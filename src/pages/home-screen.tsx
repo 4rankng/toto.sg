@@ -113,12 +113,11 @@ export const HomeScreen = () => {
         ];
     }, [analysis, trailingCounts]);
 
-    /**
-     * The seeded random baseline: the `quickpick` strategy's line for the next
-     * draw. The board's Quick pick hands over exactly the line the league
-     * measures every other strategy against.
+        /**
+     * The seeded random baseline line still lives in the league data
+     * (strategies.json, id "quickpick") — the table renders it like any
+     * other strategy; the board button always draws fresh instead.
      */
-    const baselinePick = useMemo(() => league?.strategies.find((row) => row.id === "quickpick")?.currentPick ?? null, [league]);
 
     const handleCopy = async () => {
         const result = await copy(line.join(" "), "line");
