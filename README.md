@@ -1,6 +1,6 @@
 # toto.sg
 
-Unofficial Singapore TOTO statistics: the latest result, the full draw archive, number stats, 204 number-picking strategies scored against random picks, and a 7×7 heat board with a System 6/7/8 play slip.
+Unofficial Singapore TOTO statistics: the latest result, the full draw archive, number stats, 224 number-picking strategies scored against random picks, and a 7×7 heat board with a System 6/7/8 play slip.
 
 Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysis, league scoring) runs offline; the client only renders. No backend — the one serverless component is a Netlify Function that keeps the "latest result" panel fresh between rebuilds.
 
@@ -11,7 +11,7 @@ Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysi
 | `/`           | Monitor | Latest draw as six balls + additional, the full prize table, a next-draw clock, the top 6 strategies, and the 7×7 heat board with its play slip |
 | `/history`    | Explore | Searchable, paginated archive of every draw; a row expands to that draw's structure                        |
 | `/insights`   | Learn   | 50 panels across 6 galleries: frequency, pairwise correlations, autocorrelation, ticket geometry, folklore waves & 2026 Five Elements, and empirical pari-mutuel crowd tax analytics |
-| `/strategies` | Compare | The full 204-strategy list with search, type filter, sorting, expandable details and each pick shown as six balls |
+| `/strategies` | Compare | The full 224-strategy list with search, type filter, sorting, expandable details and each pick shown as six balls |
 
 Design language: a dark-first mission-control console — canvas `#041018`, panel surfaces `#07202C`, 1px teal hairlines `#124155`, one signal colour (teal `#2EE6C5`, `#0F9E86` in light mode) with cyan `#35D6FF` as the second data hue, gold for the jackpot, and a cold→hot ramp for the heat board. Type is Sora for display, DM Sans for body, mono for labels and figures. The console is dark by default; the header toggle pins light (`data-theme`).
 
@@ -33,7 +33,7 @@ Node ≥ 18 required. `npm run refresh` is idempotent: it keeps `public/data/dra
 | ----------------------------- | ----------------- | ------------------------------------------------------------------------- |
 | `public/data/draws.json`      | `npm run refresh` | 1,892 draws, #2341–#4232, with prize tables where available               |
 | `public/data/analysis.json`   | `npm run refresh` | 6/49-era statistics (coverage, frequency, hot/cold, sums, pairs, weekday) |
-| `public/data/strategies.json` | research pipeline | 204 ranked strategies + a `meta` block (folds, chance baseline, families) |
+| `public/data/strategies.json` | research pipeline | 224 ranked strategies + a `meta` block (folds, chance baseline, families) |
 
 `strategies.json` is a **committed league artifact**: it is re-scored by the research pipeline, not by `npm run refresh`, so a routine data refresh never clobbers it. `npm run verify:data` checks all three artifacts — draw ordering, number ranges, analysis sections, and the league contract (ranks form a permutation, scores are 0–100, every current pick holds six unique numbers) — and exits non-zero on drift.
 

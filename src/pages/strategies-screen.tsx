@@ -189,7 +189,7 @@ export const StrategiesScreen = () => {
             <PageHeader
                 kicker="Strategies"
                 title="Strategy league"
-                description="204 strategies, each tested on 100 past draws. A score of 45 is random picking; higher means more numbers matched. Past results, not predictions."
+                description={`${data.strategies.length} strategies, each tested on ${meta.folds} past draws. A score of 45 is random picking; higher means more numbers matched. Past results, not predictions.`}
                 meta={
                     <>
                         <span>
