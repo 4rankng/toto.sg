@@ -1,0 +1,353 @@
+[
+  {
+    "id": "repeaters",
+    "name": "Repeaters",
+    "description": "Exactly the previous draw's 6 winning numbers.",
+    "evaluatedDraws": 1138,
+    "hitRate": 0.0228,
+    "prizeCounts": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 3,
+      "g6": 2,
+      "g7": 21
+    },
+    "totalPrizes": 26,
+    "totalWinnings": 410,
+    "drawsWithAmounts": 26,
+    "currentPick": [
+      6,
+      13,
+      31,
+      34,
+      40,
+      45
+    ]
+  },
+  {
+    "id": "hot-overdue-mix",
+    "name": "Hot–Overdue Mix",
+    "description": "3 hottest of the last 50 draws + 3 most overdue, deduplicated.",
+    "evaluatedDraws": 1138,
+    "hitRate": 0.022,
+    "prizeCounts": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 1,
+      "g6": 4,
+      "g7": 20
+    },
+    "totalPrizes": 25,
+    "totalWinnings": 350,
+    "drawsWithAmounts": 25,
+    "currentPick": [
+      1,
+      11,
+      28,
+      33,
+      38,
+      39
+    ]
+  },
+  {
+    "id": "balanced-oddeven",
+    "name": "Balanced Odd/Even",
+    "description": "All-time frequency order, greedy pick keeping at most 3 odd and 3 even numbers.",
+    "evaluatedDraws": 1138,
+    "hitRate": 0.0211,
+    "prizeCounts": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 1,
+      "g6": 0,
+      "g7": 23
+    },
+    "totalPrizes": 24,
+    "totalWinnings": 280,
+    "drawsWithAmounts": 24,
+    "currentPick": [
+      15,
+      22,
+      35,
+      40,
+      46,
+      49
+    ]
+  },
+  {
+    "id": "cold-50",
+    "name": "Cold 50",
+    "description": "The 6 numbers drawn least often in the last 50 draws (never-drawn first).",
+    "evaluatedDraws": 1138,
+    "hitRate": 0.0211,
+    "prizeCounts": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 0,
+      "g6": 1,
+      "g7": 23
+    },
+    "totalPrizes": 24,
+    "totalWinnings": 255,
+    "drawsWithAmounts": 24,
+    "currentPick": [
+      1,
+      45,
+      2,
+      15,
+      10,
+      28
+    ]
+  },
+  {
+    "id": "random-seeded",
+    "name": "Random (Seeded)",
+    "description": "Uniform random line, seeded with the target draw number so results are reproducible.",
+    "evaluatedDraws": 1138,
+    "hitRate": 0.0202,
+    "prizeCounts": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 1,
+      "g6": 0,
+      "g7": 22
+    },
+    "totalPrizes": 23,
+    "totalWinnings": 270,
+    "drawsWithAmounts": 23,
+    "currentPick": [
+      2,
+      8,
+      29,
+      32,
+      34,
+      48
+    ]
+  },
+  {
+    "id": "overdue",
+    "name": "Overdue",
+    "description": "The 6 numbers unseen for the longest time.",
+    "evaluatedDraws": 1138,
+    "hitRate": 0.0193,
+    "prizeCounts": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 1,
+      "g6": 3,
+      "g7": 18
+    },
+    "totalPrizes": 22,
+    "totalWinnings": 305,
+    "drawsWithAmounts": 22,
+    "currentPick": [
+      28,
+      1,
+      38,
+      32,
+      16,
+      36
+    ]
+  },
+  {
+    "id": "cold-all",
+    "name": "Cold All-Time",
+    "description": "The 6 numbers drawn least often across the whole 6/49 era.",
+    "evaluatedDraws": 1138,
+    "hitRate": 0.0185,
+    "prizeCounts": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 4,
+      "g6": 0,
+      "g7": 17
+    },
+    "totalPrizes": 21,
+    "totalWinnings": 370,
+    "drawsWithAmounts": 21,
+    "currentPick": [
+      45,
+      42,
+      33,
+      29,
+      41,
+      25
+    ]
+  },
+  {
+    "id": "hot-50",
+    "name": "Hot 50",
+    "description": "The 6 numbers drawn most often across the last 50 draws.",
+    "evaluatedDraws": 1138,
+    "hitRate": 0.0185,
+    "prizeCounts": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 2,
+      "g6": 2,
+      "g7": 17
+    },
+    "totalPrizes": 21,
+    "totalWinnings": 320,
+    "drawsWithAmounts": 21,
+    "currentPick": [
+      39,
+      11,
+      33,
+      23,
+      27,
+      30
+    ]
+  },
+  {
+    "id": "hot-all",
+    "name": "Hot All-Time",
+    "description": "The 6 numbers drawn most often across the whole 6/49 era.",
+    "evaluatedDraws": 1138,
+    "hitRate": 0.0176,
+    "prizeCounts": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 1,
+      "g5": 1,
+      "g6": 0,
+      "g7": 18
+    },
+    "totalPrizes": 20,
+    "totalWinnings": 449,
+    "drawsWithAmounts": 20,
+    "currentPick": [
+      15,
+      40,
+      46,
+      22,
+      8,
+      49
+    ]
+  },
+  {
+    "id": "sum-band-hot",
+    "name": "Sum-Band Hot",
+    "description": "Of the top 14 all-time numbers, the 6-number combination whose sum sits closest to the historical median sum.",
+    "evaluatedDraws": 1138,
+    "hitRate": 0.0176,
+    "prizeCounts": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 2,
+      "g6": 0,
+      "g7": 18
+    },
+    "totalPrizes": 20,
+    "totalWinnings": 280,
+    "drawsWithAmounts": 20,
+    "currentPick": [
+      15,
+      40,
+      22,
+      8,
+      35,
+      30
+    ]
+  },
+  {
+    "id": "decade-spread",
+    "name": "Decade Spread",
+    "description": "Most frequent number of each decade (1-9 … 40-49), plus the most frequent remaining number.",
+    "evaluatedDraws": 1138,
+    "hitRate": 0.0158,
+    "prizeCounts": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 3,
+      "g6": 1,
+      "g7": 14
+    },
+    "totalPrizes": 18,
+    "totalWinnings": 315,
+    "drawsWithAmounts": 18,
+    "currentPick": [
+      8,
+      15,
+      22,
+      35,
+      40,
+      46
+    ]
+  },
+  {
+    "id": "follow-hot",
+    "name": "Follow the Hot",
+    "description": "Numbers with the highest historical co-occurrence with the previous draw's numbers (previous numbers excluded).",
+    "evaluatedDraws": 1138,
+    "hitRate": 0.0158,
+    "prizeCounts": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 2,
+      "g6": 1,
+      "g7": 15
+    },
+    "totalPrizes": 18,
+    "totalWinnings": 275,
+    "drawsWithAmounts": 18,
+    "currentPick": [
+      15,
+      26,
+      46,
+      37,
+      22,
+      43
+    ]
+  },
+  {
+    "id": "hot-cold-mix",
+    "name": "Hot–Cold Mix",
+    "description": "3 hottest + 3 coldest of the last 50 draws; overlaps skip to the next cold number.",
+    "evaluatedDraws": 1138,
+    "hitRate": 0.0149,
+    "prizeCounts": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 0,
+      "g6": 0,
+      "g7": 17
+    },
+    "totalPrizes": 17,
+    "totalWinnings": 170,
+    "drawsWithAmounts": 17,
+    "currentPick": [
+      1,
+      2,
+      11,
+      33,
+      39,
+      45
+    ]
+  }
+]
