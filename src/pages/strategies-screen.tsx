@@ -17,6 +17,13 @@ const sortableValue = (row: StrategyRow, column: string): number => {
     return row[column as "hitRate" | "totalPrizes" | "evaluatedDraws"];
 };
 
+/** Nonzero prize groups as a compact "G5: 3, G7: 21" list. */
+function GroupsWon({ row }: { row: StrategyRow }) {
+    const won = PRIZE_KEYS.filter((key) => row.prizeCounts[key] > 0);
+    if (won.length === 0) return <span className="text-quaternary">—</span>;
+    return <span className="tabular-nums">{won.map((key) => `G${key.slice(1)}: ${row.prizeCounts[key]}`).join(", ")}</span>;
+}
+
 export const StrategiesScreen = () => {
     usePageTitle("Strategy rankings");
 
@@ -71,11 +78,7 @@ export const StrategiesScreen = () => {
                             <Table.Head id="name">Strategy</Table.Head>
                             <Table.Head id="hitRate" allowsSorting>Hit rate</Table.Head>
                             <Table.Head id="totalPrizes" allowsSorting>Prizes</Table.Head>
-                            {PRIZE_KEYS.map((key) => (
-                                <Table.Head key={key} id={key} allowsSorting>
-                                    {key.toUpperCase()}
-                                </Table.Head>
-                            ))}
+                            <Table.Head id="groups">Groups won</Table.Head>
                             <Table.Head id="totalWinnings" allowsSorting>Winnings</Table.Head>
                             <Table.Head id="evaluatedDraws" allowsSorting>Evaluated</Table.Head>
                             <Table.Head id="currentPick">Current pick</Table.Head>
@@ -102,15 +105,9 @@ export const StrategiesScreen = () => {
                                     <Table.Cell>
                                         <span className="tabular-nums">{row.totalPrizes}</span>
                                     </Table.Cell>
-                                    {PRIZE_KEYS.map((key) => (
-                                        <Table.Cell key={key}>
-                                            {row.prizeCounts[key] === 0 ? (
-                                                <span className="text-quaternary tabular-nums">0</span>
-                                            ) : (
-                                                <span className="tabular-nums">{row.prizeCounts[key]}</span>
-                                            )}
-                                        </Table.Cell>
-                                    ))}
+                                    <Table.Cell>
+                                        <GroupsWon row={row} />
+                                    </Table.Cell>
                                     <Table.Cell>
                                         <span className="tabular-nums">{row.totalWinnings != null ? formatSgd(row.totalWinnings) : "—"}</span>
                                     </Table.Cell>
