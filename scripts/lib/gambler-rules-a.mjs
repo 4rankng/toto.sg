@@ -154,6 +154,9 @@ export const RULES_A = {
 
             // Room each ball has inside its own class, in the direction of travel.
             const caps = lists.map((list, i) => (steps >= 0 ? list.length - 1 - picks[i] : picks[i]));
+            // Spread the 9-steps evenly over the balls rather than pushing the
+            // first ones to their class extreme, so the line keeps the spread
+            // of the sampled classes instead of clustering on class maxima.
             const order = sampleK(
                 rng,
                 caps.map((_, i) => i),
@@ -161,10 +164,14 @@ export const RULES_A = {
             );
             let remaining = Math.abs(steps);
             const moved = new Array(lists.length).fill(0);
-            for (const i of order) {
-                const take = Math.min(remaining, caps[i]);
-                remaining -= take;
-                moved[i] = take;
+            if (caps.reduce((acc, cap) => acc + cap, 0) < remaining) continue;
+            let cursor = 0;
+            while (remaining > 0) {
+                const i = order[cursor % order.length];
+                cursor += 1;
+                if (moved[i] >= caps[i]) continue;
+                moved[i] += 1;
+                remaining -= 1;
             }
             if (remaining !== 0) continue;
 
