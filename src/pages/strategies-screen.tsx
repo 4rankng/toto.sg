@@ -9,7 +9,6 @@ import { KpiCard } from "@/components/product/kpi-card";
 import { PageHeader } from "@/components/product/page-header";
 import { RecentHits } from "@/components/product/recent-hits";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
-import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { type StrategiesFile, type StrategyRow, formatDate, formatNumber, formatSigned, useJson } from "@/lib/data";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
@@ -82,8 +81,6 @@ export const StrategiesScreen = () => {
     usePageTitle(title);
 
     const { data, isLoading, error } = useJson<StrategiesFile>("/data/strategies.json");
-    // Phones get the large control size so every filter stays tappable.
-    const isCompact = !useBreakpoint("md");
     const [query, setQuery] = useState("");
     const [family, setFamily] = useState("all");
     const [sort, setSort] = useState<SortKey>("score");
@@ -127,16 +124,16 @@ export const StrategiesScreen = () => {
     const toggle = (id: string) => setExpanded((current) => (current === id ? null : id));
 
     const filters = (
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="scrollbar-hide flex w-full flex-nowrap items-center gap-1.5 overflow-x-auto sm:w-auto">
             <Input
                 value={query}
                 onChange={(value) => {
                     setQuery(value);
                     setExpanded(null);
                 }}
-                placeholder="Search strategies"
-                size={isCompact ? "lg" : "sm"}
-                className="w-44"
+                placeholder="Search"
+                size="sm"
+                className="min-w-28 flex-1 sm:w-40 sm:flex-none"
                 aria-label="Search strategies"
             />
             <Select
@@ -147,13 +144,13 @@ export const StrategiesScreen = () => {
                     setExpanded(null);
                 }}
                 placeholder="All types"
-                size={isCompact ? "lg" : "sm"}
-                className="w-36"
+                size="sm"
+                className="w-28 shrink-0"
                 aria-label="Filter by type"
             >
                 {(item) => <Select.Item id={item.id}>{item.label}</Select.Item>}
             </Select>
-            <div role="group" aria-label="Sort strategies" className="flex items-center gap-0.5 rounded-lg bg-surface-inset p-0.5">
+            <div role="group" aria-label="Sort strategies" className="flex shrink-0 items-center gap-0.5 rounded-lg bg-surface-inset p-0.5">
                 {SORTS.map((option) => (
                     <button
                         key={option.id}

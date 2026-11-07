@@ -9,7 +9,6 @@ import { KpiCard } from "@/components/product/kpi-card";
 import { PageHeader } from "@/components/product/page-header";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
 import { td, tdNum, th, thNum } from "@/components/product/table";
-import { useBreakpoint } from "@/hooks/use-breakpoint";
 import {
     type Draw,
     drawDecades,
@@ -101,8 +100,6 @@ export const HistoryScreen = () => {
     usePageTitle("Draw history — every TOTO draw");
 
     const { data: draws, isLoading, error } = useJson<Draw[]>("/data/draws.json");
-    // Phones get the large control size so every filter stays tappable.
-    const isCompact = !useBreakpoint("md");
     const [search, setSearch] = useState("");
     const [year, setYear] = useState<string>(ALL_YEARS);
     const [page, setPage] = useState(1);
@@ -187,13 +184,13 @@ export const HistoryScreen = () => {
         filterSummary.length > 0 ? `${formatNumber(filtered.length)} matches · ${filterSummary.join(" · ")}` : `${formatNumber(draws.length)} draws · newest first`;
 
     const filters = (
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="scrollbar-hide flex w-full flex-nowrap items-center gap-1.5 overflow-x-auto sm:w-auto">
             <Input
                 value={search}
                 onChange={applySearch}
                 placeholder="Search: 7 and 23, or 4232"
-                size={isCompact ? "lg" : "sm"}
-                className="w-60"
+                size="sm"
+                className="min-w-36 flex-1 sm:w-60 sm:flex-none"
                 aria-label="Search draws"
             />
             <Select
@@ -201,14 +198,14 @@ export const HistoryScreen = () => {
                 selectedKey={year}
                 onSelectionChange={(key) => applyYear(key === null ? ALL_YEARS : String(key))}
                 placeholder="All years"
-                size={isCompact ? "lg" : "sm"}
-                className="w-32"
+                size="sm"
+                className="w-28 shrink-0"
                 aria-label="Filter by year"
             >
                 {(item) => <Select.Item id={item.id}>{item.label}</Select.Item>}
             </Select>
             {hasFilter && (
-                <Button color="secondary" size="sm" onPress={clearFilters} className="max-md:h-11">
+                <Button color="secondary" size="sm" onPress={clearFilters} className="shrink-0">
                     Clear
                 </Button>
             )}
