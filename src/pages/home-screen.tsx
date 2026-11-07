@@ -355,7 +355,7 @@ export const HomeScreen = () => {
                 <Panel
                     className="lg:col-span-4"
                     title="Top strategies"
-                    description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on 100 draws · chance scores 45.`}
+                    description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on 100 draws.`}
                     actions={
                         <Link to="/strategies" className="text-xs font-semibold text-accent transition-colors duration-100 hover:text-accent-strong">
                             All →

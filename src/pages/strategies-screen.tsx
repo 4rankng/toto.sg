@@ -10,7 +10,7 @@ import { KpiCard } from "@/components/product/kpi-card";
 import { PageHeader } from "@/components/product/page-header";
 import { RecentHits } from "@/components/product/recent-hits";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
-import { type StrategiesFile, type StrategyRow, formatDate, formatNumber, formatSigned, useJson } from "@/lib/data";
+import { type StrategiesFile, type StrategyRow, formatDate, formatNumber,  useJson } from "@/lib/data";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
 
@@ -64,10 +64,6 @@ const StrategyDetail = ({ row, className }: { row: StrategyRow; className?: stri
                 <dd className="mt-0.5">
                     <RecentHits hits={row.recent12} draws={12} expectedPerLine={row.expectedHits} />
                 </dd>
-            </div>
-            <div>
-                <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Profit per draw</dt>
-                <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatSigned(row.pnlPerDraw, 2)}</dd>
             </div>
             <div>
                 <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Score</dt>
@@ -189,7 +185,7 @@ export const StrategiesScreen = () => {
             <PageHeader
                 kicker="Strategies"
                 title="Strategy league"
-                description={`${data.strategies.length} strategies, each tested on ${meta.folds} past draws. A score of 45 is random picking; higher means more numbers matched. Past results, not predictions.`}
+                description={``}
                 meta={
                     <>
                         <span>
