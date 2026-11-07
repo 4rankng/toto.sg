@@ -220,8 +220,9 @@ export const StrategiesScreen = () => {
                                     type="button"
                                     aria-expanded={isOpen}
                                     onClick={() => toggle(row.id)}
-                                    className="group flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-1.5 px-4 py-2 text-left transition-colors duration-100 hover:bg-surface-2/60"
+                                    className="group flex w-full flex-col gap-1.5 px-4 py-2.5 text-left transition-colors duration-100 hover:bg-surface-2/60"
                                 >
+                                    {/* Line 1 — identity, score and the stat. */}
                                     <span className="flex min-w-0 items-center gap-1.5">
                                         <span className="w-6 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">{row.rank}</span>
                                         {isOpen ? (
@@ -229,18 +230,18 @@ export const StrategiesScreen = () => {
                                         ) : (
                                             <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
                                         )}
-                                        <span className="truncate text-[13px] font-semibold text-ink group-hover:text-accent">{row.name}</span>
+                                        <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink group-hover:text-accent">{row.name}</span>
                                         <span className="hidden shrink-0 text-[10px] text-ink-subtle sm:inline">{row.family}</span>
+                                        <span className="shrink-0 font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score.toFixed(1)}</span>
+                                        <span className="w-16 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">{row.effPrizes} prizes</span>
                                     </span>
 
-                                    <span className="flex shrink-0 items-center gap-1">
+                                    {/* Line 2 — the sequence, on its own line, at full size. */}
+                                    <span className="flex flex-wrap items-center gap-1 pl-8">
                                         {row.currentPick.map((n) => (
                                             <Ball key={n} n={n} size="lg" />
                                         ))}
                                     </span>
-
-                                    <span className="shrink-0 font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score.toFixed(1)}</span>
-                                    <span className="w-16 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">{row.effPrizes} prizes</span>
                                 </button>
 
                                 {isOpen && (
