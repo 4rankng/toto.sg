@@ -6,9 +6,9 @@
 // one-line summary on the wrapper, so a screen reader gets the shape of the
 // data in a single stop.
 //
-// The gallery rule: every panel shows the OBSERVED next to the EXPECTATION
-// under a fair cage — a dashed reference line or band, and a caption that
-// says what the expectation is. The gamblers get their dots and the null.
+// The gallery rule: every chart shows the OBSERVED next to the EXPECTATION
+// under a fair cage — a dashed reference line or band. The gamblers get their
+// dots and the null, without a paragraph spelling it out under every panel.
 import { useMemo, useState } from "react";
 import { ChartTooltip, useChartTooltip } from "@/components/chart-tooltip";
 import { type AdditionalStats, type CompositionCell, type DeltaStats, type GapStats, type JackpotStats, type MonthStats, type PositionRow, type RepeaterStats, type StreakRow, type SumPoint, type TimelineDraw } from "@/lib/insights-stats";
@@ -431,7 +431,9 @@ export function SumTrend({ points, band, mean, className }: SumTrendProps) {
     const [hoverIndex, setHoverIndex] = useState(-1);
 
     const width = Math.max(measured, 320);
-    const height = 240;
+    // 12px taller so the rolling mean closes level with the sum histogram
+    // beside it.
+    const height = 252;
     const padLeft = 44;
     const padRight = 14;
     const padTop = 18;
@@ -1282,15 +1284,19 @@ export function AdditionalBall({ stats, className }: AdditionalBallProps) {
 
 interface JackpotTrendProps {
     stats: JackpotStats;
+    /**
+     * Chart height in pixels. The default suits a half-width panel; a panel
+     * that has to close a taller neighbouring column asks for a little more.
+     */
+    height?: number;
     className?: string;
 }
 
 /** Group 1 wins per year, with the biggest jackpot of each year marked. */
-export function JackpotTrend({ stats, className }: JackpotTrendProps) {
+export function JackpotTrend({ stats, height = 240, className }: JackpotTrendProps) {
     const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
 
     const width = Math.max(measured, 320);
-    const height = 240;
     const padLeft = 42;
     const padRight = 14;
     const padTop = 24;

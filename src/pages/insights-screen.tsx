@@ -7,6 +7,7 @@ import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/
 import { DonutChart, Gauge } from "@/components/product/console-charts";
 import { InsightPanel } from "@/components/product/insight-panel";
 import { KpiCard } from "@/components/product/kpi-card";
+import { MasonryGrid } from "@/components/product/masonry-grid";
 import { td, tdNum, th, thNum } from "@/components/product/table";
 import { AdditionalBall, CompositionMatrix, DeltaProfile, GapVolcano, JackpotTrend, MonthHeatmap, PositionLadder, RepeatersFlow, StreakRibbons, SumTrend, TimelineStrip } from "@/components/insights-charts";
 import { CountDistributionChart, DecadeHeatmap, FrequencyChart, type HeatmapCell, type SumBin, SumHistogram, WeekdayChart } from "@/components/toto-charts";
@@ -265,11 +266,13 @@ export const InsightsScreen = () => {
     /** Group 1 wins and the biggest jackpot per year. */
     const group1 = useMemo(() => (analysis ? jackpotStats(analysis.group1ByYear) : null), [analysis]);
 
-    /** The cell where the composition misses the fair cage by the widest margin. */
-    const compositionWorst = useMemo(() => {
-        if (composition.length === 0) return null;
-        return [...composition].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))[0];
+    /** The cells that sit furthest from the fair share, widest miss first. */
+    const compositionMisses = useMemo(() => {
+        return [...composition].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 4);
     }, [composition]);
+
+    /** How many cells sit above or below their fair share. */
+    const compositionAbove = useMemo(() => composition.filter((cell) => cell.delta > 0).length, [composition]);
 
     /** The calendar month with the highest and lowest mean sum. */
     const monthExtremes = useMemo(() => {
@@ -363,16 +366,15 @@ export const InsightsScreen = () => {
              * ---------------------------------------------------------------- */}
             <section id="the-numbers" className="flex flex-col gap-3">
                 <h2 className="font-display text-base leading-6 font-semibold tracking-tight text-ink">The numbers</h2>
-                <div className="grid items-start gap-3 lg:grid-cols-12">
+                <MasonryGrid>
                     <InsightPanel
                         number={1}
                         section="The numbers"
                         title="Number frequency"
                         caption={`How many of the ${formatNumber(total)} draws each number appeared in.`}
-                        expectation={`${expectedPerNumber.toFixed(1)} appearances per number — every number is equally likely in every draw.`}
                         id="panel-frequency"
                         family="Frequency"
-                        className="lg:col-span-8"
+                        className="lg:col-span-6"
                         stats={[
                             { label: "Hottest", value: hot?.number ?? "—", hint: hot ? `${formatNumber(hot.count)} draws` : undefined },
                             { label: "Coldest", value: cold?.number ?? "—", hint: cold ? `${formatNumber(cold.count)} draws` : undefined },
@@ -394,10 +396,9 @@ export const InsightsScreen = () => {
                         section="The numbers"
                         title="Gap tracker"
                         caption="Draws since each number last came up — the longer the bar, the longer the wait."
-                        expectation={`a number comes up once every ${gaps.expectedCycle.toFixed(1)} draws on average (49 ÷ 6).`}
                         id="panel-gap-tracker"
                         family="Gap & Due"
-                        className="lg:col-span-4"
+                        className="lg:col-span-6"
                         stats={[
                             { label: "Overdue now", value: gaps.overdueCount, hint: `past ${gaps.dangerGap} draws` },
                             { label: "Fair cage", value: gaps.expectedOverdue.toFixed(1), hint: "numbers overdue" },
@@ -412,7 +413,6 @@ export const InsightsScreen = () => {
                         section="The numbers"
                         title="Timeline heat strip"
                         caption={`The last ${TIMELINE_WINDOW} draws against all 49 numbers, newest on the right. The ringed cell is the additional number.`}
-                        expectation="every number has the same chance of appearing in any draw — a tinted cell is a coincidence, not a cause."
                         id="panel-timeline"
                         family="Sequence"
                         className="lg:col-span-12"
@@ -425,7 +425,6 @@ export const InsightsScreen = () => {
                         section="The numbers"
                         title="Streak ribbons"
                         caption={`A dot for every hit in the last ${STREAK_WINDOW} draws, sorted by how often each number turned up in the last ten.`}
-                        expectation="a hot streak and a cold streak are both the same coin landing the same way — the next draw starts from scratch."
                         id="panel-streaks"
                         family="Streaks"
                         className="lg:col-span-5"
@@ -443,7 +442,6 @@ export const InsightsScreen = () => {
                         section="The numbers"
                         title="Decade spread"
                         caption="Numbers per draw from each decade, year by year, with the all-time average on the right."
-                        expectation="each decade holds 10 of the 49 numbers, so every draw should take about 1.22 from each."
                         id="panel-decades"
                         family="Structure"
                         className="lg:col-span-7"
@@ -461,7 +459,6 @@ export const InsightsScreen = () => {
                         section="The numbers"
                         title="Most common pairs"
                         caption="The 10 pairs that appeared in the same draw most often."
-                        expectation={`a fixed pair meets about ${expectedPairMeetings.toFixed(1)} times in ${formatNumber(total)} draws.`}
                         id="panel-pairs"
                         family="Pairs"
                         className="lg:col-span-7"
@@ -502,7 +499,6 @@ export const InsightsScreen = () => {
                         section="The numbers"
                         title="Last 50 vs all time"
                         caption={`Appearances in the last ${RECENT_WINDOW} draws against ${movement.expected.toFixed(1)} expected.`}
-                        expectation="every number keeps the same chance every draw, so nothing carries over."
                         id="panel-last-50"
                         family="Hot & Cold"
                         className="lg:col-span-5"
@@ -526,7 +522,7 @@ export const InsightsScreen = () => {
                             ))}
                         </div>
                     </InsightPanel>
-                </div>
+                </MasonryGrid>
             </section>
 
             {/* ---------------------------------------------------------------- *
@@ -534,16 +530,15 @@ export const InsightsScreen = () => {
              * ---------------------------------------------------------------- */}
             <section id="the-lines" className="flex flex-col gap-3">
                 <h2 className="font-display text-base leading-6 font-semibold tracking-tight text-ink">The lines</h2>
-                <div className="grid items-start gap-3 lg:grid-cols-12">
+                <MasonryGrid>
                     <InsightPanel
                         number={8}
                         section="The lines"
                         title="Sum of the six numbers"
                         caption="How often each total came up, in bands of ten. Shaded band holds most draws."
-                        expectation="the six numbers are a random 6-subset of 1…49, so the sum centres on 150 and tails off either side."
                         id="panel-sum"
                         family="Sum Band"
-                        className="lg:col-span-7"
+                        className="lg:col-span-7 xl:col-span-6"
                         stats={[
                             { label: "Mean", value: analysis.sum.mean.toFixed(1), hint: `median ${analysis.sum.median}` },
                             { label: "In band", value: pct(band.share), hint: `${band.lo}–${band.hi}` },
@@ -570,10 +565,9 @@ export const InsightsScreen = () => {
                         section="The lines"
                         title="Sum trend"
                         caption={`Rolling ${SUM_TREND_WINDOW}-draw mean of the six-number sum across the whole era.`}
-                        expectation="the rolling mean should hover on the era mean the whole way — it has no direction to travel."
                         id="panel-sum-trend"
                         family="Momentum"
-                        className="lg:col-span-5"
+                        className="lg:col-span-5 xl:col-span-6"
                         stats={[
                             { label: "Era mean", value: analysis.sum.mean.toFixed(1), hint: "all draws" },
                             { label: "Band", value: `${band.lo}–${band.hi}`, hint: "most draws" },
@@ -588,10 +582,9 @@ export const InsightsScreen = () => {
                         section="The lines"
                         title="Odd numbers per draw"
                         caption={`Average ${oddExpected.toFixed(2)} of the six are odd.`}
-                        expectation="25 of the 49 numbers are odd, so about three of the six come out odd."
                         id="panel-odd"
                         family="Structure"
-                        className="lg:col-span-4"
+                        className="lg:col-span-6"
                         stats={[
                             { label: "Most common", value: analysis.oddEven.indexOf(Math.max(...analysis.oddEven)), hint: "odd numbers" },
                             { label: "Expected", value: oddExpected.toFixed(2), hint: "per draw" },
@@ -613,10 +606,9 @@ export const InsightsScreen = () => {
                         section="The lines"
                         title="Low numbers per draw"
                         caption={`Number 24 or below. Average ${lowExpected.toFixed(2)} of six.`}
-                        expectation="24 of the 49 numbers are at or below 24, so about three of the six come out low."
                         id="panel-low"
                         family="Structure"
-                        className="lg:col-span-4"
+                        className="lg:col-span-6"
                         stats={[
                             { label: "Most common", value: analysis.lowHigh.indexOf(Math.max(...analysis.lowHigh)), hint: "low numbers" },
                             { label: "Expected", value: lowExpected.toFixed(2), hint: "per draw" },
@@ -639,17 +631,39 @@ export const InsightsScreen = () => {
                         section="The lines"
                         title="Composition matrix"
                         caption="Odd count against high count. Pink sits above the fair share, blue below it."
-                        expectation="oddness and highness are not independent, so the fair share of each cell comes from the exact four-pool count."
                         id="panel-composition"
                         family="Structure"
-                        className="lg:col-span-4"
+                        className="lg:col-span-12" layout="split"
+                        aside={
+                            <div className="min-w-0 max-w-sm">
+                                <p className="font-mono text-[9px] leading-3 font-semibold tracking-[0.14em] text-ink-subtle uppercase">
+                                    furthest from the fair share
+                                </p>
+                                <ol className="mt-1">
+                                    {compositionMisses.map((cell) => (
+                                        <li
+                                            key={`${cell.odd}-${cell.high}`}
+                                            className="flex items-baseline justify-between gap-3 border-b border-line/60 py-0.5 last:border-0"
+                                        >
+                                            <span className="font-mono text-[11px] text-ink-muted tabular-nums">
+                                                {cell.odd} odd · {cell.high} high
+                                            </span>
+                                            <span className="font-mono text-[11px] text-ink tabular-nums">
+                                                {cell.delta >= 0 ? "+" : "−"}
+                                                {Math.abs(cell.delta).toFixed(1)}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </div>
+                        }
                         stats={[
-                            { label: "Biggest miss", value: compositionWorst ? `${compositionWorst.odd} odd · ${compositionWorst.high} high` : "—", hint: compositionWorst ? `${compositionWorst.delta >= 0 ? "+" : "−"}${Math.abs(compositionWorst.delta).toFixed(1)} points` : undefined },
-                            { label: "Era mean sum", value: analysis.sum.mean.toFixed(1), hint: "unchanged by parity" },
+                            { label: "Above fair share", value: compositionAbove, hint: `of ${composition.length} cells` },
+                            { label: "Below fair share", value: composition.length - compositionAbove, hint: `of ${composition.length} cells` },
                             { label: "Cells", value: 49, hint: "odd × high" },
                         ]}
                     >
-                        <CompositionMatrix cells={composition} className="mt-2" />
+                        <CompositionMatrix cells={composition} />
                     </InsightPanel>
 
                     <InsightPanel
@@ -657,13 +671,12 @@ export const InsightsScreen = () => {
                         section="The lines"
                         title="Delta profile"
                         caption="The gaps between adjacent picks inside a single draw."
-                        expectation="the mean gap between two neighbours is 7.14 draws (50 ÷ 7), and the dashed marks are the exact law."
                         id="panel-delta"
                         family="Structure"
                         className="lg:col-span-6"
                         stats={[
                             { label: "Mean gap", value: deltas.observedAverage.toFixed(2), hint: "observed" },
-                            { label: "Expected", value: deltas.expectedAverage.toFixed(2), hint: "under a fair cage" },
+                            { label: "Expected", value: deltas.expectedAverage.toFixed(2) },
                             { label: "Most common", value: deltas.rows.reduce((best, row) => (row.count > best.count ? row : best), deltas.rows[0])?.gap ?? "—", hint: "gap size" },
                         ]}
                     >
@@ -675,7 +688,6 @@ export const InsightsScreen = () => {
                         section="The lines"
                         title="Sorted-position ladder"
                         caption="Where each sorted position lands in the draw. The pale band is the fair-cage range."
-                        expectation="the j-th smallest number averages j × 50 ÷ 7, so the ladder should sit on its rails."
                         id="panel-position"
                         family="Structure"
                         className="lg:col-span-6"
@@ -687,7 +699,7 @@ export const InsightsScreen = () => {
                     >
                         <PositionLadder rows={positions} className="mt-2" />
                     </InsightPanel>
-                </div>
+                </MasonryGrid>
             </section>
 
             {/* ---------------------------------------------------------------- *
@@ -695,19 +707,18 @@ export const InsightsScreen = () => {
              * ---------------------------------------------------------------- */}
             <section id="the-cage" className="flex flex-col gap-3">
                 <h2 className="font-display text-base leading-6 font-semibold tracking-tight text-ink">The cage</h2>
-                <div className="grid items-start gap-3 lg:grid-cols-12">
+                <MasonryGrid>
                     <InsightPanel
                         number={15}
                         section="The cage"
                         title="Repeaters flow"
                         caption="How many numbers carried over from the previous draw."
-                        expectation={`repeats are expected — ${repeaters.expectedAverage.toFixed(2)} per draw on average (6 × 6 ÷ 49).`}
                         id="panel-repeaters"
                         family="Pattern"
-                        className="lg:col-span-5"
+                        className="lg:col-span-4"
                         stats={[
                             { label: "Observed", value: repeaters.observedAverage.toFixed(2), hint: "repeats per draw" },
-                            { label: "Expected", value: repeaters.expectedAverage.toFixed(2), hint: "under a fair cage" },
+                            { label: "Expected", value: repeaters.expectedAverage.toFixed(2) },
                             { label: "Draws tested", value: formatNumber(repeaters.evaluated), hint: "each against the last" },
                         ]}
                     >
@@ -719,10 +730,9 @@ export const InsightsScreen = () => {
                         section="The cage"
                         title="Additional ball"
                         caption="How often each number came up as the seventh ball."
-                        expectation={`the additional ball is drawn from the same 49 numbers, so each should appear about ${additional.expected.toFixed(1)} times.`}
                         id="panel-additional"
                         family="Frequency"
-                        className="lg:col-span-7"
+                        className="lg:col-span-8"
                         stats={[
                             { label: "Latest", value: additional.latest ?? "—", hint: additional.latestDate ? formatDate(additional.latestDate) : undefined },
                             { label: "Most seen", value: additional.hottest?.number ?? "—", hint: additional.hottest ? `${formatNumber(additional.hottest.count)} times` : undefined },
@@ -737,10 +747,9 @@ export const InsightsScreen = () => {
                         section="The cage"
                         title="Month of year"
                         caption="Mean sum by calendar month and year, with the draws behind each cell."
-                        expectation="no month is special — a fair cage gives every month the same mean sum and a near-even share of the draws."
                         id="panel-month"
                         family="Almanac & Time"
-                        className="lg:col-span-7"
+                        className="lg:col-span-8"
                         stats={[
                             { label: "Warmest month", value: monthExtremes?.highest.month ?? "—", hint: monthExtremes ? `mean ${monthExtremes.highest.mean.toFixed(1)}` : undefined },
                             { label: "Coldest month", value: monthExtremes?.lowest.month ?? "—", hint: monthExtremes ? `mean ${monthExtremes.lowest.mean.toFixed(1)}` : undefined },
@@ -755,10 +764,9 @@ export const InsightsScreen = () => {
                         section="The cage"
                         title="Weekday"
                         caption="Draws per weekday, with the mean sum above each bar."
-                        expectation="the game runs Monday and Thursday, so those two days take every draw and the rest take none."
                         id="panel-weekday"
                         family="Almanac & Time"
-                        className="lg:col-span-5"
+                        className="lg:col-span-4"
                         stats={[
                             { label: "Monday", value: formatNumber(analysis.weekday.Mon?.count ?? 0), hint: "draws" },
                             { label: "Thursday", value: formatNumber(analysis.weekday.Thu?.count ?? 0), hint: "draws" },
@@ -773,17 +781,17 @@ export const InsightsScreen = () => {
                         section="The cage"
                         title="Group 1 by year"
                         caption="Winning tickets per year, with the three biggest jackpots marked in gold."
-                        expectation="wins scale with how many tickets were sold, not with any property of the numbers."
                         id="panel-jackpot"
                         family="Pari-mutuel"
-                        className="lg:col-span-5"
+                        className="lg:col-span-4"
                         stats={[
                             { label: "Total wins", value: formatNumber(group1.totalWins), hint: "Group 1 tickets" },
                             { label: "Biggest", value: `S$${(group1.peak.max / 1_000_000).toFixed(1)}M`, hint: group1.peak.year },
                             { label: "Years", value: group1.years.length, hint: "with a Group 1" },
                         ]}
                     >
-                        <JackpotTrend stats={group1} className="mt-2" />
+                        {/* Taller than the default so the cage's left rail closes level with the right. */}
+                        <JackpotTrend stats={group1} height={284} className="mt-2" />
                     </InsightPanel>
 
                     <InsightPanel
@@ -791,10 +799,9 @@ export const InsightsScreen = () => {
                         section="The cage"
                         title="Patterns"
                         caption="How often a draw repeats itself."
-                        expectation="consecutive numbers and repeats are both normal — the gap between two picks is 1 far more often than chance would suggest."
                         id="panel-patterns"
                         family="Pattern"
-                        className="lg:col-span-7"
+                        className="lg:col-span-8"
                     >
                         <div className="grid grid-cols-2 gap-2">
                             <Gauge
@@ -824,7 +831,7 @@ export const InsightsScreen = () => {
                             ))}
                         </ol>
                     </InsightPanel>
-                </div>
+                </MasonryGrid>
             </section>
 
             <p className="px-1 text-[11px] leading-4 text-ink-subtle">

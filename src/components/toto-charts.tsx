@@ -37,7 +37,9 @@ export function FrequencyChart({ counts, expected, totalDraws, hotNumber, coldNu
     const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
 
     const width = Math.max(measured, 320);
-    const height = 260;
+    // 10px taller than the bare minimum so the row closes level with the gap
+    // tracker beside it.
+    const height = 270;
     const padLeft = 46;
     const padRight = 16;
     const padTop = 18;
