@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generatedAt": "2026-11-07T15:17:26.852812+08:00",
+  "generatedAt": "2026-11-07T16:02:41.336442+08:00",
   "nextDraw": 4233,
   "folds": 100,
   "chance": {
@@ -11,6 +11,7 @@
   "families": [
    "Almanac & Time",
    "Blends",
+   "Controls",
    "Ensemble",
    "Folk & Culture",
    "Frequency",
@@ -2057,6 +2058,31 @@
    ]
   },
   {
+   "id": "quickpick",
+   "name": "quickpick",
+   "family": "Controls",
+   "description": "Seeded random line \u2014 the honest baseline. Every other strategy is measured against this.",
+   "evaluatedDraws": 100,
+   "totalHits": 81,
+   "meanHits": 0.81,
+   "expectedHits": 0.7347,
+   "zScore": 0.74,
+   "score": 42.8,
+   "totalPrizes": 3,
+   "effPrizes": 3,
+   "pnlPerDraw": -0.7,
+   "recent12": 3,
+   "rank": 82,
+   "currentPick": [
+    8,
+    22,
+    30,
+    32,
+    46,
+    48
+   ]
+  },
+  {
    "id": "goldenPhi",
    "name": "goldenPhi",
    "family": "Pattern",
@@ -2071,7 +2097,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.65,
    "recent12": 6,
-   "rank": 82,
+   "rank": 83,
    "currentPick": [
     11,
     18,
@@ -2096,7 +2122,7 @@
    "effPrizes": 3,
    "pnlPerDraw": -0.55,
    "recent12": 9,
-   "rank": 83,
+   "rank": 84,
    "currentPick": [
     8,
     11,
@@ -2121,7 +2147,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.4,
    "recent12": 9,
-   "rank": 84,
+   "rank": 85,
    "currentPick": [
     1,
     5,
@@ -2146,7 +2172,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.4,
    "recent12": 10,
-   "rank": 85,
+   "rank": 86,
    "currentPick": [
     11,
     22,
@@ -2171,7 +2197,7 @@
    "effPrizes": 3,
    "pnlPerDraw": -0.7,
    "recent12": 7,
-   "rank": 86,
+   "rank": 87,
    "currentPick": [
     1,
     3,
@@ -2196,7 +2222,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 12,
-   "rank": 87,
+   "rank": 88,
    "currentPick": [
     4,
     5,
@@ -2221,7 +2247,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 9,
-   "rank": 88,
+   "rank": 89,
    "currentPick": [
     1,
     16,
@@ -2246,7 +2272,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 9,
-   "rank": 89,
+   "rank": 90,
    "currentPick": [
     1,
     16,
@@ -2271,7 +2297,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 10,
-   "rank": 90,
+   "rank": 91,
    "currentPick": [
     7,
     8,
@@ -2296,7 +2322,7 @@
    "effPrizes": 3,
    "pnlPerDraw": -0.55,
    "recent12": 9,
-   "rank": 91,
+   "rank": 92,
    "currentPick": [
     8,
     11,
@@ -2321,7 +2347,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 8,
-   "rank": 92,
+   "rank": 93,
    "currentPick": [
     8,
     18,
@@ -2346,7 +2372,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 9,
-   "rank": 93,
+   "rank": 94,
    "currentPick": [
     8,
     22,
@@ -2371,7 +2397,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 9,
-   "rank": 94,
+   "rank": 95,
    "currentPick": [
     1,
     16,
@@ -2396,7 +2422,7 @@
    "effPrizes": 3,
    "pnlPerDraw": -0.7,
    "recent12": 8,
-   "rank": 95,
+   "rank": 96,
    "currentPick": [
     2,
     14,
@@ -2421,7 +2447,7 @@
    "effPrizes": 3,
    "pnlPerDraw": -0.7,
    "recent12": 8,
-   "rank": 96,
+   "rank": 97,
    "currentPick": [
     1,
     8,
@@ -2446,7 +2472,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 12,
-   "rank": 97,
+   "rank": 98,
    "currentPick": [
     2,
     3,
@@ -2471,7 +2497,7 @@
    "effPrizes": 3,
    "pnlPerDraw": -0.55,
    "recent12": 6,
-   "rank": 98,
+   "rank": 99,
    "currentPick": [
     1,
     7,
@@ -2496,7 +2522,7 @@
    "effPrizes": 3,
    "pnlPerDraw": -0.7,
    "recent12": 6,
-   "rank": 99,
+   "rank": 100,
    "currentPick": [
     5,
     10,
@@ -2521,7 +2547,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 10,
-   "rank": 100,
+   "rank": 101,
    "currentPick": [
     2,
     4,
@@ -2546,7 +2572,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 10,
-   "rank": 101,
+   "rank": 102,
    "currentPick": [
     8,
     22,
@@ -2571,7 +2597,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 10,
-   "rank": 102,
+   "rank": 103,
    "currentPick": [
     8,
     22,
@@ -2596,7 +2622,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 10,
-   "rank": 103,
+   "rank": 104,
    "currentPick": [
     8,
     22,
@@ -2621,7 +2647,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.25,
    "recent12": 8,
-   "rank": 104,
+   "rank": 105,
    "currentPick": [
     8,
     9,
@@ -2646,7 +2672,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 8,
-   "rank": 105,
+   "rank": 106,
    "currentPick": [
     30,
     32,
@@ -2671,7 +2697,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 12,
-   "rank": 106,
+   "rank": 107,
    "currentPick": [
     18,
     21,
@@ -2696,7 +2722,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 12,
-   "rank": 107,
+   "rank": 108,
    "currentPick": [
     4,
     8,
@@ -2721,7 +2747,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 10,
-   "rank": 108,
+   "rank": 109,
    "currentPick": [
     2,
     3,
@@ -2746,7 +2772,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 10,
-   "rank": 109,
+   "rank": 110,
    "currentPick": [
     22,
     23,
@@ -2771,7 +2797,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.4,
    "recent12": 11,
-   "rank": 110,
+   "rank": 111,
    "currentPick": [
     3,
     14,
@@ -2796,7 +2822,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 7,
-   "rank": 111,
+   "rank": 112,
    "currentPick": [
     1,
     5,
@@ -2821,7 +2847,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.5,
    "recent12": 11,
-   "rank": 112,
+   "rank": 113,
    "currentPick": [
     22,
     30,
@@ -2846,7 +2872,7 @@
    "effPrizes": 3,
    "pnlPerDraw": -0.7,
    "recent12": 8,
-   "rank": 113,
+   "rank": 114,
    "currentPick": [
     8,
     10,
@@ -2871,7 +2897,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 6,
-   "rank": 114,
+   "rank": 115,
    "currentPick": [
     1,
     15,
@@ -2896,7 +2922,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.65,
    "recent12": 6,
-   "rank": 115,
+   "rank": 116,
    "currentPick": [
     11,
     15,
@@ -2921,7 +2947,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.65,
    "recent12": 6,
-   "rank": 116,
+   "rank": 117,
    "currentPick": [
     11,
     15,
@@ -2946,7 +2972,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 7,
-   "rank": 117,
+   "rank": 118,
    "currentPick": [
     4,
     9,
@@ -2971,7 +2997,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 10,
-   "rank": 118,
+   "rank": 119,
    "currentPick": [
     8,
     12,
@@ -2996,7 +3022,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 11,
-   "rank": 119,
+   "rank": 120,
    "currentPick": [
     2,
     5,
@@ -3021,7 +3047,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 11,
-   "rank": 120,
+   "rank": 121,
    "currentPick": [
     3,
     9,
@@ -3046,7 +3072,7 @@
    "effPrizes": 3,
    "pnlPerDraw": -0.7,
    "recent12": 11,
-   "rank": 121,
+   "rank": 122,
    "currentPick": [
     4,
     15,
@@ -3071,7 +3097,7 @@
    "effPrizes": 3,
    "pnlPerDraw": -0.7,
    "recent12": 6,
-   "rank": 122,
+   "rank": 123,
    "currentPick": [
     2,
     14,
@@ -3096,7 +3122,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.4,
    "recent12": 10,
-   "rank": 123,
+   "rank": 124,
    "currentPick": [
     11,
     12,
@@ -3121,7 +3147,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 11,
-   "rank": 124,
+   "rank": 125,
    "currentPick": [
     8,
     11,
@@ -3146,7 +3172,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.4,
    "recent12": 7,
-   "rank": 125,
+   "rank": 126,
    "currentPick": [
     4,
     8,
@@ -3171,7 +3197,7 @@
    "effPrizes": 3,
    "pnlPerDraw": -0.7,
    "recent12": 4,
-   "rank": 126,
+   "rank": 127,
    "currentPick": [
     3,
     14,
@@ -3196,7 +3222,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 11,
-   "rank": 127,
+   "rank": 128,
    "currentPick": [
     1,
     3,
@@ -3221,7 +3247,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 8,
-   "rank": 128,
+   "rank": 129,
    "currentPick": [
     4,
     9,
@@ -3246,7 +3272,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 12,
-   "rank": 129,
+   "rank": 130,
    "currentPick": [
     4,
     25,
@@ -3271,7 +3297,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 7,
-   "rank": 130,
+   "rank": 131,
    "currentPick": [
     5,
     10,
@@ -3296,7 +3322,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 11,
-   "rank": 131,
+   "rank": 132,
    "currentPick": [
     7,
     14,
@@ -3321,7 +3347,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 10,
-   "rank": 132,
+   "rank": 133,
    "currentPick": [
     8,
     11,
@@ -3346,7 +3372,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 8,
-   "rank": 133,
+   "rank": 134,
    "currentPick": [
     9,
     19,
@@ -3371,7 +3397,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 11,
-   "rank": 134,
+   "rank": 135,
    "currentPick": [
     1,
     2,
@@ -3396,7 +3422,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 10,
-   "rank": 135,
+   "rank": 136,
    "currentPick": [
     5,
     17,
@@ -3421,7 +3447,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 10,
-   "rank": 136,
+   "rank": 137,
    "currentPick": [
     8,
     11,
@@ -3446,7 +3472,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.5,
    "recent12": 9,
-   "rank": 137,
+   "rank": 138,
    "currentPick": [
     7,
     16,
@@ -3471,7 +3497,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 11,
-   "rank": 138,
+   "rank": 139,
    "currentPick": [
     7,
     8,
@@ -3496,7 +3522,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.5,
    "recent12": 11,
-   "rank": 139,
+   "rank": 140,
    "currentPick": [
     11,
     22,
@@ -3521,7 +3547,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 5,
-   "rank": 140,
+   "rank": 141,
    "currentPick": [
     7,
     21,
@@ -3546,7 +3572,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 9,
-   "rank": 141,
+   "rank": 142,
    "currentPick": [
     1,
     2,
@@ -3571,7 +3597,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 10,
-   "rank": 142,
+   "rank": 143,
    "currentPick": [
     11,
     22,
@@ -3596,7 +3622,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 8,
-   "rank": 143,
+   "rank": 144,
    "currentPick": [
     8,
     11,
@@ -3621,7 +3647,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.65,
    "recent12": 9,
-   "rank": 144,
+   "rank": 145,
    "currentPick": [
     8,
     11,
@@ -3646,7 +3672,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 10,
-   "rank": 145,
+   "rank": 146,
    "currentPick": [
     12,
     22,
@@ -3671,7 +3697,7 @@
    "effPrizes": 3,
    "pnlPerDraw": -0.7,
    "recent12": 9,
-   "rank": 146,
+   "rank": 147,
    "currentPick": [
     9,
     18,
@@ -3696,7 +3722,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 7,
-   "rank": 147,
+   "rank": 148,
    "currentPick": [
     22,
     35,
@@ -3721,7 +3747,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 7,
-   "rank": 148,
+   "rank": 149,
    "currentPick": [
     8,
     11,
@@ -3746,7 +3772,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 8,
-   "rank": 149,
+   "rank": 150,
    "currentPick": [
     1,
     2,
@@ -3771,7 +3797,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 10,
-   "rank": 150,
+   "rank": 151,
    "currentPick": [
     3,
     15,
@@ -3796,7 +3822,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 7,
-   "rank": 151,
+   "rank": 152,
    "currentPick": [
     8,
     11,
@@ -3821,7 +3847,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 7,
-   "rank": 152,
+   "rank": 153,
    "currentPick": [
     2,
     3,
@@ -3846,7 +3872,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 9,
-   "rank": 153,
+   "rank": 154,
    "currentPick": [
     3,
     11,
@@ -3871,7 +3897,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 7,
-   "rank": 154,
+   "rank": 155,
    "currentPick": [
     2,
     8,
@@ -3896,7 +3922,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.4,
    "recent12": 5,
-   "rank": 155,
+   "rank": 156,
    "currentPick": [
     8,
     10,
@@ -3921,7 +3947,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.75,
    "recent12": 13,
-   "rank": 156,
+   "rank": 157,
    "currentPick": [
     1,
     26,
@@ -3946,7 +3972,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.5,
    "recent12": 8,
-   "rank": 157,
+   "rank": 158,
    "currentPick": [
     14,
     25,
@@ -3971,7 +3997,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 10,
-   "rank": 158,
+   "rank": 159,
    "currentPick": [
     1,
     2,
@@ -3996,7 +4022,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 9,
-   "rank": 159,
+   "rank": 160,
    "currentPick": [
     3,
     5,
@@ -4021,7 +4047,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 8,
-   "rank": 160,
+   "rank": 161,
    "currentPick": [
     2,
     11,
@@ -4046,7 +4072,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 9,
-   "rank": 161,
+   "rank": 162,
    "currentPick": [
     15,
     22,
@@ -4071,7 +4097,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 9,
-   "rank": 162,
+   "rank": 163,
    "currentPick": [
     1,
     15,
@@ -4096,7 +4122,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 5,
-   "rank": 163,
+   "rank": 164,
    "currentPick": [
     10,
     18,
@@ -4121,7 +4147,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.4,
    "recent12": 3,
-   "rank": 164,
+   "rank": 165,
    "currentPick": [
     1,
     3,
@@ -4146,7 +4172,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 9,
-   "rank": 165,
+   "rank": 166,
    "currentPick": [
     1,
     7,
@@ -4171,7 +4197,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 8,
-   "rank": 166,
+   "rank": 167,
    "currentPick": [
     23,
     30,
@@ -4196,7 +4222,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 10,
-   "rank": 167,
+   "rank": 168,
    "currentPick": [
     1,
     7,
@@ -4221,7 +4247,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 7,
-   "rank": 168,
+   "rank": 169,
    "currentPick": [
     11,
     28,
@@ -4246,7 +4272,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 9,
-   "rank": 169,
+   "rank": 170,
    "currentPick": [
     1,
     22,
@@ -4271,7 +4297,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 9,
-   "rank": 170,
+   "rank": 171,
    "currentPick": [
     1,
     22,
@@ -4296,7 +4322,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.5,
    "recent12": 7,
-   "rank": 171,
+   "rank": 172,
    "currentPick": [
     5,
     8,
@@ -4321,7 +4347,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 4,
-   "rank": 172,
+   "rank": 173,
    "currentPick": [
     2,
     7,
@@ -4346,7 +4372,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 10,
-   "rank": 173,
+   "rank": 174,
    "currentPick": [
     1,
     2,
@@ -4371,7 +4397,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 9,
-   "rank": 174,
+   "rank": 175,
    "currentPick": [
     7,
     9,
@@ -4396,7 +4422,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 11,
-   "rank": 175,
+   "rank": 176,
    "currentPick": [
     1,
     7,
@@ -4421,7 +4447,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 7,
-   "rank": 176,
+   "rank": 177,
    "currentPick": [
     8,
     9,
@@ -4446,7 +4472,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 10,
-   "rank": 177,
+   "rank": 178,
    "currentPick": [
     7,
     8,
@@ -4471,7 +4497,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 5,
-   "rank": 178,
+   "rank": 179,
    "currentPick": [
     1,
     4,
@@ -4496,7 +4522,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 10,
-   "rank": 179,
+   "rank": 180,
    "currentPick": [
     11,
     12,
@@ -4521,7 +4547,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 7,
-   "rank": 180,
+   "rank": 181,
    "currentPick": [
     22,
     30,
@@ -4546,7 +4572,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 12,
-   "rank": 181,
+   "rank": 182,
    "currentPick": [
     2,
     3,
@@ -4571,7 +4597,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.5,
    "recent12": 5,
-   "rank": 182,
+   "rank": 183,
    "currentPick": [
     8,
     9,
@@ -4596,7 +4622,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 11,
-   "rank": 183,
+   "rank": 184,
    "currentPick": [
     1,
     9,
@@ -4621,7 +4647,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 9,
-   "rank": 184,
+   "rank": 185,
    "currentPick": [
     16,
     24,
@@ -4646,7 +4672,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 7,
-   "rank": 185,
+   "rank": 186,
    "currentPick": [
     4,
     15,
@@ -4671,7 +4697,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 10,
-   "rank": 186,
+   "rank": 187,
    "currentPick": [
     1,
     26,
@@ -4696,7 +4722,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 10,
-   "rank": 187,
+   "rank": 188,
    "currentPick": [
     1,
     7,
@@ -4721,7 +4747,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 11,
-   "rank": 188,
+   "rank": 189,
    "currentPick": [
     1,
     2,
@@ -4746,7 +4772,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 6,
-   "rank": 189,
+   "rank": 190,
    "currentPick": [
     1,
     10,
@@ -4771,7 +4797,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 5,
-   "rank": 190,
+   "rank": 191,
    "currentPick": [
     2,
     8,
@@ -4796,7 +4822,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 6,
-   "rank": 191,
+   "rank": 192,
    "currentPick": [
     1,
     15,
@@ -4821,7 +4847,7 @@
    "effPrizes": 2,
    "pnlPerDraw": -0.8,
    "recent12": 3,
-   "rank": 192,
+   "rank": 193,
    "currentPick": [
     12,
     19,
@@ -4846,7 +4872,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 10,
-   "rank": 193,
+   "rank": 194,
    "currentPick": [
     3,
     8,
@@ -4871,7 +4897,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 6,
-   "rank": 194,
+   "rank": 195,
    "currentPick": [
     1,
     3,
@@ -4896,7 +4922,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 7,
-   "rank": 195,
+   "rank": 196,
    "currentPick": [
     11,
     23,
@@ -4921,7 +4947,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 6,
-   "rank": 196,
+   "rank": 197,
    "currentPick": [
     8,
     9,
@@ -4946,7 +4972,7 @@
    "effPrizes": 1,
    "pnlPerDraw": -0.9,
    "recent12": 5,
-   "rank": 197,
+   "rank": 198,
    "currentPick": [
     1,
     3,
@@ -4971,7 +4997,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 2,
-   "rank": 198,
+   "rank": 199,
    "currentPick": [
     12,
     17,
@@ -4996,7 +5022,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 6,
-   "rank": 199,
+   "rank": 200,
    "currentPick": [
     10,
     15,
@@ -5021,7 +5047,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 7,
-   "rank": 200,
+   "rank": 201,
    "currentPick": [
     8,
     11,
@@ -5046,7 +5072,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 7,
-   "rank": 201,
+   "rank": 202,
    "currentPick": [
     7,
     8,
@@ -5071,7 +5097,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 6,
-   "rank": 202,
+   "rank": 203,
    "currentPick": [
     9,
     17,
@@ -5096,7 +5122,7 @@
    "effPrizes": 0,
    "pnlPerDraw": -1.0,
    "recent12": 2,
-   "rank": 203,
+   "rank": 204,
    "currentPick": [
     9,
     11,

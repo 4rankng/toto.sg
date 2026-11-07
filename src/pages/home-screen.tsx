@@ -2,11 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { BallRow } from "@/components/balls";
 import { Panel } from "@/components/panel";
-import { Delta } from "@/components/product/delta";
-import { FamilyChip } from "@/components/product/family-chip";
 import { ScoreBar } from "@/components/product/score-bar";
 import { StatTile } from "@/components/product/stat-tile";
-import { td, tdNum } from "@/components/product/table";
+import { td } from "@/components/product/table";
 import { useCountdown } from "@/hooks/use-countdown";
 import {
     type Analysis,
@@ -93,12 +91,12 @@ export const HomeScreen = () => {
                         Draw <span className="font-mono tabular-nums">{drawNo}</span> · {formatDate(date)} · {weekdayOf(date)}
                     </p>
                 </div>
-                <Link to="/history" className="text-sm font-medium text-accent transition-colors duration-150 hover:text-accent-strong">
+                <Link to="/history" className="text-sm font-medium text-primary transition-colors duration-150 hover:text-primary-strong">
                     Browse all {formatNumber(draws.length)} draws →
                 </Link>
             </header>
 
-            <div className="grid gap-4 xl:grid-cols-[1.55fr_1fr]">
+            <div className="grid gap-4 xl:grid-cols-[1.5fr_1fr_1fr]">
                 <Panel
                     title={`Draw ${drawNo}`}
                     description={`${formatDate(date)} · ${weekdayOf(date)} · 6/49`}
@@ -115,7 +113,7 @@ export const HomeScreen = () => {
                     <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-line pt-4 sm:grid-cols-4">
                         <div>
                             <dt className="text-[11px] font-medium tracking-[0.06em] text-ink-faint uppercase">Group 1</dt>
-                            <dd className="mt-0.5 font-mono text-sm font-semibold text-gold tabular-nums">
+                            <dd className="mt-0.5 font-mono text-sm font-semibold text-gold-ink tabular-nums">
                                 {prizes?.g1?.share ? formatSgd(prizes.g1.share) : "—"}
                             </dd>
                         </div>
@@ -152,6 +150,42 @@ export const HomeScreen = () => {
                         <p className="text-sm text-ink-subtle">Next draw time unavailable.</p>
                     )}
                 </Panel>
+                <Panel
+                    title="Strategy league — top 5"
+                    description="Walk-forward performance against the chance baseline. Not predictive power."
+                    actions={
+                        <Link to="/strategies" className="text-sm font-medium text-primary transition-colors duration-150 hover:text-primary-strong">
+                            All {league?.strategies.length ?? 0} strategies →
+                        </Link>
+                    }
+                    isFlush
+                >
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[420px] border-collapse text-left">
+                            <thead>
+                                <tr className="border-b border-line">
+                                    <th className="px-4 py-2 text-[11px] font-medium tracking-[0.06em] text-ink-subtle uppercase">#</th>
+                                    <th className="px-4 py-2 text-[11px] font-medium tracking-[0.06em] text-ink-subtle uppercase">Strategy</th>
+                                    <th className="px-4 py-2 text-[11px] font-medium tracking-[0.06em] text-ink-subtle uppercase">Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {topStrategies.map((strategy) => (
+                                    <tr key={strategy.id} className="border-b border-line/70 last:border-0">
+                                        <td className={td + " pl-4 font-mono text-xs tabular-nums"}>{strategy.rank}</td>
+                                        <td className={td + " max-w-40 truncate font-medium text-ink"}>{strategy.name}</td>
+                                        <td className={td + " pr-4"}>
+                                            <div className="flex items-center gap-2">
+                                                <ScoreBar score={strategy.score} baseline={baseline} tone={strategy.rank === 1 ? "gold" : "primary"} />
+                                                <span className="w-9 text-right font-mono text-xs text-ink tabular-nums">{strategy.score.toFixed(1)}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </Panel>
             </div>
 
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -161,7 +195,7 @@ export const HomeScreen = () => {
                     label="Hottest ball"
                     value={hotBall ? hotBall.number : "—"}
                     hint={hotBall ? `${formatNumber(hotBall.count)} appearances` : undefined}
-                    tone="accent"
+                    tone="primary"
                 />
                 <StatTile
                     label="Longest absence"
@@ -169,51 +203,6 @@ export const HomeScreen = () => {
                     hint={longestGap ? `${formatNumber(longestGap.gap)} draws since seen` : undefined}
                 />
             </div>
-
-            <Panel
-                title="Strategy league — top 5"
-                description="Walk-forward performance against the chance baseline. Not predictive power."
-                actions={
-                    <Link to="/strategies" className="text-sm font-medium text-accent transition-colors duration-150 hover:text-accent-strong">
-                        All {league?.strategies.length ?? 0} strategies →
-                    </Link>
-                }
-                isFlush
-            >
-                <div className="overflow-x-auto">
-                    <table className="w-full min-w-[640px] border-collapse text-left">
-                        <thead>
-                            <tr className="border-b border-line">
-                                <th className="px-4 py-2 text-[11px] font-medium tracking-[0.06em] text-ink-subtle uppercase">#</th>
-                                <th className="px-4 py-2 text-[11px] font-medium tracking-[0.06em] text-ink-subtle uppercase">Strategy</th>
-                                <th className="px-4 py-2 text-[11px] font-medium tracking-[0.06em] text-ink-subtle uppercase">Family</th>
-                                <th className="px-4 py-2 text-[11px] font-medium tracking-[0.06em] text-ink-subtle uppercase">Score</th>
-                                <th className="px-4 py-2 text-right text-[11px] font-medium tracking-[0.06em] text-ink-subtle uppercase">Hits vs chance</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {topStrategies.map((strategy) => (
-                                <tr key={strategy.id} className="border-b border-line/70 last:border-0">
-                                    <td className={td + " pl-4 font-mono text-xs tabular-nums"}>{strategy.rank}</td>
-                                    <td className={td + " max-w-52 truncate font-medium text-ink"}>{strategy.name}</td>
-                                    <td className={td + " pl-4"}>
-                                        <FamilyChip family={strategy.family} />
-                                    </td>
-                                    <td className={td + " w-48 pl-4"}>
-                                        <div className="flex items-center gap-2">
-                                            <ScoreBar score={strategy.score} baseline={baseline} tone={strategy.rank === 1 ? "gold" : "accent"} />
-                                            <span className="w-9 text-right font-mono text-xs text-ink tabular-nums">{strategy.score.toFixed(1)}</span>
-                                        </div>
-                                    </td>
-                                    <td className={tdNum + " pr-4"}>
-                                        <Delta value={strategy.meanHits - strategy.expectedHits} digits={3} />
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </Panel>
         </div>
     );
 };

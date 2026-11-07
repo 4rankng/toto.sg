@@ -17,7 +17,7 @@ const ballSizes: Record<BallSize, string> = {
     sm: "h-7 w-7 text-xs",
     md: "h-8 w-8 text-xs sm:h-9 sm:w-9 sm:text-sm",
     lg: "h-9 w-9 text-sm sm:h-11 sm:w-11 sm:text-base",
-    xl: "h-10 w-10 text-sm sm:h-14 sm:w-14 sm:text-xl",
+    xl: "h-9 w-9 text-sm sm:h-14 sm:w-14 sm:text-xl",
 };
 
 /** A single TOTO ball: solid red disc for winners, red ring for the additional number. */
@@ -27,7 +27,7 @@ export function Ball({ n, size = "md", variant = "solid", className }: BallProps
             className={cx(
                 "grid shrink-0 place-items-center rounded-full font-semibold tabular-nums",
                 ballSizes[size],
-                variant === "solid" ? "bg-accent text-white" : "border-2 border-accent bg-transparent text-accent",
+                variant === "solid" ? "bg-ball text-ball-ink ring-1 ring-line ring-inset" : "border-2 border-accent bg-canvas text-accent",
                 className,
             )}
         >

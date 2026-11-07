@@ -9,7 +9,7 @@ export const NotFound = () => {
             <p className="text-[11px] font-medium tracking-[0.08em] text-ink-faint uppercase">404</p>
             <h1 className="text-xl font-semibold tracking-tight text-ink">That page isn&apos;t here</h1>
             <p className="max-w-md text-sm text-ink-subtle">The draw archive, insights and the strategy league live at the four routes below.</p>
-            <Link to="/" className="text-sm font-medium text-accent transition-colors duration-150 hover:text-accent-strong">
+            <Link to="/" className="text-sm font-medium text-primary transition-colors duration-150 hover:text-primary-strong">
                 Back to the latest draw →
             </Link>
         </div>

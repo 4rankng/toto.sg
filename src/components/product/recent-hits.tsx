@@ -23,8 +23,8 @@ export function RecentHits({ hits, draws, expectedPerLine, className }: RecentHi
     return (
         <div className={cx("flex items-center gap-2", className)}>
             <div className="relative h-1.5 w-24 overflow-visible rounded-full bg-surface-3">
-                <div className="absolute inset-y-0 left-0 rounded-full bg-accent" style={{ width: `${(hits / scale) * 100}%` }} />
-                <div className="absolute -top-1 -bottom-1 w-px bg-ink-muted/70" style={{ left: `${marker}%` }} />
+                <div className="absolute inset-y-0 left-0 rounded-full bg-primary" style={{ width: `${(hits / scale) * 100}%` }} />
+                <div className="absolute -top-1 -bottom-1 w-px bg-chart-ref" style={{ left: `${marker}%` }} />
             </div>
             <span className="font-mono text-xs whitespace-nowrap text-ink-muted tabular-nums">
                 {hits}

@@ -228,11 +228,11 @@ export const InsightsScreen = () => {
                                 aria-current={active ? "true" : undefined}
                                 className={cx(
                                     "relative shrink-0 px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors duration-150 ease-linear",
-                                    active ? "text-accent" : "text-ink-subtle hover:text-ink-muted",
+                                    active ? "text-primary" : "text-ink-subtle hover:text-ink-muted",
                                 )}
                             >
                                 {panel.label}
-                                {active && <span aria-hidden="true" className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-accent" />}
+                                {active && <span aria-hidden="true" className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary" />}
                             </a>
                         );
                     })}
@@ -258,7 +258,7 @@ export const InsightsScreen = () => {
                     <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface-2 px-3 py-2">
                         <div className="min-w-0">
                             <p className="text-[11px] font-medium tracking-[0.08em] text-ink-faint uppercase">Hottest</p>
-                            <p className="mt-0.5 font-mono text-sm text-accent tabular-nums">Number {hot?.number}</p>
+                            <p className="mt-0.5 font-mono text-sm text-primary tabular-nums">Number {hot?.number}</p>
                         </div>
                         <div className="text-right">
                             <p className="font-mono text-sm text-ink tabular-nums">{formatNumber(hot?.count ?? 0)} draws</p>
@@ -321,6 +321,7 @@ export const InsightsScreen = () => {
                             expectedBucket={Math.round(lowExpected)}
                             expectedValue={lowExpected}
                             totalDraws={total}
+                            tone="secondary"
                             className="mt-2"
                         />
                     </div>
@@ -348,7 +349,7 @@ export const InsightsScreen = () => {
                     id={PANELS[4].id}
                     kicker="Panel 05"
                     title={PANELS[4].label}
-                    description={`The ${pairs.length} number pairs that shared a draw most often across ${formatNumber(total)} draws.`}
+                    description={`The ${pairs.length} number pairs that shared a draw most often across ${formatNumber(total)} draws — draws is the count, share the percentage of era draws.`}
                 />
                 <table className="mt-4 w-full border-collapse text-left">
                     <thead>
@@ -360,10 +361,10 @@ export const InsightsScreen = () => {
                                 Pair
                             </th>
                             <th scope="col" className={cx(thNum, "static")}>
-                                Draws together
+                                Draws
                             </th>
                             <th scope="col" className={cx(thNum, "static")}>
-                                % of era draws
+                                Share
                             </th>
                         </tr>
                     </thead>

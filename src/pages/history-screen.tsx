@@ -6,6 +6,7 @@ import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { Panel } from "@/components/panel";
 import { td, tdNum, tdSticky, th, thNum } from "@/components/product/table";
+import { useBreakpoint } from "@/hooks/use-breakpoint";
 import {
     type Draw,
     drawDecades,
@@ -94,6 +95,8 @@ export const HistoryScreen = () => {
     usePageTitle("Draw history — every TOTO draw on record");
 
     const { data: draws, isLoading, error } = useJson<Draw[]>("/data/draws.json");
+    // Phones get the large control size so every filter stays tappable.
+    const isCompact = !useBreakpoint("md");
     const [search, setSearch] = useState("");
     const [year, setYear] = useState<string>(ALL_YEARS);
     const [page, setPage] = useState(1);
@@ -183,20 +186,27 @@ export const HistoryScreen = () => {
 
     const filters = (
         <div className="flex flex-wrap items-center gap-2">
-            <Input value={search} onChange={applySearch} placeholder="Search: 7 and 23, or 4232" size="sm" className="w-64" aria-label="Search draws" />
+            <Input
+                value={search}
+                onChange={applySearch}
+                placeholder="Search: 7 and 23, or 4232"
+                size={isCompact ? "lg" : "sm"}
+                className="w-64"
+                aria-label="Search draws"
+            />
             <Select
                 items={yearOptions}
                 selectedKey={year}
                 onSelectionChange={(key) => applyYear(key === null ? ALL_YEARS : String(key))}
                 placeholder="All years"
-                size="sm"
+                size={isCompact ? "lg" : "sm"}
                 className="w-32"
                 aria-label="Filter by year"
             >
                 {(item) => <Select.Item id={item.id}>{item.label}</Select.Item>}
             </Select>
             {hasFilter && (
-                <Button color="secondary" size="sm" onPress={clearFilters}>
+                <Button color="secondary" size="sm" onPress={clearFilters} className="max-md:h-11">
                     Clear
                 </Button>
             )}
@@ -214,16 +224,16 @@ export const HistoryScreen = () => {
                 <span className="font-mono text-ink tabular-nums">{safePage}</span> of <span className="font-mono text-ink tabular-nums">{pageCount}</span>
             </p>
             <div role="group" aria-label="Archive pages" className="flex items-center gap-1.5">
-                <Button color="secondary" size="sm" isDisabled={safePage <= 1} onPress={() => setPage(1)}>
+                <Button color="secondary" size="sm" isDisabled={safePage <= 1} onPress={() => setPage(1)} className="max-md:h-11">
                     First
                 </Button>
-                <Button color="secondary" size="sm" isDisabled={safePage <= 1} onPress={() => setPage(safePage - 1)}>
+                <Button color="secondary" size="sm" isDisabled={safePage <= 1} onPress={() => setPage(safePage - 1)} className="max-md:h-11">
                     Prev
                 </Button>
-                <Button color="secondary" size="sm" isDisabled={safePage >= pageCount} onPress={() => setPage(safePage + 1)}>
+                <Button color="secondary" size="sm" isDisabled={safePage >= pageCount} onPress={() => setPage(safePage + 1)} className="max-md:h-11">
                     Next
                 </Button>
-                <Button color="secondary" size="sm" isDisabled={safePage >= pageCount} onPress={() => setPage(pageCount)}>
+                <Button color="secondary" size="sm" isDisabled={safePage >= pageCount} onPress={() => setPage(pageCount)} className="max-md:h-11">
                     Last
                 </Button>
             </div>
@@ -251,7 +261,7 @@ export const HistoryScreen = () => {
                         </Button>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto xl:overflow-visible">
+                    <div className="min-w-0 overflow-x-auto xl:overflow-visible">
                         <table className="w-full min-w-[720px] border-collapse text-left">
                             <thead>
                                 <tr>
@@ -284,7 +294,7 @@ export const HistoryScreen = () => {
                                                         aria-expanded={isOpen}
                                                         aria-controls={isOpen ? detailId : undefined}
                                                         onClick={() => setExpanded(isOpen ? null : draw.draw)}
-                                                        className="rounded font-mono text-sm font-medium text-ink tabular-nums transition-colors duration-150 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                                                        className="rounded font-mono text-sm font-medium text-ink tabular-nums transition-colors duration-150 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                                                     >
                                                         {draw.draw}
                                                     </button>
@@ -302,7 +312,7 @@ export const HistoryScreen = () => {
                                                         aria-controls={isOpen ? detailId : undefined}
                                                         aria-label={`${isOpen ? "Hide" : "Show"} detail for draw ${draw.draw}`}
                                                         onClick={() => setExpanded(isOpen ? null : draw.draw)}
-                                                        className="rounded p-1 text-ink-faint transition-colors duration-150 hover:bg-surface-3 hover:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                                                        className="grid size-11 place-items-center rounded-lg text-ink-faint transition-colors duration-150 hover:bg-surface-3 hover:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                                                     >
                                                         {isOpen ? (
                                                             <ChevronDown aria-hidden="true" className="size-4" />

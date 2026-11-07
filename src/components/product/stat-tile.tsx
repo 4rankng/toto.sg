@@ -6,8 +6,8 @@ interface StatTileProps {
     value: ReactNode;
     /** Secondary line under the value. */
     hint?: ReactNode;
-    /** `accent` for the hot number, `gold` for jackpot-scale figures. */
-    tone?: "default" | "accent" | "gold";
+    /** `primary` for the hot number, `gold` for jackpot-scale figures. */
+    tone?: "default" | "primary" | "gold" | "accent";
     className?: string;
 }
 
@@ -19,7 +19,7 @@ export function StatTile({ label, value, hint, tone = "default", className }: St
             <span
                 className={cx(
                     "text-xl font-semibold tracking-tight tabular-nums",
-                    tone === "accent" ? "text-accent" : tone === "gold" ? "text-gold" : "text-ink",
+                    tone === "primary" ? "text-primary" : tone === "gold" ? "text-gold-ink" : tone === "accent" ? "text-accent" : "text-ink",
                 )}
             >
                 {value}

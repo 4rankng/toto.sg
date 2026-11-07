@@ -30,7 +30,7 @@ export const tdStickyNum = cx(tdSticky, "text-right font-mono text-xs tabular-nu
  * `xl` and up the rail is transparent so the sticky header can stick to the
  * viewport instead of to this box.
  */
-export const tableRail = "overflow-x-auto xl:overflow-visible";
+export const tableRail = "min-w-0 overflow-x-auto xl:overflow-visible";
 
 interface TableFrameProps {
     children: ReactNode;

@@ -9,6 +9,7 @@ import { FamilyChip } from "@/components/product/family-chip";
 import { RecentHits } from "@/components/product/recent-hits";
 import { ScoreBar } from "@/components/product/score-bar";
 import { td, tdNum, tdStickyNum, th, thNum } from "@/components/product/table";
+import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { type StrategiesFile, type StrategyRow, formatDate, formatSigned, useJson } from "@/lib/data";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
@@ -24,15 +25,17 @@ const SORTS: { id: SortKey; label: string }[] = [
 ];
 
 const PODIUM = [
-    { tone: "gold", label: "1st", text: "text-gold", ring: "ring-gold/30", bg: "bg-gold/5" },
-    { tone: "silver", label: "2nd", text: "text-silver", ring: "ring-silver/25", bg: "bg-silver/5" },
-    { tone: "bronze", label: "3rd", text: "text-bronze", ring: "ring-bronze/25", bg: "bg-bronze/5" },
+    { tone: "gold", label: "1st", text: "text-gold-ink", ring: "ring-gold/40", bg: "bg-gold/10" },
+    { tone: "silver", label: "2nd", text: "text-silver-ink", ring: "ring-silver/40", bg: "bg-silver/10" },
+    { tone: "bronze", label: "3rd", text: "text-bronze-ink", ring: "ring-bronze/30", bg: "bg-bronze/10" },
 ] as const;
 
 export const StrategiesScreen = () => {
     usePageTitle("Strategy league — 203 strategies vs chance");
 
     const { data, isLoading, error } = useJson<StrategiesFile>("/data/strategies.json");
+    // Phones get the large control size so every filter stays tappable.
+    const isCompact = !useBreakpoint("md");
     const [query, setQuery] = useState("");
     const [family, setFamily] = useState("all");
     const [sort, setSort] = useState<SortKey>("score");
@@ -108,7 +111,7 @@ export const StrategiesScreen = () => {
                 </dl>
             </header>
 
-            <div className="grid gap-3 lg:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {podium.map((row, index) => {
                     const medal = PODIUM[index];
                     return (
@@ -157,7 +160,7 @@ export const StrategiesScreen = () => {
                             value={query}
                             onChange={(value) => setQuery(value)}
                             placeholder="Search strategies"
-                            size="sm"
+                            size={isCompact ? "lg" : "sm"}
                             className="w-44"
                             aria-label="Search strategies"
                         />
@@ -166,7 +169,7 @@ export const StrategiesScreen = () => {
                             selectedKey={family}
                             onSelectionChange={(key) => setFamily(String(key))}
                             placeholder="All families"
-                            size="sm"
+                            size={isCompact ? "lg" : "sm"}
                             className="w-40"
                             aria-label="Filter by family"
                         >
@@ -180,7 +183,7 @@ export const StrategiesScreen = () => {
                                     aria-pressed={sort === option.id}
                                     onClick={() => setSort(option.id)}
                                     className={cx(
-                                        "rounded-md px-2 py-1 text-xs font-medium transition-colors duration-150",
+                                        "min-h-11 rounded-md px-2 py-1 text-xs font-medium transition-colors duration-150",
                                         sort === option.id ? "bg-surface-3 text-ink" : "text-ink-subtle hover:text-ink-muted",
                                     )}
                                 >
@@ -191,7 +194,7 @@ export const StrategiesScreen = () => {
                     </div>
                 }
             >
-                <div className="overflow-x-auto xl:overflow-visible">
+                <div className="min-w-0 overflow-x-auto xl:overflow-visible">
                     <table className="w-full min-w-[1120px] border-collapse text-left">
                         <thead>
                             <tr>
@@ -223,14 +226,14 @@ export const StrategiesScreen = () => {
                                                     type="button"
                                                     aria-expanded={isOpen}
                                                     onClick={() => setExpanded(isOpen ? null : row.id)}
-                                                    className="group flex items-center gap-1.5 text-left"
+                                                    className="group flex min-h-11 items-center gap-1.5 text-left"
                                                 >
                                                     {isOpen ? (
                                                         <ChevronDown aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
                                                     ) : (
                                                         <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
                                                     )}
-                                                    <span className="truncate font-medium text-ink group-hover:text-accent">{row.name}</span>
+                                                    <span className="truncate font-medium text-ink group-hover:text-primary">{row.name}</span>
                                                 </button>
                                             </td>
                                             <td className={td}>
@@ -238,7 +241,7 @@ export const StrategiesScreen = () => {
                                             </td>
                                             <td className={td}>
                                                 <div className="flex w-44 items-center gap-2">
-                                                    <ScoreBar score={row.score} baseline={baseline} tone={row.rank === 1 ? "gold" : "accent"} />
+                                                    <ScoreBar score={row.score} baseline={baseline} tone={row.rank === 1 ? "gold" : "primary"} />
                                                     <span className="w-9 text-right font-mono text-xs text-ink tabular-nums">{row.score.toFixed(1)}</span>
                                                 </div>
                                             </td>

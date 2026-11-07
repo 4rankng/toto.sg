@@ -43,13 +43,13 @@ export const Layout = () => {
             </a>
 
             <header className="sticky top-0 z-30 h-13 border-b border-line bg-canvas">
-                <div className="mx-auto flex h-full w-full max-w-[1600px] items-center justify-between gap-4 px-4 md:px-6">
+                <div className="mx-auto flex h-full w-full max-w-[1400px] items-center justify-between gap-4 px-4 md:px-6">
                     <Link to="/" className="flex items-center gap-2 text-sm font-semibold tracking-tight text-ink">
-                        <span aria-hidden="true" className="grid size-6 place-items-center rounded-full bg-accent text-[11px] font-bold text-white">
+                        <span aria-hidden="true" className="grid size-6 place-items-center rounded-full bg-primary text-[11px] font-bold text-white">
                             6
                         </span>
                         <span>
-                            toto<span className="text-accent">.sg</span>
+                            toto<span className="text-primary">.sg</span>
                         </span>
                     </Link>
 
@@ -79,7 +79,7 @@ export const Layout = () => {
                     <AriaMenuTrigger>
                         <AriaButton
                             aria-label="Open navigation"
-                            className="grid size-9 place-items-center rounded-lg border border-line bg-surface text-ink-muted transition-colors duration-150 ease-linear hover:bg-surface-2 hover:text-ink md:hidden"
+                            className="grid size-11 place-items-center rounded-lg border border-line bg-surface text-ink-muted transition-colors duration-150 ease-linear hover:bg-surface-2 hover:text-ink md:hidden"
                         >
                             <Menu01 aria-hidden="true" className="size-5" />
                         </AriaButton>
@@ -92,7 +92,7 @@ export const Layout = () => {
                                     <AriaMenuItem
                                         key={item.to}
                                         onAction={() => navigate(item.to)}
-                                        className="rounded-lg px-3 py-2 text-sm text-ink-muted transition-colors duration-150 outline-none data-[focused]:bg-surface-2 data-[focused]:text-ink data-[hovered]:bg-surface-2 data-[hovered]:text-ink"
+                                        className="rounded-lg px-3 py-3 text-sm text-ink-muted transition-colors duration-150 outline-none data-[focused]:bg-surface-2 data-[focused]:text-ink data-[hovered]:bg-surface-2 data-[hovered]:text-ink"
                                     >
                                         {item.label}
                                     </AriaMenuItem>
@@ -103,12 +103,12 @@ export const Layout = () => {
                 </div>
             </header>
 
-            <main ref={mainRef} id="main" tabIndex={-1} className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 outline-hidden md:px-6 md:py-8">
+            <main ref={mainRef} id="main" tabIndex={-1} className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 outline-hidden md:px-6 md:py-8">
                 <Outlet />
             </main>
 
             <footer className="border-t border-line bg-canvas">
-                <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-2 px-4 py-5 text-xs text-ink-subtle md:flex-row md:items-center md:justify-between md:px-6">
+                <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-2 px-4 py-5 text-xs text-ink-subtle md:flex-row md:items-center md:justify-between md:px-6">
                     <p>
                         <span className="font-semibold text-ink-muted">toto.sg</span> — unofficial statistics for Singapore TOTO. Not affiliated with Singapore
                         Pools.

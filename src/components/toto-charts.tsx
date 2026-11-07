@@ -5,7 +5,7 @@
 // the wrapper keeps role="img" plus a one-line summary, so a screen reader
 // gets the shape of the data in a single stop and the tooltip never has to be
 // keyboard-reachable.
-import { type PointerEvent as ReactPointerEvent, useCallback, useMemo, useRef, useState } from "react";
+import { type PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatNumber } from "@/lib/data";
 import { cx } from "@/utils/cx";
 
@@ -20,10 +20,30 @@ interface TooltipState {
 /** Tooltip width in pixels — also the clamp margin at the chart edges. */
 const TOOLTIP_WIDTH = 240;
 
-/** Pointer-driven tooltip shared by every chart in this file. */
-function useChartTooltip() {
+/**
+ * Pointer-driven tooltip shared by every chart in this file, plus the measured
+ * width of the chart host. Charts lay themselves out in CSS pixels — the
+ * viewBox width is the rendered width — so labels keep their size instead of
+ * shrinking with the panel.
+ */
+function useChartTooltip(fallbackWidth = 980) {
     const hostRef = useRef<HTMLDivElement | null>(null);
     const [tip, setTip] = useState<TooltipState | null>(null);
+    const [width, setWidth] = useState(fallbackWidth);
+
+    useEffect(() => {
+        const host = hostRef.current;
+        if (!host) return;
+
+        const observer = new ResizeObserver((entries) => {
+            const next = entries[0]?.contentRect.width ?? 0;
+            if (next > 0) setWidth(next);
+        });
+        observer.observe(host);
+        setWidth(host.getBoundingClientRect().width);
+
+        return () => observer.disconnect();
+    }, []);
 
     const show = useCallback((event: ReactPointerEvent<Element>, title: string, lines: string[]) => {
         const host = hostRef.current;
@@ -36,7 +56,7 @@ function useChartTooltip() {
 
     const hide = useCallback(() => setTip(null), []);
 
-    return { hostRef, tip, show, hide };
+    return { hostRef, tip, show, hide, width };
 }
 
 /** The floating readout that follows the pointer across a chart. */
@@ -86,9 +106,9 @@ interface FrequencyChartProps {
  * readable without reading the axes.
  */
 export function FrequencyChart({ counts, expected, totalDraws, hotNumber, coldNumber, className }: FrequencyChartProps) {
-    const { hostRef, tip, show, hide } = useChartTooltip();
+    const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
 
-    const width = 980;
+    const width = Math.max(measured, 320);
     const height = 300;
     const padLeft = 46;
     const padRight = 16;
@@ -143,7 +163,7 @@ export function FrequencyChart({ counts, expected, totalDraws, hotNumber, coldNu
                             width={barW}
                             height={Math.max(1, barHeight)}
                             rx={1.5}
-                            fill="var(--color-accent)"
+                            fill="var(--color-primary)"
                             fillOpacity={number === hotNumber ? 1 : number === coldNumber ? 0.3 : 0.55}
                             onPointerEnter={(event) => show(event, title, lines)}
                             onPointerMove={(event) => show(event, title, lines)}
@@ -160,11 +180,11 @@ export function FrequencyChart({ counts, expected, totalDraws, hotNumber, coldNu
                         x2={width - padRight}
                         y1={yOf(expected)}
                         y2={yOf(expected)}
-                        stroke="var(--color-ink-muted)"
+                        stroke="var(--color-chart-ref)"
                         strokeWidth={1}
                         strokeDasharray="5 4"
                     />
-                    <text x={width - padRight} y={yOf(expected) - 6} textAnchor="end" fontSize={11} fill="var(--color-ink-muted)">
+                    <text x={width - padRight} y={yOf(expected) - 6} textAnchor="end" fontSize={11} fill="var(--color-ink-subtle)">
                         expected {expected.toFixed(1)}
                     </text>
                 </g>
@@ -219,9 +239,9 @@ interface SumHistogramProps {
  * shaded and the mean and median marked.
  */
 export function SumHistogram({ bins, mean, median, band, totalDraws, className }: SumHistogramProps) {
-    const { hostRef, tip, show, hide } = useChartTooltip();
+    const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
 
-    const width = 980;
+    const width = Math.max(measured, 320);
     const height = 300;
     const padLeft = 46;
     const padRight = 16;
@@ -255,7 +275,7 @@ export function SumHistogram({ bins, mean, median, band, totalDraws, className }
             aria-label={`Histogram of the sum of the six winning numbers across ${formatNumber(totalDraws)} draws. Mean ${mean.toFixed(1)}, median ${median}. The band ${band.lo} to ${band.hi} holds ${Math.round(band.share * 100)}% of draws.`}
         >
             <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" aria-hidden="true">
-                <rect x={bandX} y={padTop} width={bandW} height={plotH} fill="var(--color-accent)" fillOpacity={0.14} />
+                <rect x={bandX} y={padTop} width={bandW} height={plotH} fill="var(--color-primary)" fillOpacity={0.14} />
 
                 {ticks.map((tick) => (
                     <g key={tick}>
@@ -280,7 +300,7 @@ export function SumHistogram({ bins, mean, median, band, totalDraws, className }
                             width={barW}
                             height={Math.max(1, barHeight)}
                             rx={1.5}
-                            fill="var(--color-accent)"
+                            fill="var(--color-primary)"
                             fillOpacity={0.6}
                             onPointerEnter={(event) => show(event, title, lines)}
                             onPointerMove={(event) => show(event, title, lines)}
@@ -303,7 +323,7 @@ export function SumHistogram({ bins, mean, median, band, totalDraws, className }
                         x2={bandX}
                         y1={padTop}
                         y2={baseline}
-                        stroke="var(--color-accent)"
+                        stroke="var(--color-primary)"
                         strokeWidth={1}
                         strokeDasharray="3 3"
                         strokeOpacity={0.7}
@@ -313,12 +333,12 @@ export function SumHistogram({ bins, mean, median, band, totalDraws, className }
                         x2={bandX + bandW}
                         y1={padTop}
                         y2={baseline}
-                        stroke="var(--color-accent)"
+                        stroke="var(--color-primary)"
                         strokeWidth={1}
                         strokeDasharray="3 3"
                         strokeOpacity={0.7}
                     />
-                    <text x={bandX + bandW / 2} y={padTop - 26} textAnchor="middle" fontSize={11} fill="var(--color-accent)">
+                    <text x={bandX + bandW / 2} y={padTop - 26} textAnchor="middle" fontSize={11} fill="var(--color-primary)">
                         {band.lo}–{band.hi} · {Math.round(band.share * 100)}% of draws
                     </text>
                 </g>
@@ -356,14 +376,20 @@ interface CountDistributionChartProps {
     /** Expected count of that unit per draw. */
     expectedValue: number;
     totalDraws: number;
+    /** Series colour: primary (emerald) or the secondary amber. */
+    tone?: "primary" | "secondary";
     className?: string;
 }
 
-/** Compact distribution over bucket counts 0…6, with the expected bucket marked. */
-export function CountDistributionChart({ counts, unit, expectedBucket, expectedValue, totalDraws, className }: CountDistributionChartProps) {
-    const { hostRef, tip, show, hide } = useChartTooltip();
+/** Series colours for the distribution charts. */
+const SERIES = { primary: "var(--color-primary)", secondary: "var(--color-secondary)" } as const;
 
-    const width = 420;
+/** Compact distribution over bucket counts 0…6, with the expected bucket marked. */
+export function CountDistributionChart({ counts, unit, expectedBucket, expectedValue, totalDraws, tone = "primary", className }: CountDistributionChartProps) {
+    const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
+    const series = SERIES[tone];
+
+    const width = Math.max(measured, 300);
     const height = 220;
     const padLeft = 40;
     const padRight = 12;
@@ -414,7 +440,7 @@ export function CountDistributionChart({ counts, unit, expectedBucket, expectedV
                             width={barW}
                             height={Math.max(1, barHeight)}
                             rx={1.5}
-                            fill="var(--color-accent)"
+                            fill={series}
                             fillOpacity={index === expectedBucket ? 0.95 : 0.5}
                             onPointerEnter={(event) => show(event, title, lines)}
                             onPointerMove={(event) => show(event, title, lines)}
@@ -432,7 +458,7 @@ export function CountDistributionChart({ counts, unit, expectedBucket, expectedV
                         y={baseline + 16}
                         textAnchor="middle"
                         fontSize={10}
-                        fill={index === expectedBucket ? "var(--color-accent)" : "var(--color-ink-faint)"}
+                        fill={index === expectedBucket ? series : "var(--color-ink-faint)"}
                     >
                         {index}
                     </text>
@@ -444,10 +470,10 @@ export function CountDistributionChart({ counts, unit, expectedBucket, expectedV
                         x2={padLeft + expectedBucket * slot + slot / 2}
                         y1={baseline}
                         y2={baseline + 5}
-                        stroke="var(--color-accent)"
+                        stroke={series}
                         strokeWidth={1}
                     />
-                    <text x={padLeft + expectedBucket * slot + slot / 2} y={baseline + 28} textAnchor="middle" fontSize={9} fill="var(--color-accent)">
+                    <text x={padLeft + expectedBucket * slot + slot / 2} y={baseline + 28} textAnchor="middle" fontSize={9} fill={series}>
                         expected
                     </text>
                 </g>
@@ -485,23 +511,26 @@ interface DecadeHeatmapProps {
 }
 
 /** Muted red ramp from the observed minimum to the observed maximum. */
-const RAMP = ["rgb(30 32 39)", "rgb(70 32 40)", "rgb(110 33 41)", "rgb(150 35 43)", "rgb(190 40 44)", "rgb(230 46 46)"];
+const RAMP = ["rgb(236 253 245)", "rgb(209 250 229)", "rgb(167 243 208)", "rgb(110 231 183)", "rgb(52 211 153)", "rgb(5 150 105)"];
 
 /**
  * Decade-by-year heat strip. Each cell is the average picks per draw in that
  * decade and year, coloured between the observed minimum and maximum.
  */
 export function DecadeHeatmap({ rows, columns, cells, marginal, className }: DecadeHeatmapProps) {
-    const { hostRef, tip, show, hide } = useChartTooltip();
+    const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
 
-    const cellW = 56;
-    const cellH = 32;
-    const gap = 3;
-    const padLeft = 54;
+    // Thirteen year columns do not fit a phone: the strip drops to narrow
+    // cells, every other year label and no marginal column.
+    const compact = measured > 0 && measured < 620;
+    const cellW = compact ? 22 : 56;
+    const cellH = compact ? 24 : 32;
+    const gap = compact ? 2 : 3;
+    const padLeft = compact ? 42 : 54;
     const padTop = 22;
     const padBottom = 6;
-    const marginalW = marginal ? 46 : 0;
-    const marginalGap = marginal ? 14 : 0;
+    const marginalW = marginal && !compact ? 46 : 0;
+    const marginalGap = marginal && !compact ? 14 : 0;
 
     const gridW = columns.length * cellW + Math.max(0, columns.length - 1) * gap;
     const gridH = rows.length * cellH + Math.max(0, rows.length - 1) * gap;
@@ -516,7 +545,7 @@ export function DecadeHeatmap({ rows, columns, cells, marginal, className }: Dec
     }, [cells]);
 
     const colourOf = (value: number | null) => {
-        if (value === null) return "var(--color-surface)";
+        if (value === null) return "var(--color-surface-2)";
         if (max <= min) return RAMP[RAMP.length - 1];
         const step = Math.round(((value - min) / (max - min)) * (RAMP.length - 1));
         return RAMP[Math.min(RAMP.length - 1, Math.max(0, step))];
@@ -530,18 +559,22 @@ export function DecadeHeatmap({ rows, columns, cells, marginal, className }: Dec
             aria-label={`Heatmap of average picks per draw by decade and year, ${columns[0]} to ${columns[columns.length - 1]}. Values run from ${min.toFixed(2)} to ${max.toFixed(2)} picks per draw.`}
         >
             <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" aria-hidden="true">
-                {columns.map((column, columnIndex) => (
-                    <text
-                        key={column}
-                        x={padLeft + columnIndex * (cellW + gap) + cellW / 2}
-                        y={padTop - 8}
-                        textAnchor="middle"
-                        fontSize={10}
-                        fill="var(--color-ink-faint)"
-                    >
-                        {column}
-                    </text>
-                ))}
+                {columns.map((column, columnIndex) => {
+                    if (compact && columnIndex % 2 === 1) return null;
+
+                    return (
+                        <text
+                            key={column}
+                            x={padLeft + columnIndex * (cellW + gap) + cellW / 2}
+                            y={padTop - 8}
+                            textAnchor="middle"
+                            fontSize={compact ? 9 : 10}
+                            fill="var(--color-ink-faint)"
+                        >
+                            {column}
+                        </text>
+                    );
+                })}
 
                 {rows.map((row, rowIndex) => (
                     <text
@@ -549,7 +582,7 @@ export function DecadeHeatmap({ rows, columns, cells, marginal, className }: Dec
                         x={padLeft - 10}
                         y={padTop + rowIndex * (cellH + gap) + cellH / 2 + 4}
                         textAnchor="end"
-                        fontSize={11}
+                        fontSize={compact ? 10 : 11}
                         fill="var(--color-ink-muted)"
                     >
                         {row}
@@ -647,9 +680,9 @@ interface WeekdayChartProps {
 
 /** Draws per weekday, with the mean sum printed above each bar that has one. */
 export function WeekdayChart({ days, className }: WeekdayChartProps) {
-    const { hostRef, tip, show, hide } = useChartTooltip();
+    const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
 
-    const width = 620;
+    const width = Math.max(measured, 300);
     const height = 240;
     const padLeft = 46;
     const padRight = 12;
@@ -701,7 +734,7 @@ export function WeekdayChart({ days, className }: WeekdayChartProps) {
                                 width={barW}
                                 height={2}
                                 rx={1}
-                                fill="var(--color-line-strong)"
+                                fill="var(--color-surface-3)"
                                 onPointerEnter={(event) => show(event, title, lines)}
                                 onPointerMove={(event) => show(event, title, lines)}
                                 onPointerLeave={hide}
@@ -722,7 +755,7 @@ export function WeekdayChart({ days, className }: WeekdayChartProps) {
                                 width={barW}
                                 height={barHeight}
                                 rx={1.5}
-                                fill="var(--color-accent)"
+                                fill="var(--color-primary)"
                                 fillOpacity={0.7}
                                 onPointerEnter={(event) => show(event, title, lines)}
                                 onPointerMove={(event) => show(event, title, lines)}
