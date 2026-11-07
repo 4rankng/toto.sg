@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
-import { type BoardWindow, type CopyStatus, HeatLegend, LineSlip, NumberBoard } from "@/components/product/number-board";
+import { type BoardWindow, type CopyStatus, HeatLegend, heatColour, LineSlip, NumberBoard } from "@/components/product/number-board";
 import { PageHeader } from "@/components/product/page-header";
 import { ScoreBar } from "@/components/product/score-bar";
 import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
@@ -15,13 +15,10 @@ import {
     type LatestResult,
     type PrizeKey,
     type StrategiesFile,
-    drawLowCount,
-    drawOddCount,
     drawSum,
     formatDate,
     formatNumber,
     formatSgd,
-    hasConsecutive,
     nextDrawDate,
     useJson,
     weekdayOf,
@@ -45,12 +42,39 @@ const LEAGUE_ROWS = 6;
 /** Recent draws listed beside the countdown. */
 const RECENT_DRAWS = 7;
 
-const CountdownUnit = ({ value, label }: { value: number; label: string }) => (
-    <div className="rounded-lg bg-surface-inset px-2 py-1.5 text-center">
-        <span className="block font-mono text-xl leading-6 font-semibold tracking-tight text-ink tabular-nums">{String(value).padStart(2, "0")}</span>
-        <span className="block text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">{label}</span>
-    </div>
-);
+/** The countdown reads as one clock line: 02:01:20:41. */
+const Countdown = ({ days, hours, minutes, seconds }: { days: number; hours: number; minutes: number; seconds: number }) => {
+    const units = [
+        { value: days, label: "days" },
+        { value: hours, label: "hrs" },
+        { value: minutes, label: "min" },
+        { value: seconds, label: "sec" },
+    ];
+
+    return (
+        <div
+            role="timer"
+            aria-label={`${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds to the next draw`}
+            className="flex items-start justify-center gap-0.5 tabular-nums"
+        >
+            {units.map((unit, index) => (
+                <div key={unit.label} className="flex items-start">
+                    <div className="flex flex-col items-center">
+                        <span className="font-display text-2xl leading-8 font-semibold tracking-tight text-ink md:text-3xl md:leading-9">
+                            {String(unit.value).padStart(2, "0")}
+                        </span>
+                        <span className="text-[9px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">{unit.label}</span>
+                    </div>
+                    {index < units.length - 1 && (
+                        <span aria-hidden="true" className="px-1 font-display text-xl leading-8 font-medium text-ink-faint md:text-2xl md:leading-9">
+                            :
+                        </span>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+};
 
 const HomeSkeleton = () => (
     <DataLoading label="Loading draw data">
@@ -74,7 +98,8 @@ export const HomeScreen = () => {
     const { data: analysis } = useJson<Analysis>("/data/analysis.json");
     const { data: league } = useJson<StrategiesFile>("/data/strategies.json");
     const [live, setLive] = useState<LatestResult | null>(null);
-    const { line, toggle, setLine, clear } = useLineBuilder();
+    const { line, size, setSize, toggle, setLine, clear } = useLineBuilder();
+    const [period, setPeriod] = useState("all");
     const { copy } = useClipboard();
     const [copyStatus, setCopyStatus] = useState<CopyStatus>("idle");
     const copyTimer = useRef<number | null>(null);
@@ -143,6 +168,8 @@ export const HomeScreen = () => {
         ];
     }, [analysis, trailingCounts]);
 
+    const activeWindow = windows.find((window) => window.id === period) ?? windows[0];
+
     const handleCopy = async () => {
         const result = await copy(line.join(" "), "line");
         setCopyStatus(result.success ? "copied" : "failed");
@@ -198,94 +225,110 @@ export const HomeScreen = () => {
                 }
             />
 
-            <div className="grid items-start gap-3 md:grid-cols-2 lg:grid-cols-12">
-                {/* Result */}
-                <Panel emphasis="hero" className="md:col-span-2 lg:col-span-5">
-                    <div className="flex items-start justify-between gap-3">
+            <div className="grid items-start gap-3 lg:grid-cols-12">
+                {/* The draw: result, prize table and the next-draw clock. */}
+                <Panel emphasis="hero" className="lg:col-span-8">
+                    <div className="grid gap-4 md:grid-cols-[1.4fr_1fr] md:gap-5">
                         <div className="min-w-0">
-                            <p className="text-[11px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">Group 1 prize</p>
-                            <p className="mt-0.5 font-display text-2xl leading-8 font-semibold tracking-tight text-gold-ink tabular-nums md:text-3xl md:leading-9">
-                                {prizes?.g1?.share ? formatSgd(prizes.g1.share) : "—"}
-                            </p>
-                        </div>
-                        <div className="flex shrink-0 flex-col items-end gap-1">
-                            {live && (
-                                <span className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-accent uppercase ring-1 ring-accent-line ring-inset">
-                                    Live
-                                </span>
-                            )}
-                            <span className="text-[11px] text-ink-subtle">{winners != null ? `${winners} winner${winners === 1 ? "" : "s"}` : "—"}</span>
-                        </div>
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
-                        <div className="flex flex-wrap items-center gap-1.5" role="img" aria-label={`Winning numbers ${numbers.join(", ")}`}>
-                            {numbers.map((n, index) => (
-                                <span key={n} className="animate-rise" style={{ animationDelay: `${index * 40}ms` }}>
-                                    <Ball n={n} size="xl" />
-                                </span>
-                            ))}
-                        </div>
-                        <span aria-hidden="true" className="hidden h-9 w-px bg-line sm:block" />
-                        <div className="flex items-center gap-2">
-                            {additional != null && <Ball n={additional} size="xl" variant="ring" />}
-                            <span className="text-[10px] leading-3 font-semibold tracking-[0.08em] text-ink-subtle uppercase">
-                                Add.
-                            </span>
-                        </div>
-                    </div>
-
-                    <table className="mt-4 w-full border-collapse text-xs">
-                        <caption className="sr-only">Prize per share and winners for groups 2 to 7</caption>
-                        <thead>
-                            <tr className="border-y border-line/70 text-[10px] tracking-[0.08em] text-ink-subtle uppercase">
-                                <th scope="col" className="py-1.5 pr-2 text-left font-semibold">
-                                    Group
-                                </th>
-                                <th scope="col" className="px-2 py-1.5 text-right font-semibold">
-                                    Prize
-                                </th>
-                                <th scope="col" className="py-1.5 pl-2 text-right font-semibold">
-                                    Winners
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {PRIZE_GROUPS.map((group) => {
-                                const prize = prizes?.[group];
-                                return (
-                                    <tr key={group} className="border-b border-line-soft last:border-0">
-                                        <td className="py-1 pr-2 font-medium text-ink-subtle uppercase">{group.replace("g", "G")}</td>
-                                        <td className="px-2 py-1 text-right font-mono text-ink tabular-nums">
-                                            {prize?.share ? formatSgd(prize.share) : "—"}
-                                        </td>
-                                        <td className="py-1 pl-2 text-right font-mono text-ink-muted tabular-nums">{prize?.winners ?? "—"}</td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-
-                    <dl className="mt-3 grid grid-cols-4 gap-2 border-t border-line/70 pt-2.5">
-                        {[
-                            { label: "Sum", value: drawSum(numbers) },
-                            { label: "Odd", value: drawOddCount(numbers) },
-                            { label: "Low", value: drawLowCount(numbers) },
-                            { label: "Run", value: hasConsecutive(numbers) ? "Yes" : "No" },
-                        ].map((fact) => (
-                            <div key={fact.label} className="min-w-0">
-                                <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">{fact.label}</dt>
-                                <dd className="mt-0.5 font-mono text-xs font-medium text-ink tabular-nums">{fact.value}</dd>
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-[11px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">Group 1 prize</p>
+                                    <p className="mt-0.5 font-display text-2xl leading-8 font-semibold tracking-tight text-gold-ink tabular-nums md:text-3xl md:leading-9">
+                                        {prizes?.g1?.share ? formatSgd(prizes.g1.share) : "—"}
+                                    </p>
+                                </div>
+                                <div className="flex shrink-0 flex-col items-end gap-1">
+                                    {live && (
+                                        <span className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-accent uppercase ring-1 ring-accent-line ring-inset">
+                                            Live
+                                        </span>
+                                    )}
+                                    <span className="text-[11px] text-ink-subtle">{winners != null ? `${winners} winner${winners === 1 ? "" : "s"}` : "—"}</span>
+                                </div>
                             </div>
-                        ))}
-                    </dl>
+
+                            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+                                <div className="flex flex-wrap items-center gap-1.5" role="img" aria-label={`Winning numbers ${numbers.join(", ")}`}>
+                                    {numbers.map((n, index) => (
+                                        <span key={n} className="animate-rise" style={{ animationDelay: `${index * 40}ms` }}>
+                                            <Ball n={n} size="xl" />
+                                        </span>
+                                    ))}
+                                </div>
+                                <span aria-hidden="true" className="hidden h-9 w-px bg-line sm:block" />
+                                <div className="flex items-center gap-2">
+                                    {additional != null && <Ball n={additional} size="xl" variant="ring" />}
+                                    <span className="text-[10px] leading-3 font-semibold tracking-[0.08em] text-ink-subtle uppercase">Additional</span>
+                                </div>
+                            </div>
+
+                            <div className="mt-3 grid grid-cols-2 gap-x-5">
+                                {PRIZE_GROUPS.map((group) => {
+                                    const prize = prizes?.[group];
+                                    return (
+                                        <div
+                                            key={group}
+                                            className="grid grid-cols-[1.5rem_auto_1fr] items-baseline gap-x-2 border-b border-line-soft py-1 last:border-0"
+                                        >
+                                            <span className="text-[10px] font-semibold tracking-[0.06em] text-ink-subtle uppercase">
+                                                {group.replace("g", "G")}
+                                            </span>
+                                            <span className="font-mono text-[11px] text-ink tabular-nums">{prize?.share ? formatSgd(prize.share) : "—"}</span>
+                                            <span className="text-right font-mono text-[10px] text-ink-subtle tabular-nums">{prize?.winners ?? "—"} winners</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="min-w-0 border-t border-line/70 pt-3 md:border-t-0 md:border-l md:pt-0 md:pl-5">
+                            <p className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
+                                Next draw{nextDrawNo ? ` · ${nextDrawNo}` : ""}
+                            </p>
+                            {nextDraw && !countdown.isPast ? (
+                                <>
+                                    <div className="mt-1">
+                                        <Countdown
+                                            days={countdown.days}
+                                            hours={countdown.hours}
+                                            minutes={countdown.minutes}
+                                            seconds={countdown.seconds}
+                                        />
+                                    </div>
+                                    <p className="mt-1 text-[11px] leading-4 text-ink-subtle">
+                                        {nextIso ? `${formatDate(nextIso)} · ${weekdayOf(nextIso)}` : "—"} · 18:30 SGT
+                                    </p>
+                                </>
+                            ) : (
+                                <p className="mt-2 rounded-lg bg-surface-inset px-2.5 py-1.5 text-[11px] text-ink-muted">Waiting for the result.</p>
+                            )}
+
+                            <div className="mt-3 border-t border-line/70 pt-2">
+                                <p className="text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">Recent draws</p>
+                                <ol className="mt-0.5">
+                                    {recentDraws.map((draw) => (
+                                        <li key={draw.draw}>
+                                            <Link
+                                                to="/history"
+                                                className="grid grid-cols-[3rem_1fr_auto] items-center gap-2 rounded py-0.5 text-[11px] transition-colors duration-100 hover:bg-surface-2/70"
+                                            >
+                                                <span className="font-mono text-ink-muted tabular-nums">{draw.draw}</span>
+                                                <span className="truncate text-ink-subtle">{formatDate(draw.date)}</span>
+                                                <span className="font-mono text-ink tabular-nums">{drawSum(draw.numbers)}</span>
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
                 </Panel>
 
                 {/* League */}
                 <Panel
                     className="lg:col-span-4"
-                    title="Top rules"
-                    description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on 100 past draws. 45 = a random pick; higher = more hits.`}
+                    title="Top strategies"
+                    description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on 100 past draws. Score 45 = a random pick.`}
                     actions={
                         <Link to="/strategies" className="text-xs font-semibold text-accent transition-colors duration-100 hover:text-accent-strong">
                             All →
@@ -318,45 +361,6 @@ export const HomeScreen = () => {
                         ))}
                     </ol>
                 </Panel>
-
-                {/* Next draw + recent draws */}
-                <Panel className="lg:col-span-3" title="Next draw" description={nextDrawNo ? `Draw ${nextDrawNo}` : undefined} isFlush>
-                    <div className="flex flex-col gap-3 px-4 pt-3">
-                        {nextDraw && !countdown.isPast ? (
-                            <>
-                                <div className="grid grid-cols-2 gap-1.5">
-                                    <CountdownUnit value={countdown.days} label="days" />
-                                    <CountdownUnit value={countdown.hours} label="hrs" />
-                                    <CountdownUnit value={countdown.minutes} label="min" />
-                                    <CountdownUnit value={countdown.seconds} label="sec" />
-                                </div>
-                                <p className="text-[11px] leading-4 text-ink-subtle">
-                                    {nextIso ? `${formatDate(nextIso)} · ${weekdayOf(nextIso)}` : "—"} · 18:30 SGT
-                                </p>
-                            </>
-                        ) : (
-                            <p className="rounded-lg bg-surface-inset px-3 py-2 text-xs text-ink-muted">Waiting for the result.</p>
-                        )}
-                    </div>
-
-                    <div className="mt-3 border-t border-line/70">
-                        <p className="px-4 pt-2.5 pb-1 text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">Recent draws</p>
-                        <ol>
-                            {recentDraws.map((draw) => (
-                                <li key={draw.draw}>
-                                    <Link
-                                        to="/history"
-                                        className="grid grid-cols-[3.25rem_1fr_auto] items-center gap-2 px-4 py-1 text-xs transition-colors duration-100 hover:bg-surface-2/70"
-                                    >
-                                        <span className="font-mono text-ink-muted tabular-nums">{draw.draw}</span>
-                                        <span className="truncate text-ink-subtle">{formatDate(draw.date)}</span>
-                                        <span className="font-mono text-ink tabular-nums">{drawSum(draw.numbers)}</span>
-                                    </Link>
-                                </li>
-                            ))}
-                        </ol>
-                    </div>
-                </Panel>
             </div>
 
             <div className="grid items-start gap-3 md:grid-cols-2 lg:grid-cols-12">
@@ -374,7 +378,7 @@ export const HomeScreen = () => {
                         </div>
                     }
                 >
-                    <NumberBoard windows={windows} latestNumbers={numbers} line={line} onToggle={toggle} />
+                    <NumberBoard windows={windows} period={period} onPeriodChange={setPeriod} latestNumbers={numbers} line={line} onToggle={toggle} />
                 </Panel>
 
                 <div className="flex flex-col gap-3 xl:col-span-8">
@@ -402,10 +406,13 @@ export const HomeScreen = () => {
                     </div>
 
                     <div className="grid gap-3 lg:grid-cols-2">
-                        <Panel title="Play slip" description="Six numbers. Tap the board to fill it.">
+                        <Panel title="Play slip" description="Pick 6, 7 or 8 numbers. Tap the board to fill it.">
                             <LineSlip
                                 line={line}
-                                onQuickPick={() => setLine(quickPick())}
+                                size={size}
+                                colourOf={(n) => (activeWindow ? heatColour(activeWindow, n) : "var(--color-surface-2)")}
+                                onSizeChange={setSize}
+                                onQuickPick={() => setLine(quickPick(size))}
                                 onClear={clear}
                                 onCopy={handleCopy}
                                 copyStatus={copyStatus}
@@ -453,7 +460,7 @@ export const HomeScreen = () => {
                     </Panel>
 
                     <p className="px-1 text-[11px] leading-4 text-ink-subtle">
-                        TOTO draws are independent and uniform. Every line has the same chance of Group 1, whatever the board, the rules or the history say.
+                        Every number is equally likely in every draw. Every line has the same chance of Group 1, whatever the board or the history says.
                     </p>
                 </div>
             </div>

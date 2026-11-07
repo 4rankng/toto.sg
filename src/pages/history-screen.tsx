@@ -255,7 +255,7 @@ export const HistoryScreen = () => {
                     </>
                 }
                 actions={
-                    <span className="text-[11px] text-ink-subtle">Tap a row for sum, odd/even and decade split</span>
+                    <span className="text-[11px] text-ink-subtle">Tap a row for sum, odd/even and the decade counts</span>
                 }
             />
 
@@ -295,7 +295,7 @@ export const HistoryScreen = () => {
                                                     <BallRow numbers={draw.numbers} additional={draw.additional} size="sm" />
                                                 </div>
                                                 <p className="mt-1.5 font-mono text-[11px] text-ink-subtle tabular-nums">
-                                                    sum {drawSum(draw.numbers)} · odd {odd} · low {low}
+                                                    sum {drawSum(draw.numbers)} · odd {odd} · ≤ 24: {low}
                                                 </p>
                                             </div>
                                             {isOpen ? (
@@ -325,7 +325,7 @@ export const HistoryScreen = () => {
                                         <th className={th}>Numbers</th>
                                         <th className={thNum}>Sum</th>
                                         <th className={thNum}>Odd</th>
-                                        <th className={thNum}>Low</th>
+                                        <th className={thNum}>≤ 24</th>
                                         <th className={cx(th, "w-10 pr-3 text-right last:rounded-tr-xl")}>
                                             <span className="sr-only">Detail</span>
                                         </th>

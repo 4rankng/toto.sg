@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { LINE_SIZES, type LineSize } from "@/providers/line-builder-provider";
 import { cx } from "@/utils/cx";
 
 /** One window of the board: a period and the appearance counts it covers. */
@@ -15,27 +16,32 @@ export interface BoardWindow {
 
 export type CopyStatus = "idle" | "copied" | "failed";
 
-interface NumberBoardProps {
-    /** The windows the reader can compare. */
-    windows: BoardWindow[];
-    /** The six numbers of the latest draw — marked with a dot. */
-    latestNumbers: number[];
-    /** The line currently in the builder. */
-    line: number[];
-    /** Add, remove or swap a number. */
-    onToggle: (n: number) => void;
-    className?: string;
-}
-
 /** The number of winning numbers in a draw. */
 const NUMBERS_PER_DRAW = 6;
 
 /** The pool size. */
 const POOL_SIZE = 49;
 
-/** Cells are square; the number sits above its appearance count. */
-const CELL_CLASS =
-    "relative flex aspect-square min-w-0 flex-col items-center justify-center rounded-lg border border-transparent text-ink transition-[background-color,box-shadow] duration-100 ease-linear";
+/** Standard deviation of a number's appearance count under a uniform draw. */
+export const boardDeviation = (window: BoardWindow) => {
+    const p = NUMBERS_PER_DRAW / POOL_SIZE;
+    return Math.sqrt(Math.max(window.draws * p * (1 - p), 1e-9));
+};
+
+/**
+ * Heat tint for one number in a window: 6%–60% of the ramp. Counts within
+ * 0.35 standard deviations stay neutral — a gap inside the noise should not
+ * read as a colour.
+ */
+export const heatColour = (window: BoardWindow, number: number) => {
+    const count = window.counts[number - 1] ?? 0;
+    const z = (count - window.expected) / boardDeviation(window);
+    const strength = Math.min(1, Math.max(0, (Math.abs(z) - 0.35) / 2.2));
+    if (strength === 0) return "var(--color-heat-neutral)";
+    const mix = Math.round(6 + strength * 54);
+    const target = z > 0 ? "var(--color-heat-hot)" : "var(--color-heat-cold)";
+    return `color-mix(in oklab, ${target} ${mix}%, var(--color-heat-neutral))`;
+};
 
 /** The ramp legend: what the cell colours mean. */
 export function HeatLegend({ className }: { className?: string }) {
@@ -55,43 +61,40 @@ export function HeatLegend({ className }: { className?: string }) {
     );
 }
 
+interface NumberBoardProps {
+    /** The windows the reader can compare. */
+    windows: BoardWindow[];
+    /** The active window id — owned by the page so the play slip can share the tint. */
+    period: string;
+    onPeriodChange: (id: string) => void;
+    /** The six numbers of the latest draw — marked with a dot. */
+    latestNumbers: number[];
+    /** The line currently in the builder. */
+    line: number[];
+    /** Add, remove or swap a number. */
+    onToggle: (n: number) => void;
+    className?: string;
+}
+
+/** Cells are square; the number sits above its appearance count. */
+const CELL_CLASS =
+    "relative flex aspect-square min-w-0 flex-col items-center justify-center rounded-lg border border-transparent text-ink transition-[background-color,box-shadow] duration-100 ease-linear";
+
 /**
  * The 7×7 board: every number from 1 to 49, tinted by how far its appearance
  * count sits from a uniform draw. The tint carries the signal; the text ink is
- * always the same so every count stays readable — the mix is capped at 60%,
- * which keeps ink text above 5:1 in both themes.
+ * always the same so every count stays readable.
  */
-export function NumberBoard({ windows, latestNumbers, line, onToggle, className }: NumberBoardProps) {
-    const [period, setPeriod] = useState(windows[0]?.id ?? "");
+export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, line, onToggle, className }: NumberBoardProps) {
     const active = windows.find((window) => window.id === period) ?? windows[0];
     const gridRef = useRef<HTMLDivElement>(null);
     const [roving, setRoving] = useState(0);
 
-    /** Standard deviation of the appearance count under a uniform draw. */
-    const deviation = useMemo(() => {
-        if (!active) return 1;
-        const p = NUMBERS_PER_DRAW / POOL_SIZE;
-        return Math.sqrt(Math.max(active.draws * p * (1 - p), 1e-9));
-    }, [active]);
-
-    const zOf = (count: number) => (count - (active?.expected ?? 0)) / deviation;
-
-    /**
-     * Heat: a tint toward the hot/cold end, 6%–60% of the ramp. Below 0.35
-     * standard deviations the cell stays neutral — a count within noise should
-     * look like noise instead of a faint pastel.
-     */
-    const cellColour = (z: number) => {
-        const strength = Math.min(1, Math.max(0, (Math.abs(z) - 0.35) / 2.2));
-        if (strength === 0) return "var(--color-heat-neutral)";
-        const mix = Math.round(6 + strength * 54);
-        const target = z > 0 ? "var(--color-heat-hot)" : "var(--color-heat-cold)";
-        return `color-mix(in oklab, ${target} ${mix}%, var(--color-heat-neutral))`;
-    };
-
     if (!active) return null;
 
     const chosen = new Set(line);
+    const deviation = boardDeviation(active);
+    const zOf = (count: number) => (count - active.expected) / deviation;
 
     const focusCell = (index: number) => {
         const next = Math.min(Math.max(index, 0), POOL_SIZE - 1);
@@ -139,7 +142,7 @@ export function NumberBoard({ windows, latestNumbers, line, onToggle, className 
                             key={window.id}
                             type="button"
                             aria-pressed={window.id === active.id}
-                            onClick={() => setPeriod(window.id)}
+                            onClick={() => onPeriodChange(window.id)}
                             className={cx(
                                 "min-h-8 rounded-md px-2.5 text-[11px] font-semibold transition-colors duration-100",
                                 window.id === active.id ? "bg-surface text-ink shadow-xs ring-1 ring-line/70" : "text-ink-subtle hover:text-ink",
@@ -184,7 +187,7 @@ export function NumberBoard({ windows, latestNumbers, line, onToggle, className 
                                     ? "border-accent ring-2 ring-accent ring-inset"
                                     : "hover:ring-1 hover:ring-line-strong focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset",
                             )}
-                            style={{ backgroundColor: cellColour(z) }}
+                            style={{ backgroundColor: heatColour(active, number) }}
                         >
                             <span className="font-mono text-sm leading-none font-semibold tabular-nums">{number}</span>
                             <span className="mt-0.5 text-[10px] leading-none tabular-nums opacity-70">{count}</span>
@@ -210,6 +213,11 @@ export function NumberBoard({ windows, latestNumbers, line, onToggle, className 
 
 interface LineSlipProps {
     line: number[];
+    /** 6, 7 or 8 numbers — System 6, 7 or 8. */
+    size: LineSize;
+    /** The board's active window, so a slot wears the same heat tint. */
+    colourOf: (n: number) => string;
+    onSizeChange: (size: LineSize) => void;
     onQuickPick: () => void;
     onClear: () => void;
     onCopy: () => void;
@@ -218,15 +226,37 @@ interface LineSlipProps {
 }
 
 /**
- * The line builder. It sits beside the board rather than under it, so the
- * grid stays the tallest thing in the row and the action is never buried
- * below the fold.
+ * The line builder. Slots take the heat tint of the number they hold, so the
+ * slip and the board read as one surface. System 6, 7 and 8 are supported.
  */
-export function LineSlip({ line, onQuickPick, onClear, onCopy, copyStatus, className }: LineSlipProps) {
+export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, onClear, onCopy, copyStatus, className }: LineSlipProps) {
     return (
         <div className={cx("flex flex-col gap-3", className)}>
-            <div className="grid grid-cols-6 gap-1.5">
-                {Array.from({ length: 6 }, (_, index) => {
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <div role="group" aria-label="System entry" className="inline-flex items-center gap-0.5 rounded-lg bg-surface-inset p-0.5">
+                    <span className="px-1.5 text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">System</span>
+                    {LINE_SIZES.map((option) => (
+                        <button
+                            key={option}
+                            type="button"
+                            aria-pressed={size === option}
+                            onClick={() => onSizeChange(option)}
+                            className={cx(
+                                "min-h-8 min-w-7 rounded-md px-2 font-mono text-[11px] font-semibold transition-colors duration-100",
+                                size === option ? "bg-surface text-ink shadow-xs ring-1 ring-line/70" : "text-ink-subtle hover:text-ink",
+                            )}
+                        >
+                            {option}
+                        </button>
+                    ))}
+                </div>
+                <span className="font-mono text-[11px] text-ink-subtle tabular-nums">
+                    {line.length}/{size}
+                </span>
+            </div>
+
+            <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}>
+                {Array.from({ length: size }, (_, index) => {
                     const number = line[index];
 
                     return (
@@ -234,8 +264,9 @@ export function LineSlip({ line, onQuickPick, onClear, onCopy, copyStatus, class
                             key={index}
                             className={cx(
                                 "grid aspect-square place-items-center rounded-lg border text-sm font-semibold tabular-nums",
-                                number === undefined ? "border-dashed border-line-strong text-ink-faint" : "border-accent bg-accent text-white",
+                                number === undefined ? "border-dashed border-line-strong text-ink-faint" : "border-line-strong text-ink",
                             )}
+                            style={number === undefined ? undefined : { backgroundColor: colourOf(number) }}
                         >
                             {number ?? "–"}
                         </div>
@@ -246,9 +277,9 @@ export function LineSlip({ line, onQuickPick, onClear, onCopy, copyStatus, class
             <p aria-live="polite" className="text-[11px] leading-4 text-ink-subtle">
                 {line.length === 0
                     ? "Tap the board to build a line."
-                    : line.length < 6
-                      ? `${line.length} of 6 chosen — ${6 - line.length} to go.`
-                      : "6 of 6 chosen — re-tap a chosen number to swap it out."}
+                    : line.length < size
+                      ? `${line.length} of ${size} chosen — ${size - line.length} to go.`
+                      : `${size} of ${size} chosen — re-tap a chosen number to swap it out.`}
             </p>
 
             <div className="flex flex-wrap items-center gap-1.5">
@@ -283,7 +314,7 @@ export function LineSlip({ line, onQuickPick, onClear, onCopy, copyStatus, class
             </div>
 
             <p className="border-t border-line/70 pt-2.5 text-[11px] leading-4 text-ink-subtle">
-                Quick pick draws a fresh, exactly-uniform line every tap — Web Crypto randomness with bias-free sampling.
+                Quick pick makes a random line. Each number is equally likely.
             </p>
         </div>
     );

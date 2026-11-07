@@ -1,30 +1,25 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight } from "@untitledui/icons";
-import { useNavigate } from "react-router";
 import { Ball, BallRow } from "@/components/balls";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { Panel } from "@/components/panel";
-import { Delta } from "@/components/product/delta";
 import { FamilyChip } from "@/components/product/family-chip";
 import { PageHeader } from "@/components/product/page-header";
 import { RecentHits } from "@/components/product/recent-hits";
 import { ScoreBar } from "@/components/product/score-bar";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
-import { td, tdNum, tdStickyNum, th, thNum } from "@/components/product/table";
+import { td, tdNum, th, thNum } from "@/components/product/table";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { type StrategiesFile, type StrategyRow, formatDate, formatNumber, formatSigned, useJson } from "@/lib/data";
 import { usePageTitle } from "@/pages/layout";
-import { useLineBuilder } from "@/providers/line-builder-provider";
 import { cx } from "@/utils/cx";
 
-type SortKey = "score" | "hits" | "prizes" | "pnl";
+type SortKey = "score" | "prizes";
 
 const SORTS: { id: SortKey; label: string }[] = [
     { id: "score", label: "Score" },
-    { id: "hits", label: "Matches" },
     { id: "prizes", label: "Prizes" },
-    { id: "pnl", label: "Profit" },
 ];
 
 const PODIUM = [
@@ -37,7 +32,7 @@ const PODIUM = [
 const MOBILE_BATCH = 30;
 
 const LeagueSkeleton = () => (
-    <DataLoading label="Loading the rules">
+    <DataLoading label="Loading the strategies">
         <PageHeaderSkeleton />
         <div className="grid gap-3 sm:grid-cols-3">
             {[0, 1, 2].map((i) => (
@@ -49,17 +44,7 @@ const LeagueSkeleton = () => (
 );
 
 /** The expanded body of a rule, shared by the table and the phone cards. */
-const StrategyDetail = ({
-    row,
-    nextDraw,
-    onUse,
-    className,
-}: {
-    row: StrategyRow;
-    nextDraw: number;
-    onUse: () => void;
-    className?: string;
-}) => (
+const StrategyDetail = ({ row, nextDraw, className }: { row: StrategyRow; nextDraw: number; className?: string }) => (
     <div className={cx("grid gap-4 lg:grid-cols-[1.7fr_auto]", className)}>
         <div className="min-w-0">
             <p className="max-w-2xl text-[13px] leading-5 text-ink-muted">{row.description}</p>
@@ -69,15 +54,15 @@ const StrategyDetail = ({
                     <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.evaluatedDraws)}</dd>
                 </div>
                 <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matches</dt>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Numbers matched</dt>
                     <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.totalHits}</dd>
                 </div>
                 <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matches per draw</dt>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matched per draw</dt>
                     <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.meanHits.toFixed(3)}</dd>
                 </div>
                 <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Random pick rate</dt>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Random pick average</dt>
                     <dd className="mt-0.5 font-mono text-sm text-ink-muted tabular-nums">{row.expectedHits.toFixed(3)}</dd>
                 </div>
                 <div>
@@ -85,7 +70,7 @@ const StrategyDetail = ({
                     <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.totalPrizes)}</dd>
                 </div>
                 <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Last 12 draws</dt>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matched, last 12 draws</dt>
                     <dd className="mt-0.5">
                         <RecentHits hits={row.recent12} draws={12} expectedPerLine={row.expectedHits} />
                     </dd>
@@ -108,19 +93,12 @@ const StrategyDetail = ({
                     <Ball key={n} n={n} size="md" />
                 ))}
             </div>
-            <button
-                type="button"
-                onClick={onUse}
-                className="mt-2 rounded-md border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink-muted transition-colors duration-100 hover:bg-surface-2 hover:text-ink"
-            >
-                Use pick →
-            </button>
         </div>
     </div>
 );
 
 export const StrategiesScreen = () => {
-    const [title, setTitle] = useState("Rule rankings");
+    const [title, setTitle] = useState("Strategy league");
     usePageTitle(title);
 
     const { data, isLoading, error } = useJson<StrategiesFile>("/data/strategies.json");
@@ -131,26 +109,17 @@ export const StrategiesScreen = () => {
     const [sort, setSort] = useState<SortKey>("score");
     const [expanded, setExpanded] = useState<string | null>(null);
     const [visible, setVisible] = useState(MOBILE_BATCH);
-    const navigate = useNavigate();
-    const { setLine } = useLineBuilder();
-
     const baseline = data?.meta.chance.scoreBaseline ?? 45;
 
     // The league's size is part of the page title, and it changes with the data.
     useEffect(() => {
-        if (data) setTitle(`Rule rankings — ${data.strategies.length} rules vs random`);
+        if (data) setTitle(`Strategy league — ${data.strategies.length} strategies vs random`);
     }, [data]);
 
     // A new filter starts the phone list from the top again.
     useEffect(() => {
         setVisible(MOBILE_BATCH);
     }, [query, family, sort]);
-
-    /** Hand a rule's pick to the board on the home page. */
-    const loadLine = (pick: number[]) => {
-        setLine(pick);
-        navigate("/");
-    };
 
     const familyOptions = useMemo(
         () => [{ id: "all", label: "All types" }, ...(data?.meta.families ?? []).map((name) => ({ id: name, label: name }))],
@@ -167,12 +136,7 @@ export const StrategiesScreen = () => {
             return row.name.toLowerCase().includes(needle) || row.id.toLowerCase().includes(needle) || row.description.toLowerCase().includes(needle);
         });
 
-        const value = (row: StrategyRow) => {
-            if (sort === "hits") return row.meanHits;
-            if (sort === "prizes") return row.effPrizes;
-            if (sort === "pnl") return row.pnlPerDraw;
-            return row.score;
-        };
+        const value = (row: StrategyRow) => (sort === "prizes" ? row.effPrizes : row.score);
 
         return [...filtered].sort((a, b) => value(b) - value(a));
     }, [data, query, family, sort]);
@@ -181,7 +145,7 @@ export const StrategiesScreen = () => {
 
     if (error || !data) {
         return (
-            <Panel title="Rule rankings unavailable" description={error?.message ?? "The league file is missing."}>
+            <Panel title="Strategy league unavailable" description={error?.message ?? "The league file is missing."}>
                 <p className="text-sm text-ink-muted">Run `npm run refresh`, then reload.</p>
             </Panel>
         );
@@ -196,10 +160,10 @@ export const StrategiesScreen = () => {
             <Input
                 value={query}
                 onChange={(value) => setQuery(value)}
-                placeholder="Search rules"
+                placeholder="Search strategies"
                 size={isCompact ? "lg" : "sm"}
                 className="w-40"
-                aria-label="Search rules"
+                aria-label="Search strategies"
             />
             <Select
                 items={familyOptions}
@@ -212,7 +176,7 @@ export const StrategiesScreen = () => {
             >
                 {(item) => <Select.Item id={item.id}>{item.label}</Select.Item>}
             </Select>
-            <div role="group" aria-label="Sort rules" className="flex items-center gap-0.5 rounded-lg bg-surface-inset p-0.5">
+            <div role="group" aria-label="Sort strategies" className="flex items-center gap-0.5 rounded-lg bg-surface-inset p-0.5">
                 {SORTS.map((option) => (
                     <button
                         key={option.id}
@@ -231,29 +195,16 @@ export const StrategiesScreen = () => {
         </div>
     );
 
-    const rowActions = (row: StrategyRow) => (
-        <button
-            type="button"
-            onClick={(event) => {
-                event.stopPropagation();
-                loadLine(row.currentPick);
-            }}
-            className="rounded-md border border-line bg-surface px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-ink-muted transition-colors duration-100 hover:bg-surface-2 hover:text-ink md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-        >
-            Use pick
-        </button>
-    );
-
     return (
         <div className="flex flex-col gap-3">
             <PageHeader
-                kicker="Rules"
-                title="Rule rankings"
-                description="204 number-picking rules. Each was tested on 100 past draws and scored against random picks. 45 = random; higher = more matches. This shows the past, not the future."
+                kicker="Strategies"
+                title="Strategy league"
+                description="204 strategies, each tested on 100 past draws. A score of 45 is random picking; higher means more numbers matched. Past results, not predictions."
                 meta={
                     <>
                         <span>
-                            <span className="font-mono text-ink-muted tabular-nums">{formatNumber(data.strategies.length)}</span> rules
+                            <span className="font-mono text-ink-muted tabular-nums">{formatNumber(data.strategies.length)}</span> strategies
                         </span>
                         <span aria-hidden="true">·</span>
                         <span>{meta.folds} draws each</span>
@@ -262,16 +213,10 @@ export const StrategiesScreen = () => {
                     </>
                 }
                 actions={
-                    <dl className="flex flex-wrap gap-x-5 gap-y-1 text-[11px]">
-                        <div>
-                            <dt className="text-ink-subtle">Matches per random pick</dt>
-                            <dd className="font-mono text-xs text-ink tabular-nums">{meta.chance.expectedHitsPerLine.toFixed(2)}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-ink-subtle">Prizes per 100 draws</dt>
-                            <dd className="font-mono text-xs text-ink tabular-nums">{meta.chance.prizesPer100Draws.toFixed(1)}</dd>
-                        </div>
-                    </dl>
+                    <div className="text-right text-[11px]">
+                        <p className="text-ink-subtle">Prizes per 100 random draws</p>
+                        <p className="font-mono text-xs text-ink tabular-nums">{meta.chance.prizesPer100Draws.toFixed(1)}</p>
+                    </div>
                 }
             />
 
@@ -299,15 +244,8 @@ export const StrategiesScreen = () => {
                                 </div>
                                 <div className="mt-2 flex items-center justify-between gap-2 border-t border-line/70 pt-2">
                                     <p className="font-mono text-[11px] text-ink-subtle tabular-nums">
-                                        {row.totalHits} matches · {row.effPrizes} prizes
+                                        {row.effPrizes} prizes
                                     </p>
-                                    <button
-                                        type="button"
-                                        onClick={() => loadLine(row.currentPick)}
-                                        className="text-[11px] font-semibold text-accent transition-colors duration-100 hover:text-accent-strong"
-                                    >
-                                        Use pick →
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -317,8 +255,8 @@ export const StrategiesScreen = () => {
 
             <Panel
                 isFlush
-                title="All rules"
-                description={`${rows.length} of ${data.strategies.length} shown · click a row for details · Use pick sends the numbers to the board`}
+                title="All strategies"
+                description={`${rows.length} of ${data.strategies.length} · a match is one correct number; a prize needs 3 or more matches`}
                 actions={filters}
             >
                 {/* Phone: cards with a batched reveal. */}
@@ -341,7 +279,7 @@ export const StrategiesScreen = () => {
                                         <div className="mt-1 flex items-center gap-2">
                                             <FamilyChip family={row.family} />
                                             <span className="font-mono text-[11px] text-ink-subtle tabular-nums">
-                                                {row.totalHits} matches · {row.effPrizes} prizes
+                                                {row.effPrizes} prizes
                                             </span>
                                         </div>
                                         <div className="mt-1.5">
@@ -359,7 +297,7 @@ export const StrategiesScreen = () => {
                                 </button>
                                 {isOpen && (
                                     <div className="border-t border-line-soft bg-surface-2/40 px-3 py-3">
-                                        <StrategyDetail row={row} nextDraw={meta.nextDraw} onUse={() => loadLine(row.currentPick)} />
+                                        <StrategyDetail row={row} nextDraw={meta.nextDraw} />
                                     </div>
                                 )}
                             </div>
@@ -377,21 +315,25 @@ export const StrategiesScreen = () => {
                             </button>
                         </div>
                     )}
-                    {rows.length === 0 && <p className="px-4 py-8 text-center text-sm text-ink-muted">No rule matches that filter.</p>}
+                    {rows.length === 0 && <p className="px-4 py-8 text-center text-sm text-ink-muted">No strategy matches that filter.</p>}
                 </div>
 
-                {/* Tablet and up: the dense table. */}
-                <div className="hidden min-w-0 overflow-x-auto md:block xl:overflow-visible">
-                    <table className="w-full min-w-[1020px] border-collapse text-left">
+                {/* Tablet and up: a fixed-width table that never scrolls sideways. */}
+                <div className="hidden md:block">
+                    <table className="w-full table-fixed border-collapse text-left">
+                        <colgroup>
+                            <col className="w-10" />
+                            <col />
+                            <col className="w-[34%] xl:w-[38%]" />
+                            <col className="w-20" />
+                            <col className="w-[9.5rem] xl:w-52" />
+                        </colgroup>
                         <thead>
                             <tr>
-                                <th className={cx(th, "sticky left-0 z-20 w-10 pl-3 first:rounded-tl-xl")}>#</th>
-                                <th className={th}>Rule</th>
-                                <th className={th}>Type</th>
+                                <th className={cx(th, "pl-3 first:rounded-tl-xl")}>#</th>
+                                <th className={th}>Strategy</th>
                                 <th className={th}>Score</th>
-                                <th className={thNum}>Matches vs random</th>
                                 <th className={thNum}>Prizes</th>
-                                <th className={thNum}>Profit / draw</th>
                                 <th className={cx(th, "pr-3 last:rounded-tr-xl")}>Next pick</th>
                             </tr>
                         </thead>
@@ -407,7 +349,7 @@ export const StrategiesScreen = () => {
                                                 isOpen && "bg-surface-2/60",
                                             )}
                                         >
-                                            <td className={cx(tdStickyNum, "pl-3")}>{row.rank}</td>
+                                            <td className={cx(tdNum, "pl-3")}>{row.rank}</td>
                                             <td className={td}>
                                                 <button
                                                     type="button"
@@ -416,45 +358,47 @@ export const StrategiesScreen = () => {
                                                         event.stopPropagation();
                                                         toggle(row.id);
                                                     }}
-                                                    className="flex min-h-9 items-center gap-1.5 text-left"
+                                                    className="flex w-full min-w-0 items-center gap-1.5 text-left"
                                                 >
                                                     {isOpen ? (
                                                         <ChevronDown aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
                                                     ) : (
                                                         <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
                                                     )}
-                                                    <span className="truncate text-[13px] font-medium text-ink group-hover:text-accent">{row.name}</span>
+                                                    <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink group-hover:text-accent">
+                                                        {row.name}
+                                                    </span>
                                                 </button>
+                                                <p className="mt-0.5 truncate pl-5 text-[10px] text-ink-subtle">
+                                                    {row.family} · {row.description}
+                                                </p>
                                             </td>
                                             <td className={td}>
-                                                <FamilyChip family={row.family} />
-                                            </td>
-                                            <td className={td}>
-                                                <div className="flex w-32 items-center gap-2">
-                                                    <ScoreBar score={row.score} baseline={baseline} tone={row.rank === 1 ? "gold" : "primary"} />
-                                                    <span className="w-9 text-right font-mono text-xs text-ink tabular-nums">{row.score.toFixed(1)}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <ScoreBar
+                                                        score={row.score}
+                                                        baseline={baseline}
+                                                        tone={row.rank === 1 ? "gold" : "primary"}
+                                                        className="min-w-0 flex-1"
+                                                    />
+                                                    <span className="w-9 shrink-0 text-right font-mono text-xs text-ink tabular-nums">
+                                                        {row.score.toFixed(1)}
+                                                    </span>
                                                 </div>
                                             </td>
-                                            <td className={tdNum}>
-                                                <Delta value={row.meanHits - row.expectedHits} digits={3} />
-                                            </td>
                                             <td className={tdNum}>{row.effPrizes}</td>
-                                            <td className={tdNum}>{formatSigned(row.pnlPerDraw, 2)}</td>
                                             <td className={cx(td, "pr-3")}>
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <span className="flex items-center gap-0.5">
-                                                        {row.currentPick.map((n) => (
-                                                            <Ball key={n} n={n} size="xs" />
-                                                        ))}
-                                                    </span>
-                                                    {rowActions(row)}
+                                                <div className="flex items-center justify-end gap-0.5">
+                                                    {row.currentPick.map((n) => (
+                                                        <Ball key={n} n={n} size="xs" />
+                                                    ))}
                                                 </div>
                                             </td>
                                         </tr>
                                         {isOpen && (
                                             <tr className="border-b border-line-soft bg-surface-2/40">
-                                                <td colSpan={8} className="px-3 py-3">
-                                                    <StrategyDetail row={row} nextDraw={meta.nextDraw} onUse={() => loadLine(row.currentPick)} />
+                                                <td colSpan={5} className="px-3 py-3">
+                                                    <StrategyDetail row={row} nextDraw={meta.nextDraw} />
                                                 </td>
                                             </tr>
                                         )}
@@ -463,7 +407,7 @@ export const StrategiesScreen = () => {
                             })}
                         </tbody>
                     </table>
-                    {rows.length === 0 && <p className="px-4 py-8 text-center text-sm text-ink-muted">No rule matches that filter.</p>}
+                    {rows.length === 0 && <p className="px-4 py-8 text-center text-sm text-ink-muted">No strategy matches that filter.</p>}
                 </div>
             </Panel>
 

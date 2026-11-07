@@ -8,7 +8,7 @@ Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysi
 
 | Route         | Surface | What it is                                                                                                 |
 | ------------- | ------- | ---------------------------------------------------------------------------------------------------------- |
-| `/`           | Monitor | Latest draw as six balls + additional, countdown to the next draw, league top-5, the 7×7 number board + line builder |
+| `/`           | Monitor | Latest draw as six balls + additional, the full prize table, a next-draw clock, the top 6 strategies, and the 7×7 heat board with its play slip |
 | `/history`    | Explore | Searchable, paginated archive of every draw; a row expands to that draw's structure                        |
 | `/insights`   | Learn   | Six panels of charts over the 6/49 era: frequency, sum distribution, parity, decade spread, pairs, weekday |
 | `/strategies` | Compare | The full 204-row strategy league with filters, sorting and expandable rows; each row can load its pick into the board |
@@ -50,7 +50,7 @@ Analysis and strategy stats use the **6/49 era only** (draws since 9 Oct 2014); 
 
 `/` carries a 7×7 board of every number from 1 to 49. Each cell shows how often the number turned up and is tinted by the z-score of that count against the expectation for the window — the **All time** window reads `analysis.json` (6/49 era), the **Last 50** window is counted client-side from the trailing 50 draws in `draws.json`. The dot marks the latest draw's numbers.
 
-Below the grid, the line builder holds six slots: tap cells to fill it (re-tap to swap a number out), **Quick pick** fills it with a seeded random line (seed = the next draw number, so it always returns the same six), **Clear** empties it and **Copy line** puts it on the clipboard. The board state is shared, so a strategy's **Load line** button on `/strategies` hands its current pick straight to the board on the home page.
+The play slip beside the board holds six, seven or eight slots — **System 6, 7 or 8**. Tap cells to fill it (re-tap to swap a number out), **Quick pick** fills it with a fresh uniform line, **Clear** empties it and **Copy line** puts it on the clipboard. Each filled slot takes the same heat tint as the number on the board.
 
 ## Deploy to Netlify
 

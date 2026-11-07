@@ -15,7 +15,7 @@ const NAV_ITEMS = [
     { to: "/", label: "Latest" },
     { to: "/history", label: "History" },
     { to: "/insights", label: "Insights" },
-    { to: "/strategies", label: "Rules" },
+    { to: "/strategies", label: "Strategies" },
 ];
 
 /** Set the document title for the active route; pages call this themselves. */

@@ -415,8 +415,7 @@ export const InsightsScreen = () => {
             </Panel>
 
             <p className="px-1 text-[11px] leading-4 text-ink-subtle">
-                TOTO draws are independent and uniform. Every number is equally likely in every draw, so the patterns above describe the past and do not
-                predict the next draw.
+                Every number is equally likely in every draw. The patterns above describe the past and do not predict the next draw.
             </p>
         </div>
     );
