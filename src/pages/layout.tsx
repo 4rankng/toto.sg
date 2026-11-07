@@ -1,13 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Menu01 } from "@untitledui/icons";
-import {
-    Button as AriaButton,
-    Menu as AriaMenu,
-    MenuItem as AriaMenuItem,
-    MenuTrigger as AriaMenuTrigger,
-    Popover as AriaPopover,
-} from "react-aria-components";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
+import { NavLink, Outlet, useLocation } from "react-router";
 import { ThemeToggle } from "@/components/product/theme-toggle";
 import { cx } from "@/utils/cx";
 
@@ -28,7 +20,6 @@ export function usePageTitle(title: string) {
 export const Layout = () => {
     const mainRef = useRef<HTMLElement>(null);
     const headerRef = useRef<HTMLElement>(null);
-    const navigate = useNavigate();
     const { pathname } = useLocation();
     const [headerHidden, setHeaderHidden] = useState(false);
 
@@ -83,8 +74,8 @@ export const Layout = () => {
                     headerHidden ? "-translate-y-full" : "translate-y-0",
                 )}
             >
-                <div className="mx-auto flex h-full w-full max-w-[1500px] items-center gap-4 px-4 md:px-6">
-                    <nav aria-label="Main" className="hidden h-full items-stretch md:flex">
+                <div className="mx-auto flex h-full w-full max-w-[1500px] items-center gap-2 px-3 md:gap-4 md:px-6">
+                    <nav aria-label="Main" className="scrollbar-hide flex h-full min-w-0 flex-1 items-stretch overflow-x-auto">
                         {NAV_ITEMS.map((item) => (
                             <NavLink
                                 key={item.to}
@@ -92,7 +83,7 @@ export const Layout = () => {
                                 end={item.to === "/"}
                                 className={({ isActive }) =>
                                     cx(
-                                        "relative flex h-full items-center px-3.5 font-mono text-[10px] font-semibold tracking-[0.16em] uppercase transition-colors duration-100 ease-linear lg:px-4",
+                                        "relative flex h-full shrink-0 items-center px-1.5 font-mono text-[9px] font-semibold tracking-[0.1em] uppercase transition-colors duration-100 ease-linear sm:px-3 sm:text-[10px] sm:tracking-[0.16em] lg:px-4",
                                         isActive ? "text-primary" : "text-ink-subtle hover:text-ink",
                                     )
                                 }
@@ -114,33 +105,6 @@ export const Layout = () => {
 
                     <div className="ml-auto flex items-center gap-1.5">
                         <ThemeToggle />
-
-                        <AriaMenuTrigger>
-                            <AriaButton
-                                aria-label="Open navigation"
-                                className="grid size-10 place-items-center rounded-md border border-line bg-surface text-ink-muted transition-colors duration-100 ease-linear hover:border-primary/50 hover:text-ink md:hidden"
-                            >
-                                <Menu01 aria-hidden="true" className="size-5" />
-                            </AriaButton>
-                            <AriaPopover
-                                placement="bottom end"
-                                offset={8}
-                                className="z-50 min-w-52 rounded-lg border border-line bg-surface p-1 shadow-float outline-none"
-                            >
-                                <AriaMenu className="flex flex-col outline-none">
-                                    {NAV_ITEMS.map((item) => (
-                                        <AriaMenuItem
-                                            key={item.to}
-                                            onAction={() => navigate(item.to)}
-                                            className="flex min-h-11 items-center justify-between rounded-md px-3 font-mono text-[10px] font-semibold tracking-[0.14em] text-ink-muted uppercase transition-colors duration-100 outline-none data-[focused]:bg-surface-2 data-[focused]:text-ink data-[hovered]:bg-surface-2 data-[hovered]:text-ink"
-                                        >
-                                            {item.label}
-                                            {pathname === item.to && <span aria-hidden="true" className="size-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--color-primary)]" />}
-                                        </AriaMenuItem>
-                                    ))}
-                                </AriaMenu>
-                            </AriaPopover>
-                        </AriaMenuTrigger>
                     </div>
                 </div>
             </header>
