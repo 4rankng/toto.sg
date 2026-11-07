@@ -222,6 +222,8 @@ interface LineSlipProps {
     onClear: () => void;
     onCopy: () => void;
     copyStatus: CopyStatus;
+    /** The strategy a quick pick came from, shown as feedback. */
+    quickPickLabel?: string | null;
     className?: string;
 }
 
@@ -229,7 +231,7 @@ interface LineSlipProps {
  * The line builder. Slots take the heat tint of the number they hold, so the
  * slip and the board read as one surface. System 6, 7 and 8 are supported.
  */
-export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, onClear, onCopy, copyStatus, className }: LineSlipProps) {
+export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, onClear, onCopy, copyStatus, quickPickLabel, className }: LineSlipProps) {
     return (
         <div className={cx("flex flex-col gap-3", className)}>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -313,8 +315,15 @@ export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, onCl
                 )}
             </div>
 
+            {quickPickLabel && (
+                <p aria-live="polite" className="text-[10px] leading-3 text-ink-subtle">
+                    Quick pick from <span className="text-ink-muted">{quickPickLabel}</span>
+                    {size > 6 ? ` + ${size - 6} random` : ""}
+                </p>
+            )}
+
             <p className="border-t border-line/70 pt-2.5 text-[11px] leading-4 text-ink-subtle">
-                Quick pick makes a random line. Each number is equally likely.
+                Quick pick loads a random strategy&apos;s six numbers. System 7 and 8 fill the extra slots at random.
             </p>
         </div>
     );

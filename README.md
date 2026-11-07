@@ -50,7 +50,7 @@ Analysis and strategy stats use the **6/49 era only** (draws since 9 Oct 2014); 
 
 `/` carries a 7×7 board of every number from 1 to 49. Each cell shows how often the number turned up and is tinted by the z-score of that count against the expectation for the window — the **All time** window reads `analysis.json` (6/49 era), the **Last 50** window is counted client-side from the trailing 50 draws in `draws.json`. The dot marks the latest draw's numbers.
 
-The play slip beside the board holds six, seven or eight slots — **System 6, 7 or 8**. Tap cells to fill it (re-tap to swap a number out), **Quick pick** fills it with a fresh uniform line, **Clear** empties it and **Copy line** puts it on the clipboard. Each filled slot takes the same heat tint as the number on the board.
+The play slip beside the board holds six, seven or eight slots — **System 6, 7 or 8**. Tap cells to fill it (re-tap to swap a number out), **Quick pick** loads the current pick of a random strategy (System 7/8 tops it up with random numbers), **Clear** empties it and **Copy line** puts it on the clipboard. Each filled slot takes the same heat tint as the number on the board.
 
 ## Deploy to Netlify
 

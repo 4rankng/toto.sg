@@ -23,7 +23,7 @@ import {
     useJson,
     weekdayOf,
 } from "@/lib/data";
-import { quickPick } from "@/lib/quickpick";
+import { extendPick, quickPick, randBelow } from "@/lib/quickpick";
 import { usePageTitle } from "@/pages/layout";
 import { useLineBuilder } from "@/providers/line-builder-provider";
 
@@ -102,6 +102,7 @@ export const HomeScreen = () => {
     const [period, setPeriod] = useState("all");
     const { copy } = useClipboard();
     const [copyStatus, setCopyStatus] = useState<CopyStatus>("idle");
+    const [quickPickName, setQuickPickName] = useState<string | null>(null);
     const copyTimer = useRef<number | null>(null);
 
     // On Netlify the function serves /api/latest; local dev has no function,
@@ -169,6 +170,33 @@ export const HomeScreen = () => {
     }, [analysis, trailingCounts]);
 
     const activeWindow = windows.find((window) => window.id === period) ?? windows[0];
+
+    /** Quick pick is one of the 204 strategies — a random one, every tap. */
+    const handleQuickPick = () => {
+        if (league && league.strategies.length > 0) {
+            const strategy = league.strategies[randBelow(league.strategies.length)];
+            setLine(extendPick(strategy.currentPick, size));
+            setQuickPickName(strategy.name);
+            return;
+        }
+        setLine(quickPick(size));
+        setQuickPickName(null);
+    };
+
+    const handleSizeChange = (next: typeof size) => {
+        setQuickPickName(null);
+        setSize(next);
+    };
+
+    const handleToggle = (n: number) => {
+        setQuickPickName(null);
+        toggle(n);
+    };
+
+    const handleClear = () => {
+        setQuickPickName(null);
+        clear();
+    };
 
     const handleCopy = async () => {
         const result = await copy(line.join(" "), "line");
@@ -369,7 +397,7 @@ export const HomeScreen = () => {
                         </div>
                     }
                 >
-                    <NumberBoard windows={windows} period={period} onPeriodChange={setPeriod} latestNumbers={numbers} line={line} onToggle={toggle} />
+                    <NumberBoard windows={windows} period={period} onPeriodChange={setPeriod} latestNumbers={numbers} line={line} onToggle={handleToggle} />
                 </Panel>
 
                 <div className="flex flex-col gap-3 xl:col-span-8">
@@ -404,11 +432,12 @@ export const HomeScreen = () => {
                                 line={line}
                                 size={size}
                                 colourOf={(n) => (activeWindow ? heatColour(activeWindow, n) : "var(--color-surface-2)")}
-                                onSizeChange={setSize}
-                                onQuickPick={() => setLine(quickPick(size))}
-                                onClear={clear}
+                                onSizeChange={handleSizeChange}
+                                onQuickPick={handleQuickPick}
+                                onClear={handleClear}
                                 onCopy={handleCopy}
                                 copyStatus={copyStatus}
+                                quickPickLabel={quickPickName}
                             />
                         </Panel>
 

@@ -31,6 +31,16 @@ export function quickPick(count = 6): number[] {
     return [...S].map((x) => x + 1).sort((a, b) => a - b);
 }
 
+/**
+ * Extend a strategy's six-number pick to a System 7/8 line by drawing the
+ * missing numbers uniformly from the pool.
+ */
+export function extendPick(base: number[], size: number): number[] {
+    const chosen = new Set(base);
+    while (chosen.size < Math.min(size, 49)) chosen.add(randBelow(49) + 1);
+    return [...chosen].sort((a, b) => a - b);
+}
+
 // Optional honest EV tweak: redraw on famously popular tuples (raises the
 // conditional prize share when a win happens; win probability unchanged).
 const POPULAR: string[] = ["1,2,3,4,5,6", "5,10,15,20,25,30", "1,3,5,7,9,11", "2,4,6,8,10,12"];
