@@ -5,6 +5,8 @@ import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { Panel } from "@/components/panel";
+import { PageHeader } from "@/components/product/page-header";
+import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
 import { td, tdNum, tdSticky, th, thNum } from "@/components/product/table";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
 import {
@@ -33,70 +35,69 @@ const ALL_YEARS = "all";
 /** Decade bands of a draw's detail row — the buckets `drawDecades` counts. */
 const DECADE_LABELS = ["1–10", "11–20", "21–30", "31–40", "41–49"];
 
-/** The expanded row of one draw: its maths, read out cell by cell. */
-const DrawDetail = ({ draw, id }: { draw: Draw; id: string }) => {
+/** The expanded details of one draw: its maths, read out cell by cell. */
+const DrawDetail = ({ draw }: { draw: Draw }) => {
     const sum = drawSum(draw.numbers);
     const odd = drawOddCount(draw.numbers);
     const low = drawLowCount(draw.numbers);
     const spread = drawDecades(draw.numbers);
 
     return (
-        <tr id={id} className="border-b border-line/70 bg-surface-2/40">
-            <td colSpan={6} className="px-4 py-4">
-                {/* The detail row lives inside the table's horizontal rail, so
-                    its content is pinned to the visible edge and sized to the
-                    viewport — otherwise the far end of the decade strip would
-                    sit off-screen on a phone. */}
-                <div className="sticky left-0 grid w-[calc(100vw-4rem)] gap-5 md:w-[calc(100vw-5rem)] lg:grid-cols-[1.5fr_1fr] xl:static xl:w-auto">
-                    <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
-                        <div>
-                            <dt className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Sum</dt>
-                            <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums">{sum}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Odd / even</dt>
-                            <dd className="mt-0.5 text-sm text-ink">
-                                {odd} odd · {draw.numbers.length - odd} even
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Low / high</dt>
-                            <dd className="mt-0.5 text-sm text-ink">
-                                {low} low ≤ 24 · {draw.numbers.length - low} high
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Consecutive</dt>
-                            <dd className="mt-0.5 text-sm text-ink">{hasConsecutive(draw.numbers) ? "consecutive numbers" : "no consecutive numbers"}</dd>
-                        </div>
-                    </dl>
-                    <div>
-                        <p className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Decade spread</p>
-                        <div className="mt-2 grid grid-cols-5 gap-1.5">
-                            {DECADE_LABELS.map((label, index) => {
-                                const count = spread[index];
-                                const empty = count === 0;
-
-                                return (
-                                    <div
-                                        key={label}
-                                        className={cx("rounded-lg border px-2 py-1.5 text-center", empty ? "border-line/60" : "border-line bg-surface-3")}
-                                    >
-                                        <p className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">{label}</p>
-                                        <p className={cx("font-mono text-sm tabular-nums", empty ? "text-ink-faint" : "text-ink")}>{count}</p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+        <div className="grid min-w-0 gap-4 lg:grid-cols-[1.6fr_1fr]">
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Sum</dt>
+                    <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums">{sum}</dd>
                 </div>
-            </td>
-        </tr>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Odd / even</dt>
+                    <dd className="mt-0.5 text-[13px] text-ink">
+                        {odd} / {draw.numbers.length - odd}
+                    </dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Low / high</dt>
+                    <dd className="mt-0.5 text-[13px] text-ink">
+                        {low} / {draw.numbers.length - low}
+                    </dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Consecutive</dt>
+                    <dd className="mt-0.5 text-[13px] text-ink">{hasConsecutive(draw.numbers) ? "Yes" : "No"}</dd>
+                </div>
+            </dl>
+            <div>
+                <p className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">By decade</p>
+                <div className="mt-1.5 grid grid-cols-5 gap-1">
+                    {DECADE_LABELS.map((label, index) => {
+                        const count = spread[index];
+                        const empty = count === 0;
+
+                        return (
+                            <div
+                                key={label}
+                                className={cx("rounded-md border px-1 py-1 text-center", empty ? "border-line/60" : "border-line bg-surface-3")}
+                            >
+                                <p className="text-[10px] text-ink-subtle">{label}</p>
+                                <p className={cx("font-mono text-xs tabular-nums", empty ? "text-ink-faint" : "text-ink")}>{count}</p>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
     );
 };
 
+const ArchiveSkeleton = () => (
+    <DataLoading label="Loading draws">
+        <PageHeaderSkeleton />
+        <RowsSkeleton count={10} />
+    </DataLoading>
+);
+
 export const HistoryScreen = () => {
-    usePageTitle("Draw history — every TOTO draw on record");
+    usePageTitle("Draw history — every TOTO draw");
 
     const { data: draws, isLoading, error } = useJson<Draw[]>("/data/draws.json");
     // Phones get the large control size so every filter stays tappable.
@@ -165,14 +166,12 @@ export const HistoryScreen = () => {
         setExpanded(null);
     };
 
-    if (isLoading) {
-        return <div className="py-24 text-center text-sm text-ink-subtle">Loading draws…</div>;
-    }
+    if (isLoading) return <ArchiveSkeleton />;
 
     if (error || !draws) {
         return (
-            <Panel title="Couldn't load the draw archive" description={error?.message ?? "public/data/draws.json is missing."}>
-                <p className="text-sm text-ink-subtle">Run `npm run refresh` to regenerate the data files, then reload.</p>
+            <Panel title="Draw archive unavailable" description={error?.message ?? "The draw file is missing."}>
+                <p className="text-sm text-ink-muted">Run `npm run refresh`, then reload.</p>
             </Panel>
         );
     }
@@ -184,18 +183,16 @@ export const HistoryScreen = () => {
     const lastRow = Math.min(safePage * PAGE_SIZE, filtered.length);
 
     const panelDescription =
-        filterSummary.length > 0
-            ? `${formatNumber(filtered.length)} matches · ${filterSummary.join(" · ")}`
-            : `${formatNumber(draws.length)} draws · newest first`;
+        filterSummary.length > 0 ? `${formatNumber(filtered.length)} matches · ${filterSummary.join(" · ")}` : `${formatNumber(draws.length)} draws · newest first`;
 
     const filters = (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
             <Input
                 value={search}
                 onChange={applySearch}
                 placeholder="Search: 7 and 23, or 4232"
                 size={isCompact ? "lg" : "sm"}
-                className="w-64"
+                className="w-60"
                 aria-label="Search draws"
             />
             <Select
@@ -219,15 +216,10 @@ export const HistoryScreen = () => {
 
     const pagination = (
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <p className="text-xs text-ink-subtle">
-                Showing{" "}
-                <span className="font-mono text-ink tabular-nums">
-                    {firstRow}–{lastRow}
-                </span>{" "}
-                of <span className="font-mono text-ink tabular-nums">{formatNumber(filtered.length)}</span> draws · page{" "}
-                <span className="font-mono text-ink tabular-nums">{safePage}</span> of <span className="font-mono text-ink tabular-nums">{pageCount}</span>
+            <p className="font-mono text-[11px] text-ink-subtle tabular-nums">
+                {firstRow}–{lastRow} of {formatNumber(filtered.length)} · page {safePage}/{pageCount}
             </p>
-            <div role="group" aria-label="Archive pages" className="flex items-center gap-1.5">
+            <div role="group" aria-label="Archive pages" className="flex items-center gap-1">
                 <Button color="secondary" size="sm" isDisabled={safePage <= 1} onPress={() => setPage(1)} className="max-md:h-11">
                     First
                 </Button>
@@ -244,95 +236,160 @@ export const HistoryScreen = () => {
         </div>
     );
 
-    return (
-        <div className="flex flex-col gap-4">
-            <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
-                <div>
-                    <p className="text-xs font-medium tracking-[0.08em] text-ink-faint uppercase">Explore</p>
-                    <h1 className="font-display text-xl font-semibold tracking-tight text-ink">Draw history</h1>
-                    <p className="mt-0.5 text-sm text-ink-subtle">
-                        {formatNumber(draws.length)} draws · {oldest ? formatDate(oldest.date) : "—"} → {newest ? formatDate(newest.date) : "—"}
-                    </p>
-                </div>
-            </header>
+    const toggle = (drawNo: number) => setExpanded((current) => (current === drawNo ? null : drawNo));
 
-            <Panel isFlush title="Draw archive" description={panelDescription} actions={filters} footer={filtered.length > 0 ? pagination : undefined}>
+    return (
+        <div className="flex flex-col gap-3">
+            <PageHeader
+                kicker="Archive"
+                title="Draw history"
+                meta={
+                    <>
+                        <span>
+                            <span className="font-mono text-ink-muted tabular-nums">{formatNumber(draws.length)}</span> draws
+                        </span>
+                        <span aria-hidden="true">·</span>
+                        <span>
+                            {oldest ? formatDate(oldest.date) : "—"} → {newest ? formatDate(newest.date) : "—"}
+                        </span>
+                    </>
+                }
+                actions={
+                    <span className="text-[11px] text-ink-subtle">Tap a row for sum, odd/even and decade split</span>
+                }
+            />
+
+            <Panel isFlush title="All draws" description={panelDescription} actions={filters} footer={filtered.length > 0 ? pagination : undefined}>
                 {rows.length === 0 ? (
                     <div className="flex flex-col items-center gap-3 px-4 py-14 text-center">
-                        <p className="text-sm text-ink-subtle">No draw matches that search.</p>
+                        <p className="text-sm text-ink-muted">No draw matches that search.</p>
                         <Button color="secondary" size="sm" onPress={clearFilters}>
                             Clear filters
                         </Button>
                     </div>
                 ) : (
-                    <div className="min-w-0 overflow-x-auto xl:overflow-visible">
-                        <table className="w-full min-w-[720px] border-collapse text-left">
-                            <thead>
-                                <tr>
-                                    <th className={cx(th, "sticky left-0 z-20 w-24 pl-4 first:rounded-tl-xl")}>Draw</th>
-                                    <th className={th}>Date</th>
-                                    <th className={th}>Weekday</th>
-                                    <th className={th}>Numbers</th>
-                                    <th className={thNum}>Sum</th>
-                                    <th className={cx(th, "w-12 pr-4 text-right last:rounded-tr-xl")}>
-                                        <span className="sr-only">Detail</span>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {rows.map((draw) => {
-                                    const isOpen = expanded === draw.draw;
-                                    const detailId = `draw-detail-${draw.draw}`;
+                    <>
+                        {/* Phone: one card per draw. */}
+                        <div className="md:hidden">
+                            {rows.map((draw) => {
+                                const isOpen = expanded === draw.draw;
+                                const odd = drawOddCount(draw.numbers);
+                                const low = drawLowCount(draw.numbers);
 
-                                    return (
-                                        <Fragment key={draw.draw}>
-                                            <tr
-                                                className={cx(
-                                                    "border-b border-line/70 bg-surface transition-colors duration-150 hover:bg-surface-2/60",
-                                                    isOpen && "bg-surface-2/60",
-                                                )}
-                                            >
-                                                <td className={cx(tdSticky, "pl-4")}>
-                                                    <button
-                                                        type="button"
-                                                        aria-expanded={isOpen}
-                                                        aria-controls={isOpen ? detailId : undefined}
-                                                        onClick={() => setExpanded(isOpen ? null : draw.draw)}
-                                                        className="rounded font-mono text-sm font-medium text-ink tabular-nums transition-colors duration-150 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                                                    >
-                                                        {draw.draw}
-                                                    </button>
-                                                </td>
-                                                <td className={td}>{formatDate(draw.date)}</td>
-                                                <td className={cx(td, "text-ink-subtle")}>{weekdayOf(draw.date)}</td>
-                                                <td className={td}>
+                                return (
+                                    <article key={draw.draw} className={cx("border-b border-line-soft last:border-0", isOpen && "bg-surface-2/50")}>
+                                        <button
+                                            type="button"
+                                            aria-expanded={isOpen}
+                                            onClick={() => toggle(draw.draw)}
+                                            className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left"
+                                        >
+                                            <div className="min-w-0">
+                                                <p className="flex items-baseline gap-2">
+                                                    <span className="font-mono text-sm font-semibold text-ink tabular-nums">{draw.draw}</span>
+                                                    <span className="truncate text-xs text-ink-subtle">
+                                                        {formatDate(draw.date)} · {weekdayOf(draw.date)}
+                                                    </span>
+                                                </p>
+                                                <div className="mt-1.5">
                                                     <BallRow numbers={draw.numbers} additional={draw.additional} size="sm" />
-                                                </td>
-                                                <td className={tdNum}>{drawSum(draw.numbers)}</td>
-                                                <td className={cx(td, "pr-4 text-right")}>
-                                                    <button
-                                                        type="button"
-                                                        aria-expanded={isOpen}
-                                                        aria-controls={isOpen ? detailId : undefined}
-                                                        aria-label={`${isOpen ? "Hide" : "Show"} detail for draw ${draw.draw}`}
-                                                        onClick={() => setExpanded(isOpen ? null : draw.draw)}
-                                                        className="grid size-11 place-items-center rounded-lg text-ink-faint transition-colors duration-150 hover:bg-surface-3 hover:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                                                    >
-                                                        {isOpen ? (
-                                                            <ChevronDown aria-hidden="true" className="size-4" />
-                                                        ) : (
-                                                            <ChevronRight aria-hidden="true" className="size-4" />
-                                                        )}
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            {isOpen && <DrawDetail draw={draw} id={detailId} />}
-                                        </Fragment>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                                                </div>
+                                                <p className="mt-1.5 font-mono text-[11px] text-ink-subtle tabular-nums">
+                                                    sum {drawSum(draw.numbers)} · odd {odd} · low {low}
+                                                </p>
+                                            </div>
+                                            {isOpen ? (
+                                                <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-ink-faint" />
+                                            ) : (
+                                                <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-ink-faint" />
+                                            )}
+                                        </button>
+                                        {isOpen && (
+                                            <div className="border-t border-line-soft bg-surface-2/40 px-3 py-3">
+                                                <DrawDetail draw={draw} />
+                                            </div>
+                                        )}
+                                    </article>
+                                );
+                            })}
+                        </div>
+
+                        {/* Tablet and up: the dense table. */}
+                        <div className="hidden min-w-0 overflow-x-auto md:block xl:overflow-visible">
+                            <table className="w-full min-w-[820px] border-collapse text-left">
+                                <thead>
+                                    <tr>
+                                        <th className={cx(th, "sticky left-0 z-20 w-20 pl-3 first:rounded-tl-xl")}>Draw</th>
+                                        <th className={th}>Date</th>
+                                        <th className={th}>Day</th>
+                                        <th className={th}>Numbers</th>
+                                        <th className={thNum}>Sum</th>
+                                        <th className={thNum}>Odd</th>
+                                        <th className={thNum}>Low</th>
+                                        <th className={cx(th, "w-10 pr-3 text-right last:rounded-tr-xl")}>
+                                            <span className="sr-only">Detail</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {rows.map((draw) => {
+                                        const isOpen = expanded === draw.draw;
+                                        const detailId = `draw-detail-${draw.draw}`;
+
+                                        return (
+                                            <Fragment key={draw.draw}>
+                                                <tr
+                                                    onClick={() => toggle(draw.draw)}
+                                                    className={cx(
+                                                        "cursor-pointer border-b border-line-soft bg-surface transition-colors duration-100 hover:bg-surface-2/60",
+                                                        isOpen && "bg-surface-2/60",
+                                                    )}
+                                                >
+                                                    <td className={cx(tdSticky, "pl-3")}>
+                                                        <button
+                                                            type="button"
+                                                            aria-expanded={isOpen}
+                                                            aria-controls={isOpen ? detailId : undefined}
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                toggle(draw.draw);
+                                                            }}
+                                                            className="rounded font-mono text-[13px] font-semibold text-ink tabular-nums transition-colors duration-100 hover:text-accent"
+                                                        >
+                                                            {draw.draw}
+                                                        </button>
+                                                    </td>
+                                                    <td className={td}>{formatDate(draw.date)}</td>
+                                                    <td className={cx(td, "text-ink-subtle")}>{weekdayOf(draw.date)}</td>
+                                                    <td className={td}>
+                                                        <BallRow numbers={draw.numbers} additional={draw.additional} size="sm" />
+                                                    </td>
+                                                    <td className={tdNum}>{drawSum(draw.numbers)}</td>
+                                                    <td className={tdNum}>{drawOddCount(draw.numbers)}</td>
+                                                    <td className={tdNum}>{drawLowCount(draw.numbers)}</td>
+                                                    <td className={cx(td, "pr-3 text-right")}>
+                                                        <span
+                                                            aria-hidden="true"
+                                                            className="inline-grid size-7 place-items-center rounded-md text-ink-subtle"
+                                                        >
+                                                            {isOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                {isOpen && (
+                                                    <tr id={detailId} className="border-b border-line-soft bg-surface-2/40">
+                                                        <td colSpan={8} className="px-3 py-3">
+                                                            <DrawDetail draw={draw} />
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </Fragment>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
             </Panel>
         </div>

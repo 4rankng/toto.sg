@@ -65,7 +65,7 @@ function ChartTooltip({ tip }: { tip: TooltipState }) {
 
     return (
         <div
-            className="pointer-events-none absolute z-20 w-max max-w-60 rounded-lg border border-line-strong bg-surface-3 px-2.5 py-1.5 shadow-lg shadow-black/60"
+            className="pointer-events-none absolute z-20 w-max max-w-60 rounded-lg border border-line-strong bg-surface-3 px-2.5 py-1.5 shadow-float"
             style={{
                 left: tip.x,
                 top: tip.y,
@@ -109,7 +109,7 @@ export function FrequencyChart({ counts, expected, totalDraws, hotNumber, coldNu
     const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
 
     const width = Math.max(measured, 320);
-    const height = 300;
+    const height = 260;
     const padLeft = 46;
     const padRight = 16;
     const padTop = 18;
@@ -139,7 +139,7 @@ export function FrequencyChart({ counts, expected, totalDraws, hotNumber, coldNu
                 {ticks.map((tick) => (
                     <g key={tick}>
                         <line x1={padLeft} x2={width - padRight} y1={yOf(tick)} y2={yOf(tick)} stroke="var(--color-line)" strokeWidth={1} />
-                        <text x={padLeft - 8} y={yOf(tick) + 3.5} textAnchor="end" fontSize={10} fill="var(--color-ink-faint)">
+                        <text x={padLeft - 8} y={yOf(tick) + 3.5} textAnchor="end" fontSize={11} fill="var(--color-ink-subtle)">
                             {tick}
                         </text>
                     </g>
@@ -202,8 +202,8 @@ export function FrequencyChart({ counts, expected, totalDraws, hotNumber, coldNu
                             x={padLeft + index * slot + slot / 2}
                             y={baseline + 16}
                             textAnchor="middle"
-                            fontSize={10}
-                            fill="var(--color-ink-faint)"
+                            fontSize={11}
+                            fill="var(--color-ink-subtle)"
                         >
                             {number}
                         </text>
@@ -245,7 +245,7 @@ export function SumHistogram({ bins, mean, median, band, totalDraws, className }
     const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
 
     const width = Math.max(measured, 320);
-    const height = 300;
+    const height = 260;
     const padLeft = 46;
     const padRight = 16;
     const padTop = 46;
@@ -283,7 +283,7 @@ export function SumHistogram({ bins, mean, median, band, totalDraws, className }
                 {ticks.map((tick) => (
                     <g key={tick}>
                         <line x1={padLeft} x2={width - padRight} y1={yOf(tick)} y2={yOf(tick)} stroke="var(--color-line)" strokeWidth={1} />
-                        <text x={padLeft - 8} y={yOf(tick) + 3.5} textAnchor="end" fontSize={10} fill="var(--color-ink-faint)">
+                        <text x={padLeft - 8} y={yOf(tick) + 3.5} textAnchor="end" fontSize={11} fill="var(--color-ink-subtle)">
                             {tick}
                         </text>
                     </g>
@@ -315,7 +315,7 @@ export function SumHistogram({ bins, mean, median, band, totalDraws, className }
                 <line x1={padLeft} x2={width - padRight} y1={baseline} y2={baseline} stroke="var(--color-line-strong)" strokeWidth={1} />
 
                 {xTicks.map((tick) => (
-                    <text key={tick} x={xOf(tick)} y={baseline + 16} textAnchor="middle" fontSize={10} fill="var(--color-ink-faint)">
+                    <text key={tick} x={xOf(tick)} y={baseline + 16} textAnchor="middle" fontSize={11} fill="var(--color-ink-subtle)">
                         {tick}
                     </text>
                 ))}
@@ -424,7 +424,7 @@ export function CountDistributionChart({ counts, unit, expectedBucket, expectedV
                 {ticks.map((tick) => (
                     <g key={tick}>
                         <line x1={padLeft} x2={width - padRight} y1={yOf(tick)} y2={yOf(tick)} stroke="var(--color-line)" strokeWidth={1} />
-                        <text x={padLeft - 8} y={yOf(tick) + 3.5} textAnchor="end" fontSize={10} fill="var(--color-ink-faint)">
+                        <text x={padLeft - 8} y={yOf(tick) + 3.5} textAnchor="end" fontSize={11} fill="var(--color-ink-subtle)">
                             {tick}
                         </text>
                     </g>
@@ -460,8 +460,8 @@ export function CountDistributionChart({ counts, unit, expectedBucket, expectedV
                         x={padLeft + index * slot + slot / 2}
                         y={baseline + 16}
                         textAnchor="middle"
-                        fontSize={10}
-                        fill={index === expectedBucket ? series : "var(--color-ink-faint)"}
+                        fontSize={11}
+                        fill={index === expectedBucket ? series : "var(--color-ink-subtle)"}
                     >
                         {index}
                     </text>
@@ -481,7 +481,7 @@ export function CountDistributionChart({ counts, unit, expectedBucket, expectedV
                     </text>
                 </g>
 
-                <text x={padLeft} y={baseline + 42} fontSize={10} fill="var(--color-ink-faint)">
+                <text x={padLeft} y={baseline + 42} fontSize={11} fill="var(--color-ink-subtle)">
                     {unit} per draw · expected {expectedValue.toFixed(2)}
                 </text>
             </svg>
@@ -547,11 +547,15 @@ export function DecadeHeatmap({ rows, columns, cells, marginal, className }: Dec
         return { min: Math.min(...values), max: Math.max(...values) };
     }, [cells]);
 
+    const stepOf = (value: number) => {
+        if (max <= min) return RAMP.length - 1;
+        const step = Math.round(((value - min) / (max - min)) * (RAMP.length - 1));
+        return Math.min(RAMP.length - 1, Math.max(0, step));
+    };
+
     const colourOf = (value: number | null) => {
         if (value === null) return "var(--color-surface-2)";
-        if (max <= min) return RAMP[RAMP.length - 1];
-        const step = Math.round(((value - min) / (max - min)) * (RAMP.length - 1));
-        return RAMP[Math.min(RAMP.length - 1, Math.max(0, step))];
+        return RAMP[stepOf(value)];
     };
 
     return (
@@ -599,19 +603,36 @@ export function DecadeHeatmap({ rows, columns, cells, marginal, className }: Dec
                         const lines =
                             cell && cell.value !== null ? [`${cell.value.toFixed(2)} picks per draw`, `${formatNumber(cell.draws)} draws`] : ["no draws"];
 
+                        const x = padLeft + columnIndex * (cellW + gap);
+                        const y = padTop + rowIndex * (cellH + gap);
+                        const step = cell?.value != null ? stepOf(cell.value) : 0;
+
                         return (
-                            <rect
-                                key={`${row}-${column}`}
-                                x={padLeft + columnIndex * (cellW + gap)}
-                                y={padTop + rowIndex * (cellH + gap)}
-                                width={cellW}
-                                height={cellH}
-                                rx={2}
-                                fill={colourOf(cell?.value ?? null)}
-                                onPointerEnter={(event) => show(event, title, lines)}
-                                onPointerMove={(event) => show(event, title, lines)}
-                                onPointerLeave={hide}
-                            />
+                            <g key={`${row}-${column}`}>
+                                <rect
+                                    x={x}
+                                    y={y}
+                                    width={cellW}
+                                    height={cellH}
+                                    rx={2}
+                                    fill={colourOf(cell?.value ?? null)}
+                                    onPointerEnter={(event) => show(event, title, lines)}
+                                    onPointerMove={(event) => show(event, title, lines)}
+                                    onPointerLeave={hide}
+                                />
+                                {!compact && cell?.value != null && (
+                                    <text
+                                        x={x + cellW / 2}
+                                        y={y + cellH / 2 + 3.5}
+                                        textAnchor="middle"
+                                        fontSize={10}
+                                        fontFamily="var(--font-mono)"
+                                        fill={step >= 4 ? "#ffffff" : "var(--color-ink)"}
+                                    >
+                                        {cell.value.toFixed(2)}
+                                    </text>
+                                )}
+                            </g>
                         );
                     }),
                 )}
@@ -626,7 +647,7 @@ export function DecadeHeatmap({ rows, columns, cells, marginal, className }: Dec
                             stroke="var(--color-line)"
                             strokeWidth={1}
                         />
-                        <text x={padLeft + gridW + marginalGap} y={padTop - 8} fontSize={10} fill="var(--color-ink-faint)">
+                        <text x={padLeft + gridW + marginalGap} y={padTop - 8} fontSize={11} fill="var(--color-ink-subtle)">
                             All-time
                         </text>
                         {rows.map((row, rowIndex) => {
@@ -649,7 +670,7 @@ export function DecadeHeatmap({ rows, columns, cells, marginal, className }: Dec
                 )}
             </svg>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-ink-faint">
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-ink-subtle">
                 <span className="font-mono tabular-nums">{min.toFixed(2)}</span>
                 <span className="flex gap-px">
                     {RAMP.map((colour) => (
@@ -717,7 +738,7 @@ export function WeekdayChart({ days, className }: WeekdayChartProps) {
                 {ticks.map((tick) => (
                     <g key={tick}>
                         <line x1={padLeft} x2={width - padRight} y1={yOf(tick)} y2={yOf(tick)} stroke="var(--color-line)" strokeWidth={1} />
-                        <text x={padLeft - 8} y={yOf(tick) + 3.5} textAnchor="end" fontSize={10} fill="var(--color-ink-faint)">
+                        <text x={padLeft - 8} y={yOf(tick) + 3.5} textAnchor="end" fontSize={11} fill="var(--color-ink-subtle)">
                             {tick}
                         </text>
                     </g>
@@ -749,7 +770,7 @@ export function WeekdayChart({ days, className }: WeekdayChartProps) {
 
                     return (
                         <g key={day.label}>
-                            <text x={x + barW / 2} y={baseline - barHeight - 7} textAnchor="middle" fontSize={10} fill="var(--color-ink-faint)">
+                            <text x={x + barW / 2} y={baseline - barHeight - 7} textAnchor="middle" fontSize={11} fill="var(--color-ink-subtle)">
                                 {day.meanSum.toFixed(1)}
                             </text>
                             <rect

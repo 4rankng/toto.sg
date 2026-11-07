@@ -1,6 +1,9 @@
 import { type MouseEvent as ReactMouseEvent, useEffect, useMemo, useState } from "react";
+import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
+import { PageHeader } from "@/components/product/page-header";
 import { SectionHeading } from "@/components/product/section-heading";
+import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
 import { td, tdNum, th, thNum } from "@/components/product/table";
 import { CountDistributionChart, DecadeHeatmap, FrequencyChart, type HeatmapCell, type SumBin, SumHistogram, WeekdayChart } from "@/components/toto-charts";
 import { type Analysis, type Draw, drawDecades, drawSum, formatDate, formatNumber, useJson } from "@/lib/data";
@@ -10,9 +13,9 @@ import { cx } from "@/utils/cx";
 /** The six panels, in reading order — the nav links to these ids. */
 const PANELS = [
     { id: "frequency", label: "Frequency" },
-    { id: "sum-distribution", label: "Sum distribution" },
-    { id: "odd-even", label: "Odd / even & low / high" },
-    { id: "decade-spread", label: "Decade spread" },
+    { id: "sum-distribution", label: "Sums" },
+    { id: "odd-even", label: "Odd / even" },
+    { id: "decade-spread", label: "Decades" },
     { id: "pairs", label: "Pairs" },
     { id: "weekday", label: "Weekday" },
 ] as const;
@@ -38,8 +41,17 @@ const LOW_POOL = 24;
 const PAIRS_PER_DRAW = 15;
 const PAIRS_IN_POOL = 1176;
 
+const InsightsSkeleton = () => (
+    <DataLoading label="Loading the statistics">
+        <PageHeaderSkeleton />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-72 rounded-xl" />
+        <Skeleton className="h-64 rounded-xl" />
+    </DataLoading>
+);
+
 export const InsightsScreen = () => {
-    usePageTitle("Insights — what the 6/49 era looks like");
+    usePageTitle("Insights — what the draws look like");
 
     const { data: analysis, isLoading: analysisLoading, error: analysisError } = useJson<Analysis>("/data/analysis.json");
     const { data: draws, isLoading: drawsLoading, error: drawsError } = useJson<Draw[]>("/data/draws.json");
@@ -177,14 +189,12 @@ export const InsightsScreen = () => {
         [analysis],
     );
 
-    if (analysisLoading || drawsLoading) {
-        return <div className="py-24 text-center text-sm text-ink-subtle">Loading the analysis artifacts…</div>;
-    }
+    if (analysisLoading || drawsLoading) return <InsightsSkeleton />;
 
     if (analysisError || drawsError || !analysis || !draws) {
         return (
-            <Panel title="Couldn't load the analysis artifacts" description={analysisError?.message ?? drawsError?.message ?? "The JSON files are missing."}>
-                <p className="text-sm text-ink-subtle">Run `npm run refresh` to regenerate the data files, then reload.</p>
+            <Panel title="Statistics unavailable" description={analysisError?.message ?? drawsError?.message ?? "An analysis file is missing."}>
+                <p className="text-sm text-ink-muted">Run `npm run refresh`, then reload.</p>
             </Panel>
         );
     }
@@ -200,22 +210,42 @@ export const InsightsScreen = () => {
     const fridayDraws = analysis.weekday.Fri?.count ?? 0;
     const decadeMin = Math.min(...analysis.decades);
     const decadeMax = Math.max(...analysis.decades);
+    const hottest = (entry: { number: number; count: number } | undefined, tone: "primary" | "default", label: string) => {
+        if (!entry) return null;
+        return (
+            <div className="flex items-center gap-2.5 rounded-lg bg-surface-2 px-3 py-2">
+                <Ball n={entry.number} size="md" />
+                <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">{label}</p>
+                    <p className="text-xs text-ink tabular-nums">{formatNumber(entry.count)} draws</p>
+                </div>
+                <span className={cx("font-mono text-xs tabular-nums", tone === "primary" ? "text-accent" : "text-ink-muted")}>
+                    {((entry.count / total) * 100).toFixed(1)}%
+                </span>
+            </div>
+        );
+    };
 
     return (
-        <div className="flex flex-col gap-4">
-            <header className="flex flex-col gap-1">
-                <p className="text-xs font-medium tracking-[0.08em] text-ink-faint uppercase">Learn</p>
-                <h1 className="font-display text-xl font-semibold tracking-tight text-ink">Insights</h1>
-                <p className="mt-0.5 max-w-2xl text-sm text-ink-subtle">
-                    What {formatNumber(total)} draws of 6/49 actually look like — how often each number turned up, how the six added up, and how the draws
-                    spread across decades, pairs and weekdays.
-                </p>
-                <p className="mt-1 max-w-2xl text-xs text-ink-faint">
-                    TOTO draws are independent and uniform: every number is equally likely in every draw, so every pattern below is noise, not a signal.
-                </p>
-            </header>
+        <div className="flex flex-col gap-3">
+            <PageHeader
+                kicker="Stats"
+                title="Insights"
+                meta={
+                    <>
+                        <span>
+                            <span className="font-mono text-ink-muted tabular-nums">{formatNumber(total)}</span> draws
+                        </span>
+                        <span aria-hidden="true">·</span>
+                        <span>6/49 era</span>
+                        <span aria-hidden="true">·</span>
+                        <span>since {formatDate(coverage.firstDate)}</span>
+                    </>
+                }
+                description="How often each number appeared, how the six added up, and how they split by odd/even, decade, pair and weekday."
+            />
 
-            <nav aria-label="Insight panels" className="sticky top-13 z-20 -mx-4 border-b border-line bg-canvas px-4 md:-mx-6 md:px-6">
+            <nav aria-label="Insight panels" className="sticky top-13 z-20 -mx-4 border-b border-line bg-canvas/90 px-4 backdrop-blur-md md:-mx-6 md:px-6">
                 <div className="scrollbar-hide flex gap-1 overflow-x-auto">
                     {PANELS.map((panel) => {
                         const active = activeId === panel.id;
@@ -227,12 +257,12 @@ export const InsightsScreen = () => {
                                 onClick={(event) => scrollTo(event, panel.id)}
                                 aria-current={active ? "true" : undefined}
                                 className={cx(
-                                    "relative shrink-0 px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors duration-150 ease-linear",
-                                    active ? "text-accent" : "text-ink-subtle hover:text-ink-muted",
+                                    "relative shrink-0 px-2.5 py-2 text-[11px] font-semibold whitespace-nowrap transition-colors duration-100 ease-linear",
+                                    active ? "text-accent" : "text-ink-subtle hover:text-ink",
                                 )}
                             >
                                 {panel.label}
-                                {active && <span aria-hidden="true" className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-accent" />}
+                                {active && <span aria-hidden="true" className="absolute inset-x-2 bottom-0 h-[2px] rounded-t-full bg-accent" />}
                             </a>
                         );
                     })}
@@ -242,9 +272,9 @@ export const InsightsScreen = () => {
             <Panel>
                 <SectionHeading
                     id={PANELS[0].id}
-                    kicker="Panel 01"
-                    title={PANELS[0].label}
-                    description={`How many of the ${formatNumber(total)} draws each number from 1 to 49 appeared in.`}
+                    kicker="01"
+                    title="Frequency"
+                    description={`How many of the ${formatNumber(total)} draws each number appeared in. The dashed line is the average.`}
                 />
                 <FrequencyChart
                     counts={analysis.frequency.all}
@@ -252,69 +282,51 @@ export const InsightsScreen = () => {
                     totalDraws={total}
                     hotNumber={hot?.number}
                     coldNumber={cold?.number}
-                    className="mt-4"
+                    className="mt-3"
                 />
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface-2 px-3 py-2">
-                        <div className="min-w-0">
-                            <p className="text-xs font-medium tracking-[0.08em] text-ink-faint uppercase">Hottest</p>
-                            <p className="mt-0.5 font-mono text-sm text-accent tabular-nums">Number {hot?.number}</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="font-mono text-sm text-ink tabular-nums">{formatNumber(hot?.count ?? 0)} draws</p>
-                            <p className="text-xs text-ink-faint tabular-nums">{(((hot?.count ?? 0) / total) * 100).toFixed(1)}% of era draws</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface-2 px-3 py-2">
-                        <div className="min-w-0">
-                            <p className="text-xs font-medium tracking-[0.08em] text-ink-faint uppercase">Coldest</p>
-                            <p className="mt-0.5 font-mono text-sm text-ink-muted tabular-nums">Number {cold?.number}</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="font-mono text-sm text-ink tabular-nums">{formatNumber(cold?.count ?? 0)} draws</p>
-                            <p className="text-xs text-ink-faint tabular-nums">{(((cold?.count ?? 0) / total) * 100).toFixed(1)}% of era draws</p>
-                        </div>
-                    </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {hottest(hot, "primary", "Most seen")}
+                    {hottest(cold, "default", "Least seen")}
                 </div>
             </Panel>
 
             <Panel>
                 <SectionHeading
                     id={PANELS[1].id}
-                    kicker="Panel 02"
-                    title={PANELS[1].label}
-                    description="How often the six winning numbers added up to each total, in bands of ten."
+                    kicker="02"
+                    title="Sums"
+                    description="How often the six numbers added up to each total, in bands of ten."
                 />
-                <SumHistogram bins={sumBins} mean={analysis.sum.mean} median={analysis.sum.median} band={band} totalDraws={total} className="mt-4" />
-                <p className="mt-3 text-xs text-ink-subtle">
-                    Mean <span className="font-mono text-ink tabular-nums">{analysis.sum.mean.toFixed(1)}</span> · median{" "}
-                    <span className="font-mono text-ink tabular-nums">{analysis.sum.median}</span> ·{" "}
-                    <span className="font-mono text-ink tabular-nums">{formatNumber(band.count)}</span> of {formatNumber(total)} draws (
-                    {Math.round(band.share * 100)}%) landed between {band.lo} and {band.hi}.
+                <SumHistogram bins={sumBins} mean={analysis.sum.mean} median={analysis.sum.median} band={band} totalDraws={total} className="mt-3" />
+                <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
+                    Mean <span className="font-mono text-ink-muted tabular-nums">{analysis.sum.mean.toFixed(1)}</span> · median{" "}
+                    <span className="font-mono text-ink-muted tabular-nums">{analysis.sum.median}</span> ·{" "}
+                    <span className="font-mono text-ink-muted tabular-nums">{formatNumber(band.count)}</span> of {formatNumber(total)} draws (
+                    {Math.round(band.share * 100)}%) fall between {band.lo} and {band.hi}.
                 </p>
             </Panel>
 
             <Panel>
                 <SectionHeading
                     id={PANELS[2].id}
-                    kicker="Panel 03"
-                    title={PANELS[2].label}
-                    description="How the six numbers split by parity, and by the halfway line at 24."
+                    kicker="03"
+                    title="Odd / even and low / high"
+                    description="How many of the six are odd or even, and how many are 24 or below."
                 />
-                <div className="mt-4 grid gap-6 md:grid-cols-2">
+                <div className="mt-3 grid gap-5 md:grid-cols-2">
                     <div>
-                        <p className="text-xs font-medium text-ink-muted">Odd numbers per draw</p>
+                        <p className="text-[11px] font-semibold text-ink-muted">Odd numbers per draw</p>
                         <CountDistributionChart
                             counts={analysis.oddEven}
                             unit="odd numbers"
                             expectedBucket={Math.round(oddExpected)}
                             expectedValue={oddExpected}
                             totalDraws={total}
-                            className="mt-2"
+                            className="mt-1"
                         />
                     </div>
                     <div>
-                        <p className="text-xs font-medium text-ink-muted">Low numbers (≤ 24) per draw</p>
+                        <p className="text-[11px] font-semibold text-ink-muted">Low numbers (≤ 24) per draw</p>
                         <CountDistributionChart
                             counts={analysis.lowHigh}
                             unit="low numbers (≤ 24)"
@@ -322,7 +334,7 @@ export const InsightsScreen = () => {
                             expectedValue={lowExpected}
                             totalDraws={total}
                             tone="secondary"
-                            className="mt-2"
+                            className="mt-1"
                         />
                     </div>
                 </div>
@@ -331,78 +343,81 @@ export const InsightsScreen = () => {
             <Panel>
                 <SectionHeading
                     id={PANELS[3].id}
-                    kicker="Panel 04"
-                    title={PANELS[3].label}
-                    description="Average picks per draw in each decade, year by year, with the all-time average alongside."
+                    kicker="04"
+                    title="Decade spread"
+                    description="Numbers per draw from each decade, year by year, with the all-time average on the right."
                 />
-                <DecadeHeatmap rows={DECADE_LABELS} columns={decades.years} cells={decades.cells} marginal={analysis.decades} className="mt-4" />
-                <p className="mt-3 text-xs text-ink-subtle">
-                    The 6/49 era starts on {formatDate(coverage.firstDate)}, so 2014 holds only part of the year. Every decade lands between{" "}
-                    <span className="font-mono text-ink tabular-nums">{decadeMin.toFixed(2)}</span> and{" "}
-                    <span className="font-mono text-ink tabular-nums">{decadeMax.toFixed(2)}</span> picks per draw — as it must, since the six numbers spread
-                    evenly over the five decades.
+                <DecadeHeatmap rows={DECADE_LABELS} columns={decades.years} cells={decades.cells} marginal={analysis.decades} className="mt-3" />
+                <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
+                    2014 holds only part of the year. Every decade sits between{" "}
+                    <span className="font-mono text-ink-muted tabular-nums">{decadeMin.toFixed(2)}</span> and{" "}
+                    <span className="font-mono text-ink-muted tabular-nums">{decadeMax.toFixed(2)}</span> numbers per draw.
                 </p>
             </Panel>
 
             <Panel>
                 <SectionHeading
                     id={PANELS[4].id}
-                    kicker="Panel 05"
-                    title={PANELS[4].label}
-                    description={`The ${pairs.length} number pairs that shared a draw most often across ${formatNumber(total)} draws — draws is the count, share the percentage of era draws.`}
+                    kicker="05"
+                    title="Pairs"
+                    description="Pairs that appeared together most often."
                 />
-                <table className="mt-4 w-full border-collapse text-left">
-                    <thead>
-                        <tr>
-                            <th scope="col" className={cx(th, "static")}>
-                                #
-                            </th>
-                            <th scope="col" className={cx(th, "static")}>
-                                Pair
-                            </th>
-                            <th scope="col" className={cx(thNum, "static")}>
-                                Draws
-                            </th>
-                            <th scope="col" className={cx(thNum, "static")}>
-                                Share
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {pairs.map((pair, index) => (
-                            <tr key={`${pair.a}-${pair.b}`}>
-                                <td className={tdNum}>{index + 1}</td>
-                                <td className={td}>
-                                    <span className="font-mono text-ink tabular-nums">
-                                        {pair.a} – {pair.b}
-                                    </span>
-                                </td>
-                                <td className={tdNum}>{formatNumber(pair.count)}</td>
-                                <td className={tdNum}>{((pair.count / total) * 100).toFixed(1)}%</td>
+                <div className="mt-3 grid gap-5 md:grid-cols-[1fr_18rem]">
+                    <table className="w-full border-collapse text-left">
+                        <thead>
+                            <tr>
+                                <th scope="col" className={cx(th, "static w-10")}>
+                                    #
+                                </th>
+                                <th scope="col" className={cx(th, "static")}>
+                                    Pair
+                                </th>
+                                <th scope="col" className={cx(thNum, "static")}>
+                                    Draws
+                                </th>
+                                <th scope="col" className={cx(thNum, "static")}>
+                                    Share
+                                </th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-                <p className="mt-3 text-xs text-ink-subtle">
-                    Any fixed pair should meet in <span className="font-mono text-ink tabular-nums">{expectedPairMeetings.toFixed(1)}</span> of{" "}
-                    {formatNumber(total)} draws. The top pair&rsquo;s {pairs[0]?.count ?? 0} is the largest of {formatNumber(PAIRS_IN_POOL)} candidates —
-                    picking the maximum of that many always looks impressive.
-                </p>
+                        </thead>
+                        <tbody>
+                            {pairs.map((pair, index) => (
+                                <tr key={`${pair.a}-${pair.b}`}>
+                                    <td className={tdNum}>{index + 1}</td>
+                                    <td className={td}>
+                                        <span className="font-mono text-ink tabular-nums">
+                                            {pair.a} – {pair.b}
+                                        </span>
+                                    </td>
+                                    <td className={tdNum}>{formatNumber(pair.count)}</td>
+                                    <td className={tdNum}>{((pair.count / total) * 100).toFixed(1)}%</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    <div className="flex flex-col gap-2 self-start rounded-lg bg-surface-2 px-3 py-2.5">
+                        <p className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">What to expect</p>
+                        <p className="text-[11px] leading-4 text-ink-subtle">
+                            A fixed pair meets about <span className="font-mono text-ink-muted tabular-nums">{expectedPairMeetings.toFixed(1)}</span> times in{" "}
+                            {formatNumber(total)} draws. The top pair met <span className="font-mono text-ink-muted tabular-nums">{pairs[0]?.count ?? 0}</span> —
+                            the most of {formatNumber(PAIRS_IN_POOL)} possible pairs.
+                        </p>
+                    </div>
+                </div>
             </Panel>
 
             <Panel>
-                <SectionHeading
-                    id={PANELS[5].id}
-                    kicker="Panel 06"
-                    title={PANELS[5].label}
-                    description="How many draws ran on each weekday, with the mean sum of the six numbers above each bar."
-                />
-                <WeekdayChart days={weekdayDays} className="mt-4" />
-                <p className="mt-3 text-xs text-ink-subtle">
-                    Draws run Monday and Thursday. The {formatNumber(fridayDraws)} Friday draws are special draws — the eve of Chinese New Year and similar —
-                    not a third weekly draw, which is why every other weekday is empty.
+                <SectionHeading id={PANELS[5].id} kicker="06" title="Weekday" description="Draws per weekday, with the mean sum above each bar." />
+                <WeekdayChart days={weekdayDays} className="mt-3" />
+                <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
+                    Draws run Monday and Thursday. The {formatNumber(fridayDraws)} Friday draws are special draws, not a third weekly draw.
                 </p>
             </Panel>
+
+            <p className="px-1 text-[11px] leading-4 text-ink-subtle">
+                TOTO draws are independent and uniform. Every number is equally likely in every draw, so the patterns above describe the past and do not
+                predict the next draw.
+            </p>
         </div>
     );
 };

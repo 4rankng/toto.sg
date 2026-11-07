@@ -1,6 +1,6 @@
 import { cx } from "@/utils/cx";
 
-export type BallSize = "xs" | "sm" | "md" | "lg" | "xl";
+export type BallSize = "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 
 interface BallProps {
     /** The number on the ball (1–49). */
@@ -13,21 +13,28 @@ interface BallProps {
 
 // Sizes step down on narrow screens so a hero row never overflows its panel.
 const ballSizes: Record<BallSize, string> = {
-    xs: "h-5 w-5 text-xs",
-    sm: "h-7 w-7 text-xs",
-    md: "h-8 w-8 text-xs sm:h-9 sm:w-9 sm:text-sm",
-    lg: "h-9 w-9 text-sm sm:h-11 sm:w-11 sm:text-base",
-    xl: "h-9 w-9 text-sm sm:h-14 sm:w-14 sm:text-xl",
+    xs: "size-5 text-[11px]",
+    sm: "size-7 text-xs",
+    md: "size-8 text-xs sm:size-9 sm:text-sm",
+    lg: "size-9 text-sm sm:size-11 sm:text-base",
+    xl: "size-9 text-sm sm:size-12 sm:text-lg",
+    "2xl": "size-10 text-base sm:size-12 sm:text-lg md:size-14 md:text-xl",
 };
 
-/** A single TOTO ball: solid red disc for winners, red ring for the additional number. */
+/**
+ * A single TOTO ball: a soft white disc for the winning numbers, an accent
+ * ring for the additional number. The inset ring keeps the disc visible on
+ * both the tinted canvas and a white panel.
+ */
 export function Ball({ n, size = "md", variant = "solid", className }: BallProps) {
     return (
         <span
             className={cx(
                 "grid shrink-0 place-items-center rounded-full font-semibold tabular-nums",
                 ballSizes[size],
-                variant === "solid" ? "bg-ball text-ball-ink ring-1 ring-line ring-inset" : "border-2 border-accent bg-canvas text-accent",
+                variant === "solid"
+                    ? "bg-ball text-ball-ink shadow-xs ring-1 ring-line/80 ring-inset"
+                    : "border-2 border-accent bg-canvas text-accent",
                 className,
             )}
         >
@@ -39,7 +46,7 @@ export function Ball({ n, size = "md", variant = "solid", className }: BallProps
 interface BallRowProps {
     /** The 6 winning numbers. */
     numbers: number[];
-    /** The additional number, rendered as a red ring. */
+    /** The additional number, rendered as a ring. */
     additional?: number | null;
     size?: BallSize;
     className?: string;

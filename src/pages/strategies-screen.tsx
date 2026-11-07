@@ -7,33 +7,120 @@ import { Select } from "@/components/base/select/select";
 import { Panel } from "@/components/panel";
 import { Delta } from "@/components/product/delta";
 import { FamilyChip } from "@/components/product/family-chip";
+import { PageHeader } from "@/components/product/page-header";
 import { RecentHits } from "@/components/product/recent-hits";
 import { ScoreBar } from "@/components/product/score-bar";
+import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
 import { td, tdNum, tdStickyNum, th, thNum } from "@/components/product/table";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
-import { type StrategiesFile, type StrategyRow, formatDate, formatSigned, useJson } from "@/lib/data";
+import { type StrategiesFile, type StrategyRow, formatDate, formatNumber, formatSigned, useJson } from "@/lib/data";
 import { usePageTitle } from "@/pages/layout";
 import { useLineBuilder } from "@/providers/line-builder-provider";
 import { cx } from "@/utils/cx";
 
-type SortKey = "score" | "hits" | "z" | "prizes" | "pnl";
+type SortKey = "score" | "hits" | "prizes" | "pnl";
 
 const SORTS: { id: SortKey; label: string }[] = [
     { id: "score", label: "Score" },
-    { id: "hits", label: "Hits" },
-    { id: "z", label: "Z" },
+    { id: "hits", label: "Matches" },
     { id: "prizes", label: "Prizes" },
-    { id: "pnl", label: "P&L" },
+    { id: "pnl", label: "Profit" },
 ];
 
 const PODIUM = [
-    { tone: "gold", label: "1st", text: "text-gold-ink", ring: "ring-gold/40", bg: "bg-gold/10" },
-    { tone: "silver", label: "2nd", text: "text-silver-ink", ring: "ring-silver/40", bg: "bg-silver/10" },
-    { tone: "bronze", label: "3rd", text: "text-bronze-ink", ring: "ring-bronze/30", bg: "bg-bronze/10" },
+    { label: "1st", text: "text-gold-ink", bar: "bg-gold" },
+    { label: "2nd", text: "text-silver-ink", bar: "bg-silver" },
+    { label: "3rd", text: "text-bronze-ink", bar: "bg-bronze" },
 ] as const;
 
+/** Rows revealed at a time in the phone card list. */
+const MOBILE_BATCH = 30;
+
+const LeagueSkeleton = () => (
+    <DataLoading label="Loading the rules">
+        <PageHeaderSkeleton />
+        <div className="grid gap-3 sm:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+                <div key={i} className="h-28 rounded-xl border border-line bg-surface" />
+            ))}
+        </div>
+        <RowsSkeleton count={10} />
+    </DataLoading>
+);
+
+/** The expanded body of a rule, shared by the table and the phone cards. */
+const StrategyDetail = ({
+    row,
+    nextDraw,
+    onUse,
+    className,
+}: {
+    row: StrategyRow;
+    nextDraw: number;
+    onUse: () => void;
+    className?: string;
+}) => (
+    <div className={cx("grid gap-4 lg:grid-cols-[1.7fr_auto]", className)}>
+        <div className="min-w-0">
+            <p className="max-w-2xl text-[13px] leading-5 text-ink-muted">{row.description}</p>
+            <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Draws tested</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.evaluatedDraws)}</dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matches</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.totalHits}</dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matches per draw</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.meanHits.toFixed(3)}</dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Random pick rate</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink-muted tabular-nums">{row.expectedHits.toFixed(3)}</dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prizes</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.totalPrizes)}</dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Last 12 draws</dt>
+                    <dd className="mt-0.5">
+                        <RecentHits hits={row.recent12} draws={12} expectedPerLine={row.expectedHits} />
+                    </dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Profit per draw</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatSigned(row.pnlPerDraw, 2)}</dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Score</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.score.toFixed(1)}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <div className="lg:w-56">
+            <p className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Pick for draw {nextDraw}</p>
+            <div className="mt-1.5 flex flex-wrap gap-1">
+                {row.currentPick.map((n) => (
+                    <Ball key={n} n={n} size="md" />
+                ))}
+            </div>
+            <button
+                type="button"
+                onClick={onUse}
+                className="mt-2 rounded-md border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink-muted transition-colors duration-100 hover:bg-surface-2 hover:text-ink"
+            >
+                Use pick →
+            </button>
+        </div>
+    </div>
+);
+
 export const StrategiesScreen = () => {
-    const [title, setTitle] = useState("Strategy league");
+    const [title, setTitle] = useState("Rule rankings");
     usePageTitle(title);
 
     const { data, isLoading, error } = useJson<StrategiesFile>("/data/strategies.json");
@@ -43,6 +130,7 @@ export const StrategiesScreen = () => {
     const [family, setFamily] = useState("all");
     const [sort, setSort] = useState<SortKey>("score");
     const [expanded, setExpanded] = useState<string | null>(null);
+    const [visible, setVisible] = useState(MOBILE_BATCH);
     const navigate = useNavigate();
     const { setLine } = useLineBuilder();
 
@@ -50,17 +138,22 @@ export const StrategiesScreen = () => {
 
     // The league's size is part of the page title, and it changes with the data.
     useEffect(() => {
-        if (data) setTitle(`Strategy league — ${data.strategies.length} strategies vs chance`);
+        if (data) setTitle(`Rule rankings — ${data.strategies.length} rules vs random`);
     }, [data]);
 
-    /** Hand a strategy's pick to the board on the home page. */
+    // A new filter starts the phone list from the top again.
+    useEffect(() => {
+        setVisible(MOBILE_BATCH);
+    }, [query, family, sort]);
+
+    /** Hand a rule's pick to the board on the home page. */
     const loadLine = (pick: number[]) => {
         setLine(pick);
         navigate("/");
     };
 
     const familyOptions = useMemo(
-        () => [{ id: "all", label: "All families" }, ...(data?.meta.families ?? []).map((name) => ({ id: name, label: name }))],
+        () => [{ id: "all", label: "All types" }, ...(data?.meta.families ?? []).map((name) => ({ id: name, label: name }))],
         [data],
     );
 
@@ -76,7 +169,6 @@ export const StrategiesScreen = () => {
 
         const value = (row: StrategyRow) => {
             if (sort === "hits") return row.meanHits;
-            if (sort === "z") return row.zScore;
             if (sort === "prizes") return row.effPrizes;
             if (sort === "pnl") return row.pnlPerDraw;
             return row.score;
@@ -85,88 +177,138 @@ export const StrategiesScreen = () => {
         return [...filtered].sort((a, b) => value(b) - value(a));
     }, [data, query, family, sort]);
 
-    if (isLoading) {
-        return <div className="py-24 text-center text-sm text-ink-subtle">Loading the strategy league…</div>;
-    }
+    if (isLoading) return <LeagueSkeleton />;
 
     if (error || !data) {
         return (
-            <Panel title="Couldn't load the strategy league" description={error?.message ?? "public/data/strategies.json is missing."}>
-                <p className="text-sm text-ink-subtle">Run `npm run refresh` to regenerate the data files, then reload.</p>
+            <Panel title="Rule rankings unavailable" description={error?.message ?? "The league file is missing."}>
+                <p className="text-sm text-ink-muted">Run `npm run refresh`, then reload.</p>
             </Panel>
         );
     }
 
     const { meta } = data;
     const podium = [...data.strategies].sort((a, b) => a.rank - b.rank).slice(0, 3);
+    const toggle = (id: string) => setExpanded((current) => (current === id ? null : id));
+
+    const filters = (
+        <div className="flex flex-wrap items-center gap-1.5">
+            <Input
+                value={query}
+                onChange={(value) => setQuery(value)}
+                placeholder="Search rules"
+                size={isCompact ? "lg" : "sm"}
+                className="w-40"
+                aria-label="Search rules"
+            />
+            <Select
+                items={familyOptions}
+                selectedKey={family}
+                onSelectionChange={(key) => setFamily(String(key))}
+                placeholder="All types"
+                size={isCompact ? "lg" : "sm"}
+                className="w-36"
+                aria-label="Filter by type"
+            >
+                {(item) => <Select.Item id={item.id}>{item.label}</Select.Item>}
+            </Select>
+            <div role="group" aria-label="Sort rules" className="flex items-center gap-0.5 rounded-lg bg-surface-inset p-0.5">
+                {SORTS.map((option) => (
+                    <button
+                        key={option.id}
+                        type="button"
+                        aria-pressed={sort === option.id}
+                        onClick={() => setSort(option.id)}
+                        className={cx(
+                            "min-h-8 rounded-md px-2 text-[11px] font-semibold transition-colors duration-100",
+                            sort === option.id ? "bg-surface text-ink shadow-xs ring-1 ring-line/70" : "text-ink-subtle hover:text-ink",
+                        )}
+                    >
+                        {option.label}
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+
+    const rowActions = (row: StrategyRow) => (
+        <button
+            type="button"
+            onClick={(event) => {
+                event.stopPropagation();
+                loadLine(row.currentPick);
+            }}
+            className="rounded-md border border-line bg-surface px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-ink-muted transition-colors duration-100 hover:bg-surface-2 hover:text-ink md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+        >
+            Use pick
+        </button>
+    );
 
     return (
-        <div className="flex flex-col gap-4">
-            <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
-                <div>
-                    <p className="text-xs font-medium tracking-[0.08em] text-ink-faint uppercase">Compare</p>
-                    <h1 className="font-display text-xl font-semibold tracking-tight text-ink">Strategy league</h1>
-                    <p className="mt-0.5 max-w-2xl text-sm text-ink-subtle">
-                        {data.strategies.length} number-picking rules, each walked forward over {meta.folds} folds. Ranked against the chance baseline (score{" "}
-                        <span className="font-mono tabular-nums">{baseline}</span>) — this measures past performance, not predictive power.
-                    </p>
-                </div>
-                <dl className="flex flex-wrap gap-x-6 gap-y-2 text-xs">
-                    <div>
-                        <dt className="text-ink-faint">Expected hits / line</dt>
-                        <dd className="font-mono text-sm text-ink tabular-nums">{meta.chance.expectedHitsPerLine.toFixed(4)}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-ink-faint">Prizes / 100 draws</dt>
-                        <dd className="font-mono text-sm text-ink tabular-nums">{meta.chance.prizesPer100Draws.toFixed(2)}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-ink-faint">Generated</dt>
-                        <dd className="font-mono text-sm text-ink tabular-nums">{formatDate(meta.generatedAt.slice(0, 10))}</dd>
-                    </div>
-                </dl>
-            </header>
+        <div className="flex flex-col gap-3">
+            <PageHeader
+                kicker="Rules"
+                title="Rule rankings"
+                description="204 number-picking rules. Each was tested on 100 past draws and scored against random picks. 45 = random; higher = more matches. This shows the past, not the future."
+                meta={
+                    <>
+                        <span>
+                            <span className="font-mono text-ink-muted tabular-nums">{formatNumber(data.strategies.length)}</span> rules
+                        </span>
+                        <span aria-hidden="true">·</span>
+                        <span>{meta.folds} draws each</span>
+                        <span aria-hidden="true">·</span>
+                        <span>Updated {formatDate(meta.generatedAt.slice(0, 10))}</span>
+                    </>
+                }
+                actions={
+                    <dl className="flex flex-wrap gap-x-5 gap-y-1 text-[11px]">
+                        <div>
+                            <dt className="text-ink-subtle">Matches per random pick</dt>
+                            <dd className="font-mono text-xs text-ink tabular-nums">{meta.chance.expectedHitsPerLine.toFixed(2)}</dd>
+                        </div>
+                        <div>
+                            <dt className="text-ink-subtle">Prizes per 100 draws</dt>
+                            <dd className="font-mono text-xs text-ink tabular-nums">{meta.chance.prizesPer100Draws.toFixed(1)}</dd>
+                        </div>
+                    </dl>
+                }
+            />
 
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {/* Top three, compact. */}
+            <div className="grid gap-3 sm:grid-cols-3">
                 {podium.map((row, index) => {
                     const medal = PODIUM[index];
                     return (
-                        <div key={row.id} className={cx("rounded-xl border border-line p-4 ring-1 ring-inset", medal.bg, medal.ring)}>
-                            <div className="flex items-baseline justify-between gap-2">
-                                <span className={cx("text-xs font-semibold tracking-[0.08em] uppercase", medal.text)}>{medal.label}</span>
-                                <span className="font-mono text-xs text-ink-subtle tabular-nums">#{row.rank}</span>
-                            </div>
-                            <p className="mt-1 truncate text-sm font-semibold text-ink">{row.name}</p>
-                            <div className="mt-1">
-                                <FamilyChip family={row.family} />
-                            </div>
-                            <div className="mt-3 flex items-center gap-2">
-                                <ScoreBar score={row.score} baseline={baseline} tone={medal.tone} />
-                                <span className="font-mono text-sm font-semibold text-ink tabular-nums">{row.score.toFixed(1)}</span>
-                            </div>
-                            <dl className="mt-3 grid grid-cols-3 gap-2 border-t border-line/70 pt-3 text-xs">
-                                <div>
-                                    <dt className="text-ink-faint">Hits</dt>
-                                    <dd className="font-mono text-ink tabular-nums">{row.totalHits}</dd>
+                        <div key={row.id} className="overflow-hidden rounded-xl border border-line bg-surface">
+                            <div className={cx("h-0.5 w-full", medal.bar)} />
+                            <div className="p-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className={cx("text-[10px] font-semibold tracking-[0.12em] uppercase", medal.text)}>{medal.label}</p>
+                                        <p className="truncate text-sm font-semibold text-ink">{row.name}</p>
+                                    </div>
+                                    <div className="shrink-0 text-right">
+                                        <p className="font-mono text-lg leading-6 font-semibold text-ink tabular-nums">{row.score.toFixed(1)}</p>
+                                        <p className="text-[10px] text-ink-subtle">score</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <dt className="text-ink-faint">Z</dt>
-                                    <dd className="font-mono text-ink tabular-nums">{formatSigned(row.zScore)}</dd>
+                                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                                    <FamilyChip family={row.family} />
+                                    <BallRow numbers={row.currentPick} size="xs" />
                                 </div>
-                                <div>
-                                    <dt className="text-ink-faint">Prizes</dt>
-                                    <dd className="font-mono text-ink tabular-nums">{row.effPrizes}</dd>
+                                <div className="mt-2 flex items-center justify-between gap-2 border-t border-line/70 pt-2">
+                                    <p className="font-mono text-[11px] text-ink-subtle tabular-nums">
+                                        {row.totalHits} matches · {row.effPrizes} prizes
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => loadLine(row.currentPick)}
+                                        className="text-[11px] font-semibold text-accent transition-colors duration-100 hover:text-accent-strong"
+                                    >
+                                        Use pick →
+                                    </button>
                                 </div>
-                            </dl>
-                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                                <BallRow numbers={row.currentPick} size="sm" />
-                                <button
-                                    type="button"
-                                    onClick={() => loadLine(row.currentPick)}
-                                    className="rounded-md border border-line bg-surface px-2 py-1 text-xs font-medium whitespace-nowrap text-ink-muted transition-colors duration-150 hover:bg-surface-2 hover:text-ink"
-                                >
-                                    Load line
-                                </button>
                             </div>
                         </div>
                     );
@@ -175,61 +317,82 @@ export const StrategiesScreen = () => {
 
             <Panel
                 isFlush
-                title="All strategies"
-                description={`${rows.length} of ${data.strategies.length} shown · click a strategy to expand it`}
-                actions={
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Input
-                            value={query}
-                            onChange={(value) => setQuery(value)}
-                            placeholder="Search strategies"
-                            size={isCompact ? "lg" : "sm"}
-                            className="w-44"
-                            aria-label="Search strategies"
-                        />
-                        <Select
-                            items={familyOptions}
-                            selectedKey={family}
-                            onSelectionChange={(key) => setFamily(String(key))}
-                            placeholder="All families"
-                            size={isCompact ? "lg" : "sm"}
-                            className="w-40"
-                            aria-label="Filter by family"
-                        >
-                            {(item) => <Select.Item id={item.id}>{item.label}</Select.Item>}
-                        </Select>
-                        <div role="group" aria-label="Sort strategies" className="flex items-center gap-0.5 rounded-lg border border-line bg-surface p-0.5">
-                            {SORTS.map((option) => (
-                                <button
-                                    key={option.id}
-                                    type="button"
-                                    aria-pressed={sort === option.id}
-                                    onClick={() => setSort(option.id)}
-                                    className={cx(
-                                        "min-h-11 rounded-md px-2 py-1 text-xs font-medium transition-colors duration-150",
-                                        sort === option.id ? "bg-surface-3 text-ink" : "text-ink-subtle hover:text-ink-muted",
-                                    )}
-                                >
-                                    {option.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                }
+                title="All rules"
+                description={`${rows.length} of ${data.strategies.length} shown · click a row for details · Use pick sends the numbers to the board`}
+                actions={filters}
             >
-                <div className="min-w-0 overflow-x-auto xl:overflow-visible">
-                    <table className="w-full min-w-[1180px] border-collapse text-left">
+                {/* Phone: cards with a batched reveal. */}
+                <div className="md:hidden">
+                    {rows.slice(0, visible).map((row) => {
+                        const isOpen = expanded === row.id;
+                        return (
+                            <div key={row.id} className={cx("border-b border-line-soft last:border-0", isOpen && "bg-surface-2/50")}>
+                                <button
+                                    type="button"
+                                    aria-expanded={isOpen}
+                                    onClick={() => toggle(row.id)}
+                                    className="flex w-full items-start justify-between gap-3 px-3 py-2.5 text-left"
+                                >
+                                    <div className="min-w-0">
+                                        <p className="flex items-baseline gap-2">
+                                            <span className="w-5 font-mono text-[11px] text-ink-subtle tabular-nums">{row.rank}</span>
+                                            <span className="truncate text-[13px] font-semibold text-ink">{row.name}</span>
+                                        </p>
+                                        <div className="mt-1 flex items-center gap-2">
+                                            <FamilyChip family={row.family} />
+                                            <span className="font-mono text-[11px] text-ink-subtle tabular-nums">
+                                                {row.totalHits} matches · {row.effPrizes} prizes
+                                            </span>
+                                        </div>
+                                        <div className="mt-1.5">
+                                            <BallRow numbers={row.currentPick} size="xs" />
+                                        </div>
+                                    </div>
+                                    <div className="flex shrink-0 flex-col items-end gap-1">
+                                        <span className="font-mono text-sm font-semibold text-ink tabular-nums">{row.score.toFixed(1)}</span>
+                                        {isOpen ? (
+                                            <ChevronDown aria-hidden="true" className="size-4 text-ink-faint" />
+                                        ) : (
+                                            <ChevronRight aria-hidden="true" className="size-4 text-ink-faint" />
+                                        )}
+                                    </div>
+                                </button>
+                                {isOpen && (
+                                    <div className="border-t border-line-soft bg-surface-2/40 px-3 py-3">
+                                        <StrategyDetail row={row} nextDraw={meta.nextDraw} onUse={() => loadLine(row.currentPick)} />
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+
+                    {rows.length > visible && (
+                        <div className="p-3">
+                            <button
+                                type="button"
+                                onClick={() => setVisible((count) => count + MOBILE_BATCH)}
+                                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-xs font-semibold text-ink-muted transition-colors duration-100 hover:bg-surface-2 hover:text-ink"
+                            >
+                                Show {Math.min(MOBILE_BATCH, rows.length - visible)} more · {visible} of {rows.length}
+                            </button>
+                        </div>
+                    )}
+                    {rows.length === 0 && <p className="px-4 py-8 text-center text-sm text-ink-muted">No rule matches that filter.</p>}
+                </div>
+
+                {/* Tablet and up: the dense table. */}
+                <div className="hidden min-w-0 overflow-x-auto md:block xl:overflow-visible">
+                    <table className="w-full min-w-[1020px] border-collapse text-left">
                         <thead>
                             <tr>
-                                <th className={cx(th, "sticky left-0 z-20 pl-4 first:rounded-tl-xl")}>#</th>
-                                <th className={th}>Strategy</th>
-                                <th className={th}>Family</th>
+                                <th className={cx(th, "sticky left-0 z-20 w-10 pl-3 first:rounded-tl-xl")}>#</th>
+                                <th className={th}>Rule</th>
+                                <th className={th}>Type</th>
                                 <th className={th}>Score</th>
-                                <th className={thNum}>Hits vs chance</th>
-                                <th className={thNum}>z</th>
+                                <th className={thNum}>Matches vs random</th>
                                 <th className={thNum}>Prizes</th>
-                                <th className={thNum}>P&amp;L / draw</th>
-                                <th className={cx(th, "pr-4 last:rounded-tr-xl")}>Current pick</th>
+                                <th className={thNum}>Profit / draw</th>
+                                <th className={cx(th, "pr-3 last:rounded-tr-xl")}>Next pick</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -238,25 +401,29 @@ export const StrategiesScreen = () => {
                                 return (
                                     <Fragment key={row.id}>
                                         <tr
+                                            onClick={() => toggle(row.id)}
                                             className={cx(
-                                                "border-b border-line/70 bg-surface transition-colors duration-150 hover:bg-surface-2/60",
+                                                "group cursor-pointer border-b border-line-soft bg-surface transition-colors duration-100 hover:bg-surface-2/60",
                                                 isOpen && "bg-surface-2/60",
                                             )}
                                         >
-                                            <td className={cx(tdStickyNum, "pl-4")}>{row.rank}</td>
+                                            <td className={cx(tdStickyNum, "pl-3")}>{row.rank}</td>
                                             <td className={td}>
                                                 <button
                                                     type="button"
                                                     aria-expanded={isOpen}
-                                                    onClick={() => setExpanded(isOpen ? null : row.id)}
-                                                    className="group flex min-h-11 items-center gap-1.5 text-left"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        toggle(row.id);
+                                                    }}
+                                                    className="flex min-h-9 items-center gap-1.5 text-left"
                                                 >
                                                     {isOpen ? (
                                                         <ChevronDown aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
                                                     ) : (
                                                         <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
                                                     )}
-                                                    <span className="truncate font-medium text-ink group-hover:text-accent">{row.name}</span>
+                                                    <span className="truncate text-[13px] font-medium text-ink group-hover:text-accent">{row.name}</span>
                                                 </button>
                                             </td>
                                             <td className={td}>
@@ -271,89 +438,23 @@ export const StrategiesScreen = () => {
                                             <td className={tdNum}>
                                                 <Delta value={row.meanHits - row.expectedHits} digits={3} />
                                             </td>
-                                            <td className={tdNum}>{formatSigned(row.zScore)}</td>
                                             <td className={tdNum}>{row.effPrizes}</td>
                                             <td className={tdNum}>{formatSigned(row.pnlPerDraw, 2)}</td>
-                                            <td className={cx(td, "pr-4")}>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex items-center gap-0.5">
+                                            <td className={cx(td, "pr-3")}>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <span className="flex items-center gap-0.5">
                                                         {row.currentPick.map((n) => (
                                                             <Ball key={n} n={n} size="xs" />
                                                         ))}
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => loadLine(row.currentPick)}
-                                                        className="rounded-md border border-line px-2 py-1 text-xs font-medium whitespace-nowrap text-ink-muted transition-colors duration-150 hover:bg-surface-2 hover:text-ink"
-                                                    >
-                                                        Load line
-                                                    </button>
+                                                    </span>
+                                                    {rowActions(row)}
                                                 </div>
                                             </td>
                                         </tr>
                                         {isOpen && (
-                                            <tr className="border-b border-line/70 bg-surface-2/40">
-                                                <td colSpan={9} className="px-4 py-4">
-                                                    <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
-                                                        <div>
-                                                            <p className="max-w-2xl text-sm text-ink-muted">{row.description}</p>
-                                                            <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
-                                                                <div>
-                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Evaluated draws</dt>
-                                                                    <dd className="font-mono text-sm text-ink tabular-nums">{row.evaluatedDraws}</dd>
-                                                                </div>
-                                                                <div>
-                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Total hits</dt>
-                                                                    <dd className="font-mono text-sm text-ink tabular-nums">{row.totalHits}</dd>
-                                                                </div>
-                                                                <div>
-                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Mean / line</dt>
-                                                                    <dd className="font-mono text-sm text-ink tabular-nums">{row.meanHits.toFixed(3)}</dd>
-                                                                </div>
-                                                                <div>
-                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Expected / line</dt>
-                                                                    <dd className="font-mono text-sm text-ink tabular-nums">{row.expectedHits.toFixed(4)}</dd>
-                                                                </div>
-                                                                <div>
-                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Total prizes</dt>
-                                                                    <dd className="font-mono text-sm text-ink tabular-nums">{row.totalPrizes}</dd>
-                                                                </div>
-                                                                <div>
-                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Effective prizes</dt>
-                                                                    <dd className="font-mono text-sm text-ink tabular-nums">{row.effPrizes}</dd>
-                                                                </div>
-                                                                <div>
-                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Last 12 draws</dt>
-                                                                    <dd className="mt-1">
-                                                                        <RecentHits hits={row.recent12} draws={12} expectedPerLine={row.expectedHits} />
-                                                                    </dd>
-                                                                </div>
-                                                                <div>
-                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">P&amp;L / draw</dt>
-                                                                    <dd className="font-mono text-sm text-ink tabular-nums">
-                                                                        {formatSigned(row.pnlPerDraw, 2)}
-                                                                    </dd>
-                                                                </div>
-                                                            </dl>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs tracking-[0.06em] text-ink-faint uppercase">
-                                                                Current pick — draw {meta.nextDraw}
-                                                            </p>
-                                                            <div className="mt-2 flex items-center gap-1.5">
-                                                                {row.currentPick.map((n) => (
-                                                                    <Ball key={n} n={n} size="lg" />
-                                                                ))}
-                                                            </div>
-                                                            <p className="mt-3 text-xs text-ink-faint">
-                                                                Last 12 draws: <span className="font-mono text-ink-muted tabular-nums">{row.recent12}</span>{" "}
-                                                                hits · z{" "}
-                                                                <span className="font-mono text-ink-muted tabular-nums">{formatSigned(row.zScore)}</span> ·
-                                                                score <span className="font-mono text-ink-muted tabular-nums">{row.score.toFixed(1)}</span> vs
-                                                                baseline {baseline}
-                                                            </p>
-                                                        </div>
-                                                    </div>
+                                            <tr className="border-b border-line-soft bg-surface-2/40">
+                                                <td colSpan={8} className="px-3 py-3">
+                                                    <StrategyDetail row={row} nextDraw={meta.nextDraw} onUse={() => loadLine(row.currentPick)} />
                                                 </td>
                                             </tr>
                                         )}
@@ -362,18 +463,14 @@ export const StrategiesScreen = () => {
                             })}
                         </tbody>
                     </table>
+                    {rows.length === 0 && <p className="px-4 py-8 text-center text-sm text-ink-muted">No rule matches that filter.</p>}
                 </div>
-
-                {rows.length === 0 && <p className="px-4 py-8 text-center text-sm text-ink-subtle">No strategy matches that filter.</p>}
             </Panel>
 
-            <Panel title="No system beats the cage">
-                <p className="max-w-3xl text-sm text-ink-muted">
-                    TOTO draws are independent, identically distributed and uniform over 1–49. Every line carries the same{" "}
-                    <span className="font-mono text-ink tabular-nums">1 in 13,983,816</span> chance of Group 1 — including every strategy in this table. The
-                    league scores how each rule has walked forward against the chance baseline (score ≈{" "}
-                    <span className="font-mono text-ink tabular-nums">{baseline}</span>); it is <span className="text-ink">not</span> predictive power, and a
-                    high score is a description of what already happened, not a forecast. Play for entertainment, never to recover a loss.
+            <Panel emphasis="plain" className="border-t border-line/70 pt-3">
+                <p className="max-w-4xl text-[11px] leading-4 text-ink-subtle">
+                    Every line has the same chance of Group 1: <span className="font-mono text-ink-muted tabular-nums">1 in 13,983,816</span>. The score describes
+                    100 past draws. It does not predict the next draw. Play for entertainment, never to recover a loss.
                 </p>
             </Panel>
         </div>

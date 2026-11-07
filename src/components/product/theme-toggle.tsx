@@ -21,7 +21,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
             aria-label={label}
             title={label}
             className={cx(
-                "grid size-11 shrink-0 place-items-center rounded-lg border border-line bg-surface text-ink-muted transition-colors duration-150 ease-linear hover:bg-surface-2 hover:text-ink",
+                "grid size-10 shrink-0 place-items-center rounded-lg border border-line bg-surface text-ink-muted transition-colors duration-100 ease-linear hover:bg-surface-2 hover:text-ink md:size-9",
                 className,
             )}
         >

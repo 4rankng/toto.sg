@@ -11,6 +11,38 @@
 @custom-variant label (& [data-label]);
 @custom-variant focus-input-within (&:has(input:focus));
 
+/* Motion is decoration and stays short: a route cross-fade and one staggered
+   entrance for the draw balls. Both are neutralised by the reduced-motion
+   block at the bottom of this file. */
+@keyframes rise {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@utility animate-rise {
+    animation: rise 240ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@utility animate-fade {
+    animation: fade 200ms ease-out both;
+}
+
+
 @utility scrollbar-hide {
     /* For Webkit-based browsers (Chrome, Safari and Opera) */
     &::-webkit-scrollbar {

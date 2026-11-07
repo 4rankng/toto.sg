@@ -12,16 +12,16 @@ interface SectionHeadingProps {
     className?: string;
 }
 
-/** Section header used by the insights panels and their anchor nav. */
+/** Section header used inside multi-block panels. */
 export function SectionHeading({ id, kicker, title, description, actions, className }: SectionHeadingProps) {
     return (
-        <div className={cx("flex flex-wrap items-end justify-between gap-x-6 gap-y-2", className)}>
+        <div className={cx("flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1", className)}>
             <div className="min-w-0">
-                {kicker && <p className="text-xs font-medium tracking-[0.08em] text-ink-faint uppercase">{kicker}</p>}
-                <h2 id={id} className="font-display text-lg font-semibold tracking-tight text-ink">
+                {kicker && <p className="text-[11px] font-semibold tracking-[0.14em] text-ink-subtle uppercase">{kicker}</p>}
+                <h2 id={id} className="font-display text-base leading-6 font-semibold tracking-tight text-ink">
                     {title}
                 </h2>
-                {description && <p className="mt-0.5 max-w-2xl text-xs text-ink-subtle">{description}</p>}
+                {description && <p className="mt-0.5 max-w-3xl text-xs leading-4 text-ink-subtle">{description}</p>}
             </div>
             {actions}
         </div>

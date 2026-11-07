@@ -37,12 +37,26 @@
     /* Hairlines */
     --color-line: light-dark(#dadcee, #2a2f57);
     --color-line-strong: light-dark(#c3c6de, #3a4070);
+    /* Inner rules: table rows, stacked list items, well dividers. */
+    --color-line-soft: light-dark(rgb(218 220 238 / 0.62), rgb(42 47 87 / 0.72));
 
-    /* Text hierarchy — cool greys */
+    /* Wells and inset surfaces (line builder, segmented controls). */
+    --color-surface-inset: light-dark(#eeeef8, #1c2040);
+
+    /* Floating layers only — panels are separated by hairlines, not shadows. */
+    --shadow-float:
+        0 14px 34px -10px light-dark(rgb(21 23 53 / 0.22), rgb(0 0 0 / 0.55)),
+        0 3px 8px -3px light-dark(rgb(21 23 53 / 0.1), rgb(0 0 0 / 0.4));
+
+    /* Text hierarchy — cool greys.
+     *
+     * Contrast is part of the design: every token used for readable text
+     * clears 4.5:1 on the canvas and on a white panel. `ink-faint` is for
+     * decoration only (icons, chevrons, rules) — never for prose. */
     --color-ink: light-dark(#151735, #f3f4fb);
-    --color-ink-muted: light-dark(#60668a, #a8adc9);
-    --color-ink-subtle: light-dark(#7c82a6, #8f95b8);
-    --color-ink-faint: light-dark(#a0a5c2, #6b7196);
+    --color-ink-muted: light-dark(#565c80, #b4b9d4);
+    --color-ink-subtle: light-dark(#646a8c, #9aa0c0);
+    --color-ink-faint: light-dark(#7f85a6, #767ca0);
 
     /* Brand — violet */
     --color-primary: light-dark(#6b4bff, #8b6cff);

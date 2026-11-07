@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
-import { Ball, BallRow } from "@/components/balls";
+import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
-import { type BoardWindow, type CopyStatus, HeatLegend, NumberBoard } from "@/components/product/number-board";
+import { type BoardWindow, type CopyStatus, HeatLegend, LineSlip, NumberBoard } from "@/components/product/number-board";
+import { PageHeader } from "@/components/product/page-header";
 import { ScoreBar } from "@/components/product/score-bar";
+import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
 import { StatTile } from "@/components/product/stat-tile";
 import { useClipboard } from "@/hooks/use-clipboard";
 import { useCountdown } from "@/hooks/use-countdown";
@@ -11,11 +13,15 @@ import {
     type Analysis,
     type Draw,
     type LatestResult,
+    type PrizeKey,
     type StrategiesFile,
+    drawLowCount,
+    drawOddCount,
+    drawSum,
     formatDate,
     formatNumber,
     formatSgd,
-    formatSigned,
+    hasConsecutive,
     nextDrawDate,
     useJson,
     weekdayOf,
@@ -30,15 +36,39 @@ const TRAILING_WINDOW = 50;
 /** The winning numbers in a draw. */
 const NUMBERS_PER_DRAW = 6;
 
+/** Prize groups listed under the winning numbers. */
+const PRIZE_GROUPS: PrizeKey[] = ["g2", "g3", "g4", "g5", "g6", "g7"];
+
+/** League rows shown on the home page. */
+const LEAGUE_ROWS = 6;
+
+/** Recent draws listed beside the countdown. */
+const RECENT_DRAWS = 7;
+
 const CountdownUnit = ({ value, label }: { value: number; label: string }) => (
-    <div className="flex flex-col items-center gap-1">
-        <span className="font-mono text-2xl leading-none font-semibold tracking-tight text-ink tabular-nums sm:text-3xl">{String(value).padStart(2, "0")}</span>
-        <span className="text-xs font-medium tracking-[0.08em] text-ink-faint uppercase">{label}</span>
+    <div className="rounded-lg bg-surface-inset px-2 py-1.5 text-center">
+        <span className="block font-mono text-xl leading-6 font-semibold tracking-tight text-ink tabular-nums">{String(value).padStart(2, "0")}</span>
+        <span className="block text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">{label}</span>
     </div>
 );
 
+const HomeSkeleton = () => (
+    <DataLoading label="Loading draw data">
+        <PageHeaderSkeleton />
+        <div className="grid items-start gap-3 md:grid-cols-2 lg:grid-cols-12">
+            <Skeleton className="h-80 rounded-xl md:col-span-2 lg:col-span-5" />
+            <Skeleton className="h-80 rounded-xl lg:col-span-4" />
+            <Skeleton className="h-80 rounded-xl lg:col-span-3" />
+        </div>
+        <div className="grid items-start gap-3 md:grid-cols-2 lg:grid-cols-12">
+            <Skeleton className="h-96 rounded-xl lg:col-span-4" />
+            <Skeleton className="h-96 rounded-xl lg:col-span-8" />
+        </div>
+    </DataLoading>
+);
+
 export const HomeScreen = () => {
-    usePageTitle("Singapore TOTO latest draw & monitor");
+    usePageTitle("Singapore TOTO latest draw");
 
     const { data: draws, isLoading, error } = useJson<Draw[]>("/data/draws.json");
     const { data: analysis } = useJson<Analysis>("/data/analysis.json");
@@ -49,8 +79,8 @@ export const HomeScreen = () => {
     const [copyStatus, setCopyStatus] = useState<CopyStatus>("idle");
     const copyTimer = useRef<number | null>(null);
 
-    // Live freshness check: on Netlify the function serves /api/latest; local
-    // dev has no function, and the bundled head stands in.
+    // On Netlify the function serves /api/latest; local dev has no function,
+    // and the bundled head stands in.
     useEffect(() => {
         let cancelled = false;
         fetch("/api/latest")
@@ -64,7 +94,6 @@ export const HomeScreen = () => {
         };
     }, []);
 
-    // The copy notice clears itself.
     useEffect(
         () => () => {
             if (copyTimer.current !== null) window.clearTimeout(copyTimer.current);
@@ -78,7 +107,8 @@ export const HomeScreen = () => {
     const nextDraw = useMemo(() => (lastDrawDate ? nextDrawDate(lastDrawDate) : null), [lastDrawDate]);
     const countdown = useCountdown(nextDraw);
 
-    const topStrategies = useMemo(() => (league ? [...league.strategies].sort((a, b) => a.rank - b.rank).slice(0, 5) : []), [league]);
+    const topStrategies = useMemo(() => (league ? [...league.strategies].sort((a, b) => a.rank - b.rank).slice(0, LEAGUE_ROWS) : []), [league]);
+    const recentDraws = useMemo(() => (draws ? draws.slice(-(RECENT_DRAWS + 1), -1).reverse() : []), [draws]);
 
     /** Appearance counts over the trailing window, counted client-side. */
     const trailingCounts = useMemo(() => {
@@ -113,12 +143,6 @@ export const HomeScreen = () => {
         ];
     }, [analysis, trailingCounts]);
 
-        /**
-     * The seeded random baseline line still lives in the league data
-     * (strategies.json, id "quickpick") — the table renders it like any
-     * other strategy; the board button always draws fresh instead.
-     */
-
     const handleCopy = async () => {
         const result = await copy(line.join(" "), "line");
         setCopyStatus(result.success ? "copied" : "failed");
@@ -127,14 +151,12 @@ export const HomeScreen = () => {
         copyTimer.current = window.setTimeout(() => setCopyStatus("idle"), 2500);
     };
 
-    if (isLoading) {
-        return <div className="py-24 text-center text-sm text-ink-subtle">Loading draw data…</div>;
-    }
+    if (isLoading) return <HomeSkeleton />;
 
     if (error || !draws || !latest) {
         return (
-            <Panel title="Couldn't load the draw archive" description={error?.message ?? "public/data/draws.json is missing."}>
-                <p className="text-sm text-ink-subtle">Run `npm run refresh` to regenerate the data files, then reload.</p>
+            <Panel title="Draw archive unavailable" description={error?.message ?? "The draw file is missing."}>
+                <p className="text-sm text-ink-muted">Run `npm run refresh`, then reload.</p>
             </Panel>
         );
     }
@@ -150,181 +172,289 @@ export const HomeScreen = () => {
     const longestGap = analysis?.overdue[0];
     const era = analysis?.coverage;
     const nextDrawNo = league?.meta.nextDraw ?? 0;
+    const nextIso = nextDraw ? nextDraw.toISOString().slice(0, 10) : null;
+    const winners = prizes?.g1?.winners ?? (prizes?.g1?.share ? 1 : null);
 
     return (
-        <div className="flex flex-col gap-4">
-            <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
-                <div>
-                    <p className="text-xs font-medium tracking-[0.08em] text-ink-faint uppercase">Monitor</p>
-                    <h1 className="font-display text-xl font-semibold tracking-tight text-ink">Latest draw</h1>
-                    <p className="mt-0.5 text-sm text-ink-subtle">
-                        Draw <span className="font-mono tabular-nums">{drawNo}</span> · {formatDate(date)} · {weekdayOf(date)}
-                    </p>
-                </div>
-                <Link to="/history" className="text-sm font-medium text-accent transition-colors duration-150 hover:text-accent-strong">
-                    Browse all {formatNumber(draws.length)} draws →
-                </Link>
-            </header>
+        <div className="flex flex-col gap-3">
+            <PageHeader
+                kicker="TOTO · 6/49"
+                title="Latest draw"
+                meta={
+                    <>
+                        <span>
+                            Draw <span className="font-mono text-ink-muted tabular-nums">{drawNo}</span>
+                        </span>
+                        <span aria-hidden="true">·</span>
+                        <span>{formatDate(date)}</span>
+                        <span aria-hidden="true">·</span>
+                        <span>{weekdayOf(date)}</span>
+                    </>
+                }
+                actions={
+                    <Link to="/history" className="text-xs font-semibold text-accent transition-colors duration-100 hover:text-accent-strong">
+                        All {formatNumber(draws.length)} draws →
+                    </Link>
+                }
+            />
 
-            <div className="grid gap-4 xl:grid-cols-[1.5fr_1fr_1fr]">
-                <Panel
-                    title={`Draw ${drawNo}`}
-                    description={`${formatDate(date)} · ${weekdayOf(date)} · 6/49`}
-                    actions={
-                        live ? (
-                            <span className="rounded-md bg-accent-soft px-2 py-1 text-xs font-medium text-accent ring-1 ring-accent-line ring-inset">Live</span>
-                        ) : undefined
-                    }
-                >
-                    <BallRow numbers={numbers} additional={additional} size="xl" />
-
-                    <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-line pt-4 sm:grid-cols-4">
+            <div className="grid items-start gap-3 md:grid-cols-2 lg:grid-cols-12">
+                {/* Result */}
+                <Panel emphasis="hero" className="md:col-span-2 lg:col-span-5">
+                    <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                            <dt className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Group 1</dt>
-                            <dd className="mt-0.5 font-mono text-sm font-semibold text-gold-ink tabular-nums">
+                            <p className="text-[11px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">Group 1 prize</p>
+                            <p className="mt-0.5 font-display text-2xl leading-8 font-semibold tracking-tight text-gold-ink tabular-nums md:text-3xl md:leading-9">
                                 {prizes?.g1?.share ? formatSgd(prizes.g1.share) : "—"}
-                            </dd>
+                            </p>
                         </div>
-                        <div className="min-w-0">
-                            <dt className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Group 2</dt>
-                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{prizes?.g2?.share ? formatSgd(prizes.g2.share) : "—"}</dd>
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                            {live && (
+                                <span className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-accent uppercase ring-1 ring-accent-line ring-inset">
+                                    Live
+                                </span>
+                            )}
+                            <span className="text-[11px] text-ink-subtle">{winners != null ? `${winners} winner${winners === 1 ? "" : "s"}` : "—"}</span>
                         </div>
-                        <div className="min-w-0">
-                            <dt className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Group 1 winners</dt>
-                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{prizes?.g1?.winners ?? (prizes?.g1?.share ? "1" : "—")}</dd>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+                        <div className="flex flex-wrap items-center gap-1.5" role="img" aria-label={`Winning numbers ${numbers.join(", ")}`}>
+                            {numbers.map((n, index) => (
+                                <span key={n} className="animate-rise" style={{ animationDelay: `${index * 40}ms` }}>
+                                    <Ball n={n} size="xl" />
+                                </span>
+                            ))}
                         </div>
-                        <div className="min-w-0">
-                            <dt className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Additional</dt>
-                            <dd className="mt-0.5 font-mono text-sm text-accent tabular-nums">{additional ?? "—"}</dd>
+                        <span aria-hidden="true" className="hidden h-9 w-px bg-line sm:block" />
+                        <div className="flex items-center gap-2">
+                            {additional != null && <Ball n={additional} size="xl" variant="ring" />}
+                            <span className="text-[10px] leading-3 font-semibold tracking-[0.08em] text-ink-subtle uppercase">
+                                Add.
+                            </span>
                         </div>
+                    </div>
+
+                    <table className="mt-4 w-full border-collapse text-xs">
+                        <caption className="sr-only">Prize per share and winners for groups 2 to 7</caption>
+                        <thead>
+                            <tr className="border-y border-line/70 text-[10px] tracking-[0.08em] text-ink-subtle uppercase">
+                                <th scope="col" className="py-1.5 pr-2 text-left font-semibold">
+                                    Group
+                                </th>
+                                <th scope="col" className="px-2 py-1.5 text-right font-semibold">
+                                    Prize
+                                </th>
+                                <th scope="col" className="py-1.5 pl-2 text-right font-semibold">
+                                    Winners
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {PRIZE_GROUPS.map((group) => {
+                                const prize = prizes?.[group];
+                                return (
+                                    <tr key={group} className="border-b border-line-soft last:border-0">
+                                        <td className="py-1 pr-2 font-medium text-ink-subtle uppercase">{group.replace("g", "G")}</td>
+                                        <td className="px-2 py-1 text-right font-mono text-ink tabular-nums">
+                                            {prize?.share ? formatSgd(prize.share) : "—"}
+                                        </td>
+                                        <td className="py-1 pl-2 text-right font-mono text-ink-muted tabular-nums">{prize?.winners ?? "—"}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+
+                    <dl className="mt-3 grid grid-cols-4 gap-2 border-t border-line/70 pt-2.5">
+                        {[
+                            { label: "Sum", value: drawSum(numbers) },
+                            { label: "Odd", value: drawOddCount(numbers) },
+                            { label: "Low", value: drawLowCount(numbers) },
+                            { label: "Run", value: hasConsecutive(numbers) ? "Yes" : "No" },
+                        ].map((fact) => (
+                            <div key={fact.label} className="min-w-0">
+                                <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">{fact.label}</dt>
+                                <dd className="mt-0.5 font-mono text-xs font-medium text-ink tabular-nums">{fact.value}</dd>
+                            </div>
+                        ))}
                     </dl>
                 </Panel>
 
+                {/* League */}
                 <Panel
-                    title="Next draw"
-                    description={`Draw ${nextDrawNo || "—"} · Mon & Thu, 18:30 SGT`}
-                    bodyClassName="flex flex-1 flex-col justify-between gap-6"
-                >
-                    {nextDraw ? (
-                        <>
-                            <div className="grid grid-cols-4 gap-2">
-                                <CountdownUnit value={countdown.days} label="days" />
-                                <CountdownUnit value={countdown.hours} label="hrs" />
-                                <CountdownUnit value={countdown.minutes} label="min" />
-                                <CountdownUnit value={countdown.seconds} label="sec" />
-                            </div>
-                            <p className="border-t border-line pt-3 text-xs text-ink-subtle">
-                                Draw {nextDrawNo || "—"} · {formatDate(nextDraw.toISOString().slice(0, 10))} · {weekdayOf(nextDraw.toISOString().slice(0, 10))},
-                                18:30 SGT
-                            </p>
-                        </>
-                    ) : (
-                        <p className="text-sm text-ink-subtle">Next draw time unavailable.</p>
-                    )}
-                </Panel>
-                <Panel
-                    title="Strategy league — top 5"
-                    description="Walk-forward performance against the chance baseline. Each row carries the strategy's pick for the next draw."
+                    className="lg:col-span-4"
+                    title="Top rules"
+                    description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on 100 past draws. 45 = a random pick; higher = more hits.`}
                     actions={
-                        <Link to="/strategies" className="text-sm font-medium text-accent transition-colors duration-150 hover:text-accent-strong">
-                            All {league?.strategies.length ?? 0} strategies →
+                        <Link to="/strategies" className="text-xs font-semibold text-accent transition-colors duration-100 hover:text-accent-strong">
+                            All →
                         </Link>
                     }
                     isFlush
                 >
-                    <ol className="divide-y divide-line/70">
+                    <ol className="divide-y divide-line-soft">
                         {topStrategies.map((strategy) => (
-                            <li key={strategy.id} className="px-4 py-3">
-                                {/* Rank and score on one line. */}
-                                <div className="flex items-center gap-2">
-                                    <span className="w-4 shrink-0 font-mono text-xs text-ink-faint tabular-nums">{strategy.rank}</span>
+                            <li key={strategy.id} className="px-4 py-2">
+                                <div className="flex items-baseline gap-2">
+                                    <span className="w-4 shrink-0 font-mono text-[11px] text-ink-subtle tabular-nums">{strategy.rank}</span>
+                                    <span className="min-w-0 flex-1 truncate text-[13px] leading-5 font-medium text-ink">{strategy.name}</span>
+                                    <span className="shrink-0 font-mono text-xs font-semibold text-ink tabular-nums">{strategy.score.toFixed(1)}</span>
+                                </div>
+                                <div className="mt-1 flex items-center gap-2 pl-6">
                                     <ScoreBar
                                         score={strategy.score}
                                         baseline={baseline}
                                         tone={strategy.rank === 1 ? "gold" : "primary"}
                                         className="min-w-0 flex-1"
                                     />
-                                    <span className="w-9 shrink-0 text-right font-mono text-xs text-ink tabular-nums">
-                                        {strategy.score.toFixed(1)}
-                                    </span>
-                                </div>
-
-                                {/* Name and the six numbers it would play. */}
-                                <div className="mt-1.5 flex items-center justify-between gap-2">
-                                    <span className="min-w-0 truncate text-sm font-medium text-ink">{strategy.name}</span>
-                                    <span
-                                        role="img"
-                                        aria-label={`${strategy.name} picks ${strategy.currentPick.join(", ")}`}
-                                        className="flex shrink-0 items-center gap-0.5"
-                                    >
+                                    <span className="flex shrink-0 items-center gap-0.5" aria-hidden="true">
                                         {strategy.currentPick.map((n) => (
                                             <Ball key={n} n={n} size="xs" />
                                         ))}
                                     </span>
                                 </div>
-
-                                {/* The league's own numbers, kept quiet. */}
-                                <p className="mt-1 truncate text-xs text-ink-faint">
-                                    {strategy.family} · {strategy.meanHits.toFixed(2)} hits/line · z {formatSigned(strategy.zScore)} ·{" "}
-                                    {strategy.effPrizes} prizes
-                                </p>
                             </li>
                         ))}
                     </ol>
                 </Panel>
+
+                {/* Next draw + recent draws */}
+                <Panel className="lg:col-span-3" title="Next draw" description={nextDrawNo ? `Draw ${nextDrawNo}` : undefined} isFlush>
+                    <div className="flex flex-col gap-3 px-4 pt-3">
+                        {nextDraw && !countdown.isPast ? (
+                            <>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    <CountdownUnit value={countdown.days} label="days" />
+                                    <CountdownUnit value={countdown.hours} label="hrs" />
+                                    <CountdownUnit value={countdown.minutes} label="min" />
+                                    <CountdownUnit value={countdown.seconds} label="sec" />
+                                </div>
+                                <p className="text-[11px] leading-4 text-ink-subtle">
+                                    {nextIso ? `${formatDate(nextIso)} · ${weekdayOf(nextIso)}` : "—"} · 18:30 SGT
+                                </p>
+                            </>
+                        ) : (
+                            <p className="rounded-lg bg-surface-inset px-3 py-2 text-xs text-ink-muted">Waiting for the result.</p>
+                        )}
+                    </div>
+
+                    <div className="mt-3 border-t border-line/70">
+                        <p className="px-4 pt-2.5 pb-1 text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">Recent draws</p>
+                        <ol>
+                            {recentDraws.map((draw) => (
+                                <li key={draw.draw}>
+                                    <Link
+                                        to="/history"
+                                        className="grid grid-cols-[3.25rem_1fr_auto] items-center gap-2 px-4 py-1 text-xs transition-colors duration-100 hover:bg-surface-2/70"
+                                    >
+                                        <span className="font-mono text-ink-muted tabular-nums">{draw.draw}</span>
+                                        <span className="truncate text-ink-subtle">{formatDate(draw.date)}</span>
+                                        <span className="font-mono text-ink tabular-nums">{drawSum(draw.numbers)}</span>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ol>
+                    </div>
+                </Panel>
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,520px)_1fr]">
-                <Panel title="Number board" description="Every number, heat-coloured by how far its appearances sit from chance." className="min-w-0">
-                    <NumberBoard
-                        windows={windows}
-                        latestNumbers={numbers}
-                        line={line}
-                        onToggle={toggle}
-                        onQuickPick={() => setLine(quickPick())}
-                        onClear={clear}
-                        onCopy={handleCopy}
-                        copyStatus={copyStatus}
-                        className="mt-4"
-                    />
-                    <p className="mt-3 text-xs text-ink-faint">
-                        Blue runs cold, pink runs hot; the tint is the z-score against a uniform draw. The dot marks the latest draw&apos;s numbers. Quick pick
-                        draws a fresh, exactly-uniform line every tap — Web Crypto randomness with bias-free sampling, the same odds as any line.
-                    </p>
+            <div className="grid items-start gap-3 md:grid-cols-2 lg:grid-cols-12">
+                <Panel
+                    className="lg:col-span-4"
+                    title="Number board"
+                    description="How often each number appeared. Colour shows the gap from random."
+                    footer={
+                        <div className="flex flex-col gap-2">
+                            <HeatLegend />
+                            <p className="text-[11px] leading-4 text-ink-subtle">
+                                Dot = a number in the latest draw. A left dot marks a number far below random, a pink dot far above. Counts describe the past; they do
+                                not change the next draw.
+                            </p>
+                        </div>
+                    }
+                >
+                    <NumberBoard windows={windows} latestNumbers={numbers} line={line} onToggle={toggle} />
                 </Panel>
 
-                <div className="flex flex-col gap-4">
-                    <Panel title="Reading the board" className="min-w-0">
-                        <HeatLegend />
-                        <p className="mt-3 text-sm text-ink-muted">
-                            Each cell shows how often a number turned up and how far that sits from what a uniform draw would give — the gap, in standard
-                            deviations, is what the colour follows. The dot marks the numbers of the latest draw.
-                        </p>
-                        <p className="mt-2 text-sm text-ink-muted">
-                            None of it is signal. TOTO draws are independent and uniform, so a number that looks hot today is exactly as likely as any other in
-                            the next draw. The board is a way to see the noise, not to beat it.
-                        </p>
-                    </Panel>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <StatTile label="Draws tracked" value={formatNumber(draws.length)} hint="Since 03 Jul 2008" />
+                <div className="flex flex-col gap-3 xl:col-span-8">
+                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                        <StatTile variant="bare" label="Draws" value={formatNumber(draws.length)} hint="Since 3 Jul 2008" />
                         <StatTile
+                            variant="bare"
                             label="6/49 era"
                             value={formatNumber(era?.totalDraws ?? 0)}
-                            hint={`Since ${era?.firstDate ? formatDate(era.firstDate) : "—"}`}
+                            hint={era?.firstDate ? `Since ${formatDate(era.firstDate)}` : undefined}
                         />
                         <StatTile
-                            label="Hottest ball"
+                            variant="bare"
+                            label="Most seen"
                             value={hotBall ? hotBall.number : "—"}
-                            hint={hotBall ? `${formatNumber(hotBall.count)} appearances` : undefined}
+                            hint={hotBall ? `${formatNumber(hotBall.count)} times` : undefined}
                             tone="primary"
                         />
                         <StatTile
-                            label="Longest absence"
+                            variant="bare"
+                            label="Longest gap"
                             value={longestGap ? longestGap.number : "—"}
-                            hint={longestGap ? `${formatNumber(longestGap.gap)} draws since seen` : undefined}
+                            hint={longestGap ? `${formatNumber(longestGap.gap)} draws` : undefined}
                         />
                     </div>
+
+                    <div className="grid gap-3 lg:grid-cols-2">
+                        <Panel title="Play slip" description="Six numbers. Tap the board to fill it.">
+                            <LineSlip
+                                line={line}
+                                onQuickPick={() => setLine(quickPick())}
+                                onClear={clear}
+                                onCopy={handleCopy}
+                                copyStatus={copyStatus}
+                            />
+                        </Panel>
+
+                        <Panel title="Most and least seen" description="Counts across the 6/49 era." isFlush>
+                            <div className="grid grid-cols-2 divide-x divide-line-soft">
+                                {[
+                                    { label: "Most", rows: analysis?.hot.all.slice(0, 8) ?? [] },
+                                    { label: "Least", rows: analysis?.cold.all.slice(0, 8) ?? [] },
+                                ].map((column) => (
+                                    <div key={column.label} className="px-4 py-2">
+                                        <p className="text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">{column.label}</p>
+                                        <ol className="mt-1">
+                                            {column.rows.map((entry) => (
+                                                <li key={entry.number} className="flex items-center justify-between gap-2 py-0.5">
+                                                    <Ball n={entry.number} size="xs" />
+                                                    <span className="font-mono text-[11px] text-ink tabular-nums">{formatNumber(entry.count)}</span>
+                                                </li>
+                                            ))}
+                                        </ol>
+                                    </div>
+                                ))}
+                            </div>
+                        </Panel>
+                    </div>
+
+                    <Panel title="Longest gaps" description="Draws since each number last appeared." isFlush>
+                        <div className="grid grid-cols-2 divide-x divide-line-soft">
+                            {[
+                                analysis?.overdue.slice(0, 6) ?? [],
+                                analysis?.overdue.slice(6, 12) ?? [],
+                            ].map((column, columnIndex) => (
+                                <ol key={columnIndex} className="px-4 py-1.5">
+                                    {column.map((entry) => (
+                                        <li key={entry.number} className="flex items-center justify-between gap-2 py-0.5">
+                                            <Ball n={entry.number} size="xs" />
+                                            <span className="font-mono text-[11px] text-ink tabular-nums">{formatNumber(entry.gap)}</span>
+                                        </li>
+                                    ))}
+                                </ol>
+                            ))}
+                        </div>
+                    </Panel>
+
+                    <p className="px-1 text-[11px] leading-4 text-ink-subtle">
+                        TOTO draws are independent and uniform. Every line has the same chance of Group 1, whatever the board, the rules or the history say.
+                    </p>
                 </div>
             </div>
         </div>
