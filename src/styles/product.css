@@ -1,108 +1,127 @@
 /* toto.sg — product design tokens.
  *
- * The site is a light data product: white page, gray-50 sections, hairline
- * gray-200 borders, one primary colour (emerald) and one accent (TOTO red)
- * used sparingly — active nav underline, the additional-ball ring, live
- * badges, negative deltas, error states. Gold stays reserved for the
- * jackpot and the rank-1 podium.
+ * The site is a light-to-dark data product: a tinted canvas, white panels,
+ * hairline borders, one brand colour (violet) and a diverging data ramp that
+ * runs cold blue → neutral → hot pink. Gold stays reserved for the jackpot and
+ * the rank-1 podium. There is no green and no red chrome anywhere.
+ *
+ * Every colour is a `light-dark()` pair: the light value first, the dark value
+ * second. `color-scheme` on the root element picks between them — the browser
+ * follows `prefers-color-scheme` by default, and the theme toggle pins it with
+ * `color-scheme: only light | only dark`. Nothing needs a `.dark-mode` class,
+ * so a colour never depends on JavaScript having run.
  *
  * The second half re-points the Untitled UI semantic tokens at this palette so
  * the library's React Aria components (Button, Input, Select, Tooltip) render
  * on the same surfaces instead of the stock theme. Those overrides are
  * unlayered on purpose: unlayered declarations beat Tailwind's `base` layer,
  * which is where the light/dark blocks in theme.css live.
+ *
+ * Token namespaces, and why the product code uses them:
+ *   - `canvas` / `surface` / `line` / `ink` — the product's own surfaces.
+ *   - `accent` — the brand violet. `bg-accent`, `text-accent`, `ring-accent`
+ *     resolve straight to `--color-accent`; `primary` in the library's
+ *     vocabulary means "body text", not "brand", so product code never uses
+ *     `bg-primary` / `text-primary` for colour.
+ *   - `heat-*` — the diverging ramp. Data only, never chrome.
  */
 
 @theme {
-    /* Surfaces — white page, gray-50 sections. */
-    --color-canvas: #ffffff;
-    --color-surface: #f9fafb;
-    --color-surface-2: #f3f4f6;
-    --color-surface-3: #e5e7eb;
-    --color-surface-4: #d1d5db;
+    /* Surfaces — tinted canvas, white panels, tinted cells. */
+    --color-canvas: light-dark(#f3f2fa, #0e1022);
+    --color-surface: light-dark(#ffffff, #171a33);
+    --color-surface-2: light-dark(#e7e8f5, #232850);
+    --color-surface-3: light-dark(#dadcee, #2a2f57);
+    --color-surface-4: light-dark(#c3c6de, #3a4070);
 
     /* Hairlines */
-    --color-line: #e5e7eb;
-    --color-line-strong: #d1d5db;
+    --color-line: light-dark(#dadcee, #2a2f57);
+    --color-line-strong: light-dark(#c3c6de, #3a4070);
 
     /* Text hierarchy — cool greys */
-    --color-ink: #111827;
-    --color-ink-muted: #4b5563;
-    --color-ink-subtle: #6b7280;
-    --color-ink-faint: #9ca3af;
+    --color-ink: light-dark(#151735, #f3f4fb);
+    --color-ink-muted: light-dark(#60668a, #a8adc9);
+    --color-ink-subtle: light-dark(#7c82a6, #8f95b8);
+    --color-ink-faint: light-dark(#a0a5c2, #6b7196);
 
-    /* Primary — emerald */
-    --color-primary: #059669;
-    --color-primary-strong: #047857;
-    --color-primary-soft: #ecfdf5;
-    --color-primary-line: #a7f3d0;
+    /* Brand — violet */
+    --color-primary: light-dark(#6b4bff, #8b6cff);
+    --color-primary-strong: light-dark(#5636e6, #a48cff);
+    --color-primary-soft: light-dark(#efebff, #221b4a);
+    --color-primary-line: light-dark(#cfc4ff, #3a2e77);
 
-    /* Accent — TOTO red, sparse by rule */
-    --color-accent: #e62e2e;
-    --color-accent-strong: #c22727;
-    --color-accent-soft: #fef2f2;
-    --color-accent-line: #fecaca;
+    /* The accent IS the brand: one violet, no second hue. */
+    --color-accent: var(--color-primary);
+    --color-accent-strong: var(--color-primary-strong);
+    --color-accent-soft: var(--color-primary-soft);
+    --color-accent-line: var(--color-primary-line);
 
-    /* Chart references: expected lines and the secondary series */
-    --color-chart-ref: #9ca3af;
-    --color-secondary: #d97706;
-    --color-secondary-soft: #fffbeb;
+    /* Diverging heat ramp — data only. */
+    --color-heat-cold: light-dark(#2467e8, #5b8ef0);
+    --color-heat-neutral: light-dark(#e7e8f5, #232850);
+    --color-heat-hot: light-dark(#e8346f, #ef5b8b);
+
+    /* Chart references and the second series */
+    --color-chart-ref: light-dark(#a0a5c2, #6b7196);
+    --color-secondary: light-dark(#2467e8, #5b8ef0);
+    --color-secondary-soft: light-dark(#e8efff, #1b2547);
 
     /* Medals */
-    --color-gold: #f5c518;
-    --color-gold-ink: #92680a;
-    --color-silver: #9ca3af;
-    --color-silver-ink: #4b5563;
-    --color-bronze: #b45309;
-    --color-bronze-ink: #92400e;
+    --color-gold: light-dark(#f5c518, #f5c518);
+    --color-gold-ink: light-dark(#8a6a08, #f0d264);
+    --color-silver: light-dark(#9aa0c0, #9aa0c0);
+    --color-silver-ink: light-dark(#545a80, #c3c8de);
+    --color-bronze: light-dark(#b07a4e, #b07a4e);
+    --color-bronze-ink: light-dark(#7c5330, #d3a077);
 
-    /* Signed deltas */
-    --color-up: #059669;
-    --color-down: #dc2626;
+    /* Signed deltas — the ends of the ramp, never green */
+    --color-up: light-dark(#2467e8, #5b8ef0);
+    --color-down: light-dark(#e8346f, #ef5b8b);
 
     /* Ball chips */
-    --color-ball: #ffffff;
-    --color-ball-ink: #1f2937;
+    --color-ball: light-dark(#ffffff, #232850);
+    --color-ball-ink: light-dark(#151735, #f3f4fb);
 
-    /* Strategy family chips — 19 muted tones, mid-dark so they read on white */
-    --color-fam-01: #2f6fb0;
-    --color-fam-02: #7c4d9e;
-    --color-fam-03: #2f7d6b;
-    --color-fam-04: #a9683c;
-    --color-fam-05: #6b7f36;
-    --color-fam-06: #b0567e;
-    --color-fam-07: #2d6f96;
-    --color-fam-08: #5f5ba6;
-    --color-fam-09: #8a6b25;
-    --color-fam-10: #4b7f3a;
-    --color-fam-11: #6b7280;
-    --color-fam-12: #9a4f6a;
-    --color-fam-13: #3f7d5f;
-    --color-fam-14: #b05a3c;
-    --color-fam-15: #3b5f8a;
-    --color-fam-16: #7a4b9e;
-    --color-fam-17: #5f8a2f;
-    --color-fam-18: #8a6a4a;
-    --color-fam-19: #a84040;
+    /* Strategy family chips — 20 muted tones, no green, no warm accents. */
+    --color-fam-01: light-dark(#4b3fa8, #b3adff);
+    --color-fam-02: light-dark(#7a3e9e, #d3a6ee);
+    --color-fam-03: light-dark(#5650c8, #a9a4f5);
+    --color-fam-04: light-dark(#2f5f9e, #86b6e8);
+    --color-fam-05: light-dark(#8a3f63, #e294b4);
+    --color-fam-06: light-dark(#2f6f8f, #7fbcd8);
+    --color-fam-07: light-dark(#5a4ba8, #aea6f0);
+    --color-fam-08: light-dark(#8a5a25, #e0b07a);
+    --color-fam-09: light-dark(#6b4f9e, #bda6e6);
+    --color-fam-10: light-dark(#7c4a7a, #d3a3d1);
+    --color-fam-11: light-dark(#35557f, #93b1dd);
+    --color-fam-12: light-dark(#6b7280, #a9aec4);
+    --color-fam-13: light-dark(#7c3f7a, #d297d0);
+    --color-fam-14: light-dark(#2b5c7a, #84b6d4);
+    --color-fam-15: light-dark(#4a5fa8, #a3b2ec);
+    --color-fam-16: light-dark(#6e4c9b, #c5a8ea);
+    --color-fam-17: light-dark(#44557f, #9db1de);
+    --color-fam-18: light-dark(#7a5560, #d3a9b2);
+    --color-fam-19: light-dark(#4b4b8f, #a3a3d8);
+    --color-fam-20: light-dark(#8a4b6b, #e0a0b8);
 }
 
 /* Product palette on top of the library's semantic tokens. */
 :root {
-    /* Brand scale → emerald */
-    --color-brand-50: #ecfdf5;
-    --color-brand-100: #d1fae5;
-    --color-brand-200: #a7f3d0;
-    --color-brand-300: #6ee7b7;
-    --color-brand-400: #34d399;
-    --color-brand-500: #10b981;
-    --color-brand-600: #059669;
-    --color-brand-700: #047857;
-    --color-brand-800: #065f46;
-    --color-brand-900: #064e3b;
-    --color-brand-950: #022c22;
+    /* Brand scale → violet */
+    --color-brand-50: #f5f2ff;
+    --color-brand-100: #ece7ff;
+    --color-brand-200: #dbd2ff;
+    --color-brand-300: #c2b1ff;
+    --color-brand-400: #a288ff;
+    --color-brand-500: #6b4bff;
+    --color-brand-600: #5a37e0;
+    --color-brand-700: #4a2bb8;
+    --color-brand-800: #3b2290;
+    --color-brand-900: #2d1a6e;
+    --color-brand-950: #1d1049;
 
     /* Surfaces */
-    --color-bg-primary: var(--color-canvas);
+    --color-bg-primary: var(--color-surface);
     --color-bg-primary_alt: var(--color-canvas);
     --color-bg-primary_hover: var(--color-surface-2);
     --color-bg-primary-solid: var(--color-ink);
@@ -112,7 +131,7 @@
     --color-bg-secondary-solid: var(--color-ink-subtle);
     --color-bg-tertiary: var(--color-surface-2);
     --color-bg-quaternary: var(--color-surface-3);
-    --color-bg-overlay: rgb(17 24 39 / 0.4);
+    --color-bg-overlay: light-dark(rgb(21 23 53 / 0.42), rgb(4 5 14 / 0.66));
 
     /* Brand surfaces */
     --color-bg-brand-solid: var(--color-primary);
@@ -130,16 +149,20 @@
     --color-text-tertiary: var(--color-ink-subtle);
     --color-text-tertiary_hover: var(--color-ink-muted);
     --color-text-quaternary: var(--color-ink-faint);
-    --color-text-placeholder: var(--color-ink-faint);
+    --color-text-placeholder: var(--color-ink-muted);
     --color-text-brand-primary: var(--color-primary-strong);
     --color-text-brand-secondary: var(--color-primary);
     --color-text-brand-secondary_hover: var(--color-primary-strong);
     --color-text-brand-tertiary: var(--color-primary);
     --color-text-brand-tertiary_alt: var(--color-primary);
     --color-text-primary_on-brand: #ffffff;
-    --color-text-secondary_on-brand: #d1fae5;
-    --color-text-tertiary_on-brand: #d1fae5;
-    --color-text-quaternary_on-brand: #a7f3d0;
+    --color-text-secondary_on-brand: #ddd5ff;
+    --color-text-tertiary_on-brand: #ddd5ff;
+    --color-text-quaternary_on-brand: #c3b6ff;
+    --color-text-error-primary: var(--color-down);
+    --color-text-error-primary_hover: var(--color-down);
+    --color-text-warning-primary: var(--color-gold-ink);
+    --color-text-success-primary: var(--color-up);
 
     /* Borders + rings */
     --color-border-primary: var(--color-line-strong);
@@ -148,8 +171,8 @@
     --color-border-tertiary: var(--color-surface-2);
     --color-border-brand: var(--color-primary);
     --color-border-brand_alt: var(--color-primary);
-    --color-border-error: #dc2626;
-    --color-border-error_subtle: #fecaca;
+    --color-border-error: var(--color-down);
+    --color-border-error_subtle: var(--color-heat-hot);
 
     /* Foreground */
     --color-fg-primary: var(--color-ink);
@@ -158,4 +181,14 @@
     --color-fg-quaternary: var(--color-ink-faint);
     --color-fg-brand-primary: var(--color-primary);
     --color-fg-brand-secondary: var(--color-primary);
+    --color-fg-error-primary: var(--color-down);
+    --color-fg-error-secondary: var(--color-down);
+    --color-fg-warning-primary: var(--color-gold-ink);
+    --color-fg-warning-secondary: var(--color-gold-ink);
+    --color-fg-success-primary: var(--color-up);
+    --color-fg-success-secondary: var(--color-up);
+
+    /* Focus ring + tooltip */
+    --color-focus-ring: var(--color-primary);
+    --color-tooltip-supporting-text: light-dark(#c3c6de, #8f95b8);
 }

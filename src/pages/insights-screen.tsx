@@ -204,8 +204,8 @@ export const InsightsScreen = () => {
     return (
         <div className="flex flex-col gap-4">
             <header className="flex flex-col gap-1">
-                <p className="text-[11px] font-medium tracking-[0.08em] text-ink-faint uppercase">Learn</p>
-                <h1 className="text-xl font-semibold tracking-tight text-ink">Insights</h1>
+                <p className="text-xs font-medium tracking-[0.08em] text-ink-faint uppercase">Learn</p>
+                <h1 className="font-display text-xl font-semibold tracking-tight text-ink">Insights</h1>
                 <p className="mt-0.5 max-w-2xl text-sm text-ink-subtle">
                     What {formatNumber(total)} draws of 6/49 actually look like — how often each number turned up, how the six added up, and how the draws
                     spread across decades, pairs and weekdays.
@@ -228,11 +228,11 @@ export const InsightsScreen = () => {
                                 aria-current={active ? "true" : undefined}
                                 className={cx(
                                     "relative shrink-0 px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors duration-150 ease-linear",
-                                    active ? "text-primary" : "text-ink-subtle hover:text-ink-muted",
+                                    active ? "text-accent" : "text-ink-subtle hover:text-ink-muted",
                                 )}
                             >
                                 {panel.label}
-                                {active && <span aria-hidden="true" className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary" />}
+                                {active && <span aria-hidden="true" className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-accent" />}
                             </a>
                         );
                     })}
@@ -257,8 +257,8 @@ export const InsightsScreen = () => {
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface-2 px-3 py-2">
                         <div className="min-w-0">
-                            <p className="text-[11px] font-medium tracking-[0.08em] text-ink-faint uppercase">Hottest</p>
-                            <p className="mt-0.5 font-mono text-sm text-primary tabular-nums">Number {hot?.number}</p>
+                            <p className="text-xs font-medium tracking-[0.08em] text-ink-faint uppercase">Hottest</p>
+                            <p className="mt-0.5 font-mono text-sm text-accent tabular-nums">Number {hot?.number}</p>
                         </div>
                         <div className="text-right">
                             <p className="font-mono text-sm text-ink tabular-nums">{formatNumber(hot?.count ?? 0)} draws</p>
@@ -267,7 +267,7 @@ export const InsightsScreen = () => {
                     </div>
                     <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface-2 px-3 py-2">
                         <div className="min-w-0">
-                            <p className="text-[11px] font-medium tracking-[0.08em] text-ink-faint uppercase">Coldest</p>
+                            <p className="text-xs font-medium tracking-[0.08em] text-ink-faint uppercase">Coldest</p>
                             <p className="mt-0.5 font-mono text-sm text-ink-muted tabular-nums">Number {cold?.number}</p>
                         </div>
                         <div className="text-right">

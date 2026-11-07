@@ -47,6 +47,20 @@ body {
 /* Keep anchored targets and keyboard focus clear of the sticky header. */
 html {
     scroll-padding-block-start: 4.5rem;
+    /* Lock the root scale: the whole type system is rem-based, so a doubled
+       html font-size would inflate every component at once. */
+    font-size: 100%;
+    /* Follow the operating system by default; the theme toggle pins this to
+       `only light` / `only dark`, which is what `light-dark()` reads. */
+    color-scheme: light dark;
+}
+
+:root[data-theme="light"] {
+    color-scheme: only light;
+}
+
+:root[data-theme="dark"] {
+    color-scheme: only dark;
 }
 
 /* Hide the default expand arrow on Safari.  */
@@ -101,6 +115,15 @@ input[type="search"]::-webkit-search-cancel-button {
 :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+}
+
+/* React Aria moves focus onto the panel frame itself (menu, listbox, dialog).
+   A ring there draws a rectangle around the whole panel, so the frame opts out
+   and the items inside carry their own focus treatment. */
+[role="menu"]:focus-visible,
+[role="listbox"]:focus-visible,
+[role="dialog"]:focus-visible {
+    outline: none;
 }
 
 /* Motion is decoration; drop it when the reader asks for less of it. */

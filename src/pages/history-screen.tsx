@@ -43,31 +43,35 @@ const DrawDetail = ({ draw, id }: { draw: Draw; id: string }) => {
     return (
         <tr id={id} className="border-b border-line/70 bg-surface-2/40">
             <td colSpan={6} className="px-4 py-4">
-                <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
-                    <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+                {/* The detail row lives inside the table's horizontal rail, so
+                    its content is pinned to the visible edge and sized to the
+                    viewport — otherwise the far end of the decade strip would
+                    sit off-screen on a phone. */}
+                <div className="sticky left-0 grid w-[calc(100vw-4rem)] gap-5 md:w-[calc(100vw-5rem)] lg:grid-cols-[1.5fr_1fr] xl:static xl:w-auto">
+                    <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
                         <div>
-                            <dt className="text-[11px] font-medium tracking-[0.06em] text-ink-faint uppercase">Sum</dt>
+                            <dt className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Sum</dt>
                             <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums">{sum}</dd>
                         </div>
                         <div>
-                            <dt className="text-[11px] font-medium tracking-[0.06em] text-ink-faint uppercase">Odd / even</dt>
+                            <dt className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Odd / even</dt>
                             <dd className="mt-0.5 text-sm text-ink">
                                 {odd} odd · {draw.numbers.length - odd} even
                             </dd>
                         </div>
                         <div>
-                            <dt className="text-[11px] font-medium tracking-[0.06em] text-ink-faint uppercase">Low / high</dt>
+                            <dt className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Low / high</dt>
                             <dd className="mt-0.5 text-sm text-ink">
                                 {low} low ≤ 24 · {draw.numbers.length - low} high
                             </dd>
                         </div>
                         <div>
-                            <dt className="text-[11px] font-medium tracking-[0.06em] text-ink-faint uppercase">Consecutive</dt>
+                            <dt className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Consecutive</dt>
                             <dd className="mt-0.5 text-sm text-ink">{hasConsecutive(draw.numbers) ? "consecutive numbers" : "no consecutive numbers"}</dd>
                         </div>
                     </dl>
                     <div>
-                        <p className="text-[11px] font-medium tracking-[0.06em] text-ink-faint uppercase">Decade spread</p>
+                        <p className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">Decade spread</p>
                         <div className="mt-2 grid grid-cols-5 gap-1.5">
                             {DECADE_LABELS.map((label, index) => {
                                 const count = spread[index];
@@ -78,7 +82,7 @@ const DrawDetail = ({ draw, id }: { draw: Draw; id: string }) => {
                                         key={label}
                                         className={cx("rounded-lg border px-2 py-1.5 text-center", empty ? "border-line/60" : "border-line bg-surface-3")}
                                     >
-                                        <p className="text-[10px] font-medium tracking-[0.06em] text-ink-faint uppercase">{label}</p>
+                                        <p className="text-xs font-medium tracking-[0.06em] text-ink-faint uppercase">{label}</p>
                                         <p className={cx("font-mono text-sm tabular-nums", empty ? "text-ink-faint" : "text-ink")}>{count}</p>
                                     </div>
                                 );
@@ -244,8 +248,8 @@ export const HistoryScreen = () => {
         <div className="flex flex-col gap-4">
             <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
                 <div>
-                    <p className="text-[11px] font-medium tracking-[0.08em] text-ink-faint uppercase">Explore</p>
-                    <h1 className="text-xl font-semibold tracking-tight text-ink">Draw history</h1>
+                    <p className="text-xs font-medium tracking-[0.08em] text-ink-faint uppercase">Explore</p>
+                    <h1 className="font-display text-xl font-semibold tracking-tight text-ink">Draw history</h1>
                     <p className="mt-0.5 text-sm text-ink-subtle">
                         {formatNumber(draws.length)} draws · {oldest ? formatDate(oldest.date) : "—"} → {newest ? formatDate(newest.date) : "—"}
                     </p>
@@ -294,7 +298,7 @@ export const HistoryScreen = () => {
                                                         aria-expanded={isOpen}
                                                         aria-controls={isOpen ? detailId : undefined}
                                                         onClick={() => setExpanded(isOpen ? null : draw.draw)}
-                                                        className="rounded font-mono text-sm font-medium text-ink tabular-nums transition-colors duration-150 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                                        className="rounded font-mono text-sm font-medium text-ink tabular-nums transition-colors duration-150 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                                                     >
                                                         {draw.draw}
                                                     </button>
@@ -312,7 +316,7 @@ export const HistoryScreen = () => {
                                                         aria-controls={isOpen ? detailId : undefined}
                                                         aria-label={`${isOpen ? "Hide" : "Show"} detail for draw ${draw.draw}`}
                                                         onClick={() => setExpanded(isOpen ? null : draw.draw)}
-                                                        className="grid size-11 place-items-center rounded-lg text-ink-faint transition-colors duration-150 hover:bg-surface-3 hover:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                                        className="grid size-11 place-items-center rounded-lg text-ink-faint transition-colors duration-150 hover:bg-surface-3 hover:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                                                     >
                                                         {isOpen ? (
                                                             <ChevronDown aria-hidden="true" className="size-4" />

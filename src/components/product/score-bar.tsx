@@ -7,13 +7,13 @@ interface ScoreBarProps {
     baseline?: number;
     /** Highest possible score, used to scale the track. */
     max?: number;
-    /** Podium medals are gold / silver / bronze; every other row is emerald. */
+    /** Podium medals are gold / silver / bronze; every other row is the brand violet. */
     tone?: "primary" | "gold" | "silver" | "bronze" | "muted";
     className?: string;
 }
 
 const TONES = {
-    primary: "bg-primary",
+    primary: "bg-accent",
     gold: "bg-gold",
     silver: "bg-silver",
     bronze: "bg-bronze",

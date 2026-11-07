@@ -8,7 +8,7 @@ import { cx } from "@/utils/cx";
 
 /** Header cell. Sticks to the viewport on wide screens (`top-13` clears the nav). */
 export const th =
-    "sticky top-13 z-10 border-b border-line bg-surface px-3 py-2 text-left text-[11px] font-medium tracking-[0.06em] whitespace-nowrap text-ink-subtle uppercase";
+    "sticky top-13 z-10 border-b border-line bg-surface px-3 py-2 text-left text-xs font-medium tracking-[0.06em] whitespace-nowrap text-ink-subtle uppercase";
 
 /** Header cell for numeric columns. */
 export const thNum = cx(th, "text-right");

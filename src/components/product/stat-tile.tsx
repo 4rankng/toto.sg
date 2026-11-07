@@ -7,7 +7,7 @@ interface StatTileProps {
     /** Secondary line under the value. */
     hint?: ReactNode;
     /** `primary` for the hot number, `gold` for jackpot-scale figures. */
-    tone?: "default" | "primary" | "gold" | "accent";
+    tone?: "default" | "primary" | "gold";
     className?: string;
 }
 
@@ -15,11 +15,11 @@ interface StatTileProps {
 export function StatTile({ label, value, hint, tone = "default", className }: StatTileProps) {
     return (
         <div className={cx("flex flex-col gap-1 rounded-xl border border-line bg-surface px-4 py-3", className)}>
-            <span className="text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase">{label}</span>
+            <span className="text-xs font-medium tracking-[0.08em] text-ink-subtle uppercase">{label}</span>
             <span
                 className={cx(
                     "text-xl font-semibold tracking-tight tabular-nums",
-                    tone === "primary" ? "text-primary" : tone === "gold" ? "text-gold-ink" : tone === "accent" ? "text-accent" : "text-ink",
+                    tone === "primary" ? "text-accent" : tone === "gold" ? "text-gold-ink" : "text-ink",
                 )}
             >
                 {value}

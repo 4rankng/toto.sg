@@ -7,23 +7,29 @@ import { InsightsScreen } from "@/pages/insights-screen";
 import { Layout } from "@/pages/layout";
 import { NotFound } from "@/pages/not-found";
 import { StrategiesScreen } from "@/pages/strategies-screen";
+import { LineBuilderProvider } from "@/providers/line-builder-provider";
 import { RouteProvider } from "@/providers/router-provider";
+import { ThemeProvider } from "@/providers/theme-provider";
 import "@/styles/globals.css";
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
-        <BrowserRouter>
-            <RouteProvider>
-                <Routes>
-                    <Route element={<Layout />}>
-                        <Route path="/" element={<HomeScreen />} />
-                        <Route path="/history" element={<HistoryScreen />} />
-                        <Route path="/insights" element={<InsightsScreen />} />
-                        <Route path="/strategies" element={<StrategiesScreen />} />
-                        <Route path="*" element={<NotFound />} />
-                    </Route>
-                </Routes>
-            </RouteProvider>
-        </BrowserRouter>
+        <ThemeProvider>
+            <LineBuilderProvider>
+                <BrowserRouter>
+                    <RouteProvider>
+                        <Routes>
+                            <Route element={<Layout />}>
+                                <Route path="/" element={<HomeScreen />} />
+                                <Route path="/history" element={<HistoryScreen />} />
+                                <Route path="/insights" element={<InsightsScreen />} />
+                                <Route path="/strategies" element={<StrategiesScreen />} />
+                                <Route path="*" element={<NotFound />} />
+                            </Route>
+                        </Routes>
+                    </RouteProvider>
+                </BrowserRouter>
+            </LineBuilderProvider>
+        </ThemeProvider>
     </StrictMode>,
 );

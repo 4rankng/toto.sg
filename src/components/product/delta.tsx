@@ -1,7 +1,7 @@
 import { cx } from "@/utils/cx";
 
 interface DeltaProps {
-    /** Signed difference; positive reads green, negative red. */
+    /** Signed difference; positive reads cold, negative hot. */
     value: number;
     digits?: number;
     /** Prefix shown before the number, e.g. "+" is implied. */

@@ -74,7 +74,7 @@ function ChartTooltip({ tip }: { tip: TooltipState }) {
         >
             <p className="text-xs font-medium text-ink">{tip.title}</p>
             {tip.lines.map((line) => (
-                <p key={line} className="mt-0.5 font-mono text-[11px] text-ink-muted tabular-nums">
+                <p key={line} className="mt-0.5 font-mono text-xs text-ink-muted tabular-nums">
                     {line}
                 </p>
             ))}
@@ -184,7 +184,10 @@ export function FrequencyChart({ counts, expected, totalDraws, hotNumber, coldNu
                         strokeWidth={1}
                         strokeDasharray="5 4"
                     />
-                    <text x={width - padRight} y={yOf(expected) - 6} textAnchor="end" fontSize={11} fill="var(--color-ink-subtle)">
+                    {/* The label sits on a chip of the panel colour so it never
+                        reads on top of a bar. */}
+                    <rect x={width - padRight - 82} y={yOf(expected) - 21} width={82} height={16} rx={4} fill="var(--color-surface)" />
+                    <text x={width - padRight} y={yOf(expected) - 9} textAnchor="end" fontSize={11} fill="var(--color-ink-subtle)">
                         expected {expected.toFixed(1)}
                     </text>
                 </g>
@@ -376,7 +379,7 @@ interface CountDistributionChartProps {
     /** Expected count of that unit per draw. */
     expectedValue: number;
     totalDraws: number;
-    /** Series colour: primary (emerald) or the secondary amber. */
+    /** Series colour: the brand violet or the cold end of the data ramp. */
     tone?: "primary" | "secondary";
     className?: string;
 }
@@ -510,8 +513,8 @@ interface DecadeHeatmapProps {
     className?: string;
 }
 
-/** Muted red ramp from the observed minimum to the observed maximum. */
-const RAMP = ["rgb(236 253 245)", "rgb(209 250 229)", "rgb(167 243 208)", "rgb(110 231 183)", "rgb(52 211 153)", "rgb(5 150 105)"];
+/** Violet ramp from the observed minimum to the observed maximum. */
+const RAMP = ["rgb(244 242 255)", "rgb(228 222 255)", "rgb(203 190 255)", "rgb(167 141 255)", "rgb(133 96 255)", "rgb(107 75 255)"];
 
 /**
  * Decade-by-year heat strip. Each cell is the average picks per draw in that
@@ -646,7 +649,7 @@ export function DecadeHeatmap({ rows, columns, cells, marginal, className }: Dec
                 )}
             </svg>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-ink-faint">
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-ink-faint">
                 <span className="font-mono tabular-nums">{min.toFixed(2)}</span>
                 <span className="flex gap-px">
                     {RAMP.map((colour) => (

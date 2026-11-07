@@ -13,7 +13,7 @@ interface BallProps {
 
 // Sizes step down on narrow screens so a hero row never overflows its panel.
 const ballSizes: Record<BallSize, string> = {
-    xs: "h-5 w-5 text-[10px]",
+    xs: "h-5 w-5 text-xs",
     sm: "h-7 w-7 text-xs",
     md: "h-8 w-8 text-xs sm:h-9 sm:w-9 sm:text-sm",
     lg: "h-9 w-9 text-sm sm:h-11 sm:w-11 sm:text-base",

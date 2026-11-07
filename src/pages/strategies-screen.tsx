@@ -1,5 +1,6 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight } from "@untitledui/icons";
+import { useNavigate } from "react-router";
 import { Ball, BallRow } from "@/components/balls";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
@@ -12,6 +13,7 @@ import { td, tdNum, tdStickyNum, th, thNum } from "@/components/product/table";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { type StrategiesFile, type StrategyRow, formatDate, formatSigned, useJson } from "@/lib/data";
 import { usePageTitle } from "@/pages/layout";
+import { useLineBuilder } from "@/providers/line-builder-provider";
 import { cx } from "@/utils/cx";
 
 type SortKey = "score" | "hits" | "z" | "prizes" | "pnl";
@@ -31,7 +33,8 @@ const PODIUM = [
 ] as const;
 
 export const StrategiesScreen = () => {
-    usePageTitle("Strategy league — 203 strategies vs chance");
+    const [title, setTitle] = useState("Strategy league");
+    usePageTitle(title);
 
     const { data, isLoading, error } = useJson<StrategiesFile>("/data/strategies.json");
     // Phones get the large control size so every filter stays tappable.
@@ -40,8 +43,21 @@ export const StrategiesScreen = () => {
     const [family, setFamily] = useState("all");
     const [sort, setSort] = useState<SortKey>("score");
     const [expanded, setExpanded] = useState<string | null>(null);
+    const navigate = useNavigate();
+    const { setLine } = useLineBuilder();
 
     const baseline = data?.meta.chance.scoreBaseline ?? 45;
+
+    // The league's size is part of the page title, and it changes with the data.
+    useEffect(() => {
+        if (data) setTitle(`Strategy league — ${data.strategies.length} strategies vs chance`);
+    }, [data]);
+
+    /** Hand a strategy's pick to the board on the home page. */
+    const loadLine = (pick: number[]) => {
+        setLine(pick);
+        navigate("/");
+    };
 
     const familyOptions = useMemo(
         () => [{ id: "all", label: "All families" }, ...(data?.meta.families ?? []).map((name) => ({ id: name, label: name }))],
@@ -88,8 +104,8 @@ export const StrategiesScreen = () => {
         <div className="flex flex-col gap-4">
             <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
                 <div>
-                    <p className="text-[11px] font-medium tracking-[0.08em] text-ink-faint uppercase">Compare</p>
-                    <h1 className="text-xl font-semibold tracking-tight text-ink">Strategy league</h1>
+                    <p className="text-xs font-medium tracking-[0.08em] text-ink-faint uppercase">Compare</p>
+                    <h1 className="font-display text-xl font-semibold tracking-tight text-ink">Strategy league</h1>
                     <p className="mt-0.5 max-w-2xl text-sm text-ink-subtle">
                         {data.strategies.length} number-picking rules, each walked forward over {meta.folds} folds. Ranked against the chance baseline (score{" "}
                         <span className="font-mono tabular-nums">{baseline}</span>) — this measures past performance, not predictive power.
@@ -117,7 +133,7 @@ export const StrategiesScreen = () => {
                     return (
                         <div key={row.id} className={cx("rounded-xl border border-line p-4 ring-1 ring-inset", medal.bg, medal.ring)}>
                             <div className="flex items-baseline justify-between gap-2">
-                                <span className={cx("text-[11px] font-semibold tracking-[0.08em] uppercase", medal.text)}>{medal.label}</span>
+                                <span className={cx("text-xs font-semibold tracking-[0.08em] uppercase", medal.text)}>{medal.label}</span>
                                 <span className="font-mono text-xs text-ink-subtle tabular-nums">#{row.rank}</span>
                             </div>
                             <p className="mt-1 truncate text-sm font-semibold text-ink">{row.name}</p>
@@ -142,8 +158,15 @@ export const StrategiesScreen = () => {
                                     <dd className="font-mono text-ink tabular-nums">{row.effPrizes}</dd>
                                 </div>
                             </dl>
-                            <div className="mt-3">
+                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                                 <BallRow numbers={row.currentPick} size="sm" />
+                                <button
+                                    type="button"
+                                    onClick={() => loadLine(row.currentPick)}
+                                    className="rounded-md border border-line bg-surface px-2 py-1 text-xs font-medium whitespace-nowrap text-ink-muted transition-colors duration-150 hover:bg-surface-2 hover:text-ink"
+                                >
+                                    Load line
+                                </button>
                             </div>
                         </div>
                     );
@@ -195,7 +218,7 @@ export const StrategiesScreen = () => {
                 }
             >
                 <div className="min-w-0 overflow-x-auto xl:overflow-visible">
-                    <table className="w-full min-w-[1120px] border-collapse text-left">
+                    <table className="w-full min-w-[1180px] border-collapse text-left">
                         <thead>
                             <tr>
                                 <th className={cx(th, "sticky left-0 z-20 pl-4 first:rounded-tl-xl")}>#</th>
@@ -233,14 +256,14 @@ export const StrategiesScreen = () => {
                                                     ) : (
                                                         <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
                                                     )}
-                                                    <span className="truncate font-medium text-ink group-hover:text-primary">{row.name}</span>
+                                                    <span className="truncate font-medium text-ink group-hover:text-accent">{row.name}</span>
                                                 </button>
                                             </td>
                                             <td className={td}>
                                                 <FamilyChip family={row.family} />
                                             </td>
                                             <td className={td}>
-                                                <div className="flex w-44 items-center gap-2">
+                                                <div className="flex w-32 items-center gap-2">
                                                     <ScoreBar score={row.score} baseline={baseline} tone={row.rank === 1 ? "gold" : "primary"} />
                                                     <span className="w-9 text-right font-mono text-xs text-ink tabular-nums">{row.score.toFixed(1)}</span>
                                                 </div>
@@ -252,10 +275,19 @@ export const StrategiesScreen = () => {
                                             <td className={tdNum}>{row.effPrizes}</td>
                                             <td className={tdNum}>{formatSigned(row.pnlPerDraw, 2)}</td>
                                             <td className={cx(td, "pr-4")}>
-                                                <div className="flex items-center gap-0.5">
-                                                    {row.currentPick.map((n) => (
-                                                        <Ball key={n} n={n} size="xs" />
-                                                    ))}
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-0.5">
+                                                        {row.currentPick.map((n) => (
+                                                            <Ball key={n} n={n} size="xs" />
+                                                        ))}
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => loadLine(row.currentPick)}
+                                                        className="rounded-md border border-line px-2 py-1 text-xs font-medium whitespace-nowrap text-ink-muted transition-colors duration-150 hover:bg-surface-2 hover:text-ink"
+                                                    >
+                                                        Load line
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -267,37 +299,37 @@ export const StrategiesScreen = () => {
                                                             <p className="max-w-2xl text-sm text-ink-muted">{row.description}</p>
                                                             <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
                                                                 <div>
-                                                                    <dt className="text-[11px] tracking-[0.06em] text-ink-faint uppercase">Evaluated draws</dt>
+                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Evaluated draws</dt>
                                                                     <dd className="font-mono text-sm text-ink tabular-nums">{row.evaluatedDraws}</dd>
                                                                 </div>
                                                                 <div>
-                                                                    <dt className="text-[11px] tracking-[0.06em] text-ink-faint uppercase">Total hits</dt>
+                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Total hits</dt>
                                                                     <dd className="font-mono text-sm text-ink tabular-nums">{row.totalHits}</dd>
                                                                 </div>
                                                                 <div>
-                                                                    <dt className="text-[11px] tracking-[0.06em] text-ink-faint uppercase">Mean / line</dt>
+                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Mean / line</dt>
                                                                     <dd className="font-mono text-sm text-ink tabular-nums">{row.meanHits.toFixed(3)}</dd>
                                                                 </div>
                                                                 <div>
-                                                                    <dt className="text-[11px] tracking-[0.06em] text-ink-faint uppercase">Expected / line</dt>
+                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Expected / line</dt>
                                                                     <dd className="font-mono text-sm text-ink tabular-nums">{row.expectedHits.toFixed(4)}</dd>
                                                                 </div>
                                                                 <div>
-                                                                    <dt className="text-[11px] tracking-[0.06em] text-ink-faint uppercase">Total prizes</dt>
+                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Total prizes</dt>
                                                                     <dd className="font-mono text-sm text-ink tabular-nums">{row.totalPrizes}</dd>
                                                                 </div>
                                                                 <div>
-                                                                    <dt className="text-[11px] tracking-[0.06em] text-ink-faint uppercase">Effective prizes</dt>
+                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Effective prizes</dt>
                                                                     <dd className="font-mono text-sm text-ink tabular-nums">{row.effPrizes}</dd>
                                                                 </div>
                                                                 <div>
-                                                                    <dt className="text-[11px] tracking-[0.06em] text-ink-faint uppercase">Last 12 draws</dt>
+                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">Last 12 draws</dt>
                                                                     <dd className="mt-1">
                                                                         <RecentHits hits={row.recent12} draws={12} expectedPerLine={row.expectedHits} />
                                                                     </dd>
                                                                 </div>
                                                                 <div>
-                                                                    <dt className="text-[11px] tracking-[0.06em] text-ink-faint uppercase">P&amp;L / draw</dt>
+                                                                    <dt className="text-xs tracking-[0.06em] text-ink-faint uppercase">P&amp;L / draw</dt>
                                                                     <dd className="font-mono text-sm text-ink tabular-nums">
                                                                         {formatSigned(row.pnlPerDraw, 2)}
                                                                     </dd>
@@ -305,7 +337,7 @@ export const StrategiesScreen = () => {
                                                             </dl>
                                                         </div>
                                                         <div>
-                                                            <p className="text-[11px] tracking-[0.06em] text-ink-faint uppercase">
+                                                            <p className="text-xs tracking-[0.06em] text-ink-faint uppercase">
                                                                 Current pick — draw {meta.nextDraw}
                                                             </p>
                                                             <div className="mt-2 flex items-center gap-1.5">

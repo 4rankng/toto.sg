@@ -1,6 +1,6 @@
 # toto.sg
 
-Unofficial Singapore TOTO statistics: the latest result, the full draw archive, statistical insights, and a walk-forward league of 203 number-picking strategies scored against chance.
+Unofficial Singapore TOTO statistics: the latest result, the full draw archive, statistical insights, a walk-forward league of 204 number-picking strategies scored against chance, and the number heat board with its line builder.
 
 Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysis, league scoring) runs offline; the client only renders. No backend — the one serverless component is a Netlify Function that keeps the "latest result" panel fresh between rebuilds.
 
@@ -8,12 +8,12 @@ Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysi
 
 | Route         | Surface | What it is                                                                                                 |
 | ------------- | ------- | ---------------------------------------------------------------------------------------------------------- |
-| `/`           | Monitor | Latest draw as six balls + additional, countdown to the next draw, four stat tiles, league top-5           |
+| `/`           | Monitor | Latest draw as six balls + additional, countdown to the next draw, league top-5, the 7×7 number board + line builder |
 | `/history`    | Explore | Searchable, paginated archive of every draw; a row expands to that draw's structure                        |
 | `/insights`   | Learn   | Six panels of charts over the 6/49 era: frequency, sum distribution, parity, decade spread, pairs, weekday |
-| `/strategies` | Compare | The full 203-row strategy league with filters, sorting and expandable rows                                 |
+| `/strategies` | Compare | The full 204-row strategy league with filters, sorting and expandable rows; each row can load its pick into the board |
 
-Design language: dark data product (near-black canvas, hairline borders), one accent (TOTO red), gold reserved for jackpot and rank-1 highlights, tabular numerals throughout.
+Design language: a light data product — tinted canvas `#F3F2FA`, white panels, hairline borders `#DADCEE`, one accent (violet `#6B4BFF`, `#8B6CFF` in dark mode), and a diverging data ramp that runs cold `#2467E8` → neutral → hot `#E8346F`. Gold `#F5C518` is reserved for the jackpot and the rank-1 podium; there is no green and no red chrome. Type is Sora for display and DM Sans for body, tabular numerals throughout. Dark mode follows `prefers-color-scheme` and the header carries an explicit light/dark toggle.
 
 ## Quickstart
 
@@ -33,7 +33,7 @@ Node ≥ 18 required. `npm run refresh` is idempotent: it keeps `public/data/dra
 | ----------------------------- | ----------------- | ------------------------------------------------------------------------- |
 | `public/data/draws.json`      | `npm run refresh` | 1,892 draws, #2341–#4232, with prize tables where available               |
 | `public/data/analysis.json`   | `npm run refresh` | 6/49-era statistics (coverage, frequency, hot/cold, sums, pairs, weekday) |
-| `public/data/strategies.json` | research pipeline | 203 ranked strategies + a `meta` block (folds, chance baseline, families) |
+| `public/data/strategies.json` | research pipeline | 204 ranked strategies + a `meta` block (folds, chance baseline, families) |
 
 `strategies.json` is a **committed league artifact**: it is re-scored by the research pipeline, not by `npm run refresh`, so a routine data refresh never clobbers it. `npm run verify:data` checks all three artifacts — draw ordering, number ranges, analysis sections, and the league contract (ranks form a permutation, scores are 0–100, every current pick holds six unique numbers) — and exits non-zero on drift.
 
@@ -45,6 +45,12 @@ Strategy league semantics: each strategy picks six numbers from strictly earlier
 - **Per-draw backfill + live fragment**: [Singapore Pools](https://www.singaporepools.com.sg) (official results pages). Data © Singapore Pools. Reprinted for personal, non-commercial use only.
 
 Analysis and strategy stats use the **6/49 era only** (draws since 9 Oct 2014); the history page shows the full archive back to 2008.
+
+## The number board
+
+`/` carries a 7×7 board of every number from 1 to 49. Each cell shows how often the number turned up and is tinted by the z-score of that count against the expectation for the window — the **All time** window reads `analysis.json` (6/49 era), the **Last 50** window is counted client-side from the trailing 50 draws in `draws.json`. The dot marks the latest draw's numbers.
+
+Below the grid, the line builder holds six slots: tap cells to fill it (re-tap to swap a number out), **Quick pick** fills it with a seeded random line (seed = the next draw number, so it always returns the same six), **Clear** empties it and **Copy line** puts it on the clipboard. The board state is shared, so a strategy's **Load line** button on `/strategies` hands its current pick straight to the board on the home page.
 
 ## Deploy to Netlify
 
