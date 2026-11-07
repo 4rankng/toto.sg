@@ -13,7 +13,7 @@ const NAV_ITEMS = [
 /** Set the document title for the active route; pages call this themselves. */
 export function usePageTitle(title: string) {
     useEffect(() => {
-        document.title = `${title} · toto.sg`;
+        document.title = title;
     }, [title]);
 }
 
@@ -123,7 +123,7 @@ export const Layout = () => {
             <footer className="border-t border-line">
                 <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-1 px-4 py-3 font-mono text-[10px] leading-4 text-ink-subtle md:flex-row md:items-center md:justify-between md:px-6">
                     <p>
-                        <span className="font-semibold text-ink-muted">toto.sg</span> · unofficial Singapore TOTO statistics · not affiliated with Singapore Pools
+                        Unofficial Singapore TOTO statistics · not affiliated with Singapore Pools
                     </p>
                     <p>6/49 era since Oct 2014 · for entertainment and analysis only</p>
                 </div>
