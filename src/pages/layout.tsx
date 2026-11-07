@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Menu01 } from "@untitledui/icons";
 import {
     Button as AriaButton,
@@ -27,12 +27,44 @@ export function usePageTitle(title: string) {
 
 export const Layout = () => {
     const mainRef = useRef<HTMLElement>(null);
+    const headerRef = useRef<HTMLElement>(null);
     const navigate = useNavigate();
     const { pathname } = useLocation();
+    const [headerHidden, setHeaderHidden] = useState(false);
 
     useEffect(() => {
         mainRef.current?.focus({ preventScroll: true });
+        setHeaderHidden(false);
     }, [pathname]);
+
+    // The top bar is an instrument strip, not permanent chrome: it drops away
+    // while scrolling down and returns the moment the reader scrolls up.
+    useEffect(() => {
+        let lastY = window.scrollY;
+        let frame = 0;
+
+        const onScroll = () => {
+            if (frame !== 0) return;
+            frame = window.requestAnimationFrame(() => {
+                frame = 0;
+                const y = window.scrollY;
+                const delta = y - lastY;
+                const focusInside = headerRef.current?.contains(document.activeElement) ?? false;
+
+                if (y < 24) setHeaderHidden(false);
+                else if (delta > 6 && !focusInside) setHeaderHidden(true);
+                else if (delta < -6) setHeaderHidden(false);
+
+                lastY = y;
+            });
+        };
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", onScroll);
+            if (frame !== 0) window.cancelAnimationFrame(frame);
+        };
+    }, []);
 
     return (
         <div className="flex min-h-dvh flex-col">
@@ -43,7 +75,14 @@ export const Layout = () => {
                 Skip to content
             </a>
 
-            <header className="sticky top-0 z-30 h-13 border-b border-line bg-canvas/75 backdrop-blur-md">
+            <header
+                ref={headerRef}
+                inert={headerHidden}
+                className={cx(
+                    "sticky top-0 z-30 h-13 border-b border-line bg-canvas/75 backdrop-blur-md transition-transform duration-200 ease-out will-change-transform",
+                    headerHidden ? "-translate-y-full" : "translate-y-0",
+                )}
+            >
                 <div className="mx-auto flex h-full w-full max-w-[1500px] items-center gap-4 px-4 md:px-6">
                     <nav aria-label="Main" className="hidden h-full items-stretch md:flex">
                         {NAV_ITEMS.map((item) => (
