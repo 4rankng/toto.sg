@@ -10,7 +10,7 @@ Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysi
 | ------------- | ------- | ---------------------------------------------------------------------------------------------------------- |
 | `/`           | Monitor | Latest draw as six balls + additional, the full prize table, a next-draw clock, the top 6 strategies, and the 7×7 heat board with its play slip |
 | `/history`    | Explore | Searchable, paginated archive of every draw; a row expands to that draw's structure                        |
-| `/insights`   | Learn   | Six panels of charts over the 6/49 era: frequency, sum distribution, parity, decade spread, pairs, weekday |
+| `/insights`   | Learn   | 50 panels across 6 galleries: frequency, pairwise correlations, autocorrelation, ticket geometry, folklore waves & 2026 Five Elements, and empirical pari-mutuel crowd tax analytics |
 | `/strategies` | Compare | The full 204-strategy list with search, type filter, sorting, expandable details and each pick shown as six balls |
 
 Design language: a dark-first mission-control console — canvas `#041018`, panel surfaces `#07202C`, 1px teal hairlines `#124155`, one signal colour (teal `#2EE6C5`, `#0F9E86` in light mode) with cyan `#35D6FF` as the second data hue, gold for the jackpot, and a cold→hot ramp for the heat board. Type is Sora for display, DM Sans for body, mono for labels and figures. The console is dark by default; the header toggle pins light (`data-theme`).
