@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
-import { BallRow } from "@/components/balls";
+import { Ball, BallRow } from "@/components/balls";
 import { Panel } from "@/components/panel";
 import { type BoardWindow, type CopyStatus, HeatLegend, NumberBoard } from "@/components/product/number-board";
 import { ScoreBar } from "@/components/product/score-bar";
 import { StatTile } from "@/components/product/stat-tile";
-import { td } from "@/components/product/table";
 import { useClipboard } from "@/hooks/use-clipboard";
 import { useCountdown } from "@/hooks/use-countdown";
 import {
@@ -16,6 +15,7 @@ import {
     formatDate,
     formatNumber,
     formatSgd,
+    formatSigned,
     nextDrawDate,
     useJson,
     weekdayOf,
@@ -225,7 +225,7 @@ export const HomeScreen = () => {
                 </Panel>
                 <Panel
                     title="Strategy league — top 5"
-                    description="Walk-forward performance against the chance baseline. Not predictive power."
+                    description="Walk-forward performance against the chance baseline. Each row carries the strategy's pick for the next draw."
                     actions={
                         <Link to="/strategies" className="text-sm font-medium text-accent transition-colors duration-150 hover:text-accent-strong">
                             All {league?.strategies.length ?? 0} strategies →
@@ -233,31 +233,45 @@ export const HomeScreen = () => {
                     }
                     isFlush
                 >
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[420px] border-collapse text-left">
-                            <thead>
-                                <tr className="border-b border-line">
-                                    <th className="px-4 py-2 text-xs font-medium tracking-[0.06em] text-ink-subtle uppercase">#</th>
-                                    <th className="px-4 py-2 text-xs font-medium tracking-[0.06em] text-ink-subtle uppercase">Strategy</th>
-                                    <th className="px-4 py-2 text-xs font-medium tracking-[0.06em] text-ink-subtle uppercase">Score</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {topStrategies.map((strategy) => (
-                                    <tr key={strategy.id} className="border-b border-line/70 last:border-0">
-                                        <td className={td + " pl-4 font-mono text-xs tabular-nums"}>{strategy.rank}</td>
-                                        <td className={td + " max-w-56 truncate font-medium text-ink"}>{strategy.name}</td>
-                                        <td className={td + " pr-4"}>
-                                            <div className="flex items-center gap-2">
-                                                <ScoreBar score={strategy.score} baseline={baseline} tone={strategy.rank === 1 ? "gold" : "primary"} />
-                                                <span className="w-9 text-right font-mono text-xs text-ink tabular-nums">{strategy.score.toFixed(1)}</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <ol className="divide-y divide-line/70">
+                        {topStrategies.map((strategy) => (
+                            <li key={strategy.id} className="px-4 py-3">
+                                {/* Rank and score on one line. */}
+                                <div className="flex items-center gap-2">
+                                    <span className="w-4 shrink-0 font-mono text-xs text-ink-faint tabular-nums">{strategy.rank}</span>
+                                    <ScoreBar
+                                        score={strategy.score}
+                                        baseline={baseline}
+                                        tone={strategy.rank === 1 ? "gold" : "primary"}
+                                        className="min-w-0 flex-1"
+                                    />
+                                    <span className="w-9 shrink-0 text-right font-mono text-xs text-ink tabular-nums">
+                                        {strategy.score.toFixed(1)}
+                                    </span>
+                                </div>
+
+                                {/* Name and the six numbers it would play. */}
+                                <div className="mt-1.5 flex items-center justify-between gap-2">
+                                    <span className="min-w-0 truncate text-sm font-medium text-ink">{strategy.name}</span>
+                                    <span
+                                        role="img"
+                                        aria-label={`${strategy.name} picks ${strategy.currentPick.join(", ")}`}
+                                        className="flex shrink-0 items-center gap-0.5"
+                                    >
+                                        {strategy.currentPick.map((n) => (
+                                            <Ball key={n} n={n} size="xs" />
+                                        ))}
+                                    </span>
+                                </div>
+
+                                {/* The league's own numbers, kept quiet. */}
+                                <p className="mt-1 truncate text-xs text-ink-faint">
+                                    {strategy.family} · {strategy.meanHits.toFixed(2)} hits/line · z {formatSigned(strategy.zScore)} ·{" "}
+                                    {strategy.effPrizes} prizes
+                                </p>
+                            </li>
+                        ))}
+                    </ol>
                 </Panel>
             </div>
 
@@ -268,7 +282,7 @@ export const HomeScreen = () => {
                         latestNumbers={numbers}
                         line={line}
                         onToggle={toggle}
-                        onQuickPick={() => setLine(baselinePick ?? quickPick())}
+                        onQuickPick={() => setLine(quickPick())}
                         onClear={clear}
                         onCopy={handleCopy}
                         copyStatus={copyStatus}
@@ -276,8 +290,7 @@ export const HomeScreen = () => {
                     />
                     <p className="mt-3 text-xs text-ink-faint">
                         Blue runs cold, pink runs hot; the tint is the z-score against a uniform draw. The dot marks the latest draw&apos;s numbers. Quick pick
-                        hands over the seeded random baseline the league measures every other strategy against — the same six numbers the{" "}
-                        <span className="font-mono text-ink-muted">quickpick</span> strategy carries into draw {nextDrawNo || "—"}.
+                        draws a fresh, exactly-uniform line every tap — Web Crypto randomness with bias-free sampling, the same odds as any line.
                     </p>
                 </Panel>
 
