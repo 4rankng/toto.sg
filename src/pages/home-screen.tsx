@@ -295,7 +295,7 @@ export const HomeScreen = () => {
                                     return (
                                         <div
                                             key={group}
-                                            className="grid grid-cols-[1.5rem_auto_1fr] items-baseline gap-x-2 border-b border-line-soft py-1 last:border-0"
+                                            className="grid grid-cols-[1.5rem_auto_1fr] items-baseline gap-x-2 border-b border-line-soft py-2 last:border-0"
                                         >
                                             <span className="text-[10px] font-semibold tracking-[0.06em] text-ink-subtle uppercase">
                                                 {group.replace("g", "G")}
@@ -365,13 +365,13 @@ export const HomeScreen = () => {
                 >
                     <ol className="divide-y divide-line-soft">
                         {topStrategies.map((strategy) => (
-                            <li key={strategy.id} className="px-4 py-1.5">
+                            <li key={strategy.id} className="px-4 py-1">
                                 <div className="flex items-baseline gap-2">
                                     <span className="w-4 shrink-0 font-mono text-[11px] text-ink-subtle tabular-nums">{strategy.rank}</span>
                                     <span className="min-w-0 flex-1 truncate text-[13px] leading-5 font-medium text-ink">{strategy.name}</span>
                                     <span className="shrink-0 font-mono text-xs font-semibold text-ink tabular-nums">{strategy.score.toFixed(1)}</span>
                                 </div>
-                                <div className="mt-1.5 flex items-center gap-1 pl-6" aria-hidden="true">
+                                <div className="mt-1 flex items-center gap-1 pl-6" aria-hidden="true">
                                     {strategy.currentPick.map((n) => (
                                         <Ball key={n} n={n} size="sm" />
                                     ))}
