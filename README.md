@@ -1,6 +1,6 @@
 # toto.sg
 
-Unofficial Singapore TOTO statistics: the latest result, the full draw archive, statistical insights, a walk-forward league of 204 number-picking strategies scored against chance, and the number heat board with its line builder.
+Unofficial Singapore TOTO statistics: the latest result, the full draw archive, number stats, 204 number-picking strategies scored against random picks, and a 7×7 heat board with a System 6/7/8 play slip.
 
 Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysis, league scoring) runs offline; the client only renders. No backend — the one serverless component is a Netlify Function that keeps the "latest result" panel fresh between rebuilds.
 
@@ -11,7 +11,7 @@ Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysi
 | `/`           | Monitor | Latest draw as six balls + additional, the full prize table, a next-draw clock, the top 6 strategies, and the 7×7 heat board with its play slip |
 | `/history`    | Explore | Searchable, paginated archive of every draw; a row expands to that draw's structure                        |
 | `/insights`   | Learn   | Six panels of charts over the 6/49 era: frequency, sum distribution, parity, decade spread, pairs, weekday |
-| `/strategies` | Compare | The full 204-row strategy league with filters, sorting and expandable rows; each row can load its pick into the board |
+| `/strategies` | Compare | The full 204-strategy list with search, type filter, sorting, expandable details and each pick shown as six balls |
 
 Design language: a light data product — tinted canvas `#F3F2FA`, white panels, hairline borders `#DADCEE`, one accent (violet `#6B4BFF`, `#8B6CFF` in dark mode), and a diverging data ramp that runs cold `#2467E8` → neutral → hot `#E8346F`. Gold `#F5C518` is reserved for the jackpot and the rank-1 podium; there is no green and no red chrome. Type is Sora for display and DM Sans for body, tabular numerals throughout. Dark mode follows `prefers-color-scheme` and the header carries an explicit light/dark toggle.
 

@@ -4,7 +4,6 @@ import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
 import { type BoardWindow, type CopyStatus, HeatLegend, heatColour, LineSlip, NumberBoard } from "@/components/product/number-board";
 import { PageHeader } from "@/components/product/page-header";
-import { ScoreBar } from "@/components/product/score-bar";
 import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
 import { StatTile } from "@/components/product/stat-tile";
 import { useClipboard } from "@/hooks/use-clipboard";
@@ -37,10 +36,10 @@ const NUMBERS_PER_DRAW = 6;
 const PRIZE_GROUPS: PrizeKey[] = ["g2", "g3", "g4", "g5", "g6", "g7"];
 
 /** League rows shown on the home page. */
-const LEAGUE_ROWS = 6;
+const LEAGUE_ROWS = 5;
 
 /** Recent draws listed beside the countdown. */
-const RECENT_DRAWS = 7;
+const RECENT_DRAWS = 6;
 
 /** The countdown reads as one clock line: 02:01:20:41. */
 const Countdown = ({ days, hours, minutes, seconds }: { days: number; hours: number; minutes: number; seconds: number }) => {
@@ -193,7 +192,6 @@ export const HomeScreen = () => {
     const drawNo = live?.drawNo ?? latest.draw;
     const date = live?.date ?? latest.date;
     const prizes = live?.prizes ?? latest.prizes;
-    const baseline = league?.meta.chance.scoreBaseline ?? 45;
 
     const hotBall = analysis?.hot.all[0];
     const longestGap = analysis?.overdue[0];
@@ -262,7 +260,7 @@ export const HomeScreen = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-3 grid grid-cols-2 gap-x-5">
+                            <div className="mt-3 grid grid-cols-1 gap-x-5 sm:grid-cols-2">
                                 {PRIZE_GROUPS.map((group) => {
                                     const prize = prizes?.[group];
                                     return (
@@ -338,24 +336,16 @@ export const HomeScreen = () => {
                 >
                     <ol className="divide-y divide-line-soft">
                         {topStrategies.map((strategy) => (
-                            <li key={strategy.id} className="px-4 py-2">
+                            <li key={strategy.id} className="px-4 py-1.5">
                                 <div className="flex items-baseline gap-2">
                                     <span className="w-4 shrink-0 font-mono text-[11px] text-ink-subtle tabular-nums">{strategy.rank}</span>
                                     <span className="min-w-0 flex-1 truncate text-[13px] leading-5 font-medium text-ink">{strategy.name}</span>
                                     <span className="shrink-0 font-mono text-xs font-semibold text-ink tabular-nums">{strategy.score.toFixed(1)}</span>
                                 </div>
-                                <div className="mt-1 flex items-center gap-2 pl-6">
-                                    <ScoreBar
-                                        score={strategy.score}
-                                        baseline={baseline}
-                                        tone={strategy.rank === 1 ? "gold" : "primary"}
-                                        className="min-w-0 flex-1"
-                                    />
-                                    <span className="flex shrink-0 items-center gap-0.5" aria-hidden="true">
-                                        {strategy.currentPick.map((n) => (
-                                            <Ball key={n} n={n} size="xs" />
-                                        ))}
-                                    </span>
+                                <div className="mt-1.5 flex items-center gap-1 pl-6" aria-hidden="true">
+                                    {strategy.currentPick.map((n) => (
+                                        <Ball key={n} n={n} size="sm" />
+                                    ))}
                                 </div>
                             </li>
                         ))}

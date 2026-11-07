@@ -1,24 +1,14 @@
-import { type MouseEvent as ReactMouseEvent, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
 import { PageHeader } from "@/components/product/page-header";
-import { SectionHeading } from "@/components/product/section-heading";
 import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
+import { StatTile } from "@/components/product/stat-tile";
 import { td, tdNum, th, thNum } from "@/components/product/table";
 import { CountDistributionChart, DecadeHeatmap, FrequencyChart, type HeatmapCell, type SumBin, SumHistogram, WeekdayChart } from "@/components/toto-charts";
-import { type Analysis, type Draw, drawDecades, drawSum, formatDate, formatNumber, useJson } from "@/lib/data";
+import { type Analysis, type Draw, drawDecades, drawSum, formatDate, formatNumber, formatSgd, formatSigned, useJson } from "@/lib/data";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
-
-/** The six panels, in reading order — the nav links to these ids. */
-const PANELS = [
-    { id: "frequency", label: "Frequency" },
-    { id: "sum-distribution", label: "Sums" },
-    { id: "odd-even", label: "Odd / even" },
-    { id: "decade-spread", label: "Decades" },
-    { id: "pairs", label: "Pairs" },
-    { id: "weekday", label: "Weekday" },
-] as const;
 
 /** Decade buckets as `drawDecades` counts them: floor((n - 1) / 10). */
 const DECADE_LABELS = ["1–10", "11–20", "21–30", "31–40", "41–49"];
@@ -41,12 +31,25 @@ const LOW_POOL = 24;
 const PAIRS_PER_DRAW = 15;
 const PAIRS_IN_POOL = 1176;
 
+/** The trailing window compared against the all-time rate. */
+const RECENT_WINDOW = 50;
+
+const pct = (value: number) => `${Math.round(value * 100)}%`;
+
 const InsightsSkeleton = () => (
     <DataLoading label="Loading the statistics">
         <PageHeaderSkeleton />
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-72 rounded-xl" />
-        <Skeleton className="h-64 rounded-xl" />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+            {Array.from({ length: 8 }, (_, i) => (
+                <Skeleton key={i} className="h-16" />
+            ))}
+        </div>
+        <div className="grid gap-3 lg:grid-cols-12">
+            <Skeleton className="h-80 rounded-xl lg:col-span-8" />
+            <Skeleton className="h-80 rounded-xl lg:col-span-4" />
+            <Skeleton className="h-80 rounded-xl lg:col-span-7" />
+            <Skeleton className="h-80 rounded-xl lg:col-span-5" />
+        </div>
     </DataLoading>
 );
 
@@ -55,47 +58,6 @@ export const InsightsScreen = () => {
 
     const { data: analysis, isLoading: analysisLoading, error: analysisError } = useJson<Analysis>("/data/analysis.json");
     const { data: draws, isLoading: drawsLoading, error: drawsError } = useJson<Draw[]>("/data/draws.json");
-    const [activeId, setActiveId] = useState<string>(PANELS[0].id);
-
-    // Scroll spy: the heading nearest the top of the viewport is the section
-    // the reader is on. The bottom margin keeps the band to the upper fifth of
-    // the screen, so a heading only counts once it is properly in view.
-    useEffect(() => {
-        const headings = PANELS.map((panel) => document.getElementById(panel.id)).filter((heading): heading is HTMLElement => heading !== null);
-        if (headings.length === 0) return;
-
-        const visible = new Set<string>();
-        const observer = new IntersectionObserver(
-            (entries) => {
-                for (const entry of entries) {
-                    if (entry.isIntersecting) visible.add(entry.target.id);
-                    else visible.delete(entry.target.id);
-                }
-                // The deepest visible heading wins — the one the reader reached.
-                let next: string | null = null;
-                for (const heading of headings) {
-                    if (visible.has(heading.id)) next = heading.id;
-                }
-                if (next) setActiveId(next);
-            },
-            { rootMargin: "-96px 0px -78% 0px", threshold: 0 },
-        );
-
-        for (const heading of headings) observer.observe(heading);
-        return () => observer.disconnect();
-        // Re-run once the panels exist: on first mount the data has not landed
-        // yet, so there are no headings to observe.
-    }, [analysis, draws]);
-
-    const scrollTo = (event: ReactMouseEvent<HTMLAnchorElement>, id: string) => {
-        const target = document.getElementById(id);
-        if (!target) return;
-
-        event.preventDefault();
-        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-        window.history.replaceState(null, "", `#${id}`);
-    };
 
     /** The 6/49 era: every draw from the coverage date onwards. */
     const eraDraws = useMemo(() => {
@@ -177,7 +139,7 @@ export const InsightsScreen = () => {
         return [...counts.entries()]
             .map(([key, count]) => ({ a: Math.floor(key / 50), b: key % 50, count }))
             .sort((x, y) => y.count - x.count || x.a - y.a || x.b - y.b)
-            .slice(0, 15);
+            .slice(0, 10);
     }, [eraDraws]);
 
     const weekdayDays = useMemo(
@@ -188,6 +150,32 @@ export const InsightsScreen = () => {
             }),
         [analysis],
     );
+
+    /** The last 50 draws against the all-time rate: who is heating up. */
+    const movement = useMemo(() => {
+        if (!analysis) return { risers: [], fallers: [], expected: 0 };
+        const expected = (RECENT_WINDOW * 6) / 49;
+        const rows = analysis.frequency.last50.map((count, index) => ({ number: index + 1, count, delta: count - expected }));
+        return {
+            expected,
+            risers: [...rows].sort((a, b) => b.delta - a.delta).slice(0, 5),
+            fallers: [...rows].sort((a, b) => a.delta - b.delta).slice(0, 5),
+        };
+    }, [analysis]);
+
+    /** Group 1 wins and the biggest jackpot per year. */
+    const group1 = useMemo(() => {
+        if (!analysis) return { years: [] as { year: string; wins: number; max: number }[], totalWins: 0, top: { year: "", max: 0 }, maxWins: 1 };
+        const years = Object.entries(analysis.group1ByYear)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([year, value]) => ({ year, wins: value.wins, max: value.maxJackpot }));
+        return {
+            years,
+            totalWins: years.reduce((sum, row) => sum + row.wins, 0),
+            top: years.reduce((best, row) => (row.max > best.max ? { year: row.year, max: row.max } : best), { year: "", max: 0 }),
+            maxWins: Math.max(...years.map((row) => row.wins), 1),
+        };
+    }, [analysis]);
 
     if (analysisLoading || drawsLoading) return <InsightsSkeleton />;
 
@@ -210,21 +198,7 @@ export const InsightsScreen = () => {
     const fridayDraws = analysis.weekday.Fri?.count ?? 0;
     const decadeMin = Math.min(...analysis.decades);
     const decadeMax = Math.max(...analysis.decades);
-    const hottest = (entry: { number: number; count: number } | undefined, tone: "primary" | "default", label: string) => {
-        if (!entry) return null;
-        return (
-            <div className="flex items-center gap-2.5 rounded-lg bg-surface-2 px-3 py-2">
-                <Ball n={entry.number} size="md" />
-                <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">{label}</p>
-                    <p className="text-xs text-ink tabular-nums">{formatNumber(entry.count)} draws</p>
-                </div>
-                <span className={cx("font-mono text-xs tabular-nums", tone === "primary" ? "text-accent" : "text-ink-muted")}>
-                    {((entry.count / total) * 100).toFixed(1)}%
-                </span>
-            </div>
-        );
-    };
+    const gapMax = Math.max(...analysis.overdue.map((entry) => entry.gap), 1);
 
     return (
         <div className="flex flex-col gap-3">
@@ -237,147 +211,126 @@ export const InsightsScreen = () => {
                             <span className="font-mono text-ink-muted tabular-nums">{formatNumber(total)}</span> draws
                         </span>
                         <span aria-hidden="true">·</span>
-                        <span>6/49 era</span>
-                        <span aria-hidden="true">·</span>
-                        <span>since {formatDate(coverage.firstDate)}</span>
+                        <span>
+                            {formatDate(coverage.firstDate)} → {formatDate(coverage.lastDate)}
+                        </span>
                     </>
                 }
-                description="How often each number appeared, how the six added up, and how they split by odd/even, decade, pair and weekday."
+                description="The 6/49 era in numbers: frequency, sums, parity, decades, pairs, runs, gaps, weekdays and jackpots."
             />
 
-            <nav aria-label="Insight panels" className="sticky top-13 z-20 -mx-4 border-b border-line bg-canvas/90 px-4 backdrop-blur-md md:-mx-6 md:px-6">
-                <div className="scrollbar-hide flex gap-1 overflow-x-auto">
-                    {PANELS.map((panel) => {
-                        const active = activeId === panel.id;
+            {/* The headline numbers, all in one strip. */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-4 xl:grid-cols-8">
+                <StatTile variant="bare" label="Draws" value={formatNumber(total)} hint="6/49 era" />
+                <StatTile variant="bare" label="Mean sum" value={analysis.sum.mean.toFixed(1)} hint={`median ${analysis.sum.median}`} />
+                <StatTile variant="bare" label="Most seen" value={hot?.number ?? "—"} hint={hot ? `${formatNumber(hot.count)} draws` : undefined} tone="primary" />
+                <StatTile variant="bare" label="Least seen" value={cold?.number ?? "—"} hint={cold ? `${formatNumber(cold.count)} draws` : undefined} />
+                <StatTile variant="bare" label="Consecutive" value={pct(analysis.consecutive.drawRate)} hint="of draws" />
+                <StatTile variant="bare" label="Repeats" value={pct(analysis.repeaters.rate)} hint={`${analysis.repeaters.avgCount.toFixed(2)} per draw`} />
+                <StatTile variant="bare" label="Group 1 wins" value={formatNumber(group1.totalWins)} hint="since 2014" />
+                <StatTile variant="bare" label="Top jackpot" value={formatSgd(group1.top.max)} hint={group1.top.year} tone="gold" />
+            </div>
 
-                        return (
-                            <a
-                                key={panel.id}
-                                href={`#${panel.id}`}
-                                onClick={(event) => scrollTo(event, panel.id)}
-                                aria-current={active ? "true" : undefined}
-                                className={cx(
-                                    "relative shrink-0 px-2.5 py-2 text-[11px] font-semibold whitespace-nowrap transition-colors duration-100 ease-linear",
-                                    active ? "text-accent" : "text-ink-subtle hover:text-ink",
-                                )}
-                            >
-                                {panel.label}
-                                {active && <span aria-hidden="true" className="absolute inset-x-2 bottom-0 h-[2px] rounded-t-full bg-accent" />}
-                            </a>
-                        );
-                    })}
-                </div>
-            </nav>
-
-            <Panel>
-                <SectionHeading
-                    id={PANELS[0].id}
-                    kicker="01"
-                    title="Frequency"
+            <div className="grid items-start gap-3 lg:grid-cols-12">
+                <Panel
+                    className="lg:col-span-8"
+                    title="Number frequency"
                     description={`How many of the ${formatNumber(total)} draws each number appeared in. The dashed line is the average.`}
-                />
-                <FrequencyChart
-                    counts={analysis.frequency.all}
-                    expected={expectedPerNumber}
-                    totalDraws={total}
-                    hotNumber={hot?.number}
-                    coldNumber={cold?.number}
-                    className="mt-3"
-                />
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    {hottest(hot, "primary", "Most seen")}
-                    {hottest(cold, "default", "Least seen")}
-                </div>
-            </Panel>
+                >
+                    <FrequencyChart
+                        counts={analysis.frequency.all}
+                        expected={expectedPerNumber}
+                        totalDraws={total}
+                        hotNumber={hot?.number}
+                        coldNumber={cold?.number}
+                        className="mt-2"
+                    />
+                </Panel>
 
-            <Panel>
-                <SectionHeading
-                    id={PANELS[1].id}
-                    kicker="02"
-                    title="Sums"
-                    description="How often the six numbers added up to each total, in bands of ten."
-                />
-                <SumHistogram bins={sumBins} mean={analysis.sum.mean} median={analysis.sum.median} band={band} totalDraws={total} className="mt-3" />
-                <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
-                    Mean <span className="font-mono text-ink-muted tabular-nums">{analysis.sum.mean.toFixed(1)}</span> · median{" "}
-                    <span className="font-mono text-ink-muted tabular-nums">{analysis.sum.median}</span> ·{" "}
-                    <span className="font-mono text-ink-muted tabular-nums">{formatNumber(band.count)}</span> of {formatNumber(total)} draws (
-                    {Math.round(band.share * 100)}%) fall between {band.lo} and {band.hi}.
-                </p>
-            </Panel>
-
-            <Panel>
-                <SectionHeading
-                    id={PANELS[2].id}
-                    kicker="03"
-                    title="Odd / even and low / high"
-                    description="How many of the six are odd or even, and how many are 24 or below."
-                />
-                <div className="mt-3 grid gap-5 md:grid-cols-2">
-                    <div>
-                        <p className="text-[11px] font-semibold text-ink-muted">Odd numbers per draw</p>
-                        <CountDistributionChart
-                            counts={analysis.oddEven}
-                            unit="odd numbers"
-                            expectedBucket={Math.round(oddExpected)}
-                            expectedValue={oddExpected}
-                            totalDraws={total}
-                            className="mt-1"
-                        />
+                <Panel
+                    className="lg:col-span-4"
+                    title="Last 50 vs all time"
+                    description={`Appearances in the last ${RECENT_WINDOW} draws against ${movement.expected.toFixed(1)} expected.`}
+                    isFlush
+                >
+                    <div className="grid grid-cols-2 divide-x divide-line-soft">
+                        {[
+                            { label: "Rising", rows: movement.risers, tone: "text-up" },
+                            { label: "Falling", rows: movement.fallers, tone: "text-down" },
+                        ].map((column) => (
+                            <div key={column.label} className="px-4 py-2">
+                                <p className="text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">{column.label}</p>
+                                <ol className="mt-1">
+                                    {column.rows.map((row) => (
+                                        <li key={row.number} className="flex items-center justify-between gap-2 py-0.5">
+                                            <Ball n={row.number} size="sm" />
+                                            <span className={cx("font-mono text-[11px] tabular-nums", column.tone)}>{formatSigned(row.delta, 1)}</span>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </div>
+                        ))}
                     </div>
-                    <div>
-                        <p className="text-[11px] font-semibold text-ink-muted">Low numbers (≤ 24) per draw</p>
-                        <CountDistributionChart
-                            counts={analysis.lowHigh}
-                            unit="low numbers (≤ 24)"
-                            expectedBucket={Math.round(lowExpected)}
-                            expectedValue={lowExpected}
-                            totalDraws={total}
-                            tone="secondary"
-                            className="mt-1"
-                        />
-                    </div>
-                </div>
-            </Panel>
+                </Panel>
 
-            <Panel>
-                <SectionHeading
-                    id={PANELS[3].id}
-                    kicker="04"
+                <Panel
+                    className="lg:col-span-7"
+                    title="Sum of the six numbers"
+                    description="How often each total came up, in bands of ten. Shaded band holds most draws."
+                >
+                    <SumHistogram bins={sumBins} mean={analysis.sum.mean} median={analysis.sum.median} band={band} totalDraws={total} className="mt-2" />
+                    <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
+                        Mean <span className="font-mono text-ink-muted tabular-nums">{analysis.sum.mean.toFixed(1)}</span> · median{" "}
+                        <span className="font-mono text-ink-muted tabular-nums">{analysis.sum.median}</span> ·{" "}
+                        <span className="font-mono text-ink-muted tabular-nums">{formatNumber(band.count)}</span> of {formatNumber(total)} draws (
+                        {Math.round(band.share * 100)}%) fall between {band.lo} and {band.hi}.
+                    </p>
+                </Panel>
+
+                <Panel className="lg:col-span-5" title="Odd numbers per draw" description={`Average ${oddExpected.toFixed(2)} of the six are odd.`}>
+                    <CountDistributionChart
+                        counts={analysis.oddEven}
+                        unit="odd numbers"
+                        expectedBucket={Math.round(oddExpected)}
+                        expectedValue={oddExpected}
+                        totalDraws={total}
+                        className="mt-2"
+                    />
+                </Panel>
+
+                <Panel className="lg:col-span-4" title="Low numbers per draw" description={`Number 24 or below. Average ${lowExpected.toFixed(2)} of six.`}>
+                    <CountDistributionChart
+                        counts={analysis.lowHigh}
+                        unit="low numbers (≤ 24)"
+                        expectedBucket={Math.round(lowExpected)}
+                        expectedValue={lowExpected}
+                        totalDraws={total}
+                        tone="secondary"
+                        className="mt-2"
+                    />
+                </Panel>
+
+                <Panel
+                    className="lg:col-span-8"
                     title="Decade spread"
                     description="Numbers per draw from each decade, year by year, with the all-time average on the right."
-                />
-                <DecadeHeatmap rows={DECADE_LABELS} columns={decades.years} cells={decades.cells} marginal={analysis.decades} className="mt-3" />
-                <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
-                    2014 holds only part of the year. Every decade sits between{" "}
-                    <span className="font-mono text-ink-muted tabular-nums">{decadeMin.toFixed(2)}</span> and{" "}
-                    <span className="font-mono text-ink-muted tabular-nums">{decadeMax.toFixed(2)}</span> numbers per draw.
-                </p>
-            </Panel>
+                >
+                    <DecadeHeatmap rows={DECADE_LABELS} columns={decades.years} cells={decades.cells} marginal={analysis.decades} className="mt-2" />
+                    <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
+                        2014 holds only part of the year. Every decade sits between{" "}
+                        <span className="font-mono text-ink-muted tabular-nums">{decadeMin.toFixed(2)}</span> and{" "}
+                        <span className="font-mono text-ink-muted tabular-nums">{decadeMax.toFixed(2)}</span> numbers per draw.
+                    </p>
+                </Panel>
 
-            <Panel>
-                <SectionHeading
-                    id={PANELS[4].id}
-                    kicker="05"
-                    title="Pairs"
-                    description="Pairs that appeared together most often."
-                />
-                <div className="mt-3 grid gap-5 md:grid-cols-[1fr_18rem]">
+                <Panel className="lg:col-span-7" title="Most common pairs" description="The 10 pairs that appeared in the same draw most often." isFlush>
                     <table className="w-full border-collapse text-left">
                         <thead>
                             <tr>
-                                <th scope="col" className={cx(th, "static w-10")}>
-                                    #
-                                </th>
-                                <th scope="col" className={cx(th, "static")}>
-                                    Pair
-                                </th>
-                                <th scope="col" className={cx(thNum, "static")}>
-                                    Draws
-                                </th>
-                                <th scope="col" className={cx(thNum, "static")}>
-                                    Share
-                                </th>
+                                <th className={cx(th, "static w-10")}>#</th>
+                                <th className={cx(th, "static")}>Pair</th>
+                                <th className={cx(thNum, "static")}>Draws</th>
+                                <th className={cx(thNum, "static")}>Share</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -395,24 +348,95 @@ export const InsightsScreen = () => {
                             ))}
                         </tbody>
                     </table>
-                    <div className="flex flex-col gap-2 self-start rounded-lg bg-surface-2 px-3 py-2.5">
-                        <p className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">What to expect</p>
-                        <p className="text-[11px] leading-4 text-ink-subtle">
-                            A fixed pair meets about <span className="font-mono text-ink-muted tabular-nums">{expectedPairMeetings.toFixed(1)}</span> times in{" "}
-                            {formatNumber(total)} draws. The top pair met <span className="font-mono text-ink-muted tabular-nums">{pairs[0]?.count ?? 0}</span> —
-                            the most of {formatNumber(PAIRS_IN_POOL)} possible pairs.
-                        </p>
-                    </div>
-                </div>
-            </Panel>
+                    <p className="mt-2 px-3 text-[11px] leading-4 text-ink-subtle">
+                        A fixed pair meets about <span className="font-mono text-ink-muted tabular-nums">{expectedPairMeetings.toFixed(1)}</span> times in{" "}
+                        {formatNumber(total)} draws. The top pair met{" "}
+                        <span className="font-mono text-ink-muted tabular-nums">{pairs[0]?.count ?? 0}</span> — the most of{" "}
+                        {formatNumber(PAIRS_IN_POOL)} possible pairs.
+                    </p>
+                </Panel>
 
-            <Panel>
-                <SectionHeading id={PANELS[5].id} kicker="06" title="Weekday" description="Draws per weekday, with the mean sum above each bar." />
-                <WeekdayChart days={weekdayDays} className="mt-3" />
-                <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
-                    Draws run Monday and Thursday. The {formatNumber(fridayDraws)} Friday draws are special draws, not a third weekly draw.
-                </p>
-            </Panel>
+                <Panel className="lg:col-span-5" title="Weekday" description="Draws per weekday, with the mean sum above each bar.">
+                    <WeekdayChart days={weekdayDays} className="mt-2" />
+                    <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
+                        Draws run Monday and Thursday. The {formatNumber(fridayDraws)} Friday draws are special draws, not a third weekly draw.
+                    </p>
+                </Panel>
+
+                <Panel className="lg:col-span-4" title="Group 1 by year" description="Winning tickets and the biggest jackpot in each year." isFlush>
+                    <table className="w-full border-collapse text-left">
+                        <thead>
+                            <tr>
+                                <th className={cx(th, "static w-16")}>Year</th>
+                                <th className={cx(th, "static")}>Wins</th>
+                                <th className={cx(thNum, "static")}>Biggest jackpot</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {group1.years.map((row) => (
+                                <tr key={row.year}>
+                                    <td className={cx(tdNum, "text-left")}>{row.year}</td>
+                                    <td className={td}>
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-1.5 min-w-16 flex-1 rounded-full bg-surface-3">
+                                                <div
+                                                    className="h-full rounded-full bg-accent"
+                                                    style={{ width: `${(row.wins / group1.maxWins) * 100}%` }}
+                                                />
+                                            </div>
+                                            <span className="w-7 text-right font-mono text-[11px] text-ink-muted tabular-nums">{row.wins}</span>
+                                        </div>
+                                    </td>
+                                    <td className={tdNum}>{formatSgd(row.max)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </Panel>
+
+                <Panel className="lg:col-span-4" title="Patterns" description="How often a draw repeats itself.">
+                    <dl className="grid grid-cols-2 gap-3">
+                        <div>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Consecutive</dt>
+                            <dd className="font-display text-xl font-semibold text-ink tabular-nums">{pct(analysis.consecutive.drawRate)}</dd>
+                            <p className="text-[10px] text-ink-subtle">of draws have a run</p>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Repeats</dt>
+                            <dd className="font-display text-xl font-semibold text-ink tabular-nums">{pct(analysis.repeaters.rate)}</dd>
+                            <p className="text-[10px] text-ink-subtle">{analysis.repeaters.avgCount.toFixed(2)} per draw</p>
+                        </div>
+                    </dl>
+                    <p className="mt-3 border-t border-line/70 pt-2 text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Most common runs</p>
+                    <ol className="mt-1">
+                        {analysis.consecutive.topPairs.slice(0, 4).map((pair) => (
+                            <li key={`${pair.a}-${pair.b}`} className="flex items-center justify-between gap-2 py-0.5 text-[11px]">
+                                <span className="font-mono text-ink-muted tabular-nums">
+                                    {pair.a} – {pair.b}
+                                </span>
+                                <span className="font-mono text-ink tabular-nums">{pair.count}</span>
+                            </li>
+                        ))}
+                    </ol>
+                </Panel>
+
+                <Panel className="lg:col-span-4" title="Longest gaps" description="Draws since each number last appeared." isFlush>
+                    <ol className="px-4 py-1">
+                        {analysis.overdue.map((entry) => (
+                            <li key={entry.number} className="flex items-center gap-2 py-1">
+                                <Ball n={entry.number} size="xs" />
+                                <div className="h-1.5 flex-1 rounded-full bg-surface-3">
+                                    <div
+                                        className="h-full rounded-full"
+                                        style={{ width: `${(entry.gap / gapMax) * 100}%`, backgroundColor: "var(--color-heat-cold)" }}
+                                    />
+                                </div>
+                                <span className="w-6 text-right font-mono text-[11px] text-ink tabular-nums">{entry.gap}</span>
+                            </li>
+                        ))}
+                    </ol>
+                </Panel>
+            </div>
 
             <p className="px-1 text-[11px] leading-4 text-ink-subtle">
                 Every number is equally likely in every draw. The patterns above describe the past and do not predict the next draw.
