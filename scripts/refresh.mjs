@@ -1,20 +1,15 @@
 // toto.sg — data refresh orchestrator. `npm run refresh`. Zero deps, Node >= 18.
-
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { BROWSER_UA, parseCsvDraws, parseDrawHtml, parseFragment, srUrl } from "./lib/toto.mjs";
 import { computeAnalysis, filterEra } from "./lib/analysis.mjs";
-import { runStrategies } from "./lib/strategies.mjs";
+import { BROWSER_UA, parseCsvDraws, parseDrawHtml, parseFragment, srUrl } from "./lib/toto.mjs";
 
 const DATA_DIR = fileURLToPath(new URL("../public/data/", import.meta.url));
 const DRAW_PATH = `${DATA_DIR}draws.json`;
 const ANALYSIS_PATH = `${DATA_DIR}analysis.json`;
-const STRATEGIES_PATH = `${DATA_DIR}strategies.json`;
 
-const CSV_URL =
-    "https://raw.githubusercontent.com/Aloysius-JW/Singapore-ToTo-analysis/main/Initial%20file%20-%20Toto%20Winning%20Numbers.csv";
-const FRAGMENT_URL =
-    "https://www.singaporepools.com.sg/DataFileArchive/Lottery/Output/toto_result_top_draws_en.html";
+const CSV_URL = "https://raw.githubusercontent.com/Aloysius-JW/Singapore-ToTo-analysis/main/Initial%20file%20-%20Toto%20Winning%20Numbers.csv";
+const FRAGMENT_URL = "https://www.singaporepools.com.sg/DataFileArchive/Lottery/Output/toto_result_top_draws_en.html";
 const CSV_SEED_END = 3766; // last draw covered by the seed CSV (19/5/2022)
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -65,11 +60,7 @@ async function main() {
 
     // 3. Backfill every missing draw from (lowest missing <= CSV_SEED_END, else its successor) to max(draws ∪ fragment) - 1.
     const present = new Set(draws.map((d) => d.draw));
-    const maxKnown = Math.max(
-        0,
-        ...draws.map((d) => d.draw),
-        ...fragmentDraws.map((d) => d.draw),
-    );
+    const maxKnown = Math.max(0, ...draws.map((d) => d.draw), ...fragmentDraws.map((d) => d.draw));
     const lowestMissingSeed = missingSeed(draws);
     const backfillStart = lowestMissingSeed != null ? lowestMissingSeed : CSV_SEED_END + 1;
     const missing = [];
@@ -100,9 +91,10 @@ async function main() {
     await writeFile(DRAW_PATH, `${JSON.stringify(draws, null, 2)}\n`);
     const era = filterEra(draws);
     const analysis = computeAnalysis(era);
-    const strategies = runStrategies(era);
     await writeFile(ANALYSIS_PATH, `${JSON.stringify(analysis, null, 2)}\n`);
-    await writeFile(STRATEGIES_PATH, `${JSON.stringify(strategies, null, 2)}\n`);
+    // strategies.json is the committed strategy league. It is NOT regenerated
+    // here: it is re-scored by the research pipeline, and overwriting it with
+    // a differently shaped artifact would break the league page.
 
     // 5. Summary.
     const noPrize = draws.filter((d) => !d.prizes).length;
@@ -111,13 +103,8 @@ async function main() {
         `\nCoverage: ${draws.length} draws (${draws[0]?.draw} → ${draws.at(-1)?.draw}, ${draws[0]?.date} → ${draws.at(-1)?.date}); ` +
             `${startCount} pre-existing; ${noPrize} without prize data; ${noDate} without date; failed backfill: ${failed.length ? failed.join(",") : "none"}`,
     );
-    console.log(`6/49 era for analysis/strategies: ${era.length} draws from ${era[0]?.draw} (${era[0]?.date})`);
-    console.log("Top-3 strategies by hit rate:");
-    for (const s of strategies.slice(0, 3)) {
-        console.log(`  ${s.id}: hitRate=${(s.hitRate * 100).toFixed(2)}% prizes=${s.totalPrizes} evaluated=${s.evaluatedDraws}`);
-    }
-    const random = strategies.find((s) => s.id === "random-seeded");
-    if (random) console.log(`  random-seeded hitRate=${(random.hitRate * 100).toFixed(2)}% (sanity: expect ≈ 1.9%)`);
+    console.log(`6/49 era for analysis: ${era.length} draws from ${era[0]?.draw} (${era[0]?.date})`);
+    console.log("strategies.json left untouched (league artifact — run `npm run verify:data` to check it)");
 }
 
 main().catch((err) => {

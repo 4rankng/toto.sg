@@ -1,0 +1,141 @@
+/* toto.sg — product design tokens.
+ *
+ * The site is a dark data product: near-black canvas, hairline borders, one
+ * accent (TOTO red), gold reserved for jackpot / rank-1 highlights. These
+ * tokens are the palette; everything in the UI is styled from them.
+ *
+ * The second half re-points the Untitled UI semantic tokens at this palette so
+ * the library's React Aria components (Button, Input, Select, Tooltip) render
+ * on the same surfaces instead of the stock light theme. Those overrides are
+ * unlayered on purpose: unlayered declarations beat Tailwind's `base` layer,
+ * which is where the light/dark blocks in theme.css live.
+ */
+
+@theme {
+    /* Surfaces — near-black canvas, zinc-scale panels, hairline borders. */
+    --color-canvas: #0a0b0e;
+    --color-surface: #101116;
+    --color-surface-2: #17181e;
+    --color-surface-3: #1e2027;
+
+    /* Hairlines */
+    --color-line: #26272e;
+    --color-line-strong: #34363f;
+
+    /* Text hierarchy — cool greys */
+    --color-ink: #f4f4f5;
+    --color-ink-muted: #a1a1aa;
+    --color-ink-subtle: #71717a;
+    --color-ink-faint: #52525b;
+
+    /* Accent — TOTO red */
+    --color-accent: #e62e2e;
+    --color-accent-strong: #c22727;
+    --color-accent-soft: #1b1013;
+    --color-accent-line: #4a1f22;
+
+    /* Jackpot / rank-1 only */
+    --color-gold: #f5c518;
+    --color-gold-soft: #221d0d;
+    --color-silver: #cbd0da;
+    --color-bronze: #b4784a;
+
+    /* Signed deltas */
+    --color-up: #3fb950;
+    --color-down: #f87171;
+
+    /* Strategy family chips — 19 muted tones */
+    --color-fam-01: #7f93b8;
+    --color-fam-02: #9a7fb0;
+    --color-fam-03: #6f9e8f;
+    --color-fam-04: #b08968;
+    --color-fam-05: #8fa06a;
+    --color-fam-06: #b57f9b;
+    --color-fam-07: #6e93b0;
+    --color-fam-08: #8e8ab0;
+    --color-fam-09: #a58f63;
+    --color-fam-10: #79a36b;
+    --color-fam-11: #8f8f8f;
+    --color-fam-12: #a8788f;
+    --color-fam-13: #7f9c86;
+    --color-fam-14: #b5806b;
+    --color-fam-15: #7a8fa8;
+    --color-fam-16: #9c7fb0;
+    --color-fam-17: #88a05f;
+    --color-fam-18: #a08a72;
+    --color-fam-19: #b06a6a;
+}
+
+/* Product palette on top of the library's semantic tokens. */
+:root {
+    /* Brand scale → TOTO red */
+    --color-brand-50: #fdf2f2;
+    --color-brand-100: #fbe3e3;
+    --color-brand-200: #f6c8c8;
+    --color-brand-300: #ee9d9d;
+    --color-brand-400: #e85a5a;
+    --color-brand-500: #e62e2e;
+    --color-brand-600: #d02626;
+    --color-brand-700: #b02020;
+    --color-brand-800: #8e1c1c;
+    --color-brand-900: #761a1a;
+    --color-brand-950: #400d0d;
+
+    /* Surfaces */
+    --color-bg-primary: var(--color-surface);
+    --color-bg-primary_alt: var(--color-surface);
+    --color-bg-primary_hover: var(--color-surface-2);
+    --color-bg-primary-solid: var(--color-surface-3);
+    --color-bg-secondary: var(--color-canvas);
+    --color-bg-secondary_alt: var(--color-surface);
+    --color-bg-secondary_hover: var(--color-surface-2);
+    --color-bg-secondary-solid: var(--color-ink-faint);
+    --color-bg-tertiary: var(--color-surface-2);
+    --color-bg-quaternary: var(--color-surface-3);
+    --color-bg-overlay: var(--color-canvas);
+
+    /* Brand surfaces */
+    --color-bg-brand-solid: var(--color-accent);
+    --color-bg-brand-solid_hover: var(--color-accent-strong);
+    --color-bg-brand-primary: var(--color-accent-soft);
+    --color-bg-brand-secondary: var(--color-accent-soft);
+    --color-bg-brand-primary_alt: var(--color-surface-2);
+    --color-bg-brand-section: var(--color-surface-2);
+    --color-bg-brand-section_subtle: var(--color-surface);
+
+    /* Text */
+    --color-text-primary: var(--color-ink);
+    --color-text-secondary: var(--color-ink-muted);
+    --color-text-secondary_hover: var(--color-ink);
+    --color-text-tertiary: var(--color-ink-subtle);
+    --color-text-tertiary_hover: var(--color-ink-muted);
+    --color-text-quaternary: var(--color-ink-faint);
+    --color-text-placeholder: var(--color-ink-faint);
+    --color-text-brand-primary: #f07575;
+    --color-text-brand-secondary: var(--color-accent);
+    --color-text-brand-secondary_hover: #f05555;
+    --color-text-brand-tertiary: var(--color-accent);
+    --color-text-brand-tertiary_alt: var(--color-accent);
+    --color-text-primary_on-brand: #ffffff;
+    --color-text-secondary_on-brand: #fbd5d5;
+    --color-text-tertiary_on-brand: #fbd5d5;
+    --color-text-quaternary_on-brand: #f6bcbc;
+
+    /* Borders + rings */
+    --color-border-primary: var(--color-line-strong);
+    --color-border-secondary: var(--color-line);
+    --color-border-secondary_alt: var(--color-line);
+    --color-border-tertiary: #1d1e23;
+    --color-border-brand: var(--color-accent);
+    --color-border-brand_alt: var(--color-accent);
+    --color-border-error: #f87171;
+    --color-border-error_subtle: #4b2226;
+
+    /* Foreground */
+    --color-fg-primary: var(--color-ink);
+    --color-fg-secondary: var(--color-ink-muted);
+    --color-fg-tertiary: var(--color-ink-subtle);
+    --color-fg-quaternary: var(--color-ink-faint);
+    --color-fg-brand-primary: var(--color-accent);
+    --color-fg-brand-secondary: var(--color-accent);
+}
