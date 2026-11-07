@@ -564,7 +564,7 @@ export const InsightsScreen = () => {
                         number={9}
                         section="The lines"
                         title="Sum trend"
-                        caption={`Rolling ${SUM_TREND_WINDOW}-draw mean of the six-number sum across the whole era.`}
+                        caption={`Rolling ${SUM_TREND_WINDOW}-draw mean of the draw sum.`}
                         id="panel-sum-trend"
                         family="Momentum"
                         className="lg:col-span-5 xl:col-span-6"
