@@ -40,7 +40,7 @@ const PRIZE_GROUPS: PrizeKey[] = ["g2", "g3", "g4", "g5", "g6", "g7"];
 const LEAGUE_ROWS = 5;
 
 /** Recent draws listed beside the countdown. */
-const RECENT_DRAWS = 6;
+const RECENT_DRAWS = 10;
 
 /** The countdown reads as one clock line: 02:01:20:41. */
 const Countdown = ({ days, hours, minutes, seconds }: { days: number; hours: number; minutes: number; seconds: number }) => {
@@ -252,11 +252,11 @@ export const HomeScreen = () => {
                 }
             />
 
-            <div className="grid items-start gap-3 lg:grid-cols-12">
+            <div className="grid gap-3 lg:grid-cols-12">
                 {/* The draw: result, prize table and the next-draw clock. */}
-                <Panel emphasis="hero" className="lg:col-span-8">
-                    <div className="grid gap-4 md:grid-cols-[1.4fr_1fr] md:gap-5">
-                        <div className="min-w-0">
+                <Panel emphasis="hero" className="lg:col-span-8" bodyClassName="flex flex-1 flex-col">
+                    <div className="grid gap-4 md:grid-cols-[1.4fr_1fr] md:gap-5 lg:flex-1">
+                        <div className="min-w-0 lg:flex lg:flex-col">
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                     <p className="text-[11px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">Group 1 prize</p>
@@ -289,7 +289,7 @@ export const HomeScreen = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-3 grid grid-cols-1 gap-x-5 sm:grid-cols-2">
+                            <div className="mt-3 grid grid-cols-1 gap-x-5 sm:grid-cols-2 lg:mt-auto lg:grid-cols-1">
                                 {PRIZE_GROUPS.map((group) => {
                                     const prize = prizes?.[group];
                                     return (
@@ -308,7 +308,7 @@ export const HomeScreen = () => {
                             </div>
                         </div>
 
-                        <div className="min-w-0 border-t border-line/70 pt-3 md:border-t-0 md:border-l md:pt-0 md:pl-5">
+                        <div className="min-w-0 border-t border-line/70 pt-3 md:border-t-0 md:border-l md:pt-0 md:pl-5 lg:flex lg:flex-col">
                             <p className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
                                 Next draw{nextDrawNo ? ` · ${nextDrawNo}` : ""}
                             </p>
@@ -330,7 +330,7 @@ export const HomeScreen = () => {
                                 <p className="mt-2 rounded-lg bg-surface-inset px-2.5 py-1.5 text-[11px] text-ink-muted">Waiting for the result.</p>
                             )}
 
-                            <div className="mt-3 border-t border-line/70 pt-2">
+                            <div className="mt-3 border-t border-line/70 pt-2 lg:mt-auto">
                                 <p className="text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">Recent draws</p>
                                 <ol className="mt-0.5">
                                     {recentDraws.map((draw) => (
@@ -355,7 +355,7 @@ export const HomeScreen = () => {
                 <Panel
                     className="lg:col-span-4"
                     title="Top strategies"
-                    description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on 100 past draws. Score 45 = a random pick.`}
+                    description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on 100 draws · chance scores 45.`}
                     actions={
                         <Link to="/strategies" className="text-xs font-semibold text-accent transition-colors duration-100 hover:text-accent-strong">
                             All →
@@ -382,9 +382,10 @@ export const HomeScreen = () => {
                 </Panel>
             </div>
 
-            <div className="grid items-start gap-3 md:grid-cols-2 lg:grid-cols-12">
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-12">
                 <Panel
                     className="lg:col-span-4"
+                    bodyClassName="flex flex-1 flex-col justify-center"
                     title="Number board"
                     description="How often each number appeared. Colour shows the gap from random."
                     footer={
@@ -400,7 +401,7 @@ export const HomeScreen = () => {
                     <NumberBoard windows={windows} period={period} onPeriodChange={setPeriod} latestNumbers={numbers} line={line} onToggle={handleToggle} />
                 </Panel>
 
-                <div className="flex flex-col gap-3 xl:col-span-8">
+                <div className="flex flex-col gap-3 lg:col-span-8">
                     <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                         <KpiCard label="Draws" value={formatNumber(draws.length)} hint="Since 3 Jul 2008" icon={Hash01} tone="primary" />
                         <KpiCard
