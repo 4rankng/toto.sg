@@ -5,10 +5,25 @@ import { Panel } from "@/components/panel";
 import { PageHeader } from "@/components/product/page-header";
 import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
 import { DonutChart, Gauge } from "@/components/product/console-charts";
+import { InsightPanel } from "@/components/product/insight-panel";
 import { KpiCard } from "@/components/product/kpi-card";
 import { td, tdNum, th, thNum } from "@/components/product/table";
+import { AdditionalBall, CompositionMatrix, DeltaProfile, GapVolcano, JackpotTrend, MonthHeatmap, PositionLadder, RepeatersFlow, StreakRibbons, SumTrend, TimelineStrip } from "@/components/insights-charts";
 import { CountDistributionChart, DecadeHeatmap, FrequencyChart, type HeatmapCell, type SumBin, SumHistogram, WeekdayChart } from "@/components/toto-charts";
-import { type Analysis, type Draw, drawDecades, drawSum, formatDate, formatNumber, formatSgd, formatSigned, useJson } from "@/lib/data";
+import { type Analysis, type Draw, drawDecades, drawSum, formatDate, formatNumber, formatSigned, useJson } from "@/lib/data";
+import {
+    additionalStats,
+    compositionMatrix,
+    deltaStats,
+    gapStats,
+    jackpotStats,
+    monthStats,
+    positionLadder,
+    repeaterStats,
+    streakRows,
+    sumTrend,
+    timelineWindow,
+} from "@/lib/insights-stats";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
 
@@ -35,6 +50,70 @@ const PAIRS_IN_POOL = 1176;
 
 /** The trailing window compared against the all-time rate. */
 const RECENT_WINDOW = 50;
+
+/** Draws in the tracking strip. */
+const TIMELINE_WINDOW = 60;
+
+/** Draws in the streak ribbons. */
+const STREAK_WINDOW = 30;
+
+/** Draws in the rolling sum mean. */
+const SUM_TREND_WINDOW = 20;
+
+/** One panel in the gallery index. */
+interface IndexPanel {
+    id: string;
+    label: string;
+}
+
+/** The three galleries, in reading order, with the panels inside each. */
+const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
+    {
+        id: "the-numbers",
+        label: "The numbers",
+        panels: [
+            { id: "panel-frequency", label: "Frequency" },
+            { id: "panel-gap-tracker", label: "Gap tracker" },
+            { id: "panel-timeline", label: "Timeline" },
+            { id: "panel-streaks", label: "Streaks" },
+            { id: "panel-decades", label: "Decades" },
+            { id: "panel-pairs", label: "Pairs" },
+            { id: "panel-last-50", label: "Last 50" },
+        ],
+    },
+    {
+        id: "the-lines",
+        label: "The lines",
+        panels: [
+            { id: "panel-sum", label: "Sum" },
+            { id: "panel-sum-trend", label: "Sum trend" },
+            { id: "panel-odd", label: "Odd" },
+            { id: "panel-low", label: "Low" },
+            { id: "panel-composition", label: "Composition" },
+            { id: "panel-delta", label: "Deltas" },
+            { id: "panel-position", label: "Positions" },
+        ],
+    },
+    {
+        id: "the-cage",
+        label: "The cage",
+        panels: [
+            { id: "panel-repeaters", label: "Repeaters" },
+            { id: "panel-additional", label: "Additional ball" },
+            { id: "panel-month", label: "Month of year" },
+            { id: "panel-weekday", label: "Weekday" },
+            { id: "panel-jackpot", label: "Jackpots" },
+            { id: "panel-patterns", label: "Patterns" },
+        ],
+    },
+];
+
+/** Every panel in reading order, numbered the way the panels are numbered. */
+const PANEL_INDEX = SECTIONS.flatMap((section) => section.panels).map((panel, index) => ({
+    id: panel.id,
+    label: panel.label,
+    number: index + 1,
+}));
 
 const pct = (value: number) => `${Math.round(value * 100)}%`;
 
@@ -165,23 +244,46 @@ export const InsightsScreen = () => {
         };
     }, [analysis]);
 
+    /** The gap volcano: how long every number has been missing. */
+    const gaps = useMemo(() => (analysis ? gapStats(analysis.lastSeen, analysis.frequency.all) : null), [analysis]);
+
+    /** The tracking strip and the streak ribbons. */
+    const timeline = useMemo(() => timelineWindow(eraDraws, TIMELINE_WINDOW), [eraDraws]);
+    const streaks = useMemo(() => streakRows(eraDraws, STREAK_WINDOW), [eraDraws]);
+
+    /** The rolling sum mean across the era. */
+    const sums = useMemo(() => sumTrend(eraDraws, SUM_TREND_WINDOW), [eraDraws]);
+
+    /** Odd × high composition, repeats, deltas, positions, months, additional. */
+    const composition = useMemo(() => compositionMatrix(eraDraws), [eraDraws]);
+    const repeaters = useMemo(() => repeaterStats(eraDraws), [eraDraws]);
+    const deltas = useMemo(() => deltaStats(eraDraws), [eraDraws]);
+    const positions = useMemo(() => positionLadder(eraDraws), [eraDraws]);
+    const months = useMemo(() => monthStats(eraDraws), [eraDraws]);
+    const additional = useMemo(() => additionalStats(eraDraws), [eraDraws]);
+
     /** Group 1 wins and the biggest jackpot per year. */
-    const group1 = useMemo(() => {
-        if (!analysis) return { years: [] as { year: string; wins: number; max: number }[], totalWins: 0, top: { year: "", max: 0 }, maxWins: 1 };
-        const years = Object.entries(analysis.group1ByYear)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([year, value]) => ({ year, wins: value.wins, max: value.maxJackpot }));
+    const group1 = useMemo(() => (analysis ? jackpotStats(analysis.group1ByYear) : null), [analysis]);
+
+    /** The cell where the composition misses the fair cage by the widest margin. */
+    const compositionWorst = useMemo(() => {
+        if (composition.length === 0) return null;
+        return [...composition].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))[0];
+    }, [composition]);
+
+    /** The calendar month with the highest and lowest mean sum. */
+    const monthExtremes = useMemo(() => {
+        const withDraws = months.monthlyMean.filter((row) => row.draws > 0);
+        if (withDraws.length === 0) return null;
         return {
-            years,
-            totalWins: years.reduce((sum, row) => sum + row.wins, 0),
-            top: years.reduce((best, row) => (row.max > best.max ? { year: row.year, max: row.max } : best), { year: "", max: 0 }),
-            maxWins: Math.max(...years.map((row) => row.wins), 1),
+            highest: [...withDraws].sort((a, b) => b.mean - a.mean)[0],
+            lowest: [...withDraws].sort((a, b) => a.mean - b.mean)[0],
         };
-    }, [analysis]);
+    }, [months]);
 
     if (analysisLoading || drawsLoading) return <InsightsSkeleton />;
 
-    if (analysisError || drawsError || !analysis || !draws) {
+    if (analysisError || drawsError || !analysis || !draws || !gaps || !group1) {
         return (
             <Panel title="Statistics unavailable" description={analysisError?.message ?? drawsError?.message ?? "An analysis file is missing."}>
                 <p className="text-sm text-ink-muted">Run `npm run refresh`, then reload.</p>
@@ -200,7 +302,6 @@ export const InsightsScreen = () => {
     const fridayDraws = analysis.weekday.Fri?.count ?? 0;
     const decadeMin = Math.min(...analysis.decades);
     const decadeMax = Math.max(...analysis.decades);
-    const gapMax = Math.max(...analysis.overdue.map((entry) => entry.gap), 1);
 
     return (
         <div className="flex flex-col gap-3">
@@ -218,7 +319,7 @@ export const InsightsScreen = () => {
                         </span>
                     </>
                 }
-                description="The 6/49 era in numbers: frequency, sums, parity, decades, pairs, runs, gaps, weekdays and jackpots."
+                description="The 6/49 era in numbers: frequency, gaps, sums, parity, deltas, positions, runs, weekdays and jackpots — each one against what a fair cage would have produced."
             />
 
             {/* The headline numbers, in console cards. */}
@@ -227,235 +328,507 @@ export const InsightsScreen = () => {
                 <KpiCard label="Mean sum" value={analysis.sum.mean.toFixed(1)} hint={`median ${analysis.sum.median}`} icon={BarChart01} tone="secondary" />
                 <KpiCard label="Most seen" value={hot?.number ?? "—"} hint={hot ? `${formatNumber(hot.count)} draws` : undefined} icon={Lightning01} tone="gold" />
                 <KpiCard label="Least seen" value={cold?.number ?? "—"} hint={cold ? `${formatNumber(cold.count)} draws` : undefined} icon={Activity} tone="neutral" />
-                <KpiCard label="Consecutive" value={pct(analysis.consecutive.drawRate)} hint="of draws" icon={Clock} tone="primary" />
-                <KpiCard label="Top jackpot" value={`S$${(group1.top.max / 1_000_000).toFixed(1)}M`} hint={`${group1.top.year} · exact below`} icon={Coins01} tone="gold" />
+                <KpiCard label="Overdue" value={gaps.overdueCount} hint={`of 49 numbers`} icon={Clock} tone="primary" />
+                <KpiCard label="Top jackpot" value={`S$${(group1.peak.max / 1_000_000).toFixed(1)}M`} hint={`${group1.peak.year} · biggest ever`} icon={Coins01} tone="gold" />
             </div>
 
-            <div className="grid items-start gap-3 lg:grid-cols-12">
-                <Panel
-                    className="lg:col-span-8"
-                    title="Number frequency"
-                    description={`How many of the ${formatNumber(total)} draws each number appeared in. The dashed line is the average.`}
-                >
-                    <FrequencyChart
-                        counts={analysis.frequency.all}
-                        expected={expectedPerNumber}
-                        totalDraws={total}
-                        hotNumber={hot?.number}
-                        coldNumber={cold?.number}
-                        className="mt-2"
-                    />
-                </Panel>
+            {/* The gallery index — three sections, twenty panels. */}
+            <nav aria-label="Insights sections" className="scrollbar-hide flex flex-col gap-1.5">
+                <div className="scrollbar-hide flex items-center gap-1.5 overflow-x-auto">
+                    {SECTIONS.map((section) => (
+                        <a
+                            key={section.id}
+                            href={`#${section.id}`}
+                            className="shrink-0 rounded-md border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink-muted transition-colors duration-100 hover:border-line-strong hover:text-ink"
+                        >
+                            {section.label}
+                        </a>
+                    ))}
+                </div>
+                <div className="scrollbar-hide flex items-center gap-1 overflow-x-auto">
+                    {PANEL_INDEX.map((panel) => (
+                        <a
+                            key={panel.id}
+                            href={`#${panel.id}`}
+                            className="shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] text-ink-subtle transition-colors duration-100 hover:text-accent"
+                        >
+                            {String(panel.number).padStart(2, "0")} {panel.label}
+                        </a>
+                    ))}
+                </div>
+            </nav>
 
-                <Panel
-                    className="lg:col-span-4"
-                    title="Last 50 vs all time"
-                    description={`Appearances in the last ${RECENT_WINDOW} draws against ${movement.expected.toFixed(1)} expected.`}
-                    isFlush
-                >
-                    <div className="grid grid-cols-2 divide-x divide-line-soft">
-                        {[
-                            { label: "Rising", rows: movement.risers, tone: "text-up" },
-                            { label: "Falling", rows: movement.fallers, tone: "text-down" },
-                        ].map((column) => (
-                            <div key={column.label} className="px-4 py-2">
-                                <p className="text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">{column.label}</p>
-                                <ol className="mt-1">
-                                    {column.rows.map((row) => (
-                                        <li key={row.number} className="flex items-center justify-between gap-2 py-0.5">
-                                            <Ball n={row.number} size="sm" />
-                                            <span className={cx("font-mono text-[11px] tabular-nums", column.tone)}>{formatSigned(row.delta, 1)}</span>
-                                        </li>
-                                    ))}
-                                </ol>
-                            </div>
-                        ))}
-                    </div>
-                </Panel>
-
-                <Panel
-                    className="lg:col-span-7"
-                    title="Sum of the six numbers"
-                    description="How often each total came up, in bands of ten. Shaded band holds most draws."
-                >
-                    <div className="grid items-center gap-3 lg:grid-cols-[minmax(0,1fr)_11rem]">
-                        <SumHistogram bins={sumBins} mean={analysis.sum.mean} median={analysis.sum.median} band={band} totalDraws={total} />
-                        <DonutChart
-                            segments={[
-                                { label: "under 120", value: analysis.sum.bands.slice(0, 2).reduce((sum, b) => sum + b.count, 0), colour: "var(--color-secondary)" },
-                                { label: "120–149", value: analysis.sum.bands[2]?.count ?? 0, colour: "var(--color-primary)" },
-                                { label: "150–179", value: analysis.sum.bands[3]?.count ?? 0, colour: "var(--color-heat-hot)" },
-                                { label: "180 and over", value: analysis.sum.bands.slice(4).reduce((sum, b) => sum + b.count, 0), colour: "var(--color-gold)" },
-                            ]}
-                            centerValue={analysis.sum.mean.toFixed(0)}
-                            centerLabel="mean sum"
+            {/* ---------------------------------------------------------------- *
+             * The numbers — what each of the 49 has been doing.
+             * ---------------------------------------------------------------- */}
+            <section id="the-numbers" className="flex flex-col gap-3">
+                <h2 className="font-display text-base leading-6 font-semibold tracking-tight text-ink">The numbers</h2>
+                <div className="grid items-start gap-3 lg:grid-cols-12">
+                    <InsightPanel
+                        number={1}
+                        section="The numbers"
+                        title="Number frequency"
+                        caption={`How many of the ${formatNumber(total)} draws each number appeared in.`}
+                        expectation={`${expectedPerNumber.toFixed(1)} appearances per number — every number is equally likely in every draw.`}
+                        id="panel-frequency"
+                        family="Frequency"
+                        className="lg:col-span-8"
+                        stats={[
+                            { label: "Hottest", value: hot?.number ?? "—", hint: hot ? `${formatNumber(hot.count)} draws` : undefined },
+                            { label: "Coldest", value: cold?.number ?? "—", hint: cold ? `${formatNumber(cold.count)} draws` : undefined },
+                            { label: "Spread", value: `${(hot?.count ?? 0) - (cold?.count ?? 0)} draws`, hint: "hottest minus coldest" },
+                        ]}
+                    >
+                        <FrequencyChart
+                            counts={analysis.frequency.all}
+                            expected={expectedPerNumber}
+                            totalDraws={total}
+                            hotNumber={hot?.number}
+                            coldNumber={cold?.number}
+                            className="mt-2"
                         />
-                    </div>
-                    <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
-                        Mean <span className="font-mono text-ink-muted tabular-nums">{analysis.sum.mean.toFixed(1)}</span> · median{" "}
-                        <span className="font-mono text-ink-muted tabular-nums">{analysis.sum.median}</span> ·{" "}
-                        <span className="font-mono text-ink-muted tabular-nums">{formatNumber(band.count)}</span> of {formatNumber(total)} draws (
-                        {Math.round(band.share * 100)}%) fall between {band.lo} and {band.hi}.
-                    </p>
-                </Panel>
+                    </InsightPanel>
 
-                <Panel className="lg:col-span-5" title="Odd numbers per draw" description={`Average ${oddExpected.toFixed(2)} of the six are odd.`}>
-                    <CountDistributionChart
-                        counts={analysis.oddEven}
-                        unit="odd numbers"
-                        expectedBucket={Math.round(oddExpected)}
-                        expectedValue={oddExpected}
-                        totalDraws={total}
-                        className="mt-2"
-                    />
-                </Panel>
+                    <InsightPanel
+                        number={2}
+                        section="The numbers"
+                        title="Gap tracker"
+                        caption="Draws since each number last came up — the longer the bar, the longer the wait."
+                        expectation={`a number comes up once every ${gaps.expectedCycle.toFixed(1)} draws on average (49 ÷ 6).`}
+                        id="panel-gap-tracker"
+                        family="Gap & Due"
+                        className="lg:col-span-4"
+                        stats={[
+                            { label: "Overdue now", value: gaps.overdueCount, hint: `past ${gaps.dangerGap} draws` },
+                            { label: "Fair cage", value: gaps.expectedOverdue.toFixed(1), hint: "numbers overdue" },
+                            { label: "Hottest", value: gaps.hottest[0]?.number ?? "—", hint: gaps.hottest[0] ? `${gaps.hottest[0].gap} draws out` : undefined },
+                        ]}
+                    >
+                        <GapVolcano stats={gaps} className="mt-2" />
+                    </InsightPanel>
 
-                <Panel className="lg:col-span-4" title="Low numbers per draw" description={`Number 24 or below. Average ${lowExpected.toFixed(2)} of six.`}>
-                    <CountDistributionChart
-                        counts={analysis.lowHigh}
-                        unit="low numbers (≤ 24)"
-                        expectedBucket={Math.round(lowExpected)}
-                        expectedValue={lowExpected}
-                        totalDraws={total}
-                        tone="secondary"
-                        className="mt-2"
-                    />
-                </Panel>
+                    <InsightPanel
+                        number={3}
+                        section="The numbers"
+                        title="Timeline heat strip"
+                        caption={`The last ${TIMELINE_WINDOW} draws against all 49 numbers, newest on the right. The ringed cell is the additional number.`}
+                        expectation="every number has the same chance of appearing in any draw — a tinted cell is a coincidence, not a cause."
+                        id="panel-timeline"
+                        family="Sequence"
+                        className="lg:col-span-12"
+                    >
+                        <TimelineStrip draws={timeline} className="mt-2" />
+                    </InsightPanel>
 
-                <Panel
-                    className="lg:col-span-8"
-                    title="Decade spread"
-                    description="Numbers per draw from each decade, year by year, with the all-time average on the right."
-                >
-                    <DecadeHeatmap rows={DECADE_LABELS} columns={decades.years} cells={decades.cells} marginal={analysis.decades} className="mt-2" />
-                    <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
-                        2014 holds only part of the year. Every decade sits between{" "}
-                        <span className="font-mono text-ink-muted tabular-nums">{decadeMin.toFixed(2)}</span> and{" "}
-                        <span className="font-mono text-ink-muted tabular-nums">{decadeMax.toFixed(2)}</span> numbers per draw.
-                    </p>
-                </Panel>
+                    <InsightPanel
+                        number={4}
+                        section="The numbers"
+                        title="Streak ribbons"
+                        caption={`A dot for every hit in the last ${STREAK_WINDOW} draws, sorted by how often each number turned up in the last ten.`}
+                        expectation="a hot streak and a cold streak are both the same coin landing the same way — the next draw starts from scratch."
+                        id="panel-streaks"
+                        family="Streaks"
+                        className="lg:col-span-5"
+                        stats={[
+                            { label: "Hot now", value: streaks[0]?.number ?? "—", hint: streaks[0] ? `${streaks[0].hot} hits in 10` : undefined },
+                            { label: "Cold now", value: streaks.at(-1)?.number ?? "—", hint: streaks.at(-1) ? `${streaks.at(-1)?.hot} hits in 10` : undefined },
+                            { label: "Expected", value: `${((STREAK_WINDOW * 6) / 49).toFixed(1)}`, hint: "hits per number" },
+                        ]}
+                    >
+                        <StreakRibbons rows={streaks} window={STREAK_WINDOW} className="mt-2" />
+                    </InsightPanel>
 
-                <Panel className="lg:col-span-7" title="Most common pairs" description="The 10 pairs that appeared in the same draw most often." isFlush>
-                    <table className="w-full border-collapse text-left">
-                        <thead>
-                            <tr>
-                                <th className={cx(th, "static w-10")}>#</th>
-                                <th className={cx(th, "static")}>Pair</th>
-                                <th className={cx(thNum, "static")}>Draws</th>
-                                <th className={cx(thNum, "static")}>Share</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {pairs.map((pair, index) => (
-                                <tr key={`${pair.a}-${pair.b}`}>
-                                    <td className={tdNum}>{index + 1}</td>
-                                    <td className={td}>
-                                        <span className="font-mono text-ink tabular-nums">
-                                            {pair.a} – {pair.b}
-                                        </span>
-                                    </td>
-                                    <td className={tdNum}>{formatNumber(pair.count)}</td>
-                                    <td className={tdNum}>{((pair.count / total) * 100).toFixed(1)}%</td>
+                    <InsightPanel
+                        number={5}
+                        section="The numbers"
+                        title="Decade spread"
+                        caption="Numbers per draw from each decade, year by year, with the all-time average on the right."
+                        expectation="each decade holds 10 of the 49 numbers, so every draw should take about 1.22 from each."
+                        id="panel-decades"
+                        family="Structure"
+                        className="lg:col-span-7"
+                        stats={[
+                            { label: "Widest", value: decadeMax.toFixed(2), hint: "numbers per draw" },
+                            { label: "Narrowest", value: decadeMin.toFixed(2), hint: "numbers per draw" },
+                            { label: "Expected", value: (6 * 10 / 49).toFixed(2), hint: "per decade" },
+                        ]}
+                    >
+                        <DecadeHeatmap rows={DECADE_LABELS} columns={decades.years} cells={decades.cells} marginal={analysis.decades} className="mt-2" />
+                    </InsightPanel>
+
+                    <InsightPanel
+                        number={6}
+                        section="The numbers"
+                        title="Most common pairs"
+                        caption="The 10 pairs that appeared in the same draw most often."
+                        expectation={`a fixed pair meets about ${expectedPairMeetings.toFixed(1)} times in ${formatNumber(total)} draws.`}
+                        id="panel-pairs"
+                        family="Pairs"
+                        className="lg:col-span-7"
+                        stats={[
+                            { label: "Top pair", value: pairs[0] ? `${pairs[0].a}–${pairs[0].b}` : "—", hint: `${formatNumber(pairs[0]?.count ?? 0)} draws` },
+                            { label: "Possible pairs", value: formatNumber(PAIRS_IN_POOL), hint: "in the pool" },
+                            { label: "Expected", value: expectedPairMeetings.toFixed(1), hint: "meetings" },
+                        ]}
+                    >
+                        <table className="w-full border-collapse text-left">
+                            <thead>
+                                <tr>
+                                    <th className={cx(th, "static w-10")}>#</th>
+                                    <th className={cx(th, "static")}>Pair</th>
+                                    <th className={cx(thNum, "static")}>Draws</th>
+                                    <th className={cx(thNum, "static")}>Share</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <p className="mt-2 px-3 text-[11px] leading-4 text-ink-subtle">
-                        A fixed pair meets about <span className="font-mono text-ink-muted tabular-nums">{expectedPairMeetings.toFixed(1)}</span> times in{" "}
-                        {formatNumber(total)} draws. The top pair met{" "}
-                        <span className="font-mono text-ink-muted tabular-nums">{pairs[0]?.count ?? 0}</span> — the most of{" "}
-                        {formatNumber(PAIRS_IN_POOL)} possible pairs.
-                    </p>
-                </Panel>
+                            </thead>
+                            <tbody>
+                                {pairs.map((pair, index) => (
+                                    <tr key={`${pair.a}-${pair.b}`}>
+                                        <td className={tdNum}>{index + 1}</td>
+                                        <td className={td}>
+                                            <span className="font-mono text-ink tabular-nums">
+                                                {pair.a} – {pair.b}
+                                            </span>
+                                        </td>
+                                        <td className={tdNum}>{formatNumber(pair.count)}</td>
+                                        <td className={tdNum}>{((pair.count / total) * 100).toFixed(1)}%</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </InsightPanel>
 
-                <Panel className="lg:col-span-5" title="Weekday" description="Draws per weekday, with the mean sum above each bar.">
-                    <WeekdayChart days={weekdayDays} className="mt-2" />
-                    <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
-                        Draws run Monday and Thursday. The {formatNumber(fridayDraws)} Friday draws are special draws, not a third weekly draw.
-                    </p>
-                </Panel>
-
-                <Panel className="lg:col-span-4" title="Group 1 by year" description="Winning tickets and the biggest jackpot in each year." isFlush>
-                    <table className="w-full border-collapse text-left">
-                        <thead>
-                            <tr>
-                                <th className={cx(th, "static w-16")}>Year</th>
-                                <th className={cx(th, "static")}>Wins</th>
-                                <th className={cx(thNum, "static")}>Biggest jackpot</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {group1.years.map((row) => (
-                                <tr key={row.year}>
-                                    <td className={cx(tdNum, "text-left")}>{row.year}</td>
-                                    <td className={td}>
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-1.5 min-w-16 flex-1 rounded-full bg-surface-3">
-                                                <div
-                                                    className="h-full rounded-full bg-accent"
-                                                    style={{ width: `${(row.wins / group1.maxWins) * 100}%` }}
-                                                />
-                                            </div>
-                                            <span className="w-7 text-right font-mono text-[11px] text-ink-muted tabular-nums">{row.wins}</span>
-                                        </div>
-                                    </td>
-                                    <td className={tdNum}>{formatSgd(row.max)}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </Panel>
-
-                <Panel className="lg:col-span-4" title="Patterns" description="How often a draw repeats itself.">
-                    <div className="grid grid-cols-2 gap-2">
-                        <Gauge
-                            value={analysis.consecutive.drawRate}
-                            display={pct(analysis.consecutive.drawRate)}
-                            label="Consecutive"
-                            hint="of draws have a run"
-                            tone="primary"
-                        />
-                        <Gauge
-                            value={analysis.repeaters.rate}
-                            display={pct(analysis.repeaters.rate)}
-                            label="Repeats"
-                            hint={`${analysis.repeaters.avgCount.toFixed(2)} per draw`}
-                            tone="secondary"
-                        />
-                    </div>
-                    <p className="mt-3 border-t border-line/70 pt-2 text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Most common runs</p>
-                    <ol className="mt-1">
-                        {analysis.consecutive.topPairs.slice(0, 4).map((pair) => (
-                            <li key={`${pair.a}-${pair.b}`} className="flex items-center justify-between gap-2 py-0.5 text-[11px]">
-                                <span className="font-mono text-ink-muted tabular-nums">
-                                    {pair.a} – {pair.b}
-                                </span>
-                                <span className="font-mono text-ink tabular-nums">{pair.count}</span>
-                            </li>
-                        ))}
-                    </ol>
-                </Panel>
-
-                <Panel className="lg:col-span-4" title="Longest gaps" description="Draws since each number last appeared." isFlush>
-                    <ol className="px-4 py-1">
-                        {analysis.overdue.map((entry) => (
-                            <li key={entry.number} className="flex items-center gap-2 py-1">
-                                <Ball n={entry.number} size="xs" />
-                                <div className="h-1.5 flex-1 rounded-full bg-surface-3">
-                                    <div
-                                        className="h-full rounded-full"
-                                        style={{ width: `${(entry.gap / gapMax) * 100}%`, backgroundColor: "var(--color-heat-cold)" }}
-                                    />
+                    <InsightPanel
+                        number={7}
+                        section="The numbers"
+                        title="Last 50 vs all time"
+                        caption={`Appearances in the last ${RECENT_WINDOW} draws against ${movement.expected.toFixed(1)} expected.`}
+                        expectation="every number keeps the same chance every draw, so nothing carries over."
+                        id="panel-last-50"
+                        family="Hot & Cold"
+                        className="lg:col-span-5"
+                    >
+                        <div className="grid grid-cols-2 divide-x divide-line-soft">
+                            {[
+                                { label: "Rising", rows: movement.risers, tone: "text-up" },
+                                { label: "Falling", rows: movement.fallers, tone: "text-down" },
+                            ].map((column) => (
+                                <div key={column.label} className="px-4 py-2">
+                                    <p className="text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">{column.label}</p>
+                                    <ol className="mt-1">
+                                        {column.rows.map((row) => (
+                                            <li key={row.number} className="flex items-center justify-between gap-2 py-0.5">
+                                                <Ball n={row.number} size="sm" />
+                                                <span className={cx("font-mono text-[11px] tabular-nums", column.tone)}>{formatSigned(row.delta, 1)}</span>
+                                            </li>
+                                        ))}
+                                    </ol>
                                 </div>
-                                <span className="w-6 text-right font-mono text-[11px] text-ink tabular-nums">{entry.gap}</span>
-                            </li>
-                        ))}
-                    </ol>
-                </Panel>
-            </div>
+                            ))}
+                        </div>
+                    </InsightPanel>
+                </div>
+            </section>
+
+            {/* ---------------------------------------------------------------- *
+             * The lines — the shape of a single draw.
+             * ---------------------------------------------------------------- */}
+            <section id="the-lines" className="flex flex-col gap-3">
+                <h2 className="font-display text-base leading-6 font-semibold tracking-tight text-ink">The lines</h2>
+                <div className="grid items-start gap-3 lg:grid-cols-12">
+                    <InsightPanel
+                        number={8}
+                        section="The lines"
+                        title="Sum of the six numbers"
+                        caption="How often each total came up, in bands of ten. Shaded band holds most draws."
+                        expectation="the six numbers are a random 6-subset of 1…49, so the sum centres on 150 and tails off either side."
+                        id="panel-sum"
+                        family="Sum Band"
+                        className="lg:col-span-7"
+                        stats={[
+                            { label: "Mean", value: analysis.sum.mean.toFixed(1), hint: `median ${analysis.sum.median}` },
+                            { label: "In band", value: pct(band.share), hint: `${band.lo}–${band.hi}` },
+                            { label: "Draws in band", value: formatNumber(band.count), hint: `of ${formatNumber(total)}` },
+                        ]}
+                    >
+                        <div className="grid items-center gap-3 lg:grid-cols-[minmax(0,1fr)_11rem]">
+                            <SumHistogram bins={sumBins} mean={analysis.sum.mean} median={analysis.sum.median} band={band} totalDraws={total} />
+                            <DonutChart
+                                segments={[
+                                    { label: "under 120", value: analysis.sum.bands.slice(0, 2).reduce((sum, b) => sum + b.count, 0), colour: "var(--color-secondary)" },
+                                    { label: "120–149", value: analysis.sum.bands[2]?.count ?? 0, colour: "var(--color-primary)" },
+                                    { label: "150–179", value: analysis.sum.bands[3]?.count ?? 0, colour: "var(--color-heat-hot)" },
+                                    { label: "180 and over", value: analysis.sum.bands.slice(4).reduce((sum, b) => sum + b.count, 0), colour: "var(--color-gold)" },
+                                ]}
+                                centerValue={analysis.sum.mean.toFixed(0)}
+                                centerLabel="mean sum"
+                            />
+                        </div>
+                    </InsightPanel>
+
+                    <InsightPanel
+                        number={9}
+                        section="The lines"
+                        title="Sum trend"
+                        caption={`Rolling ${SUM_TREND_WINDOW}-draw mean of the six-number sum across the whole era.`}
+                        expectation="the rolling mean should hover on the era mean the whole way — it has no direction to travel."
+                        id="panel-sum-trend"
+                        family="Momentum"
+                        className="lg:col-span-5"
+                        stats={[
+                            { label: "Era mean", value: analysis.sum.mean.toFixed(1), hint: "all draws" },
+                            { label: "Band", value: `${band.lo}–${band.hi}`, hint: "most draws" },
+                            { label: "Longest run", value: formatNumber(analysis.consecutive.drawRate * total), hint: "draws with a pair" },
+                        ]}
+                    >
+                        <SumTrend points={sums} band={{ lo: band.lo, hi: band.hi }} mean={analysis.sum.mean} className="mt-2" />
+                    </InsightPanel>
+
+                    <InsightPanel
+                        number={10}
+                        section="The lines"
+                        title="Odd numbers per draw"
+                        caption={`Average ${oddExpected.toFixed(2)} of the six are odd.`}
+                        expectation="25 of the 49 numbers are odd, so about three of the six come out odd."
+                        id="panel-odd"
+                        family="Structure"
+                        className="lg:col-span-4"
+                        stats={[
+                            { label: "Most common", value: analysis.oddEven.indexOf(Math.max(...analysis.oddEven)), hint: "odd numbers" },
+                            { label: "Expected", value: oddExpected.toFixed(2), hint: "per draw" },
+                            { label: "Odd in pool", value: ODD_POOL, hint: "of 49 numbers" },
+                        ]}
+                    >
+                        <CountDistributionChart
+                            counts={analysis.oddEven}
+                            unit="odd numbers"
+                            expectedBucket={Math.round(oddExpected)}
+                            expectedValue={oddExpected}
+                            totalDraws={total}
+                            className="mt-2"
+                        />
+                    </InsightPanel>
+
+                    <InsightPanel
+                        number={11}
+                        section="The lines"
+                        title="Low numbers per draw"
+                        caption={`Number 24 or below. Average ${lowExpected.toFixed(2)} of six.`}
+                        expectation="24 of the 49 numbers are at or below 24, so about three of the six come out low."
+                        id="panel-low"
+                        family="Structure"
+                        className="lg:col-span-4"
+                        stats={[
+                            { label: "Most common", value: analysis.lowHigh.indexOf(Math.max(...analysis.lowHigh)), hint: "low numbers" },
+                            { label: "Expected", value: lowExpected.toFixed(2), hint: "per draw" },
+                            { label: "Low in pool", value: LOW_POOL, hint: "of 49 numbers" },
+                        ]}
+                    >
+                        <CountDistributionChart
+                            counts={analysis.lowHigh}
+                            unit="low numbers (≤ 24)"
+                            expectedBucket={Math.round(lowExpected)}
+                            expectedValue={lowExpected}
+                            totalDraws={total}
+                            tone="secondary"
+                            className="mt-2"
+                        />
+                    </InsightPanel>
+
+                    <InsightPanel
+                        number={12}
+                        section="The lines"
+                        title="Composition matrix"
+                        caption="Odd count against high count. Pink sits above the fair share, blue below it."
+                        expectation="oddness and highness are not independent, so the fair share of each cell comes from the exact four-pool count."
+                        id="panel-composition"
+                        family="Structure"
+                        className="lg:col-span-4"
+                        stats={[
+                            { label: "Biggest miss", value: compositionWorst ? `${compositionWorst.odd} odd · ${compositionWorst.high} high` : "—", hint: compositionWorst ? `${compositionWorst.delta >= 0 ? "+" : "−"}${Math.abs(compositionWorst.delta).toFixed(1)} points` : undefined },
+                            { label: "Era mean sum", value: analysis.sum.mean.toFixed(1), hint: "unchanged by parity" },
+                            { label: "Cells", value: 49, hint: "odd × high" },
+                        ]}
+                    >
+                        <CompositionMatrix cells={composition} className="mt-2" />
+                    </InsightPanel>
+
+                    <InsightPanel
+                        number={13}
+                        section="The lines"
+                        title="Delta profile"
+                        caption="The gaps between adjacent picks inside a single draw."
+                        expectation="the mean gap between two neighbours is 7.14 draws (50 ÷ 7), and the dashed marks are the exact law."
+                        id="panel-delta"
+                        family="Structure"
+                        className="lg:col-span-6"
+                        stats={[
+                            { label: "Mean gap", value: deltas.observedAverage.toFixed(2), hint: "observed" },
+                            { label: "Expected", value: deltas.expectedAverage.toFixed(2), hint: "under a fair cage" },
+                            { label: "Most common", value: deltas.rows.reduce((best, row) => (row.count > best.count ? row : best), deltas.rows[0])?.gap ?? "—", hint: "gap size" },
+                        ]}
+                    >
+                        <DeltaProfile stats={deltas} className="mt-2" />
+                    </InsightPanel>
+
+                    <InsightPanel
+                        number={14}
+                        section="The lines"
+                        title="Sorted-position ladder"
+                        caption="Where each sorted position lands in the draw. The pale band is the fair-cage range."
+                        expectation="the j-th smallest number averages j × 50 ÷ 7, so the ladder should sit on its rails."
+                        id="panel-position"
+                        family="Structure"
+                        className="lg:col-span-6"
+                        stats={[
+                            { label: "Lowest median", value: positions[0]?.observedMedian.toFixed(0) ?? "—", hint: "position 1" },
+                            { label: "Highest median", value: positions[5]?.observedMedian.toFixed(0) ?? "—", hint: "position 6" },
+                            { label: "Expected mid", value: positions[2]?.expectedMedian ?? "—", hint: "position 3" },
+                        ]}
+                    >
+                        <PositionLadder rows={positions} className="mt-2" />
+                    </InsightPanel>
+                </div>
+            </section>
+
+            {/* ---------------------------------------------------------------- *
+             * The cage — the machine that produced it.
+             * ---------------------------------------------------------------- */}
+            <section id="the-cage" className="flex flex-col gap-3">
+                <h2 className="font-display text-base leading-6 font-semibold tracking-tight text-ink">The cage</h2>
+                <div className="grid items-start gap-3 lg:grid-cols-12">
+                    <InsightPanel
+                        number={15}
+                        section="The cage"
+                        title="Repeaters flow"
+                        caption="How many numbers carried over from the previous draw."
+                        expectation={`repeats are expected — ${repeaters.expectedAverage.toFixed(2)} per draw on average (6 × 6 ÷ 49).`}
+                        id="panel-repeaters"
+                        family="Pattern"
+                        className="lg:col-span-5"
+                        stats={[
+                            { label: "Observed", value: repeaters.observedAverage.toFixed(2), hint: "repeats per draw" },
+                            { label: "Expected", value: repeaters.expectedAverage.toFixed(2), hint: "under a fair cage" },
+                            { label: "Draws tested", value: formatNumber(repeaters.evaluated), hint: "each against the last" },
+                        ]}
+                    >
+                        <RepeatersFlow stats={repeaters} className="mt-2" />
+                    </InsightPanel>
+
+                    <InsightPanel
+                        number={16}
+                        section="The cage"
+                        title="Additional ball"
+                        caption="How often each number came up as the seventh ball."
+                        expectation={`the additional ball is drawn from the same 49 numbers, so each should appear about ${additional.expected.toFixed(1)} times.`}
+                        id="panel-additional"
+                        family="Frequency"
+                        className="lg:col-span-7"
+                        stats={[
+                            { label: "Latest", value: additional.latest ?? "—", hint: additional.latestDate ? formatDate(additional.latestDate) : undefined },
+                            { label: "Most seen", value: additional.hottest?.number ?? "—", hint: additional.hottest ? `${formatNumber(additional.hottest.count)} times` : undefined },
+                            { label: "Expected", value: additional.expected.toFixed(1), hint: "times per number" },
+                        ]}
+                    >
+                        <AdditionalBall stats={additional} className="mt-2" />
+                    </InsightPanel>
+
+                    <InsightPanel
+                        number={17}
+                        section="The cage"
+                        title="Month of year"
+                        caption="Mean sum by calendar month and year, with the draws behind each cell."
+                        expectation="no month is special — a fair cage gives every month the same mean sum and a near-even share of the draws."
+                        id="panel-month"
+                        family="Almanac & Time"
+                        className="lg:col-span-7"
+                        stats={[
+                            { label: "Warmest month", value: monthExtremes?.highest.month ?? "—", hint: monthExtremes ? `mean ${monthExtremes.highest.mean.toFixed(1)}` : undefined },
+                            { label: "Coldest month", value: monthExtremes?.lowest.month ?? "—", hint: monthExtremes ? `mean ${monthExtremes.lowest.mean.toFixed(1)}` : undefined },
+                            { label: "Spread", value: months.spread.toFixed(1), hint: "best minus worst" },
+                        ]}
+                    >
+                        <MonthHeatmap stats={months} className="mt-2" />
+                    </InsightPanel>
+
+                    <InsightPanel
+                        number={18}
+                        section="The cage"
+                        title="Weekday"
+                        caption="Draws per weekday, with the mean sum above each bar."
+                        expectation="the game runs Monday and Thursday, so those two days take every draw and the rest take none."
+                        id="panel-weekday"
+                        family="Almanac & Time"
+                        className="lg:col-span-5"
+                        stats={[
+                            { label: "Monday", value: formatNumber(analysis.weekday.Mon?.count ?? 0), hint: "draws" },
+                            { label: "Thursday", value: formatNumber(analysis.weekday.Thu?.count ?? 0), hint: "draws" },
+                            { label: "Special draws", value: formatNumber(fridayDraws), hint: "on Fridays" },
+                        ]}
+                    >
+                        <WeekdayChart days={weekdayDays} className="mt-2" />
+                    </InsightPanel>
+
+                    <InsightPanel
+                        number={19}
+                        section="The cage"
+                        title="Group 1 by year"
+                        caption="Winning tickets per year, with the three biggest jackpots marked in gold."
+                        expectation="wins scale with how many tickets were sold, not with any property of the numbers."
+                        id="panel-jackpot"
+                        family="Pari-mutuel"
+                        className="lg:col-span-5"
+                        stats={[
+                            { label: "Total wins", value: formatNumber(group1.totalWins), hint: "Group 1 tickets" },
+                            { label: "Biggest", value: `S$${(group1.peak.max / 1_000_000).toFixed(1)}M`, hint: group1.peak.year },
+                            { label: "Years", value: group1.years.length, hint: "with a Group 1" },
+                        ]}
+                    >
+                        <JackpotTrend stats={group1} className="mt-2" />
+                    </InsightPanel>
+
+                    <InsightPanel
+                        number={20}
+                        section="The cage"
+                        title="Patterns"
+                        caption="How often a draw repeats itself."
+                        expectation="consecutive numbers and repeats are both normal — the gap between two picks is 1 far more often than chance would suggest."
+                        id="panel-patterns"
+                        family="Pattern"
+                        className="lg:col-span-7"
+                    >
+                        <div className="grid grid-cols-2 gap-2">
+                            <Gauge
+                                value={analysis.consecutive.drawRate}
+                                display={pct(analysis.consecutive.drawRate)}
+                                label="Consecutive"
+                                hint="of draws have a run"
+                                tone="primary"
+                            />
+                            <Gauge
+                                value={analysis.repeaters.rate}
+                                display={pct(analysis.repeaters.rate)}
+                                label="Repeats"
+                                hint={`${analysis.repeaters.avgCount.toFixed(2)} per draw`}
+                                tone="secondary"
+                            />
+                        </div>
+                        <p className="mt-3 border-t border-line/70 pt-2 text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Most common runs</p>
+                        <ol className="mt-1">
+                            {analysis.consecutive.topPairs.slice(0, 4).map((pair) => (
+                                <li key={`${pair.a}-${pair.b}`} className="flex items-center justify-between gap-2 py-0.5 text-[11px]">
+                                    <span className="font-mono text-ink-muted tabular-nums">
+                                        {pair.a} – {pair.b}
+                                    </span>
+                                    <span className="font-mono text-ink tabular-nums">{pair.count}</span>
+                                </li>
+                            ))}
+                        </ol>
+                    </InsightPanel>
+                </div>
+            </section>
 
             <p className="px-1 text-[11px] leading-4 text-ink-subtle">
-                Every number is equally likely in every draw. The patterns above describe the past and do not predict the next draw.
+                Every number is equally likely in every draw. The patterns above describe the past and do not predict the next draw. Play for entertainment, never to recover a loss.
             </p>
         </div>
     );

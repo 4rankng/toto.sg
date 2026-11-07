@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Award01, Calendar, ChevronDown, ChevronRight, Coins01, Grid01 } from "@untitledui/icons";
+import { useSearchParams } from "react-router";
 import { Ball } from "@/components/balls";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
@@ -81,10 +82,22 @@ export const StrategiesScreen = () => {
     usePageTitle(title);
 
     const { data, isLoading, error } = useJson<StrategiesFile>("/data/strategies.json");
+    const [searchParams, setSearchParams] = useSearchParams();
     const [query, setQuery] = useState("");
     const [family, setFamily] = useState("all");
     const [sort, setSort] = useState<SortKey>("score");
     const [expanded, setExpanded] = useState<string | null>(null);
+
+    // A link from an Insights panel arrives with ?family=… — open on that family.
+    const requestedFamily = searchParams.get("family");
+    useEffect(() => {
+        if (!requestedFamily) return;
+        // Only honour a family the league actually has; an unknown one would
+        // leave the filter pointing at nothing.
+        if (!data?.meta.families.includes(requestedFamily)) return;
+        setFamily(requestedFamily);
+        setExpanded(null);
+    }, [requestedFamily, data]);
 
     // The league's size is part of the page title, and it changes with the data.
     useEffect(() => {
@@ -140,8 +153,10 @@ export const StrategiesScreen = () => {
                 items={familyOptions}
                 selectedKey={family}
                 onSelectionChange={(key) => {
-                    setFamily(String(key));
+                    const next = String(key);
+                    setFamily(next);
                     setExpanded(null);
+                    setSearchParams(next === "all" ? {} : { family: next }, { replace: true });
                 }}
                 placeholder="All types"
                 size="sm"

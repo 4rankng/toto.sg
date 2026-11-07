@@ -5,6 +5,8 @@ import { cx } from "@/utils/cx";
 type PanelEmphasis = "default" | "hero" | "plain";
 
 interface PanelProps {
+    /** Anchor id — the insights nav links to it. */
+    id?: string;
     /** Small mono label above the title. */
     kicker?: string;
     title?: string;
@@ -44,12 +46,12 @@ const EMPHASIS: Record<PanelEmphasis, { root: string; body: string; header: stri
  * Console cell: a hairline panel with a mono header strip. No drop shadows
  * except the signal glow; density comes from tight padding, not chrome.
  */
-export function Panel({ kicker, title, description, actions, footer, isFlush = false, emphasis = "default", bodyClassName, className, children }: PanelProps) {
+export function Panel({ id, kicker, title, description, actions, footer, isFlush = false, emphasis = "default", bodyClassName, className, children }: PanelProps) {
     const tone = EMPHASIS[emphasis];
     const hasHeader = Boolean(kicker || title || actions);
 
     return (
-        <section className={cx("flex min-w-0 flex-col rounded-lg", tone.root, className)}>
+        <section id={id} className={cx("flex min-w-0 flex-col rounded-lg", tone.root, className)}>
             {hasHeader && (
                 <header
                     className={cx(
