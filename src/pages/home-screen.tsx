@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Calendar, Clock, Hash01, Lightning01 } from "@untitledui/icons";
 import { Link } from "react-router";
 import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
 import { type BoardWindow, type CopyStatus, HeatLegend, heatColour, LineSlip, NumberBoard } from "@/components/product/number-board";
 import { PageHeader } from "@/components/product/page-header";
 import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
-import { StatTile } from "@/components/product/stat-tile";
+import { KpiCard } from "@/components/product/kpi-card";
 import { useClipboard } from "@/hooks/use-clipboard";
 import { useCountdown } from "@/hooks/use-countdown";
 import {
@@ -372,26 +373,28 @@ export const HomeScreen = () => {
                 </Panel>
 
                 <div className="flex flex-col gap-3 xl:col-span-8">
-                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                        <StatTile variant="bare" label="Draws" value={formatNumber(draws.length)} hint="Since 3 Jul 2008" />
-                        <StatTile
-                            variant="bare"
+                    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                        <KpiCard label="Draws" value={formatNumber(draws.length)} hint="Since 3 Jul 2008" icon={Hash01} tone="primary" />
+                        <KpiCard
                             label="6/49 era"
                             value={formatNumber(era?.totalDraws ?? 0)}
                             hint={era?.firstDate ? `Since ${formatDate(era.firstDate)}` : undefined}
+                            icon={Calendar}
+                            tone="secondary"
                         />
-                        <StatTile
-                            variant="bare"
+                        <KpiCard
                             label="Most seen"
                             value={hotBall ? hotBall.number : "—"}
                             hint={hotBall ? `${formatNumber(hotBall.count)} times` : undefined}
-                            tone="primary"
+                            icon={Lightning01}
+                            tone="gold"
                         />
-                        <StatTile
-                            variant="bare"
+                        <KpiCard
                             label="Longest gap"
                             value={longestGap ? longestGap.number : "—"}
                             hint={longestGap ? `${formatNumber(longestGap.gap)} draws` : undefined}
+                            icon={Clock}
+                            tone="neutral"
                         />
                     </div>
 

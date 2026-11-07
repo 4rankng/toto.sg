@@ -1,9 +1,11 @@
 import { useMemo } from "react";
+import { Activity, BarChart01, Clock, Coins01, Hash01, Lightning01 } from "@untitledui/icons";
 import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
 import { PageHeader } from "@/components/product/page-header";
 import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
-import { StatTile } from "@/components/product/stat-tile";
+import { DonutChart, Gauge } from "@/components/product/console-charts";
+import { KpiCard } from "@/components/product/kpi-card";
 import { td, tdNum, th, thNum } from "@/components/product/table";
 import { CountDistributionChart, DecadeHeatmap, FrequencyChart, type HeatmapCell, type SumBin, SumHistogram, WeekdayChart } from "@/components/toto-charts";
 import { type Analysis, type Draw, drawDecades, drawSum, formatDate, formatNumber, formatSgd, formatSigned, useJson } from "@/lib/data";
@@ -219,16 +221,14 @@ export const InsightsScreen = () => {
                 description="The 6/49 era in numbers: frequency, sums, parity, decades, pairs, runs, gaps, weekdays and jackpots."
             />
 
-            {/* The headline numbers, all in one strip. */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-4 xl:grid-cols-8">
-                <StatTile variant="bare" label="Draws" value={formatNumber(total)} hint="6/49 era" />
-                <StatTile variant="bare" label="Mean sum" value={analysis.sum.mean.toFixed(1)} hint={`median ${analysis.sum.median}`} />
-                <StatTile variant="bare" label="Most seen" value={hot?.number ?? "—"} hint={hot ? `${formatNumber(hot.count)} draws` : undefined} tone="primary" />
-                <StatTile variant="bare" label="Least seen" value={cold?.number ?? "—"} hint={cold ? `${formatNumber(cold.count)} draws` : undefined} />
-                <StatTile variant="bare" label="Consecutive" value={pct(analysis.consecutive.drawRate)} hint="of draws" />
-                <StatTile variant="bare" label="Repeats" value={pct(analysis.repeaters.rate)} hint={`${analysis.repeaters.avgCount.toFixed(2)} per draw`} />
-                <StatTile variant="bare" label="Group 1 wins" value={formatNumber(group1.totalWins)} hint="since 2014" />
-                <StatTile variant="bare" label="Top jackpot" value={formatSgd(group1.top.max)} hint={group1.top.year} tone="gold" />
+            {/* The headline numbers, in console cards. */}
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+                <KpiCard label="Draws" value={formatNumber(total)} hint="6/49 era" icon={Hash01} tone="primary" />
+                <KpiCard label="Mean sum" value={analysis.sum.mean.toFixed(1)} hint={`median ${analysis.sum.median}`} icon={BarChart01} tone="secondary" />
+                <KpiCard label="Most seen" value={hot?.number ?? "—"} hint={hot ? `${formatNumber(hot.count)} draws` : undefined} icon={Lightning01} tone="gold" />
+                <KpiCard label="Least seen" value={cold?.number ?? "—"} hint={cold ? `${formatNumber(cold.count)} draws` : undefined} icon={Activity} tone="neutral" />
+                <KpiCard label="Consecutive" value={pct(analysis.consecutive.drawRate)} hint="of draws" icon={Clock} tone="primary" />
+                <KpiCard label="Top jackpot" value={`S$${(group1.top.max / 1_000_000).toFixed(1)}M`} hint={`${group1.top.year} · exact below`} icon={Coins01} tone="gold" />
             </div>
 
             <div className="grid items-start gap-3 lg:grid-cols-12">
@@ -278,7 +278,19 @@ export const InsightsScreen = () => {
                     title="Sum of the six numbers"
                     description="How often each total came up, in bands of ten. Shaded band holds most draws."
                 >
-                    <SumHistogram bins={sumBins} mean={analysis.sum.mean} median={analysis.sum.median} band={band} totalDraws={total} className="mt-2" />
+                    <div className="grid items-center gap-3 lg:grid-cols-[minmax(0,1fr)_11rem]">
+                        <SumHistogram bins={sumBins} mean={analysis.sum.mean} median={analysis.sum.median} band={band} totalDraws={total} />
+                        <DonutChart
+                            segments={[
+                                { label: "under 120", value: analysis.sum.bands.slice(0, 2).reduce((sum, b) => sum + b.count, 0), colour: "var(--color-secondary)" },
+                                { label: "120–149", value: analysis.sum.bands[2]?.count ?? 0, colour: "var(--color-primary)" },
+                                { label: "150–179", value: analysis.sum.bands[3]?.count ?? 0, colour: "var(--color-heat-hot)" },
+                                { label: "180 and over", value: analysis.sum.bands.slice(4).reduce((sum, b) => sum + b.count, 0), colour: "var(--color-gold)" },
+                            ]}
+                            centerValue={analysis.sum.mean.toFixed(0)}
+                            centerLabel="mean sum"
+                        />
+                    </div>
                     <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
                         Mean <span className="font-mono text-ink-muted tabular-nums">{analysis.sum.mean.toFixed(1)}</span> · median{" "}
                         <span className="font-mono text-ink-muted tabular-nums">{analysis.sum.median}</span> ·{" "}
@@ -395,18 +407,22 @@ export const InsightsScreen = () => {
                 </Panel>
 
                 <Panel className="lg:col-span-4" title="Patterns" description="How often a draw repeats itself.">
-                    <dl className="grid grid-cols-2 gap-3">
-                        <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Consecutive</dt>
-                            <dd className="font-display text-xl font-semibold text-ink tabular-nums">{pct(analysis.consecutive.drawRate)}</dd>
-                            <p className="text-[10px] text-ink-subtle">of draws have a run</p>
-                        </div>
-                        <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Repeats</dt>
-                            <dd className="font-display text-xl font-semibold text-ink tabular-nums">{pct(analysis.repeaters.rate)}</dd>
-                            <p className="text-[10px] text-ink-subtle">{analysis.repeaters.avgCount.toFixed(2)} per draw</p>
-                        </div>
-                    </dl>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Gauge
+                            value={analysis.consecutive.drawRate}
+                            display={pct(analysis.consecutive.drawRate)}
+                            label="Consecutive"
+                            hint="of draws have a run"
+                            tone="primary"
+                        />
+                        <Gauge
+                            value={analysis.repeaters.rate}
+                            display={pct(analysis.repeaters.rate)}
+                            label="Repeats"
+                            hint={`${analysis.repeaters.avgCount.toFixed(2)} per draw`}
+                            tone="secondary"
+                        />
+                    </div>
                     <p className="mt-3 border-t border-line/70 pt-2 text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Most common runs</p>
                     <ol className="mt-1">
                         {analysis.consecutive.topPairs.slice(0, 4).map((pair) => (

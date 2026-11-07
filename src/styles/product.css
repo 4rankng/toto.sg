@@ -27,76 +27,81 @@
  */
 
 @theme {
-    /* Surfaces — tinted canvas, white panels, tinted cells. */
-    --color-canvas: light-dark(#f3f2fa, #0e1022);
-    --color-surface: light-dark(#ffffff, #171a33);
-    --color-surface-2: light-dark(#e7e8f5, #232850);
-    --color-surface-3: light-dark(#dadcee, #2a2f57);
-    --color-surface-4: light-dark(#c3c6de, #3a4070);
+    /* Futuristic console palette — dark first, light as the "day console".
+     * Both modes keep the same geometry: near-black/near-white surfaces,
+     * 1px luminous rules, one violet signal colour and cyan as the second
+     * data hue. Everything below is a light-dark() pair. */
 
-    /* Hairlines */
-    --color-line: light-dark(#dadcee, #2a2f57);
-    --color-line-strong: light-dark(#c3c6de, #3a4070);
-    /* Inner rules: table rows, stacked list items, well dividers. */
-    --color-line-soft: light-dark(rgb(218 220 238 / 0.62), rgb(42 47 87 / 0.72));
+    /* Surfaces */
+    --color-canvas: light-dark(#eef6f8, #041018);
+    --color-surface: light-dark(#ffffff, #07202c);
+    --color-surface-2: light-dark(#e4f0f4, #0a2a39);
+    --color-surface-3: light-dark(#d5e6ec, #0f3547);
+    --color-surface-4: light-dark(#bfd5de, #164458);
+    --color-surface-inset: light-dark(#e9f3f6, #08232f);
 
-    /* Wells and inset surfaces (line builder, segmented controls). */
-    --color-surface-inset: light-dark(#eeeef8, #1c2040);
+    /* Hairlines — the only structure in the product */
+    --color-line: light-dark(#d3e4ea, #124155);
+    --color-line-strong: light-dark(#b9d2db, #1c566e);
+    --color-line-soft: light-dark(rgb(211 228 234 / 0.7), rgb(18 65 85 / 0.75));
 
-    /* Floating layers only — panels are separated by hairlines, not shadows. */
+    /* Floating layers only */
     --shadow-float:
-        0 14px 34px -10px light-dark(rgb(21 23 53 / 0.22), rgb(0 0 0 / 0.55)),
-        0 3px 8px -3px light-dark(rgb(21 23 53 / 0.1), rgb(0 0 0 / 0.4));
+        0 16px 40px -12px light-dark(rgb(10 16 32 / 0.24), rgb(0 0 0 / 0.62)),
+        0 3px 10px -4px light-dark(rgb(10 16 32 / 0.12), rgb(0 0 0 / 0.5));
 
-    /* Text hierarchy — cool greys.
-     *
-     * Contrast is part of the design: every token used for readable text
-     * clears 4.5:1 on the canvas and on a white panel. `ink-faint` is for
-     * decoration only (icons, chevrons, rules) — never for prose. */
-    --color-ink: light-dark(#151735, #f3f4fb);
-    --color-ink-muted: light-dark(#565c80, #b4b9d4);
-    --color-ink-subtle: light-dark(#646a8c, #9aa0c0);
-    --color-ink-faint: light-dark(#7f85a6, #767ca0);
+    /* Text — readable in both modes */
+    --color-ink: light-dark(#06212c, #e8f7fb);
+    --color-ink-muted: light-dark(#45606c, #9cc4d2);
+    --color-ink-subtle: light-dark(#5f7d89, #6c96a8);
+    --color-ink-faint: light-dark(#8299a4, #4d7486);
 
-    /* Brand — violet */
-    --color-primary: light-dark(#6b4bff, #8b6cff);
-    --color-primary-strong: light-dark(#5636e6, #a48cff);
-    --color-primary-soft: light-dark(#efebff, #221b4a);
-    --color-primary-line: light-dark(#cfc4ff, #3a2e77);
+    /* Signal — electric violet */
+    --color-primary: light-dark(#0f9e86, #2ee6c5);
+    --color-primary-strong: light-dark(#0b7a67, #7cf5de);
+    --color-primary-soft: light-dark(#e3f7f3, #072f33);
+    --color-primary-line: light-dark(#b9e8e0, #12605c);
 
-    /* The accent IS the brand: one violet, no second hue. */
     --color-accent: var(--color-primary);
     --color-accent-strong: var(--color-primary-strong);
     --color-accent-soft: var(--color-primary-soft);
     --color-accent-line: var(--color-primary-line);
 
-    /* Diverging heat ramp — data only. */
-    --color-heat-cold: light-dark(#2467e8, #5b8ef0);
-    --color-heat-neutral: light-dark(#e7e8f5, #232850);
-    --color-heat-hot: light-dark(#e8346f, #ef5b8b);
+    /* Data ramp — cold blue → hot pink */
+    --color-heat-cold: light-dark(#0284c7, #35d6ff);
+    --color-heat-neutral: light-dark(#e4f0f4, #0a2a39);
+    --color-heat-hot: light-dark(#db2777, #ff5c8a);
 
-    /* Chart references and the second series */
-    --color-chart-ref: light-dark(#a0a5c2, #6b7196);
-    --color-secondary: light-dark(#2467e8, #5b8ef0);
-    --color-secondary-soft: light-dark(#e8efff, #1b2547);
+    /* Sequential ramp for the decade heatmap */
+    --color-ramp-1: light-dark(#e8fbf7, #082c33);
+    --color-ramp-2: light-dark(#c8f4ec, #0a3b43);
+    --color-ramp-3: light-dark(#9be9dc, #0d515a);
+    --color-ramp-4: light-dark(#63dbc8, #0f6f77);
+    --color-ramp-5: light-dark(#2ec9b1, #17a394);
+    --color-ramp-6: light-dark(#12a58f, #2ee6c5);
 
-    /* Medals */
-    --color-gold: light-dark(#f5c518, #f5c518);
-    --color-gold-ink: light-dark(#8a6a08, #f0d264);
-    --color-silver: light-dark(#9aa0c0, #9aa0c0);
-    --color-silver-ink: light-dark(#545a80, #c3c8de);
-    --color-bronze: light-dark(#b07a4e, #b07a4e);
-    --color-bronze-ink: light-dark(#7c5330, #d3a077);
+    /* Second data hue */
+    --color-chart-ref: light-dark(#8299a4, #4d7486);
+    --color-secondary: light-dark(#0e7490, #35d6ff);
+    --color-secondary-soft: light-dark(#e0f5fb, #062b36);
 
-    /* Signed deltas — the ends of the ramp, never green */
-    --color-up: light-dark(#2467e8, #5b8ef0);
-    --color-down: light-dark(#e8346f, #ef5b8b);
+    /* Medals and the jackpot */
+    --color-gold: light-dark(#d4a500, #f5c518);
+    --color-gold-ink: light-dark(#7a5b00, #ffdf8f);
+    --color-silver: light-dark(#7d87a3, #9ab8c4);
+    --color-silver-ink: light-dark(#4a5470, #c3dde5);
+    --color-bronze: light-dark(#a8673a, #d99a63);
+    --color-bronze-ink: light-dark(#744526, #f0bd8c);
+
+    /* Signed deltas — ends of the data ramp, never green */
+    --color-up: light-dark(#0284c7, #35d6ff);
+    --color-down: light-dark(#db2777, #ff5c8a);
 
     /* Ball chips */
-    --color-ball: light-dark(#ffffff, #232850);
-    --color-ball-ink: light-dark(#151735, #f3f4fb);
+    --color-ball: light-dark(#ffffff, #0f3547);
+    --color-ball-ink: light-dark(#06212c, #e8f7fb);
 
-    /* Strategy family chips — 20 muted tones, no green, no warm accents. */
+    /* Strategy family chips — 20 muted tones, no green, no warm chrome */
     --color-fam-01: light-dark(#4b3fa8, #b3adff);
     --color-fam-02: light-dark(#7a3e9e, #d3a6ee);
     --color-fam-03: light-dark(#5650c8, #a9a4f5);

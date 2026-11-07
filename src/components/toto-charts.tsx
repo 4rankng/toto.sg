@@ -513,8 +513,8 @@ interface DecadeHeatmapProps {
     className?: string;
 }
 
-/** Violet ramp from the observed minimum to the observed maximum. */
-const RAMP = ["rgb(244 242 255)", "rgb(228 222 255)", "rgb(203 190 255)", "rgb(167 141 255)", "rgb(133 96 255)", "rgb(107 75 255)"];
+/** Sequential console ramp from the observed minimum to the observed maximum. */
+const RAMP = ["var(--color-ramp-1)", "var(--color-ramp-2)", "var(--color-ramp-3)", "var(--color-ramp-4)", "var(--color-ramp-5)", "var(--color-ramp-6)"];
 
 /**
  * Decade-by-year heat strip. Each cell is the average picks per draw in that
@@ -627,7 +627,7 @@ export function DecadeHeatmap({ rows, columns, cells, marginal, className }: Dec
                                         textAnchor="middle"
                                         fontSize={10}
                                         fontFamily="var(--font-mono)"
-                                        fill={step >= 4 ? "#ffffff" : "var(--color-ink)"}
+                                        fill={step >= 5 ? "light-dark(var(--color-ink), #04121a)" : "light-dark(var(--color-ink), #ffffff)"}
                                     >
                                         {cell.value.toFixed(2)}
                                     </text>
@@ -637,7 +637,7 @@ export function DecadeHeatmap({ rows, columns, cells, marginal, className }: Dec
                     }),
                 )}
 
-                {marginal && (
+                {marginal && !compact && (
                     <g>
                         <line
                             x1={padLeft + gridW + marginalGap / 2}

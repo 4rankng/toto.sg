@@ -13,7 +13,7 @@ Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysi
 | `/insights`   | Learn   | Six panels of charts over the 6/49 era: frequency, sum distribution, parity, decade spread, pairs, weekday |
 | `/strategies` | Compare | The full 204-strategy list with search, type filter, sorting, expandable details and each pick shown as six balls |
 
-Design language: a light data product — tinted canvas `#F3F2FA`, white panels, hairline borders `#DADCEE`, one accent (violet `#6B4BFF`, `#8B6CFF` in dark mode), and a diverging data ramp that runs cold `#2467E8` → neutral → hot `#E8346F`. Gold `#F5C518` is reserved for the jackpot and the rank-1 podium; there is no green and no red chrome. Type is Sora for display and DM Sans for body, tabular numerals throughout. Dark mode follows `prefers-color-scheme` and the header carries an explicit light/dark toggle.
+Design language: a dark-first mission-control console — canvas `#041018`, panel surfaces `#07202C`, 1px teal hairlines `#124155`, one signal colour (teal `#2EE6C5`, `#0F9E86` in light mode) with cyan `#35D6FF` as the second data hue, gold for the jackpot, and a cold→hot ramp for the heat board. Type is Sora for display, DM Sans for body, mono for labels and figures. The console is dark by default; the header toggle pins light (`data-theme`).
 
 ## Quickstart
 

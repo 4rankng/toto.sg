@@ -27,7 +27,8 @@ const readStoredChoice = (): ThemeChoice => {
     } catch {
         /* Private mode: the choice still applies for this session. */
     }
-    return "system";
+    // The console is dark first; the toggle still pins light for anyone who wants it.
+    return "dark";
 };
 
 /**

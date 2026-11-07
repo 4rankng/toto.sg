@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import { cx } from "@/utils/cx";
 
-/** How much surface a panel owns. Dense pages stay on `default`. */
+/** How much surface a panel owns. */
 type PanelEmphasis = "default" | "hero" | "plain";
 
 interface PanelProps {
-    /** Small uppercase label above the title. */
+    /** Small mono label above the title. */
     kicker?: string;
     title?: string;
     description?: string;
@@ -16,9 +16,8 @@ interface PanelProps {
     /** Remove the body padding — for edge-to-edge tables. */
     isFlush?: boolean;
     /**
-     * `default` is the standard hairline card. `hero` earns a little more
-     * padding for the one block that leads a page. `plain` drops the card
-     * chrome entirely (closing notes, inline callouts).
+     * `default` is the console cell. `hero` adds the signal glow for the one
+     * block that leads a page. `plain` drops the cell chrome.
      */
     emphasis?: PanelEmphasis;
     /** Extra classes for the body wrapper. */
@@ -27,40 +26,49 @@ interface PanelProps {
     children: ReactNode;
 }
 
-const EMPHASIS: Record<PanelEmphasis, { root: string; body: string }> = {
-    default: { root: "border border-line bg-surface", body: "p-4" },
-    hero: { root: "border border-line bg-surface", body: "p-4 md:p-5" },
-    plain: { root: "bg-transparent", body: "p-0" },
+const EMPHASIS: Record<PanelEmphasis, { root: string; body: string; header: string }> = {
+    default: {
+        root: "border border-line bg-surface panel-glow",
+        body: "p-3",
+        header: "border-b border-line/80 bg-surface-2/40",
+    },
+    hero: {
+        root: "border border-primary-line bg-surface shadow-[0_0_60px_-28px_var(--color-primary)]",
+        body: "p-3 md:p-3.5",
+        header: "border-b border-line/80 bg-surface-2/40",
+    },
+    plain: { root: "bg-transparent", body: "p-0", header: "" },
 };
 
 /**
- * Data panel: hairline-bordered surface used for every analysis block.
- * No drop shadow — a single hairline is enough to lift a card off the tinted
- * canvas, and it keeps the page quiet when six of them stack.
+ * Console cell: a hairline panel with a mono header strip. No drop shadows
+ * except the signal glow; density comes from tight padding, not chrome.
  */
 export function Panel({ kicker, title, description, actions, footer, isFlush = false, emphasis = "default", bodyClassName, className, children }: PanelProps) {
     const tone = EMPHASIS[emphasis];
     const hasHeader = Boolean(kicker || title || actions);
 
     return (
-        <section className={cx("flex min-w-0 flex-col rounded-xl", tone.root, className)}>
+        <section className={cx("flex min-w-0 flex-col rounded-lg", tone.root, className)}>
             {hasHeader && (
                 <header
                     className={cx(
-                        "flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5 px-4 py-2.5",
-                        emphasis !== "plain" && "border-b border-line/70",
+                        "flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5 rounded-t-lg px-3 py-2",
+                        tone.header,
                     )}
                 >
                     <div className="min-w-0">
-                        {kicker && <p className="text-[11px] font-semibold tracking-[0.14em] text-ink-subtle uppercase">{kicker}</p>}
-                        {title && <h2 className="font-display text-sm leading-5 font-semibold tracking-tight text-ink">{title}</h2>}
-                        {description && <p className="mt-0.5 max-w-prose text-xs leading-4 text-ink-subtle">{description}</p>}
+                        {kicker && (
+                            <p className="font-mono text-[9px] leading-3 font-semibold tracking-[0.18em] text-primary uppercase">{kicker}</p>
+                        )}
+                        {title && <h2 className={cx("font-display text-[13px] leading-5 font-semibold tracking-tight text-ink", kicker && "mt-0.5")}>{title}</h2>}
+                        {description && <p className="mt-0.5 max-w-prose text-[11px] leading-4 text-ink-subtle">{description}</p>}
                     </div>
                     {actions && <div className="ml-auto flex min-w-0 flex-wrap items-center gap-2">{actions}</div>}
                 </header>
             )}
             <div className={cx(isFlush ? "" : tone.body, bodyClassName)}>{children}</div>
-            {footer && <footer className="border-t border-line/70 px-4 py-2.5 text-xs text-ink-subtle">{footer}</footer>}
+            {footer && <footer className="border-t border-line/70 px-3 py-2 text-[11px] leading-4 text-ink-subtle">{footer}</footer>}
         </section>
     );
 }

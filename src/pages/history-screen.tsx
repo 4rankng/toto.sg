@@ -1,13 +1,14 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight } from "@untitledui/icons";
+import { Activity, BarChart01, Calendar, ChevronDown, ChevronRight, Hash01 } from "@untitledui/icons";
 import { BallRow } from "@/components/balls";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { Panel } from "@/components/panel";
+import { KpiCard } from "@/components/product/kpi-card";
 import { PageHeader } from "@/components/product/page-header";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
-import { td, tdNum, tdSticky, th, thNum } from "@/components/product/table";
+import { td, tdNum, th, thNum } from "@/components/product/table";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
 import {
     type Draw,
@@ -259,6 +260,19 @@ export const HistoryScreen = () => {
                 }
             />
 
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                <KpiCard label="Draws" value={formatNumber(draws.length)} hint="2008 → now" icon={Hash01} tone="primary" />
+                <KpiCard
+                    label="Span"
+                    value={`${Number(newest.date.slice(0, 4)) - Number(oldest.date.slice(0, 4))} yrs`}
+                    hint={oldest ? formatDate(oldest.date) : undefined}
+                    icon={Calendar}
+                    tone="secondary"
+                />
+                <KpiCard label="Latest draw" value={newest.draw} hint={formatDate(newest.date)} icon={Activity} tone="neutral" />
+                <KpiCard label="Latest sum" value={drawSum(newest.numbers)} hint="six numbers" icon={BarChart01} tone="gold" />
+            </div>
+
             <Panel isFlush title="All draws" description={panelDescription} actions={filters} footer={filtered.length > 0 ? pagination : undefined}>
                 {rows.length === 0 ? (
                     <div className="flex flex-col items-center gap-3 px-4 py-14 text-center">
@@ -315,13 +329,13 @@ export const HistoryScreen = () => {
                         </div>
 
                         {/* Tablet and up: the dense table. */}
-                        <div className="hidden min-w-0 overflow-x-auto md:block xl:overflow-visible">
-                            <table className="w-full min-w-[820px] border-collapse text-left">
+                        <div className="hidden min-w-0 md:block">
+                            <table className="w-full border-collapse text-left">
                                 <thead>
                                     <tr>
-                                        <th className={cx(th, "sticky left-0 z-20 w-20 pl-3 first:rounded-tl-xl")}>Draw</th>
+                                        <th className={cx(th, "w-20 pl-3")}>Draw</th>
                                         <th className={th}>Date</th>
-                                        <th className={th}>Day</th>
+                                        <th className={cx(th, "hidden lg:table-cell")}>Day</th>
                                         <th className={th}>Numbers</th>
                                         <th className={thNum}>Sum</th>
                                         <th className={thNum}>Odd</th>
@@ -345,7 +359,7 @@ export const HistoryScreen = () => {
                                                         isOpen && "bg-surface-2/60",
                                                     )}
                                                 >
-                                                    <td className={cx(tdSticky, "pl-3")}>
+                                                    <td className={cx(td, "pl-3")}>
                                                         <button
                                                             type="button"
                                                             aria-expanded={isOpen}
@@ -360,7 +374,7 @@ export const HistoryScreen = () => {
                                                         </button>
                                                     </td>
                                                     <td className={td}>{formatDate(draw.date)}</td>
-                                                    <td className={cx(td, "text-ink-subtle")}>{weekdayOf(draw.date)}</td>
+                                                    <td className={cx(td, "hidden text-ink-subtle lg:table-cell")}>{weekdayOf(draw.date)}</td>
                                                     <td className={td}>
                                                         <BallRow numbers={draw.numbers} additional={draw.additional} size="sm" />
                                                     </td>

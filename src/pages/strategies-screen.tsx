@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight } from "@untitledui/icons";
+import { Award01, Calendar, ChevronDown, ChevronRight, Coins01, Grid01 } from "@untitledui/icons";
 import { Ball } from "@/components/balls";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { Panel } from "@/components/panel";
 import { FamilyChip } from "@/components/product/family-chip";
+import { KpiCard } from "@/components/product/kpi-card";
 import { PageHeader } from "@/components/product/page-header";
 import { RecentHits } from "@/components/product/recent-hits";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
@@ -188,13 +189,20 @@ export const StrategiesScreen = () => {
                         <span>Updated {formatDate(meta.generatedAt.slice(0, 10))}</span>
                     </>
                 }
-                actions={
-                    <div className="text-right text-[11px]">
-                        <p className="text-ink-subtle">Prizes per 100 random draws</p>
-                        <p className="font-mono text-xs text-ink tabular-nums">{meta.chance.prizesPer100Draws.toFixed(1)}</p>
-                    </div>
-                }
             />
+
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                <KpiCard label="Strategies" value={formatNumber(data.strategies.length)} hint={`${meta.folds} draws each`} icon={Grid01} tone="primary" />
+                <KpiCard
+                    label="Top score"
+                    value={data.strategies.reduce((best, row) => Math.max(best, row.score), 0).toFixed(1)}
+                    hint={[...data.strategies].sort((a, b) => b.score - a.score)[0]?.name}
+                    icon={Award01}
+                    tone="gold"
+                />
+                <KpiCard label="Prizes / 100" value={meta.chance.prizesPer100Draws.toFixed(1)} hint="random picks" icon={Coins01} tone="secondary" />
+                <KpiCard label="Next draw" value={meta.nextDraw} hint="picks below" icon={Calendar} tone="neutral" />
+            </div>
 
             <Panel
                 isFlush
