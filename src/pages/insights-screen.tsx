@@ -6,7 +6,9 @@ import {
     Coins01,
     Hash01,
     Lightning01,
+    Scales02,
     SearchSm,
+    TrendUp01,
 } from "@untitledui/icons";
 import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
@@ -31,6 +33,8 @@ import {
     TimelineStrip,
 } from "@/components/insights-charts";
 import {
+    BallPayoutChart,
+    BirthdayPayoutChart,
     ButterflySplitChart,
     ChiSquareScorecard,
     CorrelogramChart,
@@ -75,6 +79,8 @@ import {
     acValueStats,
     additionalPromotionStats,
     autocorrelationStats,
+    ballPayoutStats,
+    birthdayPayoutStats,
     bounceBackStats,
     chiSquareAuditStats,
     coldPairStats,
@@ -89,9 +95,12 @@ import {
     neighborLiftStats,
     pairCorrelationMatrix,
     playslipGeometryStats,
+    prizeTierAnatomyStats,
     runAnatomyStats,
+    snowballCascadeStats,
     spreadStats,
     strategyConsensusStats,
+    sumPayoutCorrelationStats,
     tailDigitStats,
     tripleStats,
     weekdaySplitStats,
@@ -201,6 +210,17 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
             { id: "panel-lucky-digits", label: "Lucky digits" },
             { id: "panel-math-sequences", label: "Math sequences" },
             { id: "panel-lunar", label: "Lo Shu & Moon" },
+        ],
+    },
+    {
+        id: "crowd",
+        label: "Pari-mutuel & crowd",
+        panels: [
+            { id: "panel-ball-payout", label: "The Crowd Tax" },
+            { id: "panel-birthday", label: "Birthday bias" },
+            { id: "panel-snowball", label: "Snowball cascade" },
+            { id: "panel-sum-payout", label: "Sum & ticket payout" },
+            { id: "panel-prize-tiers", label: "Prize tiers" },
         ],
     },
     {
@@ -400,6 +420,12 @@ export const InsightsScreen = () => {
     const mathSeqs = useMemo(() => mathSequenceStats(eraDraws), [eraDraws]);
     const loShu = useMemo(() => loShuLunarStats(eraDraws), [eraDraws]);
 
+    const ballPayouts = useMemo(() => ballPayoutStats(eraDraws), [eraDraws]);
+    const birthdayPayouts = useMemo(() => birthdayPayoutStats(eraDraws), [eraDraws]);
+    const snowball = useMemo(() => snowballCascadeStats(eraDraws), [eraDraws]);
+    const sumPayout = useMemo(() => sumPayoutCorrelationStats(eraDraws), [eraDraws]);
+    const prizeTiers = useMemo(() => prizeTierAnatomyStats(eraDraws), [eraDraws]);
+
     const weekdaySplit = useMemo(() => weekdaySplitStats(eraDraws), [eraDraws]);
     const chiSquare = useMemo(() => chiSquareAuditStats(eraDraws), [eraDraws]);
 
@@ -467,7 +493,7 @@ export const InsightsScreen = () => {
                         <span>50 analytics panels</span>
                     </>
                 }
-                description={""}
+                description="Comprehensive gambler analytics, empirical correlations, and crowd psychology across the 6/49 era — evaluated against exact combinatorial null models and pari-mutuel prize payouts."
             />
 
             {/* The headline numbers: 8 console KPI cards. */}
@@ -478,8 +504,8 @@ export const InsightsScreen = () => {
                 <KpiCard label="Least seen" value={cold?.number ?? "—"} hint={cold ? `${formatNumber(cold.count)} draws` : undefined} icon={Activity} tone="neutral" />
                 <KpiCard label="Overdue" value={gaps.overdueCount} hint="of 49 numbers" icon={Clock} tone="primary" />
                 <KpiCard label="Top jackpot" value={`S$${(group1.peak.max / 1_000_000).toFixed(1)}M`} hint={`${group1.peak.year} · biggest`} icon={Coins01} tone="gold" />
-                
-                
+                <KpiCard label="Sum ↔ Payout" value={`r = ${formatSigned(sumPayout.correlation, 2)}`} hint="Draw sum vs G3" icon={TrendUp01} tone="primary" />
+                <KpiCard label="Crowd Tax" value={`S$${Math.round(ballPayouts.topPayingBalls[0].meanG3 - ballPayouts.mostCrowdedBalls[0].meanG3)}`} hint="Per-ball spread" icon={Scales02} tone="secondary" />
             </div>
 
             {/* The interactive gallery navigation bar with search and pills. */}
@@ -578,7 +604,7 @@ export const InsightsScreen = () => {
                                 number={2}
                                 section="The numbers"
                                 title="Gap tracker"
-                                caption="Draws since each number last came up"
+                                caption="Draws since each number last came up — the longer the bar, the longer the wait."
                                 id="panel-gap-tracker"
                                 family="Gap & Due"
                                 className="lg:col-span-6"
@@ -735,7 +761,7 @@ export const InsightsScreen = () => {
                                 number={8}
                                 section="The numbers"
                                 title="Most common triples"
-                                caption="3-number combinations sharing the same draw most often"
+                                caption="3-number combinations sharing the same draw most often out of 18,424 possible triples."
                                 id="panel-triples"
                                 family="Pairs"
                                 className="lg:col-span-6"
@@ -806,7 +832,7 @@ export const InsightsScreen = () => {
                                 number={10}
                                 section="The numbers"
                                 title="Return rate by skip (Bounce-back)"
-                                caption="Empirical probability P(hit | current skip band)."
+                                caption="Empirical probability P(hit | current skip band) testing gambler's fallacy against the 12.24% null."
                                 id="panel-bounce-back"
                                 family="Gap & Due"
                                 className="lg:col-span-12"
@@ -889,7 +915,7 @@ export const InsightsScreen = () => {
                                 number={12}
                                 section="Correlations"
                                 title="Draw autocorrelation (Lags 1–20)"
-                                caption="Correlation of draw sum with previous draws up to 20 draws back."
+                                caption="Correlation of draw sum with previous draws up to 20 draws back. All points stay within the 95% null band."
                                 id="panel-autocorrelation"
                                 family="Momentum"
                                 className="lg:col-span-6"
@@ -999,7 +1025,7 @@ export const InsightsScreen = () => {
                                 number={16}
                                 section="Correlations"
                                 title="Mirror twins (50−n) & Bolak-Balik"
-                                caption="Symmetric pairs (n + m = 50) and Indonesian Togel digit swaps (cermin)."
+                                caption="Symmetric pairs (n + m = 50) and Indonesian Togel digit swaps (cermin) vs chance."
                                 id="panel-mirrors"
                                 family="Folk & Culture"
                                 className="lg:col-span-6"
@@ -1288,7 +1314,7 @@ export const InsightsScreen = () => {
                                 number={26}
                                 section="The lines"
                                 title="Line span (max − min)"
-                                caption="Difference between the highest and lowest winning ball."
+                                caption="Difference between the highest and lowest winning ball vs exact combinatorial distribution."
                                 id="panel-span"
                                 family="Structure"
                                 className="lg:col-span-6"
@@ -1661,6 +1687,151 @@ export const InsightsScreen = () => {
             {/* ---------------------------------------------------------------- *
              * 5. Pari-mutuel & crowd psychology
              * ---------------------------------------------------------------- */}
+            {(activeSection === "all" || activeSection === "crowd") && (
+                <section id="crowd" className="flex flex-col gap-3">
+                    <h2 className="font-display text-base leading-6 font-semibold tracking-tight text-ink">5. Pari-mutuel & crowd psychology</h2>
+                    <MasonryGrid>
+                        {isVisible("panel-ball-payout", "crowd") && (
+                            <InsightPanel
+                                number={38}
+                                section="Pari-mutuel"
+                                title="The Crowd Tax — Payout by ball (1–49)"
+                                caption="Average Group 3 prize payout when each ball is drawn. High numbers pay +29% more than crowded calendar balls!"
+                                id="panel-ball-payout"
+                                family="Pari-mutuel"
+                                className="lg:col-span-12"
+                                stats={[
+                                    { label: "Highest paying", value: `Ball ${ballPayouts.topPayingBalls[0].number}`, hint: `S$${Math.round(ballPayouts.topPayingBalls[0].meanG3)}` },
+                                    { label: "Most crowded", value: `Ball ${ballPayouts.mostCrowdedBalls[0].number}`, hint: `S$${Math.round(ballPayouts.mostCrowdedBalls[0].meanG3)}` },
+                                    { label: "Correlation r", value: formatSigned(ballPayouts.correlationWithNumber, 2), hint: "ball # vs payout" },
+                                ]}
+                            >
+                                <BallPayoutChart stats={ballPayouts} className="mt-2" />
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-birthday", "crowd") && (
+                            <InsightPanel
+                                number={39}
+                                section="Pari-mutuel"
+                                title="Birthday bias curve (≤ 31 count vs payout)"
+                                caption="When 5 or 6 calendar numbers (≤ 31) are drawn, Group 3 prize drops over 50% due to crowded tickets!"
+                                id="panel-birthday"
+                                family="Pari-mutuel"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Correlation r", value: formatSigned(birthdayPayouts.correlationG3, 2), hint: "birthday count vs G3" },
+                                    { label: "Payout drop", value: `${birthdayPayouts.payoutDropPercent.toFixed(0)}%`, hint: "from 2 to 6 bday balls" },
+                                    { label: "6 Bday payout", value: `S$${Math.round(birthdayPayouts.rows[6]?.meanG3 ?? 0)}`, hint: "vs S$2,122 at 2 bdays" },
+                                ]}
+                            >
+                                <BirthdayPayoutChart stats={birthdayPayouts} className="mt-2" />
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-snowball", "crowd") && (
+                            <InsightPanel
+                                number={40}
+                                section="Pari-mutuel"
+                                title="Snowball rollover & Cascade fever"
+                                caption="Implied ticket volume (estimated from Group 7 winners) surges over 3x on Draw 4 Cascade fever."
+                                id="panel-snowball"
+                                family="Pari-mutuel"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Cascade surge", value: `${snowball.cascadeTicketMultiplier.toFixed(1)}x`, hint: "ticket lines vs base" },
+                                    { label: "Peak G1 Jackpot", value: `S$${(snowball.maxObservedJackpot / 1e6).toFixed(1)}M`, hint: "record pool" },
+                                    { label: "Base lines sold", value: `~${(snowball.rows[0].impliedTicketVolume / 1e6).toFixed(1)}M`, hint: "draw 0 tickets" },
+                                ]}
+                            >
+                                <ObservedExpectedBarChart
+                                    items={snowball.rows.slice(0, 4).map((r) => ({
+                                        label: r.label.split(" (")[0],
+                                        observedValue: r.impliedTicketVolume / 1e6,
+                                        expectedValue: (snowball.rows[0].impliedTicketVolume / 1e6),
+                                        formattedObserved: `~${(r.impliedTicketVolume / 1e6).toFixed(1)}M tickets (S$${(r.meanG1Pool / 1e6).toFixed(1)}M G1)`,
+                                        formattedExpected: `Base ${(snowball.rows[0].impliedTicketVolume / 1e6).toFixed(1)}M`,
+                                        tone: r.rolloverDepth === 3 ? "gold" : "primary",
+                                    }))}
+                                    maxValue={25}
+                                    orientation="horizontal"
+                                    className="mt-2"
+                                />
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-sum-payout", "crowd") && (
+                            <InsightPanel
+                                number={41}
+                                section="Pari-mutuel"
+                                title="Sum & ticket-shape payout correlation"
+                                caption="High-sum draws pay dramatically higher prizes (r = +0.58). Consecutive pairs incur a payout penalty."
+                                id="panel-sum-payout"
+                                family="Pari-mutuel"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Sum Correlation r", value: formatSigned(sumPayout.correlation, 2), hint: "higher sum = higher payout" },
+                                    { label: "Consecutive penalty", value: `-${sumPayout.consecutiveRunPenalty.penaltyPct.toFixed(1)}%`, hint: "when run appears" },
+                                    { label: "Top sum payout", value: `S$${Math.round(sumPayout.bands[sumPayout.bands.length - 1].meanG3)}`, hint: "draws summing 190+" },
+                                ]}
+                            >
+                                <ObservedExpectedBarChart
+                                    items={sumPayout.bands.map((b) => ({
+                                        label: b.band,
+                                        observedValue: b.meanG3,
+                                        expectedValue: 1750,
+                                        formattedObserved: `S$${Math.round(b.meanG3)} (${b.draws} draws)`,
+                                        formattedExpected: "S$1,750 avg",
+                                        tone: b.meanG3 >= 1750 ? "primary" : "secondary",
+                                    }))}
+                                    maxValue={2400}
+                                    orientation="vertical"
+                                    className="mt-2"
+                                />
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-prize-tiers", "crowd") && (
+                            <InsightPanel
+                                number={42}
+                                section="Pari-mutuel"
+                                title="Prize tier anatomy (Groups 1–7)"
+                                caption="Historical median payout share and winner counts across all 7 Singapore Pools prize tiers."
+                                id="panel-prize-tiers"
+                                family="Pari-mutuel"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Solo G1 wins", value: prizeTiers.soloG1Count, hint: "single jackpot ticket" },
+                                    { label: "Split G1 wins", value: prizeTiers.splitG1Count, hint: "shared jackpots" },
+                                    { label: "Rollovers", value: prizeTiers.noWinnerG1Count, hint: "snowball draws" },
+                                ]}
+                            >
+                                <table className="w-full border-collapse text-left text-xs">
+                                    <thead>
+                                        <tr>
+                                            <th className={cx(th, "static")}>Group</th>
+                                            <th className={cx(th, "static")}>Match</th>
+                                            <th className={cx(thNum, "static")}>Odds (1 in)</th>
+                                            <th className={cx(thNum, "static")}>Median Share</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {prizeTiers.tiers.map((t) => (
+                                            <tr key={t.tier}>
+                                                <td className={td}><span className="font-semibold text-ink">{t.tier}</span></td>
+                                                <td className={td}><span className="text-ink-muted">{t.match}</span></td>
+                                                <td className={tdNum}>{formatNumber(t.odds1In)}</td>
+                                                <td className={tdNum}>{t.medianShare > 0 ? `S$${formatNumber(t.medianShare)}` : "—"}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </InsightPanel>
+                        )}
+                    </MasonryGrid>
+                </section>
+            )}
+
             {/* ---------------------------------------------------------------- *
              * 6. The cage — the machine that produced it.
              * ---------------------------------------------------------------- */}

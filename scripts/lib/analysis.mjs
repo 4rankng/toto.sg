@@ -51,6 +51,25 @@ const median = (values) => {
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const weekdayOf = (iso) => WEEKDAYS[(new Date(`${iso}T00:00:00Z`).getUTCDay() + 6) % 7];
 
+/**
+ * The next Mon/Thu draw date strictly after `lastIso` (TOTO draws run
+ * Monday and Thursday, 18:30 SGT = 10:30 UTC). Mirrors nextDrawDate() in
+ * src/lib/data.ts, which drives the home-page countdown.
+ */
+export function nextDrawDateIso(lastIso) {
+    const last = new Date(`${lastIso}T00:00:00Z`);
+    // The last draw happened at 18:30 SGT on `lastIso`; the next Mon/Thu draw
+    // is the first one strictly after that instant.
+    const lastDraw = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), last.getUTCDate(), 10, 30));
+    const candidate = new Date(lastDraw.getTime());
+    for (let i = 0; i < 21; i += 1) {
+        const day = candidate.getUTCDay();
+        if ((day === 1 || day === 4) && candidate.getTime() > lastDraw.getTime()) return candidate.toISOString().slice(0, 10);
+        candidate.setUTCDate(candidate.getUTCDate() + 1);
+    }
+    return candidate.toISOString().slice(0, 10);
+}
+
 export function computeAnalysis(draws49) {
     const draws = [...draws49].sort((a, b) => a.draw - b.draw);
     const total = draws.length;

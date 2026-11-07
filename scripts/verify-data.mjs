@@ -101,6 +101,30 @@ const checkStrategies = (league) => {
     check(ranks.size === league.strategies.length, "strategies.json: ranks must be a permutation of 1..N");
 };
 
+/** The gambler playbook must mirror the league: one row per documented strategy. */
+const checkPlaybook = (playbook, league) => {
+    check(playbook?.meta != null, "gambler-playbook.json: missing meta");
+    check(Array.isArray(playbook?.strategies) && playbook.strategies.length === 10, "gambler-playbook.json: expected 10 strategies");
+    if (!Array.isArray(playbook?.strategies)) return;
+
+    const leagueIds = new Set((league?.strategies ?? []).map((row) => row.id));
+    const seen = new Set();
+    playbook.strategies.forEach((entry, i) => {
+        const where = `gambler-playbook.json[${i}] (${entry?.id ?? "?"})`;
+        check(typeof entry?.id === "string" && entry.id.length > 0, `${where}: missing id`);
+        check(!seen.has(entry?.id), `${where}: duplicate id`);
+        seen.add(entry?.id);
+        check(leagueIds.has(entry?.id), `${where}: no league row with this id`);
+        check(typeof entry?.name === "string" && entry.name.length > 0, `${where}: missing name`);
+        check(typeof entry?.description === "string" && entry.description.length > 0, `${where}: missing description`);
+        check(Array.isArray(entry?.specLine) && entry.specLine.length === 6, `${where}: specLine must hold 6 numbers`);
+        check(new Set(entry?.specLine ?? []).size === 6, `${where}: specLine has duplicates`);
+        check((entry?.specLine ?? []).every(isDraw), `${where}: specLine must be 1-49`);
+        check(Array.isArray(entry?.rules) && entry.rules.length > 0, `${where}: missing rules`);
+        check(Array.isArray(entry?.panels) && entry.panels.length > 0, `${where}: missing evidence panels`);
+    });
+};
+
 const main = async () => {
     const read = async (name) => JSON.parse(await readFile(`${DATA_DIR}${name}`, "utf8"));
 
@@ -113,6 +137,9 @@ const main = async () => {
     const league = await read("strategies.json");
     checkStrategies(league);
 
+    const playbook = await read("gambler-playbook.json");
+    checkPlaybook(playbook, league);
+
     if (failures.length > 0) {
         console.error(`✗ ${failures.length} data contract failure(s):`);
         for (const failure of failures) console.error(`  - ${failure}`);
@@ -124,6 +151,7 @@ const main = async () => {
     console.log(
         `✓ strategies.json ${league.strategies.length} strategies, ${league.meta.families.length} families, baseline ${league.meta.chance.scoreBaseline}`,
     );
+    console.log(`✓ gambler-playbook.json ${playbook.strategies.length} strategies, all matched to league rows`);
 };
 
 main().catch((err) => {

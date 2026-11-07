@@ -25,7 +25,7 @@ CADDY  := /opt/vfic/Caddyfile
 deploy: league verify build image ship check
 
 league:
-	npm run league:custom
+	npm run league
 
 verify:
 	npm run verify:data
@@ -46,9 +46,12 @@ ship:
 caddy:
 	ssh $(SERVER) 'grep -q "$(VHOST)" $(CADDY) || printf "\n# --- toto.sg edge vhost: static container $(NAME) on 172.17.0.1:8090 (image $(IMAGE)) ---\n$(VHOST) {\n\tencode zstd gzip\n\treverse_proxy 172.17.0.1:8090\n}\n" >> $(CADDY); docker exec vfic-caddy-1 caddy validate --config /etc/caddy/Caddyfile && docker exec vfic-caddy-1 caddy reload --config /etc/caddy/Caddyfile'
 
-# The league contract: exactly 224 strategies, every score finite. Matches
-# scripts/verify-data.mjs plus the count the UI copy is written against.
+# The league contract: the live league must carry exactly the rows of the
+# committed artifact, every score finite. The expected count comes from the
+# artifact itself, so it never drifts from the league the UI was built against.
 check:
 	@curl -fsS https://$(VHOST)/api/latest >/dev/null && echo "OK /api/latest"
-	@curl -fsS https://$(VHOST)/data/strategies.json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);const bad=j.strategies.some(r=>r.score==null);if(j.strategies.length!==224||bad){console.error('FAIL league: '+j.strategies.length+' strategies'+(bad?', null scores':''));process.exit(1)}console.log('OK league: 224 strategies, no null scores')})"
+	@EXPECTED=$$(node -e "console.log(require('./public/data/strategies.json').strategies.length)"); \
+	 curl -fsS https://$(VHOST)/data/strategies.json | EXPECTED=$$EXPECTED node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);const bad=j.strategies.some(r=>r.score==null);const expected=Number(process.env.EXPECTED);if(j.strategies.length!==expected||bad){console.error('FAIL league: '+j.strategies.length+' strategies, expected '+expected+(bad?', null scores':''));process.exit(1)}console.log('OK league: '+j.strategies.length+' strategies, no null scores')})"
 	@curl -fsS -o /dev/null https://$(VHOST)/strategies && echo "OK /strategies"
+	@curl -fsS -o /dev/null https://$(VHOST)/data/gambler-playbook.json && echo "OK /data/gambler-playbook.json"

@@ -120,6 +120,32 @@ export interface StrategiesFile {
     strategies: StrategyRow[];
 }
 
+/** One of the 10 cross-panel gambler strategies (public/data/gambler-playbook.json). */
+export interface GamblerStrategy {
+    index: number;
+    id: string;
+    name: string;
+    family: string;
+    description: string;
+    /** The document's illustrative line for the strategy. */
+    specLine: number[];
+    /** The insights panels the strategy is derived from. */
+    panels: number[];
+    edge: string;
+    rules: string[];
+    math: string;
+}
+
+export interface GamblerPlaybook {
+    meta: {
+        generatedAt: string;
+        nextDraw: number;
+        source: string;
+        folds: number;
+    };
+    strategies: GamblerStrategy[];
+}
+
 const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
 const numberFmt = new Intl.NumberFormat("en-SG");
 

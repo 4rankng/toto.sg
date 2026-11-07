@@ -26,54 +26,23 @@
 // committed artifact byte-for-byte).
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { scoreLine } from "./lib/toto.mjs";
-import { filterEra } from "./lib/analysis.mjs";
+import { evaluateStrategy, FOLDS } from "./lib/league-eval.mjs";
+import { filterEra, nextDrawDateIso } from "./lib/analysis.mjs";
+// Placeholder rows are defined once in ./lib/league-clean.mjs: any row that
+// carries the shared placeholder line [8,22,30,32,46,48], the placeholder
+// description "Documented strategy." or one of the replaced placeholder ids
+// is litter and is dropped before the league is rewritten.
+import { isPlaceholderRow } from "./lib/league-clean.mjs";
 
 const DATA_DIR = fileURLToPath(new URL("../public/data/", import.meta.url));
-const FOLDS = 100; // matches meta.folds
-const STAKE_PER_DRAW = 1; // S$1 Ordinary
 const REJECT_CAP = 10000; // per draw; a cap hit means a bug in the rule encoding
-// Placeholder rows to remove. All are hand-added litter sharing the identical
-// pick [8,22,30,32,46,48] (which actually scores 95 main hits on the last 100
-// era draws while these rows claim 60–91 or carry score:null) — duplicates of
-// each other and of nothing in the real league. Five research-pipeline rows
-// (fibCount1, quickpick, lastDigitFreq, ensemble, consecCap) also happen to
-// hold that pick but predate the placeholders in the committed 204-row
-// artifact and are left untouched, like every other pipeline row.
-const PLACEHOLDER_IDS = [
-    "mod9Root7", "matrixPeak", "pmArb", "payHotCold", "weekdayLadder", "zHubMomentum",
-    "tail6Distinct", "pairNeutral", "mod9Cover", "ladderAnchor", "zeroRepZeroConsec",
-    "residueColdHigh", "velocitySurf", "antiCalendarFortress", "acMaxEntropy",
-    "tail2Resonance", "dualRuns",
-];
 
 // ---------------------------------------------------------------------------
-// Seeded RNG — mulberry32 + FNV-1a string hash (same pattern as the original
-// pipeline's scripts/lib/strategies.mjs at 6009183).
+// Seeded RNG, walk-forward evaluation and scoring live in ./lib/league-eval.mjs
+// so that every script that writes league rows scores them identically.
 // ---------------------------------------------------------------------------
-function mulberry32(seed) {
-    let a = seed >>> 0;
-    return function () {
-        a |= 0;
-        a = (a + 0x6d2b79f5) | 0;
-        let t = Math.imul(a ^ (a >>> 15), 1 | a);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-}
 
-function fnv1a(str) {
-    let h = 0x811c9dc5;
-    for (let i = 0; i < str.length; i++) {
-        h ^= str.charCodeAt(i);
-        h = Math.imul(h, 0x01000193);
-    }
-    return h >>> 0;
-}
 
-const rngFor = (id, drawNo) => mulberry32(fnv1a(`${id}:${drawNo}`));
-
-// ---------------------------------------------------------------------------
 // Sampling helpers
 // ---------------------------------------------------------------------------
 const RANGE49 = Array.from({ length: 49 }, (_, i) => i + 1);
@@ -377,88 +346,6 @@ const GENERATOR_STRATEGIES = [
     ["residueColdHybrid", "Residue-Diverse Cold-High Hybrid", "Blends", "Two crowd-cold balls plus four others covering at least five mod-9 residue classes with three balls above 31 — spreading risk across two independent structural signals."],
 ];
 
-/** Generate a line for `id`/`drawNo`, rejecting up to REJECT_CAP candidates. */
-function generateLine(id, rule, prior, drawNo) {
-    const rng = rngFor(id, drawNo);
-    for (let attempt = 0; attempt < REJECT_CAP; attempt++) {
-        const line = rule(prior, rng);
-        if (line != null) {
-            if (line.length !== 6 || new Set(line).size !== 6 || line.some((n) => n < 1 || n > 49)) {
-                throw new Error(`${id}: rule produced an invalid line on draw ${drawNo}`);
-            }
-            return line;
-        }
-    }
-    throw new Error(`${id}: rejection cap on draw ${drawNo}`);
-}
-
-// ---------------------------------------------------------------------------
-// Walk-forward evaluation
-// ---------------------------------------------------------------------------
-const round2 = (x) => Math.round(x * 100) / 100;
-const round1 = (x) => Math.round(x * 10) / 10;
-const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
-
-/** Sample standard deviation (ddof = 1) of the per-fold hit counts. */
-function sampleSd(counts) {
-    if (counts.length < 2) return 0;
-    const mean = counts.reduce((a, b) => a + b, 0) / counts.length;
-    const ss = counts.reduce((acc, x) => acc + (x - mean) ** 2, 0);
-    return Math.sqrt(ss / (counts.length - 1));
-}
-
-function evaluateStrategy(spec, era, foldStart, expectedHits) {
-    const rule = spec.rule ?? null;
-    const perFoldHits = [];
-    let totalHits = 0;
-    let totalPrizes = 0;
-    let totalWinnings = 0;
-    for (let j = 0; j < FOLDS; j++) {
-        const i = foldStart + j;
-        const draw = era[i];
-        const pick = rule ? generateLine(spec.id, rule, era.slice(0, i), draw.draw) : spec.pick;
-        const hits = draw.numbers.filter((n) => pick.includes(n)).length; // main numbers only
-        perFoldHits.push(hits);
-        totalHits += hits;
-        const group = scoreLine(pick, draw);
-        if (group > 0) {
-            totalPrizes += 1;
-            const share = draw.prizes?.[`g${group}`]?.share;
-            if (share != null) totalWinnings += share;
-        }
-    }
-    const meanHits = totalHits / FOLDS;
-    const sd = sampleSd(perFoldHits);
-    // se of the mean over 100 folds; the exact pipeline se is unrecoverable but
-    // per-strategy sample sd reproduces the z magnitudes of the pipeline rows.
-    const zScore = sd === 0 ? 0 : round2((meanHits - expectedHits) / (sd / 10));
-    const effPrizes = totalPrizes;
-    const pnlPerDraw = round2((totalWinnings - FOLDS * STAKE_PER_DRAW) / FOLDS);
-    const recent12 = perFoldHits.slice(-12).reduce((a, b) => a + b, 0);
-    const score = round1(clamp(20.4 + 7.8 * zScore + 5.5 * effPrizes + 0.6 * recent12, 0, 100));
-    const currentPick = rule
-        ? generateLine(spec.id, rule, era, era[era.length - 1].draw + 1)
-        : spec.pick;
-    return {
-        id: spec.id,
-        name: spec.name,
-        family: spec.family,
-        description: spec.description,
-        evaluatedDraws: FOLDS,
-        totalHits,
-        meanHits: round2(meanHits),
-        expectedHits,
-        zScore,
-        score,
-        totalPrizes,
-        effPrizes,
-        pnlPerDraw,
-        recent12,
-        rank: 0, // assigned by the league-wide re-rank
-        currentPick,
-    };
-}
-
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -496,13 +383,17 @@ const main = async () => {
             name,
             family,
             description,
-            rule: GENERATOR_RULES[id],
+            // The shared evaluator calls rules as (prior, target, rng, prepared);
+            // these rules only need the history and the rng.
+            rule: (prior, _target, rng) => GENERATOR_RULES[id](prior, rng),
         })),
     ];
-    const newRows = specs.map((spec) => evaluateStrategy(spec, era, foldStart, expectedHits));
+    const nextTarget = { draw: nextDrawNo, date: nextDrawDateIso(era[era.length - 1].date) };
+    const newRows = specs.map((spec) => evaluateStrategy(spec, era, foldStart, expectedHits, { nextTarget }));
 
     // Merge: drop placeholders, upsert the 20 custom rows, keep pipeline fields.
-    const kept = league.strategies.filter((row) => !PLACEHOLDER_IDS.includes(row.id));
+    const kept = league.strategies.filter((row) => !isPlaceholderRow(row));
+    const purged = league.strategies.length - kept.length;
     const byId = new Map(kept.map((row) => [row.id, row]));
     for (const row of newRows) byId.set(row.id, row);
 
@@ -544,7 +435,7 @@ const main = async () => {
         );
     }
     console.log(
-        `\n${newRows.length} custom strategies (removed ${PLACEHOLDER_IDS.length} placeholders), league size ${league.strategies.length}, nextDraw ${nextDrawNo}.`,
+        `\n${newRows.length} custom strategies (removed ${purged} placeholder rows), league size ${league.strategies.length}, nextDraw ${nextDrawNo}.`,
     );
 };
 
