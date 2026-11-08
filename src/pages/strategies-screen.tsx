@@ -235,12 +235,12 @@ export const StrategiesScreen = () => {
                 description={`${rows.length} of ${data.strategies.length} · the six numbers each strategy would play for draw ${meta.nextDraw} · a prize needs 3 or more matches`}
                 actions={filters}
             >
-                <ol className="divide-y divide-line-soft">
+                <ol className="grid grid-cols-1 gap-px bg-line-soft xl:grid-cols-2">
                     {rows.map((row) => {
                         const isOpen = expanded === row.id;
 
                         return (
-                            <li key={row.id} className={cx("transition-colors duration-100", isOpen && "bg-surface-2/50")}>
+                            <li key={row.id} className={cx("bg-surface transition-colors duration-100", isOpen && "bg-surface-2/50 xl:col-span-2")}>
                                 <button
                                     type="button"
                                     aria-expanded={isOpen}
