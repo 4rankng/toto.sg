@@ -10,7 +10,7 @@ import {
     TrendUp01,
     Users01,
 } from "@untitledui/icons";
-import { CandidateBallChip, SequenceBlueprintBar } from "@/components/product/sequence-blueprint-bar";
+import { CandidateBallChip } from "@/components/product/sequence-blueprint-bar";
 import { useLineBuilder } from "@/providers/line-builder-provider";
 import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
@@ -688,8 +688,6 @@ export const InsightsScreen = () => {
     const ksTest = useMemo(() => computeKsUniformityStats(eraDraws), [eraDraws]);
     const pokerTails = useMemo(() => computePokerTailTestStats(eraDraws), [eraDraws]);
 
-    const latestDraw = useMemo(() => eraDraws[eraDraws.length - 1], [eraDraws]);
-
     /* Gallery 1-9 Blueprint and Match Analytics Memos */
     const sevenBallExposure = useMemo(() => computeSevenBallExposureStats(eraDraws), [eraDraws]);
     const velocityMatrix = useMemo(() => computeMultiWindowVelocityStats(eraDraws), [eraDraws]);
@@ -814,15 +812,6 @@ export const InsightsScreen = () => {
                 <KpiCard label="8-Signal #1" value={confluenceBoard?.rankedBalls[0]?.number ? `Ball ${confluenceBoard.rankedBalls[0].number}` : "—"} hint={confluenceBoard?.rankedBalls[0] ? `${confluenceBoard.rankedBalls[0].signalsPassed}/8 signals` : undefined} icon={Target05} tone="primary" />
                 <KpiCard label="Bot consensus" value={stratConsensus.topVoted[0] ? `Ball ${stratConsensus.topVoted[0].number}` : "—"} hint={stratConsensus.topVoted[0] ? `${stratConsensus.topVoted[0].votes} bot votes` : undefined} icon={Users01} tone="secondary" />
             </div>
-
-            {/* Live interactive sequence blueprint builder */}
-            <SequenceBlueprintBar
-                latestDraw={latestDraw}
-                confluence={confluenceBoard ?? undefined}
-                followers={latestTriggers}
-                greedy={greedyCoverage}
-                league={league ?? undefined}
-            />
 
             {/*
                 Gallery navigation. The section pills wrap instead of scrolling
