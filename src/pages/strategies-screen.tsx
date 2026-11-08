@@ -24,14 +24,11 @@ import { lineAcValue } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
 
-type SortKey = "score" | "hits" | "twoPlus" | "prizes" | "recent12";
+type SortKey = "score" | "prizes";
 
 const SORTS: { id: SortKey; label: string }[] = [
     { id: "score", label: "Score" },
-    { id: "hits", label: "Hits" },
-    { id: "twoPlus", label: "2+" },
     { id: "prizes", label: "Prizes" },
-    { id: "recent12", label: "Recent 12" },
 ];
 
 const TIERS = ["g1", "g2", "g3", "g4", "g5", "g6", "g7"] as const;
@@ -152,7 +149,7 @@ const StrategyDetail = ({
                         <div>
                             <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize points</dt>
                             <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                                {row.weightedPrizes ?? 0} <span className="text-ink-subtle">vs {Math.round((folds * (chance.weightedPrizesPer100Draws ?? 2.23)) / 100)}</span>
+                                {row.weightedPrizes ?? 0} <span className="text-ink-subtle">vs {Math.round((folds * (chance.weightedPrizesPer100Draws ?? 0.43)) / 100)}</span>
                             </dd>
                         </div>
                         <div>
@@ -340,12 +337,6 @@ export const StrategiesScreen = () => {
             switch (sort) {
                 case "prizes":
                     return row.effPrizes ?? 0;
-                case "hits":
-                    return row.totalHits ?? 0;
-                case "twoPlus":
-                    return row.twoPlusDraws ?? 0;
-                case "recent12":
-                    return row.recent12 ?? 0;
                 case "score":
                 default:
                     return row.score ?? 0;
@@ -366,8 +357,6 @@ export const StrategiesScreen = () => {
 
     const { meta } = data;
     // Chance nulls scale with the fold count: the meta rates are per 100 draws.
-    const chanceHits = Math.round(meta.folds * meta.chance.expectedHitsPerLine);
-    const chanceTwoPlus = Math.round((meta.folds * meta.chance.twoPlusPer100Draws) / 100);
     const chancePrizes = Math.round((meta.folds * meta.chance.prizesPer100Draws) / 100);
     const toggle = (id: string) => setExpanded((current) => (current === id ? null : id));
 
@@ -425,7 +414,7 @@ export const StrategiesScreen = () => {
             <PageHeader
                 kicker="Strategies"
                 title="Strategy league"
-                description={`Every score is expanding walk-forward over ${formatNumber(meta.folds)} real draws — each draw graded only on the history before it. Score = prize points: G7 1 · G6 2 · G5 4 · G4 8 · G3 16 · G2 32 · G1 64 per hit.`}
+                description={`Every score is expanding walk-forward over ${formatNumber(meta.folds)} real draws — each draw graded only on the history before it. Score = prize points: G7 1 · G6 10 · G5 100 · G4 1k · G3 10k · G2 100k · G1 1M per hit — one G1 outweighs any number of G7s.`}
                 meta={
                     <>
                         <span>
@@ -455,7 +444,7 @@ export const StrategiesScreen = () => {
             <Panel
                 isFlush
                 title="All strategies"
-                description={`${rows.length} of ${data.strategies.length} · picks for draw ${meta.nextDraw} · chance over ${formatNumber(meta.folds)} draws: ${formatNumber(chanceHits)} hits, ${formatNumber(chanceTwoPlus)} with 2+, ${formatNumber(chancePrizes)} prizes`}
+                description={`${rows.length} of ${data.strategies.length} · picks for draw ${meta.nextDraw} · chance over ${formatNumber(meta.folds)} draws: ${formatNumber(chancePrizes)} prizes (score points: ${formatNumber(Math.round((meta.folds * meta.chance.weightedPrizesPer100Draws) / 100))})`}
                 actions={filters}
             >
                 <ol className="grid grid-cols-1 gap-px bg-line-soft xl:grid-cols-2">
@@ -482,13 +471,7 @@ export const StrategiesScreen = () => {
                                         <span className="hidden shrink-0 text-[10px] text-ink-subtle sm:inline">{row.family}</span>
                                         <span className="shrink-0 font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score ?? 0}</span>
                                         <span className="w-20 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">
-                                            {sort === "recent12"
-                                                ? `${row.recent12 ?? 0} (L12)`
-                                                : sort === "twoPlus"
-                                                  ? `${row.twoPlusDraws ?? 0}× 2+`
-                                                  : sort === "hits"
-                                                    ? `${row.totalHits ?? 0} hits`
-                                                    : `${row.effPrizes ?? 0} prizes`}
+                                            {`${row.effPrizes ?? 0} prizes`}
                                         </span>
                                     </span>
 
@@ -498,7 +481,7 @@ export const StrategiesScreen = () => {
                                             <Ball key={n} n={n} size="lg" />
                                         ))}
                                         <span className="ml-auto shrink-0 font-mono text-[10px] text-ink-subtle tabular-nums">
-                                            {row.totalHits ?? 0}/{formatNumber(chanceHits)} hits · 2+ {row.twoPlusDraws ?? 0}/{formatNumber(chanceTwoPlus)}
+                                            {formatNumber(row.effPrizes ?? 0)}/{formatNumber(chancePrizes)} prizes · best {row.bestGroup != null ? `G${row.bestGroup}` : "—"}
                                         </span>
                                     </span>
                                 </button>

@@ -123,7 +123,7 @@ const checkStrategies = (league) => {
         check(Number.isFinite(row?.meanHits) && Number.isFinite(row?.expectedHits) && Number.isFinite(row?.zScore), `${where}: non-finite metrics`);
         check(Number.isInteger(row?.recent12) && row.recent12 >= 0 && row.recent12 <= 72, `${where}: recent12 must be 0-72 (12 draws × 6 numbers)`);
         check(Number.isInteger(row?.totalPrizes) && Number.isInteger(row?.effPrizes), `${where}: prize counts must be integers`);
-        check(Number.isInteger(row?.weightedPrizes) && row.weightedPrizes >= row.totalPrizes && row.weightedPrizes <= row.totalPrizes * 64, `${where}: weightedPrizes must be 1–64 per prize draw`);
+        check(Number.isInteger(row?.weightedPrizes) && row.weightedPrizes >= row.totalPrizes && row.weightedPrizes <= row.totalPrizes * 1_000_000, `${where}: weightedPrizes must be 1–1,000,000 per prize draw`);
         check(row.weightedPrizes === row.score, `${where}: score must equal weightedPrizes (the score is the prize points)`);
         check(row?.bestGroup === null || (Number.isInteger(row.bestGroup) && row.bestGroup >= 1 && row.bestGroup <= 7), `${where}: bestGroup must be null or 1-7`);
         check(Number.isInteger(row?.depthPoints) && row.depthPoints >= 0 && row.depthPoints <= league.meta.folds * 16, `${where}: depthPoints must be 0-${league.meta.folds * 16}`);
@@ -219,7 +219,7 @@ const main = async () => {
     console.log(`✓ draws.json      ${draws.length} draws (#${draws[0]?.draw} → #${draws.at(-1)?.draw})`);
     console.log(`✓ analysis.json   ${analysis.coverage.totalDraws} 6/49-era draws, ${Object.keys(analysis).length} sections`);
     console.log(
-        `✓ strategies.json ${league.strategies.length} strategies, ${league.meta.families.length} families, baseline ${league.meta.chance.scoreBaseline}`,
+        `✓ strategies.json ${league.strategies.length} strategies, ${league.meta.families.length} families, chance score ${league.meta.chance.weightedPrizesPer100Draws}/100 draws`,
     );
     console.log(`✓ cross-panel-playbook.json ${playbook.strategies.length} documented strategies, no payout claims`);
 };

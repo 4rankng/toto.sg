@@ -11,11 +11,10 @@ interface TicketXRayProps {
     balls: number[];
     result: TicketXRayResult | null;
     className?: string;
-    onClear?: () => void;
     onApplyConsensus?: () => void;
 }
 
-export function TicketXRay({ balls, result, className, onClear: _onClear, onApplyConsensus }: TicketXRayProps) {
+export function TicketXRay({ balls, result, className, onApplyConsensus }: TicketXRayProps) {
     const [tab, setTab] = useState<"diagnostics" | "backtest">("diagnostics");
 
     if (balls.length < 6 || !result) {

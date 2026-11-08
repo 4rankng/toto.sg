@@ -1,14 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Calendar, Clock, Hash01, Lightning01 } from "@untitledui/icons";
 import { Link } from "react-router";
 import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
-import { type BoardWindow, type CopyStatus, HeatLegend, heatColour, LineSlip, NumberBoard } from "@/components/product/number-board";
+import { type BoardWindow, HeatLegend, heatColour, LineSlip, NumberBoard } from "@/components/product/number-board";
 import { PageHeader } from "@/components/product/page-header";
 import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
 import { KpiCard } from "@/components/product/kpi-card";
 import { TicketXRay } from "@/components/product/ticket-xray";
-import { useClipboard } from "@/hooks/use-clipboard";
 import { useCountdown } from "@/hooks/use-countdown";
 import {
     type Analysis,
@@ -94,12 +93,9 @@ export const HomeScreen = () => {
     const { data: analysis } = useJson<Analysis>("/data/analysis.json");
     const { data: league } = useJson<StrategiesFile>("/data/strategies.json");
     const [live, setLive] = useState<LatestResult | null>(null);
-    const { line, size, setSize, toggle, setLine, clear } = useLineBuilder();
+    const { line, size, setSize, toggle, setLine } = useLineBuilder();
     const [period, setPeriod] = useState("all");
-    const { copy } = useClipboard();
-    const [copyStatus, setCopyStatus] = useState<CopyStatus>("idle");
     const [quickPickName, setQuickPickName] = useState<string | null>(null);
-    const copyTimer = useRef<number | null>(null);
 
     // On Netlify the function serves /api/latest; local dev has no function,
     // and the bundled head stands in.
@@ -115,13 +111,6 @@ export const HomeScreen = () => {
             cancelled = true;
         };
     }, []);
-
-    useEffect(
-        () => () => {
-            if (copyTimer.current !== null) window.clearTimeout(copyTimer.current);
-        },
-        [],
-    );
 
     const latest = useMemo(() => draws?.at(-1) ?? null, [draws]);
     const lastDrawDate = live?.date ?? latest?.date ?? null;
@@ -178,19 +167,6 @@ export const HomeScreen = () => {
     const handleToggle = (n: number) => {
         setQuickPickName(null);
         toggle(n);
-    };
-
-    const handleClear = () => {
-        setQuickPickName(null);
-        clear();
-    };
-
-    const handleCopy = async () => {
-        const result = await copy(line.join(" "), "line");
-        setCopyStatus(result.success ? "copied" : "failed");
-
-        if (copyTimer.current !== null) window.clearTimeout(copyTimer.current);
-        copyTimer.current = window.setTimeout(() => setCopyStatus("idle"), 2500);
     };
 
     if (isLoading) return <HomeSkeleton />;
@@ -270,10 +246,11 @@ export const HomeScreen = () => {
                                     ))}
                                 </div>
                                 <span aria-hidden="true" className="hidden h-9 w-px bg-line sm:block" />
-                                <div className="flex items-center gap-2">
-                                    {additional != null && <Ball n={additional} size="xl" variant="ring" />}
-                                    <span className="text-[10px] leading-3 font-semibold tracking-[0.08em] text-ink-subtle uppercase">Additional</span>
-                                </div>
+                                {additional != null && (
+                                    <span role="img" aria-label={`Additional number ${additional}`}>
+                                        <Ball n={additional} size="xl" variant="ring" />
+                                    </span>
+                                )}
                             </div>
 
                             <div className="mt-3 grid grid-cols-1 gap-x-5 sm:grid-cols-2 lg:mt-auto lg:grid-cols-1">
@@ -342,7 +319,7 @@ export const HomeScreen = () => {
                 <Panel
                     className="lg:col-span-4"
                     title="Top strategies"
-                    description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on ${league?.meta.folds ?? 0} draws · chance scores ${league?.meta.chance.scoreBaseline ?? 45}.`}
+                    description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on ${league?.meta.folds ?? 0} draws · chance scores ${Math.round(((league?.meta.folds ?? 0) * (league?.meta.chance.weightedPrizesPer100Draws ?? 0)) / 100)}.`}
                     actions={
                         <Link to="/strategies" className="text-xs font-semibold text-accent transition-colors duration-100 hover:text-accent-strong">
                             All →
@@ -446,7 +423,7 @@ export const HomeScreen = () => {
                         />
                     </div>
 
-                    <div className="grid gap-3 lg:grid-cols-2">
+                    <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                         <div className="flex flex-col gap-3">
                             <Panel title="Play slip" description="Pick 6, 7 or 8 numbers. Tap the board to fill it.">
                                 <LineSlip
@@ -455,31 +432,12 @@ export const HomeScreen = () => {
                                     colourOf={(n) => (activeWindow ? heatColour(activeWindow, n) : "var(--color-surface-2)")}
                                     onSizeChange={handleSizeChange}
                                     onQuickPick={handleQuickPick}
-                                    onClear={handleClear}
-                                    onCopy={handleCopy}
-                                    copyStatus={copyStatus}
                                     quickPickLabel={quickPickName}
-                                    extraActions={
-                                        <>
-                                            <button
-                                                type="button"
-                                                onClick={handleApplyConsensus}
-                                                className="min-h-9 rounded-lg border border-secondary/40 bg-secondary/10 px-2.5 text-xs font-semibold whitespace-nowrap text-secondary transition-colors duration-100 hover:bg-secondary/20"
-                                            >
-                                                Consensus Pick
-                                            </button>
-                                        </>
-                                    }
                                 />
                             </Panel>
 
                             {/* Live Ticket X-Ray Engine & 1,892-Draw Backtester */}
-                            <TicketXRay
-                                balls={line}
-                                result={ticketAnalysis}
-                                onClear={handleClear}
-                                onApplyConsensus={handleApplyConsensus}
-                            />
+                            <TicketXRay balls={line} result={ticketAnalysis} onApplyConsensus={handleApplyConsensus} />
                         </div>
 
                         <Panel title="Most and least seen" description="Counts across the 6/49 era." isFlush>

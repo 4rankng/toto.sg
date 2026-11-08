@@ -20,8 +20,6 @@ export interface BoardWindow {
     summary?: string;
 }
 
-export type CopyStatus = "idle" | "copied" | "failed";
-
 /** The number of winning numbers in a draw. */
 const NUMBERS_PER_DRAW = 6;
 
@@ -231,20 +229,16 @@ interface LineSlipProps {
     colourOf: (n: number) => string;
     onSizeChange: (size: LineSize) => void;
     onQuickPick: () => void;
-    onClear: () => void;
-    onCopy: () => void;
-    copyStatus: CopyStatus;
     /** The strategy a quick pick came from, shown as feedback. */
     quickPickLabel?: string | null;
     className?: string;
-    extraActions?: React.ReactNode;
 }
 
 /**
  * The line builder. Slots take the heat tint of the number they hold, so the
  * slip and the board read as one surface. System 6, 7 and 8 are supported.
  */
-export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, onClear, onCopy, copyStatus, quickPickLabel, className, extraActions }: LineSlipProps) {
+export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, quickPickLabel, className }: LineSlipProps) {
     return (
         <div className={cx("flex flex-col gap-3", className)}>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -305,28 +299,6 @@ export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, onCl
                 >
                     Quick pick
                 </button>
-                <button
-                    type="button"
-                    onClick={onClear}
-                    disabled={line.length === 0}
-                    className="min-h-9 rounded-lg border border-line bg-surface px-3 text-xs font-semibold whitespace-nowrap text-ink-muted transition-colors duration-100 hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    Clear
-                </button>
-                <button
-                    type="button"
-                    onClick={onCopy}
-                    disabled={line.length === 0}
-                    className="min-h-9 rounded-lg border border-line bg-surface px-3 text-xs font-semibold whitespace-nowrap text-ink-muted transition-colors duration-100 hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    Copy
-                </button>
-                {copyStatus !== "idle" && (
-                    <span role="status" className="text-[11px] leading-4 text-ink-subtle">
-                        {copyStatus === "copied" ? "Copied." : "Copy failed — copy manually."}
-                    </span>
-                )}
-                {extraActions}
             </div>
 
             {quickPickLabel && (
@@ -335,10 +307,6 @@ export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, onCl
                     {size > 6 ? ` + ${size - 6} random` : ""}
                 </p>
             )}
-
-            <p className="border-t border-line/70 pt-2.5 text-[11px] leading-4 text-ink-subtle">
-                Quick pick loads a random strategy&apos;s six numbers. System 7 and 8 fill the extra slots at random.
-            </p>
         </div>
     );
 }

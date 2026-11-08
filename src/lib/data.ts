@@ -100,7 +100,7 @@ export interface StrategyRow {
     score: number;
     totalPrizes: number;
     effPrizes: number;
-    /** Prize quality: matched−2 points per prize draw (chance: 1.96 per 100). */
+    /** The score itself: each prize draw earns 10^(7−group) — G7 1 … G1 1,000,000, a decade per tier (chance ≈ 43.3 per 100). */
     weightedPrizes: number;
     /** Hit depth total: each fold earns 2^(matched−2) — 1/2/4/8/16 for 2–6 matched. */
     depthPoints: number;
@@ -135,7 +135,6 @@ export interface StrategyMeta {
         tierG5: number;
         tierG6: number;
         tierG7: number;
-        scoreBaseline: number;
     };
     families: string[];
 }
