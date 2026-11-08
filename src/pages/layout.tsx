@@ -4,7 +4,7 @@ import { ThemeToggle } from "@/components/product/theme-toggle";
 import { cx } from "@/utils/cx";
 
 const NAV_ITEMS = [
-    { to: "/", label: "Latest" },
+    { to: "/", label: "Home" },
     { to: "/history", label: "History" },
     { to: "/insights", label: "Insights" },
     { to: "/strategies", label: "Strategies" },

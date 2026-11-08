@@ -179,7 +179,6 @@ export const HomeScreen = () => {
         <div className="flex flex-col gap-3">
             <PageHeader
                 kicker="TOTO · 6/49"
-                title="Latest draw"
                 meta={
                     <>
                         <span>
@@ -266,11 +265,6 @@ export const HomeScreen = () => {
                             onToggle={handleToggle}
                         />
                     </Panel>
-
-                    {/* The gap list lives under the board in every layout —
-                        it fills the space the tall right-hand column would
-                        otherwise leave hollow next to the board. */}
-                    {longestGapsPanel}
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-3 lg:col-span-8 lg:col-start-5">
