@@ -218,6 +218,18 @@ const STREAK_WINDOW = 30;
 /** Draws in the rolling sum mean. */
 const SUM_TREND_WINDOW = 20;
 
+/** Compact axis labels for the eight-filter envelope (full names are in the caption). */
+const ENVELOPE_FILTER_LABELS: Record<string, string> = {
+    "Sum Range": "Sum",
+    "Odd/Even Balance": "Odd/Even",
+    "Low/High Balance": "Low/High",
+    "Span (Max - Min)": "Span",
+    "Arithmetic Complexity": "AC ≥7",
+    "Decades Covered": "Decades",
+    "Distinct Tails": "Tails",
+    "Repeater Restraint": "Repeaters",
+};
+
 /** One panel in the gallery index. */
 interface IndexPanel {
     id: string;
@@ -765,6 +777,11 @@ export const InsightsScreen = () => {
         return p ? p.label.toLowerCase().includes(q) || panelId.toLowerCase().includes(q) : true;
     };
 
+    /** Panel-index links the search box filters. */
+    const visiblePanelIndex = searchQuery.trim()
+        ? PANEL_INDEX.filter((p) => p.label.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+        : PANEL_INDEX;
+
     return (
         <div className="flex min-w-0 max-w-full flex-col gap-3">
             <PageHeader
@@ -807,41 +824,52 @@ export const InsightsScreen = () => {
                 league={league ?? undefined}
             />
 
-            {/* The interactive gallery navigation bar with search and pills. */}
+            {/*
+                Gallery navigation. The section pills wrap instead of scrolling
+                sideways (at 1440 the row was 1,458px inside a 1,186px track,
+                hiding the last two sections), the search now sits with the
+                panel index it actually filters, and the long index strip keeps
+                a fade at its right edge so a clipped link reads as "more
+                below" rather than a cut-off label.
+            */}
             <nav aria-label="Insights sections" className="flex min-w-0 max-w-full flex-col gap-2 rounded-lg border border-line bg-surface p-2.5">
-                <div className="flex min-w-0 max-w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="scrollbar-hide flex min-w-0 max-w-full items-center gap-1.5 overflow-x-auto">
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                    <button
+                        type="button"
+                        onClick={() => setActiveSection("all")}
+                        className={cx(
+                            "cursor-pointer shrink-0 rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors duration-100",
+                            activeSection === "all"
+                                ? "bg-primary-soft text-primary border border-primary-line"
+                                : "border border-line bg-surface-2 text-ink-muted hover:text-ink hover:border-line-strong",
+                        )}
+                    >
+                        All {PANEL_INDEX.length} Panels
+                    </button>
+                    {SECTIONS.map((section) => (
                         <button
+                            key={section.id}
                             type="button"
-                            onClick={() => setActiveSection("all")}
+                            onClick={() => setActiveSection(section.id)}
                             className={cx(
                                 "cursor-pointer shrink-0 rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors duration-100",
-                                activeSection === "all"
+                                activeSection === section.id
                                     ? "bg-primary-soft text-primary border border-primary-line"
                                     : "border border-line bg-surface-2 text-ink-muted hover:text-ink hover:border-line-strong",
                             )}
                         >
-                            All {PANEL_INDEX.length} Panels
+                            {section.label} ({section.panels.length})
                         </button>
-                        {SECTIONS.map((section) => (
-                            <button
-                                key={section.id}
-                                type="button"
-                                onClick={() => setActiveSection(section.id)}
-                                className={cx(
-                                    "cursor-pointer shrink-0 rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors duration-100",
-                                    activeSection === section.id
-                                        ? "bg-primary-soft text-primary border border-primary-line"
-                                        : "border border-line bg-surface-2 text-ink-muted hover:text-ink hover:border-line-strong",
-                                )}
-                            >
-                                {section.label} ({section.panels.length})
-                            </button>
-                        ))}
-                    </div>
+                    ))}
+                </div>
 
-                    <div className="relative w-full shrink-0 sm:w-auto sm:min-w-44 sm:max-w-xs">
-                        <SearchSm className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-ink-subtle" />
+                <div className="flex min-w-0 flex-wrap items-center gap-2 border-t border-line/60 pt-2 sm:flex-nowrap">
+                    <label className="relative min-w-40 flex-1 sm:max-w-xs">
+                        <span className="sr-only">Filter panels</span>
+                        <SearchSm
+                            aria-hidden="true"
+                            className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-ink-subtle"
+                        />
                         <input
                             type="text"
                             placeholder="Filter panels..."
@@ -849,19 +877,27 @@ export const InsightsScreen = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full rounded-md border border-line bg-surface-inset py-1 pl-8 pr-2 text-xs text-ink placeholder:text-ink-subtle focus:border-primary focus:outline-none"
                         />
+                    </label>
+                    <span className="shrink-0 font-mono text-[10px] text-ink-subtle tabular-nums">
+                        {visiblePanelIndex.length}/{PANEL_INDEX.length} panels
+                    </span>
+                    <div className="relative min-w-0 basis-full sm:basis-auto sm:flex-1">
+                        <div className="scrollbar-hide flex min-w-0 max-w-full items-center gap-1 overflow-x-auto pr-10">
+                            {visiblePanelIndex.map((panel) => (
+                                <a
+                                    key={panel.id}
+                                    href={`#${panel.id}`}
+                                    className="shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] text-ink-subtle transition-colors duration-100 hover:text-accent"
+                                >
+                                    {String(panel.number).padStart(2, "0")} {panel.label}
+                                </a>
+                            ))}
+                        </div>
+                        <span
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-surface to-transparent"
+                        />
                     </div>
-                </div>
-
-                <div className="scrollbar-hide flex min-w-0 max-w-full items-center gap-1 overflow-x-auto border-t border-line/60 pt-2">
-                    {PANEL_INDEX.filter((p) => !searchQuery || p.label.toLowerCase().includes(searchQuery.toLowerCase())).map((panel) => (
-                        <a
-                            key={panel.id}
-                            href={`#${panel.id}`}
-                            className="shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] text-ink-subtle transition-colors duration-100 hover:text-accent"
-                        >
-                            {String(panel.number).padStart(2, "0")} {panel.label}
-                        </a>
-                    ))}
                 </div>
             </nav>
 
@@ -2237,17 +2273,25 @@ export const InsightsScreen = () => {
                                 className="lg:col-span-6"
                                 stats={[
                                     { label: "Modal Pattern", value: tercileMatrix.modalPattern, hint: "most frequent tier split" },
-                                    { label: "Top Pattern", value: tercileMatrix.topPatterns[0]?.pattern ?? "2-2-2", hint: `${(tercileMatrix.topPatterns[0]?.observedRate ?? 0).toFixed(1)}% draws` },
-                                    { label: "Expected Rate", value: `${(tercileMatrix.topPatterns[0]?.expectedRate ?? 0).toFixed(1)}%`, hint: "hypergeometric null" },
+                                    {
+                                        label: "Top Pattern",
+                                        value: tercileMatrix.topPatterns[0]?.pattern ?? "2-2-2",
+                                        hint: `${((tercileMatrix.topPatterns[0]?.observedRate ?? 0) * 100).toFixed(1)}% draws`,
+                                    },
+                                    {
+                                        label: "Expected Rate",
+                                        value: `${((tercileMatrix.topPatterns[0]?.expectedRate ?? 0) * 100).toFixed(1)}%`,
+                                        hint: "hypergeometric null",
+                                    },
                                 ]}
                             >
                                 <ObservedExpectedBarChart
                                     items={tercileMatrix.topPatterns.slice(0, 6).map((p) => ({
                                         label: p.pattern,
-                                        observedValue: p.observedRate,
-                                        expectedValue: p.expectedRate,
-                                        formattedObserved: `${p.observedRate.toFixed(1)}% (${p.count}d)`,
-                                        formattedExpected: `${p.expectedRate.toFixed(1)}%`,
+                                        observedValue: p.observedRate * 100,
+                                        expectedValue: p.expectedRate * 100,
+                                        formattedObserved: `${(p.observedRate * 100).toFixed(1)}% (${p.count}d)`,
+                                        formattedExpected: `${(p.expectedRate * 100).toFixed(1)}%`,
                                         tone: p.observedRate >= p.expectedRate ? "primary" : "secondary",
                                     }))}
                                     maxValue={25}
@@ -4072,15 +4116,15 @@ export const InsightsScreen = () => {
                         >
                             <ObservedExpectedBarChart
                                 items={envelopeStats.filters.map((f) => ({
-                                    label: f.filterName,
-                                    observedValue: f.historicalPassRate,
+                                    label: ENVELOPE_FILTER_LABELS[f.filterName] ?? f.filterName,
+                                    observedValue: f.historicalPassRate * 100,
                                     expectedValue: 75,
-                                    formattedObserved: `${f.historicalPassRate.toFixed(1)}%`,
-                                    formattedExpected: f.sweetRange,
-                                    tone: f.historicalPassRate >= 70 ? "primary" : "secondary",
+                                    formattedObserved: `${(f.historicalPassRate * 100).toFixed(1)}%`,
+                                    formattedExpected: `75% · sweet ${f.sweetRange}`,
+                                    tone: f.historicalPassRate >= 0.7 ? "primary" : "secondary",
                                 }))}
                                 maxValue={100}
-                                orientation="vertical"
+                                orientation="horizontal"
                                 className="mt-2"
                             />
                         </InsightPanel>

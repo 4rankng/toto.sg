@@ -17,7 +17,7 @@ const ballSizes: Record<BallSize, string> = {
     sm: "size-7 text-xs",
     md: "size-8 text-xs sm:size-9 sm:text-sm",
     lg: "size-9 text-sm sm:size-11 sm:text-base",
-    xl: "size-9 text-sm sm:size-12 sm:text-lg",
+    xl: "size-9 text-sm sm:size-11 sm:text-base",
     "2xl": "size-10 text-base sm:size-12 sm:text-lg md:size-14 md:text-xl",
 };
 

@@ -257,8 +257,8 @@ export const HomeScreen = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-                                <div className="flex flex-wrap items-center gap-1.5" role="img" aria-label={`Winning numbers ${numbers.join(", ")}`}>
+                            <div className="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-2">
+                                <div className="flex flex-wrap items-center gap-1" role="img" aria-label={`Winning numbers ${numbers.join(", ")}`}>
                                     {numbers.map((n, index) => (
                                         <span key={n} className="animate-rise" style={{ animationDelay: `${index * 40}ms` }}>
                                             <Ball n={n} size="xl" />

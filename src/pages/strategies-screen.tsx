@@ -8,7 +8,6 @@ import { Panel } from "@/components/panel";
 import { FamilyChip } from "@/components/product/family-chip";
 import { KpiCard } from "@/components/product/kpi-card";
 import { PageHeader } from "@/components/product/page-header";
-import { RecentHits } from "@/components/product/recent-hits";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
 import {
     type CrossPanelPlaybook,
@@ -117,51 +116,33 @@ const StrategyDetail = ({
             <div className="grid gap-3 lg:grid-cols-12">
                 {/* Walk-forward performance vs chance */}
                 <div className="flex min-w-0 flex-col gap-3 lg:col-span-7">
-                    <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-5">
                         <div>
                             <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Draws tested</dt>
                             <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.evaluatedDraws)}</dd>
                         </div>
                         <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Numbers matched</dt>
-                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                                {formatNumber(row.totalHits ?? 0)} <span className="text-ink-subtle">vs {formatNumber(Math.round(folds * chance.expectedHitsPerLine))}</span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Hit rate — 2+ matched</dt>
-                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                                {row.twoPlusDraws ?? 0}/{row.evaluatedDraws} <span className="text-ink-subtle">vs {Math.round((folds * chance.twoPlusPer100Draws) / 100)}</span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Depth points</dt>
-                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                                {row.depthPoints ?? 0} <span className="text-ink-subtle">vs {Math.round((folds * (chance.depthPointsPer100Draws ?? 17.17)) / 100)}</span>
-                            </dd>
-                        </div>
-                        <div>
                             <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize draws</dt>
                             <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                                {formatNumber(row.totalPrizes ?? 0)} <span className="text-ink-subtle">vs {Math.round((folds * chance.prizesPer100Draws) / 100)}</span>
+                                {formatNumber(row.totalPrizes ?? 0)} <span className="text-ink-subtle">vs {Math.round((folds * chance.prizesPer100Draws) / 100)} chance</span>
                             </dd>
                         </div>
                         <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize points</dt>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Score</dt>
+                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums" title="Prize points: each prize hit earns its tier's weight — G7 1, G6 10, G5 100, G4 1k, G3 10k, G2 100k, G1 1M">
+                                {formatNumber(row.score ?? 0)} <span className="text-ink-subtle">pts</span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Profit/draw</dt>
+                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums" title="Average prize money per S$1 line over the window">
+                                {formatSigned(row.pnlPerDraw ?? 0, 2)} <span className="text-ink-subtle">S$/draw</span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Best hit</dt>
                             <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                                {row.weightedPrizes ?? 0} <span className="text-ink-subtle">vs {Math.round((folds * (chance.weightedPrizesPer100Draws ?? 0.43)) / 100)}</span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matched, last 12 draws</dt>
-                            <dd className="mt-0.5">
-                                <RecentHits hits={row.recent12 ?? 0} draws={12} expectedPerLine={row.expectedHits ?? chance.expectedHitsPerLine} />
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Profit/draw · Prize points</dt>
-                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                                {formatSigned(row.pnlPerDraw ?? 0, 2)} · {row.score ?? 0} pts
+                                {row.bestGroup != null ? `G${row.bestGroup}` : "—"}
                             </dd>
                         </div>
                     </dl>
@@ -360,8 +341,10 @@ export const StrategiesScreen = () => {
     const chancePrizes = Math.round((meta.folds * meta.chance.prizesPer100Draws) / 100);
     const toggle = (id: string) => setExpanded((current) => (current === id ? null : id));
 
+    // Wrap rather than scroll: on phones the sort pills were clipped behind
+    // an invisible horizontal scroller.
     const filters = (
-        <div className="scrollbar-hide flex w-full flex-nowrap items-center gap-1.5 overflow-x-auto sm:w-auto">
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-1.5 sm:w-auto sm:flex-nowrap">
             <Input
                 value={query}
                 onChange={(value) => {

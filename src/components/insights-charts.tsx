@@ -1003,7 +1003,9 @@ export function MonthHeatmap({ stats, className }: MonthHeatmapProps) {
 
     // The hit-count strip: how many draws each calendar month holds, against
     // the fair share (the game runs twice a week, so months are near-even).
-    const stripH = 40;
+    // At 40px the bars read as hairlines; the taller strip makes the spread
+    // and the expected line legible without challenging the heatmap.
+    const stripH = 64;
     const stripTop = padTop + gridH + 40;
     const height = stripTop + stripH + padBottom;
 

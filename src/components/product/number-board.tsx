@@ -145,7 +145,10 @@ export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, li
     return (
         <div className={cx("flex flex-col gap-3", className)}>
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <div role="group" aria-label="Board lens" className="inline-flex max-w-full overflow-x-auto items-center gap-0.5 rounded-lg bg-surface-inset p-0.5">
+                {/* The lens row wraps rather than scrolls: a half-visible
+                    "RSI" tab at 1024–1279px read as a clipped label and hid
+                    the last two lenses behind an invisible scroller. */}
+                <div role="group" aria-label="Board lens" className="flex min-w-0 max-w-full flex-wrap items-center gap-0.5 rounded-lg bg-surface-inset p-0.5">
                     {windows.map((window) => (
                         <button
                             key={window.id}
@@ -153,7 +156,7 @@ export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, li
                             aria-pressed={window.id === active.id}
                             onClick={() => onPeriodChange(window.id)}
                             className={cx(
-                                "min-h-8 rounded-md px-2.5 text-[11px] font-semibold whitespace-nowrap transition-colors duration-100",
+                                "min-h-8 rounded-md px-2 text-[11px] font-semibold whitespace-nowrap transition-colors duration-100",
                                 window.id === active.id ? "bg-surface text-ink shadow-xs ring-1 ring-line/70" : "text-ink-subtle hover:text-ink",
                             )}
                         >
