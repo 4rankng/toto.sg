@@ -8,8 +8,8 @@
 //   /assets/*              vite hashed bundles, immutable
 //   everything else        static file from dist/, SPA fallback to index.html
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { readFile, stat } from "node:fs/promises";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -133,15 +133,16 @@ async function serveLatest(res) {
 async function serveStatic(req, res, pathname) {
     let filePath = path.join(DIST, path.normalize(pathname).replace(/^(\.\.[/\\])+/, ""));
     if (!filePath.startsWith(DIST)) filePath = path.join(DIST, "index.html");
-    if (!existsSync(filePath) || path.basename(filePath) === "") filePath = path.join(DIST, "index.html");
-    const isDirectory = existsSync(filePath) && (await readFile(filePath).then(() => false, () => true));
-    if (isDirectory) filePath = path.join(filePath, "index.html");
 
     let body;
     try {
-        body = await readFile(filePath);
+        const st = await stat(filePath);
+        const target = st.isDirectory() ? path.join(filePath, "index.html") : filePath;
+        body = await readFile(target);
+        filePath = target;
     } catch {
-        // SPA fallback: client-side routes (/strategies, /history, /insights)
+        // Missing file or SPA route (/strategies, /history, /insights): the
+        // client router owns every path that is not a real asset.
         return send(res, 200, await readFile(path.join(DIST, "index.html")), {
             "Content-Type": MIME[".html"],
             "Cache-Control": "no-cache",

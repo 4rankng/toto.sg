@@ -28,6 +28,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { evaluateStrategy, FOLDS } from "./lib/league-eval.mjs";
 import { filterEra, nextDrawDateIso } from "./lib/analysis.mjs";
+import { DESK_RULES, DESK_STRATEGIES, buildDeskContext } from "./lib/desk-rules.mjs";
 // Placeholder rows are defined once in ./lib/league-clean.mjs: any row that
 // carries the shared placeholder line [8,22,30,32,46,48], the placeholder
 // description "Documented strategy." or one of the replaced placeholder ids
@@ -365,10 +366,26 @@ const main = async () => {
         if (fixed.pick.length !== 6 || new Set(fixed.pick).size !== 6) throw new Error(`${fixed.id}: bad curated line`);
         if (!league.meta.families.includes(fixed.family)) throw new Error(`${fixed.id}: family "${fixed.family}" not in meta.families`);
     }
-    for (const [id, , family] of GENERATOR_STRATEGIES) {
-        if (typeof GENERATOR_RULES[id] !== "function") throw new Error(`${id}: missing rule`);
+    for (const [id, , family] of DESK_STRATEGIES) {
+        if (typeof DESK_RULES[id] !== "function") throw new Error(`${id}: missing desk rule`);
         if (!league.meta.families.includes(family)) throw new Error(`${id}: family "${family}" not in meta.families`);
     }
+
+    // The desk strategies (TWIN-45 / ERA-BRIDGE / SHAPE-CONDITIONAL / the six
+    // portfolio shape lines) read the FULL archive — both ball pools — not just
+    // the 6/49 era. buildDeskContext does the heavy per-fold work (fingerprints,
+    // twin distances, era-split rates) once per fold draw; the memo shares it
+    // across the nine strategies.
+    const sorted = [...draws].sort((a, b) => a.draw - b.draw);
+    const boundaryDraw = era[0].draw;
+    const ctxMemo = new Map();
+    const deskPrepare = (eraPrior, target) => {
+        if (!ctxMemo.has(target.draw)) {
+            const fullPrior = sorted.filter((d) => d.draw < target.draw);
+            ctxMemo.set(target.draw, buildDeskContext(eraPrior, fullPrior, target.draw, boundaryDraw));
+        }
+        return ctxMemo.get(target.draw);
+    };
 
     const specs = [
         ...FIXED_STRATEGIES.map(({ id, name, family, pick, description }) => ({
@@ -387,9 +404,22 @@ const main = async () => {
             // these rules only need the history and the rng.
             rule: (prior, _target, rng) => GENERATOR_RULES[id](prior, rng),
         })),
+        ...DESK_STRATEGIES.map(([id, name, family, description]) => ({
+            id,
+            name,
+            family,
+            description,
+            // Desk rules are pure functions of the prepared full-archive context.
+            rule: (prior, target, rng, prepared) => DESK_RULES[id](prior, target, rng, prepared),
+        })),
     ];
     const nextTarget = { draw: nextDrawNo, date: nextDrawDateIso(era[era.length - 1].date) };
-    const newRows = specs.map((spec) => evaluateStrategy(spec, era, foldStart, expectedHits, { nextTarget }));
+    const newRows = specs.map((spec) =>
+        DESK_STRATEGIES.some(([id]) => id === spec.id)
+            ? evaluateStrategy(spec, era, foldStart, expectedHits, { prepare: deskPrepare, nextTarget })
+            : evaluateStrategy(spec, era, foldStart, expectedHits, { nextTarget }),
+    );
+
 
     // Merge: drop placeholders, upsert the 20 custom rows, keep pipeline fields.
     const kept = league.strategies.filter((row) => !isPlaceholderRow(row));

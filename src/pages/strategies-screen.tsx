@@ -14,10 +14,11 @@ import { type GamblerPlaybook, type GamblerStrategy, type StrategiesFile, type S
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
 
-type SortKey = "score" | "prizes";
+type SortKey = "score" | "hits" | "prizes";
 
 const SORTS: { id: SortKey; label: string }[] = [
     { id: "score", label: "Score" },
+    { id: "hits", label: "Hits" },
     { id: "prizes", label: "Prizes" },
 ];
 
@@ -199,7 +200,7 @@ export const StrategiesScreen = () => {
             return row.name.toLowerCase().includes(needle) || row.id.toLowerCase().includes(needle) || row.description.toLowerCase().includes(needle);
         });
 
-        const value = (row: StrategyRow) => (sort === "prizes" ? row.effPrizes : row.score);
+        const value = (row: StrategyRow) => (sort === "prizes" ? row.effPrizes : sort === "hits" ? row.totalHits : row.score);
         return [...filtered].sort((a, b) => value(b) - value(a));
     }, [data, query, family, sort]);
 
