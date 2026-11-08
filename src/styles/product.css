@@ -129,6 +129,7 @@
     --color-fam-24: light-dark(#5a6b7d, #9ab5cf);
     --color-fam-25: light-dark(#466e6b, #84c0ba);
     --color-fam-26: light-dark(#7e5c43, #d9a987);
+    --color-fam-27: light-dark(#6e5d3a, #cbb878);
 }
 
 /* Product palette on top of the library's semantic tokens. */

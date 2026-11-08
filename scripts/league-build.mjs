@@ -38,6 +38,7 @@ import { CROSS_PANEL_RULES, CROSS_PANEL_STRATEGIES, buildCrossPanelContext } fro
 import { CROSS_PANEL_PLAYBOOK } from "./lib/cross-panel-playbook.mjs";
 import { CURATED_RULES, CURATED_STRATEGIES } from "./lib/curated-rules.mjs";
 import { GENERATOR_RULES, GENERATOR_STRATEGIES } from "./lib/generator-rules.mjs";
+import { HUNTER_RULES, HUNTER_STRATEGIES } from "./lib/hunter-rules.mjs";
 import { buildDeskContext, DESK_RULES, DESK_STRATEGIES } from "./lib/desk-rules.mjs";
 import { buildMatchrateContext, freezeBandRates, MATCHRATE_RULES, MATCHRATE_STRATEGIES } from "./lib/matchrate-rules.mjs";
 import { buildIndicatorFoldStats, INDICATOR_RULES, INDICATOR_STRATEGIES } from "./lib/indicator-rules.mjs";
@@ -114,6 +115,9 @@ const main = async () => {
     const baseSpecs = [
         ...CURATED_STRATEGIES.map((s) => specOf(s, (prior, target, rng, stats) => CURATED_RULES[s[0]](prior, target, rng, stats), (prior, target) => buildFoldStats(prior, target))),
         ...GENERATOR_STRATEGIES.map((s) => specOf(s, (prior, _target, rng) => GENERATOR_RULES[s[0]](prior, rng))),
+        // The seed hunters ignore the injected rng: their lines must reproduce
+        // the guide's numpy-seeded corpus bit-for-bit (see hunter-rules.mjs).
+        ...HUNTER_STRATEGIES.map((s) => specOf(s, (prior) => HUNTER_RULES[s[0]](prior))),
         ...DESK_STRATEGIES.map((s) => specOf(s, (prior, target, rng, prepared) => DESK_RULES[s[0]](prior, target, rng, prepared), deskPrepare)),
         ...MATCHRATE_STRATEGIES.map((s) => specOf(s, (prior, target, rng, prepared) => MATCHRATE_RULES[s[0]](prior, target, rng, prepared), mrPrepare)),
         ...INDICATOR_STRATEGIES.map((s) => specOf(s, (prior, target, rng, stats) => INDICATOR_RULES[s[0]](prior, target, rng, stats), (prior, target) => buildIndicatorFoldStats(prior, target))),
