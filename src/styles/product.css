@@ -131,6 +131,82 @@
     --color-fam-26: light-dark(#7e5c43, #d9a987);
     --color-fam-27: light-dark(#6e5d3a, #cbb878);
     --color-fam-28: light-dark(#9a4040, #e6a3a3);
+
+    /* Play-slip ball hues — one per decade band (1–10 … 41–49). */
+    --color-slip-h1: light-dark(#d9684a, #f4a68f);
+    --color-slip-h2: light-dark(#b98a12, #f2d58f);
+    --color-slip-h3: light-dark(#1f9f78, #86e8c4);
+    --color-slip-h4: light-dark(#1b83c4, #80d6ff);
+    --color-slip-h5: light-dark(#6a54e0, #aa9dff);
+}
+
+/* Play-slip balls: decade-hued ring, tinted fill, glow, pop + sweep landing.
+   Adopted from the reference play-slip prototype (conic ring behind a masked
+   hole, registered custom property so the sweep animates). */
+@property --slip-p {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+}
+
+.slip-ball {
+    --slip-p: 55;
+    --slip-c: var(--color-accent);
+    position: relative;
+    container-type: inline-size;
+    display: grid;
+    place-items: center;
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--slip-c) 7%, var(--color-surface));
+    box-shadow: 0 0 34px light-dark(transparent, color-mix(in srgb, var(--slip-c) 22%, transparent));
+    animation:
+        slip-pop 0.45s ease-out both,
+        slip-sweep 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: var(--slip-d, 0s);
+}
+
+.slip-ball::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: conic-gradient(var(--slip-c) calc(var(--slip-p) * 1%), color-mix(in srgb, var(--slip-c) 20%, transparent) 0);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5cqw), #000 calc(100% - 4.5cqw));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 5cqw), #000 calc(100% - 4.5cqw));
+}
+
+.slip-ball i {
+    font-style: normal;
+    font-weight: 700;
+    font-size: 30cqi;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+}
+
+@keyframes slip-pop {
+    from {
+        transform: scale(0.7);
+        opacity: 0;
+    }
+}
+
+.slip-rack {
+    gap: clamp(0.5rem, 1.5vw, 0.875rem);
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    padding: clamp(0.875rem, 2.5vw, 1.5rem) clamp(0.5rem, 1.5vw, 1rem);
+    background:
+        linear-gradient(color-mix(in srgb, var(--color-ink) 4%, transparent) 1px, transparent 1px) 0 0 / 100% 28px,
+        linear-gradient(90deg, color-mix(in srgb, var(--color-ink) 4%, transparent) 1px, transparent 1px) 0 0 / 28px 100%,
+        var(--color-surface-inset);
+}
+
+@keyframes slip-sweep {
+    from {
+        --slip-p: 0;
+    }
 }
 
 /* Product palette on top of the library's semantic tokens. */

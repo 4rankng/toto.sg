@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { type CSSProperties, useRef, useState } from "react";
 import { LINE_SIZES, type LineSize } from "@/providers/line-builder-provider";
 import { cx } from "@/utils/cx";
 
@@ -243,8 +243,7 @@ export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel
     return (
         <div className={cx("flex flex-col gap-3", className)}>
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <div role="group" aria-label="System entry" className="inline-flex items-center gap-0.5 rounded-lg bg-surface-inset p-0.5">
-                    <span className="px-1.5 text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">System</span>
+                <div role="group" aria-label="Line size" className="inline-flex items-center gap-0.5 rounded-lg bg-surface-inset p-0.5">
                     {LINE_SIZES.map((option) => (
                         <button
                             key={option}
@@ -252,11 +251,11 @@ export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel
                             aria-pressed={size === option}
                             onClick={() => onSizeChange(option)}
                             className={cx(
-                                "min-h-8 min-w-7 rounded-md px-2 font-mono text-[11px] font-semibold transition-colors duration-100",
+                                "min-h-8 rounded-md px-2 text-[11px] font-semibold transition-colors duration-100",
                                 size === option ? "bg-surface text-ink shadow-xs ring-1 ring-line/70" : "text-ink-subtle hover:text-ink",
                             )}
                         >
-                            {option}
+                            {option === 6 ? "Ordinary" : `System ${option}`}
                         </button>
                     ))}
                 </div>
@@ -265,7 +264,7 @@ export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel
                 </span>
             </div>
 
-            <div className="grid gap-1.5 mx-auto w-full max-w-2xl" style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}>
+            <div className="slip-rack mx-auto grid w-full max-w-2xl" style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}>
                 {Array.from({ length: size }, (_, index) => {
                     const number = line[index];
 
@@ -278,17 +277,24 @@ export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel
                             ) : (
                                 <span
                                     key={number}
-                                    className="relative grid aspect-square w-[82%] place-items-center overflow-hidden rounded-full bg-gradient-to-b from-accent/20 to-surface-3 shadow-md ring-2 ring-accent/40 animate-rise dark:from-accent/25 dark:to-surface-inset"
-                                    style={{ animationDelay: `${index * 70}ms` }}
+                                    className="slip-ball aspect-square w-[82%]"
+                                    style={
+                                        {
+                                            "--slip-c": `var(--color-slip-h${Math.ceil(number / 10)})`,
+                                            "--slip-p": Math.round((number / 49) * 100),
+                                            "--slip-d": `${index * 90}ms`,
+                                        } as CSSProperties
+                                    }
                                 >
-                                    <span aria-hidden="true" className="absolute inset-x-[18%] top-[9%] h-[24%] rounded-[50%] bg-white/70 blur-[2px] dark:bg-white/25" />
-                                    <span className="relative font-mono text-[30cqi] leading-none font-bold text-ink tabular-nums">{number}</span>
+                                    <i>{number}</i>
                                 </span>
                             )}
                         </div>
                     );
                 })}
             </div>
+
+            <p className="text-[11px] leading-4 text-ink-subtle">The ring on each ball shows where its number sits between 1 and 49.</p>
 
             <p aria-live="polite" className="text-[11px] leading-4 text-ink-subtle">
                 {line.length === 0
