@@ -29,6 +29,7 @@ import { fileURLToPath } from "node:url";
 import { evaluateStrategy, FOLDS } from "./lib/league-eval.mjs";
 import { filterEra, nextDrawDateIso } from "./lib/analysis.mjs";
 import { DESK_RULES, DESK_STRATEGIES, buildDeskContext } from "./lib/desk-rules.mjs";
+import { MATCHRATE_RULES, MATCHRATE_STRATEGIES, buildMatchrateContext, freezeBandRates } from "./lib/matchrate-rules.mjs";
 // Placeholder rows are defined once in ./lib/league-clean.mjs: any row that
 // carries the shared placeholder line [8,22,30,32,46,48], the placeholder
 // description "Documented strategy." or one of the replaced placeholder ids
@@ -370,6 +371,10 @@ const main = async () => {
         if (typeof DESK_RULES[id] !== "function") throw new Error(`${id}: missing desk rule`);
         if (!league.meta.families.includes(family)) throw new Error(`${id}: family "${family}" not in meta.families`);
     }
+    for (const [id, , family] of MATCHRATE_STRATEGIES) {
+        if (typeof MATCHRATE_RULES[id] !== "function") throw new Error(`${id}: missing match-rate rule`);
+        if (!league.meta.families.includes(family)) throw new Error(`${id}: family "${family}" not in meta.families`);
+    }
 
     // The desk strategies (TWIN-45 / ERA-BRIDGE / SHAPE-CONDITIONAL / the six
     // portfolio shape lines) read the FULL archive — both ball pools — not just
@@ -385,6 +390,19 @@ const main = async () => {
             ctxMemo.set(target.draw, buildDeskContext(eraPrior, fullPrior, target.draw, boundaryDraw));
         }
         return ctxMemo.get(target.draw);
+    };
+
+    // The match-rate desk (SUM-POSTERIOR family + CONSENSUS STACK) gets its own
+    // per-fold context; the skip-band table is frozen once on the first 400
+    // archived draws, exactly as its document specifies.
+    freezeBandRates(sorted);
+    const mrMemo = new Map();
+    const mrPrepare = (eraPrior, target) => {
+        if (!mrMemo.has(target.draw)) {
+            const fullPrior = sorted.filter((d) => d.draw < target.draw);
+            mrMemo.set(target.draw, buildMatchrateContext(eraPrior, fullPrior, boundaryDraw));
+        }
+        return mrMemo.get(target.draw);
     };
 
     const specs = [
@@ -412,12 +430,21 @@ const main = async () => {
             // Desk rules are pure functions of the prepared full-archive context.
             rule: (prior, target, rng, prepared) => DESK_RULES[id](prior, target, rng, prepared),
         })),
+        ...MATCHRATE_STRATEGIES.map(([id, name, family, description]) => ({
+            id,
+            name,
+            family,
+            description,
+            rule: (prior, target, rng, prepared) => MATCHRATE_RULES[id](prior, target, rng, prepared),
+        })),
     ];
     const nextTarget = { draw: nextDrawNo, date: nextDrawDateIso(era[era.length - 1].date) };
     const newRows = specs.map((spec) =>
-        DESK_STRATEGIES.some(([id]) => id === spec.id)
-            ? evaluateStrategy(spec, era, foldStart, expectedHits, { prepare: deskPrepare, nextTarget })
-            : evaluateStrategy(spec, era, foldStart, expectedHits, { nextTarget }),
+        MATCHRATE_STRATEGIES.some(([id]) => id === spec.id)
+            ? evaluateStrategy(spec, era, foldStart, expectedHits, { prepare: mrPrepare, nextTarget })
+            : DESK_STRATEGIES.some(([id]) => id === spec.id)
+              ? evaluateStrategy(spec, era, foldStart, expectedHits, { prepare: deskPrepare, nextTarget })
+              : evaluateStrategy(spec, era, foldStart, expectedHits, { nextTarget }),
     );
 
 

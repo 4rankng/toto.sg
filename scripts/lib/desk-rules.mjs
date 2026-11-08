@@ -39,10 +39,10 @@ export function fingerprint(draw) {
     return [sum, odd, low, span, decades, tails, gaps.size];
 }
 
-const meanVec = (rows) =>
+export const meanVec = (rows) =>
     rows.reduce((acc, r) => r.map((x, d) => acc[d] + x / rows.length), new Array(rows[0].length).fill(0));
 
-const sdVec = (rows) => {
+export const sdVec = (rows) => {
     const m = meanVec(rows);
     const out = m.map((_, d) => {
         const ss = rows.reduce((acc, r) => acc + (r[d] - m[d]) ** 2, 0);
@@ -53,7 +53,7 @@ const sdVec = (rows) => {
 
 /** Standardised Euclidean distance (each dimension divided by its archive sd —
  *  this is what makes sum, the widest-ranging dimension, weigh heaviest). */
-const shapeDistance = (a, b, sds) => {
+export const shapeDistance = (a, b, sds) => {
     let s = 0;
     for (let d = 0; d < a.length; d++) s += ((a[d] - b[d]) / sds[d]) ** 2;
     return Math.sqrt(s);
@@ -62,7 +62,7 @@ const shapeDistance = (a, b, sds) => {
 /** Era-split scores: each ball's appearance z across BOTH pools, pooled
  *  properly (different per-draw probabilities: 6/45 vs 6/49), with a +35%
  *  replication bonus when the eras independently agree. */
-function eraScores(prior, boundaryDraw) {
+export function eraScores(prior, boundaryDraw) {
     const oldDraws = prior.filter((d) => d.draw < boundaryDraw);
     const newDraws = prior.filter((d) => d.draw >= boundaryDraw);
     const countIn = (draws, b) => {
@@ -118,7 +118,7 @@ export function buildDeskContext(eraPrior, full, targetDraw, boundaryDraw) {
 }
 
 /** The k archived draws nearest the forecast shape (ties: lower draw no). */
-function nearestTwins(ctx, k) {
+export function nearestTwins(ctx, k) {
     return ctx.full
         .map((d, i) => ({ d, dist: shapeDistance(ctx.fps[i], ctx.forecast, ctx.sds) }))
         .sort((a, b) => a.dist - b.dist || a.d.draw - b.d.draw)
