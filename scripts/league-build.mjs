@@ -288,15 +288,17 @@ const main = async () => {
     for (const spec of crossPanelSpecs) {
         rows.push(evaluate(spec, (drawNo, pick) => collectEvent(spec.id, drawNo, pick), baseSetHash));
     }
-    // Below-chance cleanup: any strategy whose raw match score lands below
-    // the honest chance baseline (quickpick — seeded uniform 6-of-49) is
-    // dropped from the league table instead of riding along as filler. Every
-    // rule still ran, so the Phase-2 consensus stays whole; only the report
-    // is trimmed.
+    // Below-chance cleanup: any strategy that performs worse than the honest
+    // chance baseline (quickpick — seeded uniform 6-of-49) on EITHER axis —
+    // raw match score or prize-fold count — is dropped from the league table
+    // instead of riding along as filler. Every rule still ran, so the
+    // Phase-2 consensus stays whole; only the report is trimmed.
     const baseline = rows.find((row) => row.id === "quickpick");
     if (!baseline) throw new Error("chance baseline row missing: quickpick");
-    const belowBaseline = rows.filter((row) => row.score < baseline.score);
-    const kept = rows.filter((row) => row.score >= baseline.score);
+    const belowBaseline = rows.filter(
+        (row) => row.score < baseline.score || row.totalPrizes < baseline.totalPrizes,
+    );
+    const kept = rows.filter((row) => row.score >= baseline.score && row.totalPrizes >= baseline.totalPrizes);
     const keptIds = new Set(kept.map((row) => row.id));
 
     kept.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
@@ -423,7 +425,7 @@ const main = async () => {
     console.log(
         `\n${kept.length} strategies over ${foldEnd - foldStart} expanding walk-forward folds ` +
             `(chance: ${CHANCE.hitsPer100Draws} hits, ${CHANCE.twoPlusPer100Draws} draws with 2+, ${CHANCE.prizesPer100Draws} prizes per 100). ` +
-            `${belowBaseline.length} rows below the chance baseline (quickpick, score ${baseline.score}) dropped. ` +
+            `${belowBaseline.length} rows below the chance baseline (quickpick — score ${baseline.score}, ${baseline.totalPrizes} prize folds) dropped. ` +
             `Next draw ${nextDrawNo}. Cache: ${hits} fold hits / ${misses} misses, ${pickHits}/${kept.length} current picks reused.`,
     );
 };
