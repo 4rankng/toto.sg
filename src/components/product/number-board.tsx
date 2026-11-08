@@ -12,6 +12,12 @@ export interface BoardWindow {
     expected: number;
     /** Draws in the window. */
     draws: number;
+    /** Formatted display value per cell (e.g. "RSI 62", "Skip 14", "EV +18%"). */
+    displayValues?: string[];
+    /** Precomputed z-score or normalized distance [-3..+3] per ball. */
+    zScores?: number[];
+    /** Descriptive summary strip (e.g. "1,238 draws · Wilder RSI-14 oscillator"). */
+    summary?: string;
 }
 
 export type CopyStatus = "idle" | "copied" | "failed";
@@ -34,8 +40,13 @@ export const boardDeviation = (window: BoardWindow) => {
  * read as a colour.
  */
 export const heatColour = (window: BoardWindow, number: number) => {
-    const count = window.counts[number - 1] ?? 0;
-    const z = (count - window.expected) / boardDeviation(window);
+    let z = 0;
+    if (window.zScores && window.zScores[number - 1] !== undefined) {
+        z = window.zScores[number - 1];
+    } else {
+        const count = window.counts[number - 1] ?? 0;
+        z = (count - window.expected) / boardDeviation(window);
+    }
     const strength = Math.min(1, Math.max(0, (Math.abs(z) - 0.35) / 2.2));
     if (strength === 0) return "var(--color-heat-neutral)";
     const mix = Math.round(6 + strength * 54);
@@ -136,7 +147,7 @@ export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, li
     return (
         <div className={cx("flex flex-col gap-3", className)}>
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <div role="group" aria-label="Board period" className="inline-flex items-center gap-0.5 rounded-lg bg-surface-inset p-0.5">
+                <div role="group" aria-label="Board lens" className="inline-flex max-w-full overflow-x-auto items-center gap-0.5 rounded-lg bg-surface-inset p-0.5">
                     {windows.map((window) => (
                         <button
                             key={window.id}
@@ -144,7 +155,7 @@ export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, li
                             aria-pressed={window.id === active.id}
                             onClick={() => onPeriodChange(window.id)}
                             className={cx(
-                                "min-h-8 rounded-md px-2.5 text-[11px] font-semibold transition-colors duration-100",
+                                "min-h-8 rounded-md px-2.5 text-[11px] font-semibold whitespace-nowrap transition-colors duration-100",
                                 window.id === active.id ? "bg-surface text-ink shadow-xs ring-1 ring-line/70" : "text-ink-subtle hover:text-ink",
                             )}
                         >
@@ -153,7 +164,7 @@ export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, li
                     ))}
                 </div>
                 <p className="font-mono text-[11px] text-ink-subtle tabular-nums">
-                    {active.draws.toLocaleString("en-SG")} draws · expected {active.expected.toFixed(1)}
+                    {active.summary ?? `${active.draws.toLocaleString("en-SG")} draws · expected ${active.expected.toFixed(1)}`}
                 </p>
             </div>
 
@@ -166,10 +177,11 @@ export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, li
             >
                 {active.counts.slice(0, POOL_SIZE).map((count, index) => {
                     const number = index + 1;
-                    const z = zOf(count);
+                    const z = active.zScores?.[index] !== undefined ? active.zScores[index] : zOf(count);
                     const selected = chosen.has(number);
                     const isLatest = latestNumbers.includes(number);
                     const isExtreme = Math.abs(z) >= 2;
+                    const displayVal = active.displayValues?.[index] ?? String(count);
 
                     return (
                         <button
@@ -178,7 +190,7 @@ export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, li
                             data-number={number}
                             tabIndex={index === roving ? 0 : -1}
                             aria-pressed={selected}
-                            aria-label={`Number ${number}, ${count} appearances, ${z > 0.05 ? "above" : z < -0.05 ? "below" : "on"} expectation`}
+                            aria-label={`Number ${number}, ${displayVal}, ${z > 0.05 ? "above" : z < -0.05 ? "below" : "on"} expectation`}
                             onClick={() => onToggle(number)}
                             onFocus={() => setRoving(index)}
                             className={cx(
@@ -190,7 +202,7 @@ export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, li
                             style={{ backgroundColor: heatColour(active, number) }}
                         >
                             <span className="font-mono text-sm leading-none font-semibold tabular-nums">{number}</span>
-                            <span className="mt-0.5 text-[10px] leading-none tabular-nums opacity-70">{count}</span>
+                            <span className="mt-0.5 text-[10px] leading-none tabular-nums opacity-70 truncate max-w-full px-0.5">{displayVal}</span>
                             {isLatest && <span aria-hidden="true" className="absolute top-1 right-1 size-1.5 rounded-full bg-ink" />}
                             {isExtreme && (
                                 <span
@@ -225,13 +237,14 @@ interface LineSlipProps {
     /** The strategy a quick pick came from, shown as feedback. */
     quickPickLabel?: string | null;
     className?: string;
+    extraActions?: React.ReactNode;
 }
 
 /**
  * The line builder. Slots take the heat tint of the number they hold, so the
  * slip and the board read as one surface. System 6, 7 and 8 are supported.
  */
-export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, onClear, onCopy, copyStatus, quickPickLabel, className }: LineSlipProps) {
+export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, onClear, onCopy, copyStatus, quickPickLabel, className, extraActions }: LineSlipProps) {
     return (
         <div className={cx("flex flex-col gap-3", className)}>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -313,6 +326,7 @@ export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, onCl
                         {copyStatus === "copied" ? "Copied." : "Copy failed — copy manually."}
                     </span>
                 )}
+                {extraActions}
             </div>
 
             {quickPickLabel && (

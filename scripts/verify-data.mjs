@@ -81,9 +81,12 @@ const checkStrategies = (league) => {
     if (!Array.isArray(league?.strategies)) return;
 
     const ranks = new Set();
+    const seenIds = new Set();
     league.strategies.forEach((row, i) => {
         const where = `strategies.json[${i}] (${row?.id ?? "?"})`;
         check(typeof row?.id === "string" && row.id.length > 0, `${where}: missing id`);
+        check(!seenIds.has(row?.id), `${where}: duplicate strategy id "${row?.id}"`);
+        seenIds.add(row?.id);
         check(typeof row?.name === "string" && row.name.length > 0, `${where}: missing name`);
         check(typeof row?.family === "string" && league.meta.families.includes(row.family), `${where}: family "${row?.family}" not in meta.families`);
         check(typeof row?.description === "string" && row.description.length > 0, `${where}: missing description`);

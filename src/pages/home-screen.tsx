@@ -7,6 +7,7 @@ import { type BoardWindow, type CopyStatus, HeatLegend, heatColour, LineSlip, Nu
 import { PageHeader } from "@/components/product/page-header";
 import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
 import { KpiCard } from "@/components/product/kpi-card";
+import { TicketXRay } from "@/components/product/ticket-xray";
 import { useClipboard } from "@/hooks/use-clipboard";
 import { useCountdown } from "@/hooks/use-countdown";
 import {
@@ -23,15 +24,11 @@ import {
     useJson,
     weekdayOf,
 } from "@/lib/data";
+import { ballPayoutStats } from "@/lib/insights-correlations";
 import { extendPick, quickPick, randBelow } from "@/lib/quickpick";
+import { analyzeTicket, computeBoardLenses, computeNextDrawRegime } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
 import { useLineBuilder } from "@/providers/line-builder-provider";
-
-/** How many draws the trailing window covers. */
-const TRAILING_WINDOW = 50;
-
-/** The winning numbers in a draw. */
-const NUMBERS_PER_DRAW = 6;
 
 /** Prize groups listed under the winning numbers. */
 const PRIZE_GROUPS: PrizeKey[] = ["g2", "g3", "g4", "g5", "g6", "g7"];
@@ -136,42 +133,22 @@ export const HomeScreen = () => {
     const topStrategies = useMemo(() => (league ? [...league.strategies].sort((a, b) => a.rank - b.rank).slice(0, LEAGUE_ROWS) : []), [league]);
     const recentDraws = useMemo(() => (draws ? draws.slice(-(RECENT_DRAWS + 1), -1).reverse() : []), [draws]);
 
-    /** Appearance counts over the trailing window, counted client-side. */
-    const trailingCounts = useMemo(() => {
-        const counts = new Array(49).fill(0);
-        if (!draws) return counts;
-
-        for (const draw of draws.slice(-TRAILING_WINDOW)) {
-            for (const number of draw.numbers) counts[number - 1] += 1;
-        }
-        return counts;
-    }, [draws]);
+    const ballPayouts = useMemo(() => (draws ? ballPayoutStats(draws) : null), [draws]);
+    const regime = useMemo(() => (draws && ballPayouts ? computeNextDrawRegime(draws, ballPayouts, draws.at(-1) ?? null) : null), [draws, ballPayouts]);
 
     const windows = useMemo<BoardWindow[]>(() => {
-        if (!analysis) return [];
-
-        const eraDraws = analysis.coverage.totalDraws;
-        return [
-            {
-                id: "all",
-                label: "All time",
-                counts: analysis.frequency.all,
-                expected: (eraDraws * NUMBERS_PER_DRAW) / 49,
-                draws: eraDraws,
-            },
-            {
-                id: "trailing",
-                label: `Last ${TRAILING_WINDOW}`,
-                counts: trailingCounts,
-                expected: (TRAILING_WINDOW * NUMBERS_PER_DRAW) / 49,
-                draws: TRAILING_WINDOW,
-            },
-        ];
-    }, [analysis, trailingCounts]);
+        if (!draws || !analysis) return [];
+        return computeBoardLenses(draws, analysis, league ?? undefined);
+    }, [draws, analysis, league]);
 
     const activeWindow = windows.find((window) => window.id === period) ?? windows[0];
 
-    /** Quick pick is one of the 204 strategies — a random one, every tap. */
+    const ticketAnalysis = useMemo(
+        () => (draws && ballPayouts && line.length >= 6 ? analyzeTicket(line, draws, ballPayouts, league ?? undefined) : null),
+        [line, draws, ballPayouts, league],
+    );
+
+    /** Quick pick is one of the strategies — a random one, every tap. */
     const handleQuickPick = () => {
         if (league && league.strategies.length > 0) {
             const strategy = league.strategies[randBelow(league.strategies.length)];
@@ -181,6 +158,24 @@ export const HomeScreen = () => {
         }
         setLine(quickPick(size));
         setQuickPickName(null);
+    };
+
+    const handleApplyAntiCrowd = () => {
+        const candidates = [33, 34, 35, 37, 39, 41, 42, 43, 45, 46, 47, 49];
+        const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+        setLine(shuffled.slice(0, size).sort((a, b) => a - b));
+        setQuickPickName("+EV Anti-Crowd");
+    };
+
+    const handleApplyConsensus = () => {
+        if (!league) return;
+        const votes = new Uint16Array(50);
+        for (const s of league.strategies) {
+            for (const n of s.currentPick) votes[n] += 1;
+        }
+        const sortedBalls = Array.from({ length: 49 }, (_, i) => i + 1).sort((a, b) => votes[b] - votes[a]);
+        setLine(sortedBalls.slice(0, size).sort((a, b) => a - b));
+        setQuickPickName("Consensus Top-Picks");
     };
 
     const handleSizeChange = (next: typeof size) => {
@@ -382,18 +377,51 @@ export const HomeScreen = () => {
                 </Panel>
             </div>
 
+            {/* Next-Draw Regime Briefing Strip */}
+            {regime && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface/70 px-4 py-2.5 text-xs backdrop-blur-sm">
+                    <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                        <span className="font-semibold uppercase tracking-wider text-text flex items-center gap-1.5">
+                            <span className="size-2 rounded-full bg-primary animate-pulse" />
+                            Regime Briefing
+                        </span>
+                        <span className="text-text-subtle">·</span>
+                        <span className="text-text font-medium">
+                            {regime.rolloverLabel}
+                        </span>
+                        <span className="text-text-subtle">·</span>
+                        <span className="text-text-muted">
+                            {regime.nextWeekday} Skew: <strong className="text-text font-mono font-semibold">{regime.weekdayLeaders.map((l) => l.number).join(", ")}</strong>
+                        </span>
+                        <span className="text-text-subtle">·</span>
+                        <span className="text-text-muted">
+                            49-Ball Sweep: <strong className="text-primary font-mono">{regime.activeSweepCount}/49</strong> seen
+                        </span>
+                        <span className="text-text-subtle">·</span>
+                        <span className="text-text-muted">
+                            RSI-14 High: <strong className="text-heat-hot font-mono">Ball {regime.topRsiBall.number} ({regime.topRsiBall.rsi})</strong>
+                        </span>
+                    </div>
+                    {regime.topMarkovFollower && (
+                        <div className="text-[11px] font-mono text-secondary">
+                            Markov Trigger: {regime.topMarkovFollower.fromBall} → {regime.topMarkovFollower.number} ({regime.topMarkovFollower.count}x)
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-12">
                 <Panel
                     className="lg:col-span-4"
                     bodyClassName="flex flex-1 flex-col justify-center"
                     title="Number board"
-                    description="How often each number appeared. Colour shows the gap from random."
+                    description="How often each number appeared across 7 indicator lenses. Colour shows deviation."
                     footer={
                         <div className="flex flex-col gap-2">
                             <HeatLegend />
                             <p className="text-[11px] leading-4 text-ink-subtle">
-                                Dot = a number in the latest draw. A left dot marks a number far below random, a pink dot far above. Counts describe the past; they do
-                                not change the next draw.
+                                Dot = a number in the latest draw. Left dot marks below expectation, pink dot above. Counts describe the past; they do
+                                not alter cage randomness.
                             </p>
                         </div>
                     }
@@ -428,19 +456,48 @@ export const HomeScreen = () => {
                     </div>
 
                     <div className="grid gap-3 lg:grid-cols-2">
-                        <Panel title="Play slip" description="Pick 6, 7 or 8 numbers. Tap the board to fill it.">
-                            <LineSlip
-                                line={line}
-                                size={size}
-                                colourOf={(n) => (activeWindow ? heatColour(activeWindow, n) : "var(--color-surface-2)")}
-                                onSizeChange={handleSizeChange}
-                                onQuickPick={handleQuickPick}
+                        <div className="flex flex-col gap-3">
+                            <Panel title="Play slip" description="Pick 6, 7 or 8 numbers. Tap the board to fill it.">
+                                <LineSlip
+                                    line={line}
+                                    size={size}
+                                    colourOf={(n) => (activeWindow ? heatColour(activeWindow, n) : "var(--color-surface-2)")}
+                                    onSizeChange={handleSizeChange}
+                                    onQuickPick={handleQuickPick}
+                                    onClear={handleClear}
+                                    onCopy={handleCopy}
+                                    copyStatus={copyStatus}
+                                    quickPickLabel={quickPickName}
+                                    extraActions={
+                                        <>
+                                            <button
+                                                type="button"
+                                                onClick={handleApplyAntiCrowd}
+                                                className="min-h-9 rounded-lg border border-primary/40 bg-primary/10 px-2.5 text-xs font-semibold whitespace-nowrap text-primary transition-colors duration-100 hover:bg-primary/20"
+                                            >
+                                                +EV Anti-Crowd
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={handleApplyConsensus}
+                                                className="min-h-9 rounded-lg border border-secondary/40 bg-secondary/10 px-2.5 text-xs font-semibold whitespace-nowrap text-secondary transition-colors duration-100 hover:bg-secondary/20"
+                                            >
+                                                Consensus Pick
+                                            </button>
+                                        </>
+                                    }
+                                />
+                            </Panel>
+
+                            {/* Live Ticket X-Ray Engine & 1,892-Draw Backtester */}
+                            <TicketXRay
+                                balls={line}
+                                result={ticketAnalysis}
                                 onClear={handleClear}
-                                onCopy={handleCopy}
-                                copyStatus={copyStatus}
-                                quickPickLabel={quickPickName}
+                                onApplyAntiCrowd={handleApplyAntiCrowd}
+                                onApplyConsensus={handleApplyConsensus}
                             />
-                        </Panel>
+                        </div>
 
                         <Panel title="Most and least seen" description="Counts across the 6/49 era." isFlush>
                             <div className="grid grid-cols-2 divide-x divide-line-soft">

@@ -11,7 +11,8 @@
     "verify:data": "node scripts/verify-data.mjs",
     "league:custom": "node scripts/strategies-custom.mjs",
     "league:gambler": "node scripts/strategies-gambler.mjs",
-    "league": "npm run league:custom && npm run league:gambler"
+    "league:indicators": "node scripts/strategies-indicators.mjs",
+    "league": "npm run league:custom && npm run league:gambler && npm run league:indicators"
   },
   "dependencies": {
     "@internationalized/date": "^3.12.4",
