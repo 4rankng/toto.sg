@@ -446,7 +446,6 @@ export const StrategiesScreen = () => {
             <PageHeader
                 kicker="Strategies"
                 title="Strategy league"
-                description={`Every score is expanding walk-forward over ${formatNumber(meta.folds)} real draws — each draw graded only on the history before it. Score = prize points: G7 1 · G6 10 · G5 100 · G4 1k · G3 10k · G2 100k · G1 1M per hit — one G1 outweighs any number of G7s.`}
                 meta={
                     <>
                         <span>
@@ -561,11 +560,6 @@ export const StrategiesScreen = () => {
 
                 {rows.length === 0 && <p className="px-4 py-8 text-center text-sm text-ink-muted">No strategy matches that filter.</p>}
             </Panel>
-
-
-            <p className="px-1 text-[11px] leading-4 text-ink-subtle">
-                Every line has the same Group 1 chance: <span className="font-mono text-ink-muted tabular-nums">1 in 13,983,816</span>.
-            </p>
         </div>
     );
 };
