@@ -146,6 +146,55 @@ export interface StrategiesFile {
     strategies: StrategyRow[];
 }
 
+/** An Insights panel a cross-panel strategy was read off. */
+export interface CrossPanelPanelRef {
+    /** The panel's number in the source document. */
+    doc: number;
+    /** The live Insights panel id, for a deep link. */
+    anchor: string;
+    label: string;
+}
+
+/** One cross-panel strategy: the rule's evidence plus its live league row. */
+export interface CrossPanelStrategy {
+    id: string;
+    /** The source document's own name for the strategy. */
+    docTitle: string;
+    summary: string;
+    /** The document's illustrative line — an example, never the graded line. */
+    specLine: number[];
+    specNote: string;
+    logic: string;
+    differs: string;
+    rules: string[];
+    panels: CrossPanelPanelRef[];
+    row: {
+        id: string;
+        name: string;
+        rank: number;
+        score: number;
+        totalHits: number;
+        meanHits: number;
+        twoPlusDraws: number;
+        currentPick: number[];
+    };
+}
+
+/**
+ * The cross-panel playbook (public/data/cross-panel-playbook.json): what each
+ * of the ten cross-panel strategies selects and why. Documentation only — the
+ * league grades the rules themselves on numbers matched.
+ */
+export interface CrossPanelPlaybook {
+    meta: {
+        generatedAt: string;
+        nextDraw: number;
+        family: string;
+        source: string;
+    };
+    strategies: CrossPanelStrategy[];
+}
+
 
 const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
 const numberFmt = new Intl.NumberFormat("en-SG");
