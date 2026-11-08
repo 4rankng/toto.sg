@@ -1133,7 +1133,6 @@ export const InsightsScreen = () => {
                                 family="Sequence"
                                 className="lg:col-span-12"
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Timeline heat strip" />
                                 <TimelineStrip draws={timeline} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -1446,7 +1445,6 @@ export const InsightsScreen = () => {
                                     { label: "Expected 7-Ball", value: `${(sevenBallExposure.expectedTotalRate * 100).toFixed(1)}%`, hint: "14.29% chance" },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="7-Ball exposure" />
                                 <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                         <thead>
@@ -1540,7 +1538,6 @@ export const InsightsScreen = () => {
                                     { label: "Underdue", value: skipQuantiles.underdueBalls.length, hint: "below personal p25" },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Skip quantiles" />
                                 <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                         <thead>
@@ -1897,7 +1894,6 @@ export const InsightsScreen = () => {
                                     { label: "Total families", value: stratConsensus.familyScores.length, hint: `${league?.strategies.length ?? 263} rules scored` },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Strategy consensus" />
                                 <ButterflySplitChart
                                     rows={stratConsensus.familyScores.slice(0, 10).map((f) => ({
                                         label: f.family,
@@ -2077,7 +2073,6 @@ export const InsightsScreen = () => {
                                     { label: "Sum Pair z", value: `+${bestCompanions.topTriplets[0]?.sumPairZ.toFixed(2)}σ`, hint: "triplet synergy" },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Greedy companions" />
                                 <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                         <thead>
@@ -2270,7 +2265,6 @@ export const InsightsScreen = () => {
                                     { label: "Longest run", value: formatNumber(analysis.consecutive.drawRate * total), hint: "draws with a pair" },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Sum trend" />
                                 <SumTrend points={sums} band={{ lo: band.lo, hi: band.hi }} mean={analysis.sum.mean} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -2393,7 +2387,6 @@ export const InsightsScreen = () => {
                                     { label: "Cells", value: 49, hint: "odd × high" },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Composition" />
                                 <CompositionMatrix cells={composition} />
                             </InsightPanel>
                         )}
@@ -2642,7 +2635,6 @@ export const InsightsScreen = () => {
                                     { label: "Cross hit", value: `${(slipGeo.diagonalHits[3].observedRate * 100).toFixed(1)}%`, hint: `exp ${(slipGeo.diagonalHits[3].expectedRate * 100).toFixed(1)}%` },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Playslip geometry" />
                                 <ObservedExpectedBarChart
                                     items={slipGeo.diagonalHits.map((h) => ({
                                         label: h.name,
@@ -2718,7 +2710,6 @@ export const InsightsScreen = () => {
                                     },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="3-Tier zones" />
                                 <ObservedExpectedBarChart
                                     items={tercileMatrix.topPatterns.slice(0, 6).map((p) => ({
                                         label: p.pattern,
@@ -2750,7 +2741,6 @@ export const InsightsScreen = () => {
                                     { label: "Distinct Cells", value: "6.0", hint: "zero ball collisions" },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="7×7 Grid dispersion" />
                                 <ObservedExpectedBarChart
                                     items={rowColDispersion.rowsCoverageDistribution.map((r) => ({
                                         label: `${r.rows} rows`,
@@ -2782,7 +2772,6 @@ export const InsightsScreen = () => {
                                     { label: "Clumpy Lines", value: `${gapEntropy.lowEntropyPct.toFixed(1)}%`, hint: "entropy < 0.70" },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Gap spacing entropy" />
                                 <div className="flex flex-col gap-3 mt-2">
                                     <div className="flex items-center justify-between text-xs border-b border-line pb-2">
                                         <span className="text-ink-muted">Well-Spread Draws (H ≥ 0.85):</span>
@@ -2824,7 +2813,6 @@ export const InsightsScreen = () => {
                                     { label: "Green balls", value: "16", hint: "expected 1.96" },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Colour waves" />
                                 <ObservedExpectedBarChart
                                     items={colorWaves.waves.map((w) => ({
                                         label: w.name,
@@ -2855,7 +2843,6 @@ export const InsightsScreen = () => {
                                     { label: "Water", value: `${wuXing.elements[2].balls} balls`, hint: `${wuXing.elements[2].observedRate.toFixed(2)} hits` },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Five elements" />
                                 <ObservedExpectedBarChart
                                     items={wuXing.elements.map((e) => ({
                                         label: e.name,
@@ -2886,7 +2873,6 @@ export const InsightsScreen = () => {
                                     { label: "Clash Rat", value: "4 balls", hint: "clash animal" },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="12 Zodiacs" />
                                 <ObservedExpectedBarChart
                                     items={zodiacs.zodiacs.map((z) => ({
                                         label: z.animal.split(" ")[0],
@@ -2917,7 +2903,6 @@ export const InsightsScreen = () => {
                                     { label: "Digit 7 hits/draw", value: luckyDigits.digit7Stats.observedRate.toFixed(2), hint: `exp ${luckyDigits.digit7Stats.expectedRate.toFixed(2)}` },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Lucky digits" />
                                 <div className="space-y-2 p-2">
                                     {[luckyDigits.digit4Stats, luckyDigits.digit8Stats, luckyDigits.digit7Stats, luckyDigits.repdigitsStats].map((st) => (
                                         <div key={st.name} className="flex justify-between items-center border-b border-line pb-1 text-xs">
@@ -2947,7 +2932,6 @@ export const InsightsScreen = () => {
                                     { label: "Squares (7)", value: `${mathSeqs.sequences[2].observedRate.toFixed(2)} hits`, hint: `exp ${mathSeqs.sequences[2].expectedRate.toFixed(2)}` },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Math sequences" />
                                 <ObservedExpectedBarChart
                                     items={mathSeqs.sequences.map((s) => ({
                                         label: s.name,
@@ -2978,7 +2962,6 @@ export const InsightsScreen = () => {
                                     { label: "Lunar Cycle", value: "29.53 days", hint: "synodic period" },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Lo Shu & Moon" />
                                 <ObservedExpectedBarChart
                                     items={loShu.moonPhases.map((m) => {
                                         const shortName =
@@ -3021,7 +3004,6 @@ export const InsightsScreen = () => {
                                     { label: "Pool Share", value: "15 / 49 primes", hint: "30.6% of balls" },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Prime balance" />
                                 <ObservedExpectedBarChart
                                     items={primeDistribution.rows.map((d) => ({
                                         label: `${d.primes} primes`,
@@ -3243,7 +3225,6 @@ export const InsightsScreen = () => {
                                     { label: "Odd/Even Draw", value: `${weekdaySplit.oddDrawSumMean.toFixed(1)} / ${weekdaySplit.evenDrawSumMean.toFixed(1)}`, hint: "mean sums" },
                                 ]}
                             >
-                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Mon vs Thu" />
                                 <ButterflySplitChart
                                     rows={weekdaySplit.topMonBiased.slice(0, 3).concat(weekdaySplit.topThuBiased.slice(0, 3)).map((r) => ({
                                         label: `Ball ${r.number}`,
@@ -3595,7 +3576,6 @@ export const InsightsScreen = () => {
                                 { label: "Information Redundancy", value: `${entropyStats.informationRedundancy}%`, hint: "compressibility" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Shannon entropy" />
                             <div className="text-xs space-y-2 mt-2">
                                 <p className="text-text leading-relaxed">
                                     The 6/49 draw stream exhibits <strong className="text-primary">{entropyStats.relativeEntropyPct}%</strong> of theoretical maximum Shannon entropy. Outcome redundancy is under 0.1%, proving near-perfect algorithmic unpredictability.
@@ -3619,7 +3599,6 @@ export const InsightsScreen = () => {
                                 { label: "Inequality Assessment", value: humanizeStatus(giniStats.inequalityAssessment), hint: "conforms to cage null" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Gini concentration" />
                             <SurvivalHazardChart
                                 points={giniStats.lorenzCurve.map((p) => ({
                                     step: p.cumulativePopulationPct,
@@ -3894,7 +3873,6 @@ export const InsightsScreen = () => {
                                 { label: "Active Sweep", value: `${couponStats.currentSweepSeenCount} / 49`, hint: `${couponStats.unseenInCurrentSweep.length} unseen balls` },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Coupon-collector sweep" />
                             <div className="text-xs space-y-2 mt-2">
                                 <p className="text-ink-subtle">Unseen balls in current sweep:</p>
                                 <div className="flex flex-wrap gap-1 font-mono text-xs">
@@ -4047,7 +4025,6 @@ export const InsightsScreen = () => {
                                 { label: "≥2 Hits in 10d", value: `${dormancyBreakout.continuationRate.toFixed(1)}%`, hint: "continuation rate" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Dormancy breakout" />
                             <div className="flex flex-col gap-2 mt-2">
                                 <span className="text-xs text-ink-subtle">Active breakout balls currently within 10 draws of ending drought:</span>
                                 <div className="flex flex-wrap gap-1.5">
@@ -4078,7 +4055,6 @@ export const InsightsScreen = () => {
                                 { label: "Top Negative", value: `Ball ${ballChiResiduals.topNegativeResiduals[0]?.number}`, hint: `${ballChiResiduals.topNegativeResiduals[0]?.residual.toFixed(1)} draws` },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Ball χ² residuals" />
                             <ObservedExpectedBarChart
                                 items={ballChiResiduals.topPositiveResiduals.slice(0, 4).concat(ballChiResiduals.topNegativeResiduals.slice(0, 4)).map((r) => ({
                                     label: `Ball ${r.number}`,
@@ -4243,7 +4219,6 @@ export const InsightsScreen = () => {
                                 { label: "Total Waves", value: `${halfWaves.waves.length}`, hint: "6 wave classes" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Mark Six half-waves" />
                             <div className="grid grid-cols-3 gap-2 mt-2 font-mono text-xs text-center">
                                 {halfWaves.waves.map((w) => (
                                     <div key={w.name} className="rounded bg-surface-2 p-2 border border-line">
@@ -4302,7 +4277,6 @@ export const InsightsScreen = () => {
                                 { label: "Theoretical Null", value: `${ledStrokes.theoreticalMeanStrokes}`, hint: "expected segments" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="7-Segment LED density" />
                             <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
                                 {ledStrokes.strokeDistribution.map((d) => (
                                     <div key={d.strokes} className="rounded bg-surface-2 p-1.5 border border-line">
@@ -4392,7 +4366,6 @@ export const InsightsScreen = () => {
                                 { label: "Mod 7 Uniform", value: "PASS", hint: "p > 0.05" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Modular residue sieve" />
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 All modular classes (mod 3, mod 5, mod 7) conform strictly to discrete uniform expectations with zero residue clustering.
                             </p>
@@ -4414,7 +4387,6 @@ export const InsightsScreen = () => {
                                 { label: "Theoretical Null", value: `${digitSum.expectedRate}%`, hint: "25/49 balls in pool" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Combined digit sum" />
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 Digit-sum parity matches the 25/49 theoretical pool composition with less than 0.2% variance.
                             </p>
@@ -4435,7 +4407,6 @@ export const InsightsScreen = () => {
                                 { label: "Triple Tail Rate", value: `${homologous.tripleTailRate}%`, hint: "≥3 balls share tail" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Twin/triple tail clusters" />
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 In 6/49 draws, homologous tail collisions occur in over 80% of all winning lines by basic birthday-problem mechanics.
                             </p>
@@ -4456,7 +4427,6 @@ export const InsightsScreen = () => {
                                 { label: "AP-4 Observed", value: `${((stepLadder.ap4DrawsObserved / total) * 100).toFixed(1)}%`, hint: `exp ${stepLadder.ap4ExpectedRate}%` },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Step-ladder AP-4 traps" />
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 Arithmetic progression sequences appear rarely in actual draws (under 3% for AP-3 and under 0.1% for AP-4), confirming that forced linear step sequences match historical draws significantly less frequently than dispersed sequences.
                             </p>
@@ -4551,7 +4521,6 @@ export const InsightsScreen = () => {
                                 { label: "Exact 6-Ball Repeats", value: "0", hint: "zero identical draws" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Quad collisions" />
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 With C(49,6) = 13,983,816 possible lines, zero exact 6-number repetitions have ever occurred in Singapore Pools history.
                             </p>
@@ -4572,7 +4541,6 @@ export const InsightsScreen = () => {
                                 { label: "Cage Drift", value: "NONE", hint: crossEra.driftAssessment },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Cross-era audit" />
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 {crossEra.driftAssessment}
                             </p>
@@ -4806,7 +4774,6 @@ export const InsightsScreen = () => {
                                 { label: "Filters Checked", value: envelopeStats.filters.length, hint: "orthogonal checks" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="8-Filter envelope" />
                             <ObservedExpectedBarChart
                                 items={envelopeStats.filters.map((f) => ({
                                     label: ENVELOPE_FILTER_LABELS[f.filterName] ?? f.filterName,
@@ -4838,7 +4805,6 @@ export const InsightsScreen = () => {
                                 { label: "Selected In-Zone", value: `${sortedLine.slice(0, 6).filter((n, idx) => { const s = slotQuantiles.slots[idx]; return s ? n >= s.p25 && n <= s.p75 : false; }).length} / ${Math.min(sortedLine.length, 6)}`, hint: "current line slots" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Slot quantiles" />
                             <SlotQuantileBandChart slots={slotQuantiles.slots} currentLine={sortedLine} className="mt-2" />
                         </InsightPanel>
                     )}
@@ -4858,7 +4824,6 @@ export const InsightsScreen = () => {
                                 { label: "Greedy 8 Pool 2+", value: `${greedyCoverage.greedy8TwoPlusCoverPct.toFixed(1)}%`, hint: "8-ball coverage" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Greedy coverage" />
                             <div className="flex flex-col gap-3 mt-2">
                                 <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface-2 p-2.5">
                                     <div className="flex items-center justify-between text-xs">
@@ -4897,7 +4862,6 @@ export const InsightsScreen = () => {
                                 { label: "Pool 20 2+ Match", value: `${poolCapture.rows.find((r)=>r.poolSize===20)?.empirical2Plus ?? 0}%`, hint: "empirical capture" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Pool capture curve" />
                             <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                     <thead>
@@ -4940,7 +4904,6 @@ export const InsightsScreen = () => {
                                 { label: "Sys 12 (924 lines)", value: "924 tickets", hint: "C(12,6)" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="System multipliers" />
                             <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                     <thead>
@@ -4983,7 +4946,6 @@ export const InsightsScreen = () => {
                                 { label: "Savings", value: "99.4%", hint: "ticket reduction" },
                             ]}
                         >
-                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Covering wheels" />
                             <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                     <thead>
