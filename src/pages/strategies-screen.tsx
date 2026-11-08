@@ -5,6 +5,7 @@ import { Ball } from "@/components/balls";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { Panel } from "@/components/panel";
+import { FamilyChip } from "@/components/product/family-chip";
 import { KpiCard } from "@/components/product/kpi-card";
 import { PageHeader } from "@/components/product/page-header";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
@@ -588,8 +589,11 @@ export const StrategiesScreen = () => {
                                                         <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
                                                     )}
                                                     <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink group-hover:text-accent">{row.name}</span>
-                                                    <span className="hidden shrink-0 text-[10px] text-ink-subtle sm:inline">{row.family}</span>
-                                                    <span className="shrink-0 font-mono text-[13px] font-semibold text-ink tabular-nums" title={`Score 1–100, log-scaled from ${formatNumber(row.score ?? 0)} raw prize points against the theoretical ceiling (every fold a Group 1)`}>{row.score100 ?? 1}</span>
+                                                    <FamilyChip family={row.family} className="hidden shrink-0 sm:inline-flex" />
+                                                    <span className="hidden shrink-0 items-center gap-1 rounded-md bg-surface-inset px-1.5 py-0.5 sm:flex" title={`Score 1–100, log-scaled from ${formatNumber(row.score ?? 0)} raw prize points against the theoretical ceiling (every fold a Group 1)`}>
+                                                        <span className="font-mono text-[9px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">score</span>
+                                                        <span className="font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score100 ?? 1}</span>
+                                                    </span>
                                                     <span className="w-20 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">
                                                         {`${row.effPrizes ?? 0} prizes`}
                                                     </span>

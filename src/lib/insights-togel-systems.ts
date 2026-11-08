@@ -540,7 +540,7 @@ export function computeModularSieveStats(draws: Draw[]): ModularSieveStats {
 }
 
 /* ------------------------------------------------------------------ *
- * 84. Combined Digit-Sum (He Dan / He Shuang 合單 / 合雙)
+ * 84. Combined Digit-Sum (He Dan / He Shuang)
  * ------------------------------------------------------------------ */
 
 export interface CombinedDigitSumStats {

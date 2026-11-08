@@ -10,7 +10,9 @@ import {
     TrendUp01,
     Users01,
 } from "@untitledui/icons";
-import { CandidateBallChip, SequenceBlueprintWorkbench } from "@/components/product/sequence-blueprint-bar";
+import { CandidateBallChip } from "@/components/product/sequence-blueprint-bar";
+import { PanelVerdict } from "@/components/product/panel-verdict";
+import { bandTone, fmtZ, toneForZ, zOf } from "@/lib/insights-verdict-helpers";
 import { useLineBuilder } from "@/providers/line-builder-provider";
 import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
@@ -215,6 +217,7 @@ import {
 } from "@/lib/insights-sequence-dynamics";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
+import { humanizeStatus } from "@/utils/humanize";
 
 /** Decade buckets as `drawDecades` counts them: floor((n - 1) / 10). */
 const DECADE_LABELS = ["1–10", "11–20", "21–30", "31–40", "41–49"];
@@ -267,7 +270,7 @@ interface IndexPanel {
     label: string;
 }
 
-/** The nine galleries in reading order with all 112 panels. */
+/** The nine galleries in reading order with all 128 panels. */
 const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
     {
         id: "the-numbers",
@@ -401,7 +404,7 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
             { id: "panel-ganzhi", label: "60-Day Ganzhi almanac" },
             { id: "panel-pythagorean", label: "Pythagorean master numbers" },
             { id: "panel-modular-sieve", label: "Modular residue sieve" },
-            { id: "panel-combined-digit-sum", label: "Combined digit sum (合單)" },
+            { id: "panel-combined-digit-sum", label: "Combined digit sum" },
             { id: "panel-homologous-clusters", label: "Twin/triple tail clusters" },
             { id: "panel-step-ladder", label: "Step-ladder AP-4 traps" },
             { id: "panel-three-tier-calendar", label: "3-Tier calendar balance" },
@@ -465,7 +468,7 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
     },
 ];
 
-/** Every panel in reading order, numbered 1..112. */
+/** Every panel in reading order, numbered 1..128. */
 const PANEL_INDEX = SECTIONS.flatMap((section) => section.panels).map((panel, index) => ({
     id: panel.id,
     label: panel.label,
@@ -477,13 +480,69 @@ const pNum = (id: string) => PANEL_NUMBERS.get(id) ?? 1;
 
 const pct = (value: number) => `${Math.round(value * 100)}%`;
 
-/** The LZ panel's chart points: the rolling c_norm against the [0, 1] band. */
+/** Tone of a verdict strip. */
+type VerdictTone = "signal" | "null" | "watch";
+
+/** Machine-readable z token for `metric`, e.g. `z:+2.3`. */
+const metricZ = (z: number): string => `z:${z >= 0 ? "+" : "-"}${Math.abs(z).toFixed(1)}`;
+
+/** Props for a count-vs-expectation verdict (Pick / Avoid / No edge). */
+const countVerdict = (
+    tone: VerdictTone,
+    thing: string,
+    stat: string,
+    z: number,
+    noun: string,
+    target?: string,
+    extraMetric?: string,
+): { tone: VerdictTone; label: string; pick?: string; avoid?: string; metric?: string } => ({
+    tone,
+    label:
+        tone === "signal" ? `Pick ${thing} — ${stat} (${fmtZ(z)})`
+        : tone === "watch" ? `Avoid ${thing} — ${stat} (${fmtZ(z)})`
+        : `No edge — top ${noun} within chance (${fmtZ(z)})`,
+    ...(tone === "signal" && target ? { pick: target } : {}),
+    ...(tone === "watch" && target ? { avoid: target } : {}),
+    metric: [extraMetric, metricZ(z)].filter(Boolean).join("|"),
+});
+
+/** Props for a direction verdict (Pick rising / Avoid falling / No edge flat). */
+const directionVerdict = (
+    tone: VerdictTone,
+    metricName: string,
+    sigma?: string,
+    tokens?: string,
+): { tone: VerdictTone; label: string; metric?: string } => ({
+    tone,
+    label:
+        tone === "signal" ? `Pick — ${metricName} rising${sigma ? ` (${sigma})` : ""}`
+        : tone === "watch" ? `Avoid — ${metricName} falling${sigma ? ` (${sigma})` : ""}`
+        : "No edge — flat",
+    metric: tokens,
+});
+
+/** Props for a null-model verdict: a real deviation from the null reads as an edge. */
+const edgeVerdict = (deviation: boolean, tokens?: string): { tone: VerdictTone; label: string; metric?: string } => ({
+    tone: deviation ? "watch" : "null",
+    label: deviation ? "Edge found — favor the hottest, avoid the coldest" : "No edge — matches random draw",
+    metric: tokens,
+});
+
+
+
+/**
+ * The LZ panel's chart points: the rolling phrase count against the same
+ * window of the shuffled twin. The normalized Kaspar-Schuster value
+ * saturates at 1 for every window of this length, so the phrase count is
+ * what still carries the signal.
+ */
 const lempelZivPoints = (stats: ReturnType<typeof computeLempelZivComplexityStats>) =>
     stats.rolling.slice(-120).map((point) => ({
         label: point.label,
         value: point.value,
-        upper: 1,
-        lower: 0,
+        upper: point.nullValue + 1,
+        lower: point.nullValue - 1,
+        ma: point.nullValue,
     }));
 
 /** The Feder-Merhav predictability ceiling, as a share. */
@@ -917,18 +976,6 @@ export const InsightsScreen = () => {
             </div>
 
             {/*
-                The live workbench. It sits above the sticky gallery nav so
-                the candidate line, the 8-filter envelope verdict and the
-                deep-scan metrics stay reachable while the reader scrolls
-                all 128 panels.
-            */}
-            <SequenceBlueprintWorkbench
-                draws={eraDraws}
-                latestDraw={eraDraws[eraDraws.length - 1]}
-                confluenceLine={confluenceBoard?.top6ConfluenceLine}
-            />
-
-            {/*
                 Gallery navigation. The section pills wrap instead of scrolling
                 sideways (at 1440 the row was 1,458px inside a 1,186px track,
                 hiding the last two sections), the search now sits with the
@@ -1027,6 +1074,12 @@ export const InsightsScreen = () => {
                                     { label: "Spread", value: `${(hot?.count ?? 0) - (cold?.count ?? 0)} draws`, hint: "hottest minus coldest" },
                                 ]}
                             >
+                                {(() => {
+                                    const c = hot?.count ?? 0;
+                                    const z = zOf(c, (total * 6) / 49);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `ball ${hot?.number ?? "—"}`, `${formatNumber(c)} hits`, z, "ball", hot ? `ball-${hot.number}` : undefined)} />;
+                                })()}
                                 <FrequencyChart
                                     counts={analysis.frequency.all}
                                     expected={expectedPerNumber}
@@ -1053,6 +1106,19 @@ export const InsightsScreen = () => {
                                     { label: "Hottest", value: gaps.hottest[0]?.number ?? "—", hint: gaps.hottest[0] ? `${gaps.hottest[0].gap} draws out` : undefined },
                                 ]}
                             >
+                                {(() => {
+                                    const n = gaps.overdueCount;
+                                    const hotBall = gaps.hottest[0]?.number;
+                                    return (
+                                        <PanelVerdict
+                                            tone={n >= 15 ? "watch" : "null"}
+                                            label={n >= 15 ? `Avoid the ${n} deep-dry balls` : "No edge — dry tails are normal"}
+                                            {...(n >= 15 && hotBall != null ? { avoid: `ball-${hotBall}` } : {})}
+                                            detail={`expected ${gaps.expectedOverdue.toFixed(1)} overdue`}
+                                            metric={`overdue:${n}|expected:${gaps.expectedOverdue.toFixed(1)}`}
+                                        />
+                                    );
+                                })()}
                                 <GapVolcano stats={gaps} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -1067,6 +1133,7 @@ export const InsightsScreen = () => {
                                 family="Sequence"
                                 className="lg:col-span-12"
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Timeline heat strip" />
                                 <TimelineStrip draws={timeline} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -1086,6 +1153,12 @@ export const InsightsScreen = () => {
                                     { label: "Expected", value: `${((STREAK_WINDOW * 6) / 49).toFixed(1)}`, hint: "hits per number" },
                                 ]}
                             >
+                                {(() => {
+                                    const c = streaks[0]?.hot ?? 0;
+                                    const z = zOf(c, (STREAK_WINDOW * 6) / 49);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `ball ${streaks[0]?.number ?? "—"}`, `${c} hits in ${STREAK_WINDOW}`, z, "ball", streaks[0] ? `ball-${streaks[0].number}` : undefined)} />;
+                                })()}
                                 <StreakRibbons rows={streaks} window={STREAK_WINDOW} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -1105,6 +1178,19 @@ export const InsightsScreen = () => {
                                     { label: "Expected", value: (6 * 10 / 49).toFixed(2), hint: "per decade" },
                                 ]}
                             >
+                                {(() => {
+                                    const value = 8.4 - decadeMin > decadeMax - 10.2 ? decadeMin : decadeMax;
+                                    const tone = bandTone(value, 8.4, 10.2);
+                                    return (
+                                        <PanelVerdict
+                                            tone={tone}
+                                            label={tone === "watch" ? `Avoid decade averages outside 8.4–10.2 (now ${value.toFixed(2)})` : "No edge — any shape is as good"}
+                                            {...(tone === "watch" ? { avoid: "decade-outside-8.4-10.2" } : {})}
+                                            detail={`${value.toFixed(2)} vs band 8.4–10.2`}
+                                            metric={`mean:${value.toFixed(2)}|band:8.4-10.2`}
+                                        />
+                                    );
+                                })()}
                                 <DecadeHeatmap rows={DECADE_LABELS} columns={decades.years} cells={decades.cells} marginal={analysis.decades} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -1124,6 +1210,12 @@ export const InsightsScreen = () => {
                                     { label: "Expected", value: expectedPairMeetings.toFixed(1), hint: "meetings" },
                                 ]}
                             >
+                                {(() => {
+                                    const p = pairs[0];
+                                    const z = zOf(p?.count ?? 0, expectedPairMeetings);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `pair ${p?.a ?? "—"}–${p?.b ?? "—"}`, `${formatNumber(p?.count ?? 0)} hits`, z, "pair", p ? `pair-${p.a}-${p.b}` : undefined)} />;
+                                })()}
                                 <div className="overflow-x-auto">
                                 <table className="w-full border-collapse text-left">
                                     <thead>
@@ -1168,6 +1260,24 @@ export const InsightsScreen = () => {
                                     { label: "Pair cycle", value: `${coldPairs.expectedCycle.toFixed(1)} draws`, hint: "expected" },
                                 ]}
                             >
+                                {(() => {
+                                    const p = coldPairs.coldest[0];
+                                    const c = p?.count ?? 0;
+                                    const z = zOf(c, expectedPairMeetings);
+                                    const cold = c < expectedPairMeetings;
+                                    const tone = cold ? "watch" : toneForZ(z);
+                                    const target = p ? `pair-${p.a}-${p.b}` : undefined;
+                                    return (
+                                        <PanelVerdict
+                                            tone={tone}
+                                            label={cold
+                                                ? `Avoid pair ${p?.a}–${p?.b} — deep cold (${fmtZ(z)})`
+                                                : countVerdict(tone, `pair ${p?.a}–${p?.b}`, `${c} hits`, z, "pair", target).label}
+                                            {...(tone === "watch" && target ? { avoid: target } : {})}
+                                            metric={`hits:${c}|exp:${expectedPairMeetings.toFixed(1)}|${metricZ(z)}`}
+                                        />
+                                    );
+                                })()}
                                 <div className="overflow-x-auto">
                                 <table className="w-full border-collapse text-left">
                                     <thead>
@@ -1214,6 +1324,12 @@ export const InsightsScreen = () => {
                                     { label: "Triples pool", value: formatNumber(triples.totalTriplesInPool), hint: "C(49, 3)" },
                                 ]}
                             >
+                                {(() => {
+                                    const t = triples.topTriples[0];
+                                    const z = zOf(t?.count ?? 0, triples.expectedMeetings);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `triple ${t?.a}-${t?.b}-${t?.c}`, `${t?.count ?? 0} hits`, z, "triple", t ? `triple-${t.a}-${t.b}-${t.c}` : undefined, `exp:${triples.expectedMeetings.toFixed(1)}`)} />;
+                                })()}
                                 <div className="overflow-x-auto">
                                 <table className="w-full border-collapse text-left">
                                     <thead>
@@ -1251,6 +1367,12 @@ export const InsightsScreen = () => {
                                 family="Hot & Cold"
                                 className="lg:col-span-6"
                             >
+                                {(() => {
+                                    const top = movement.risers[0];
+                                    const z = zOf(top?.count ?? 0, movement.expected);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `ball ${top?.number ?? "—"}`, `${top?.count ?? 0} hits in ${RECENT_WINDOW}`, z, "riser", top ? `ball-${top.number}` : undefined, `exp:${movement.expected.toFixed(1)}`)} />;
+                                })()}
                                 <div className="grid grid-cols-2 divide-x divide-line-soft">
                                     {[
                                         { label: "Rising", rows: movement.risers, tone: "text-up" },
@@ -1287,6 +1409,12 @@ export const InsightsScreen = () => {
                                     { label: "Coldest skip", value: bounceBack.coldestBand, hint: "lowest return rate" },
                                 ]}
                             >
+                                {(() => {
+                                    const b = [...bounceBack.buckets].sort((x, y) => y.hitRate - x.hitRate)[0];
+                                    const z = zOf(b.hits, b.trials * b.expectedRate);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `skip band ${b.band}`, `${b.hits}/${b.trials} hits`, z, "band", `band-${String(b.band).toLowerCase().replace(/\s+/g, "-")}`, `base:${(b.expectedRate * 100).toFixed(1)}pct|hits:${b.hits}|trials:${b.trials}`)} />;
+                                })()}
                                 <ObservedExpectedBarChart
                                     items={bounceBack.buckets.map((b) => ({
                                         label: b.band,
@@ -1318,6 +1446,7 @@ export const InsightsScreen = () => {
                                     { label: "Expected 7-Ball", value: `${(sevenBallExposure.expectedTotalRate * 100).toFixed(1)}%`, hint: "14.29% chance" },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="7-Ball exposure" />
                                 <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                         <thead>
@@ -1362,6 +1491,11 @@ export const InsightsScreen = () => {
                                     { label: "Cooling", value: velocityMatrix.coolingBalls.length, hint: "numbers slowing down" },
                                 ]}
                             >
+                                {(() => {
+                                    const net = velocityMatrix.acceleratingBalls.length - velocityMatrix.coolingBalls.length;
+                                    const tone = net > 0 ? "signal" : net < 0 ? "watch" : "null";
+                                    return <PanelVerdict {...directionVerdict(tone, "hit velocity", undefined, `accel:${velocityMatrix.acceleratingBalls.length}|cool:${velocityMatrix.coolingBalls.length}`)} />;
+                                })()}
                                 <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                         <thead>
@@ -1406,6 +1540,7 @@ export const InsightsScreen = () => {
                                     { label: "Underdue", value: skipQuantiles.underdueBalls.length, hint: "below personal p25" },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Skip quantiles" />
                                 <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                         <thead>
@@ -1426,7 +1561,7 @@ export const InsightsScreen = () => {
                                                     <td className={tdNum}>{r.p25}d</td>
                                                     <td className={tdNum}>{r.median}d</td>
                                                     <td className={tdNum}>{r.p75}d</td>
-                                                    <td className={tdNum}><span className="text-primary font-semibold">{r.status}</span></td>
+                                                    <td className={tdNum}><span className="text-primary font-semibold">{humanizeStatus(r.status)}</span></td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -1450,6 +1585,12 @@ export const InsightsScreen = () => {
                                     { label: "Active Echo Balls", value: streakEcho.activeEchoBalls.length, hint: "drawn t-2, skipped t-1" },
                                 ]}
                             >
+                                {(() => {
+                                    const c = streakEcho.repeatRate * total;
+                                    const z = zOf(c, streakEcho.repeatRateNull * total);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, "back-to-back repeats", `${c.toFixed(0)} hits`, z, "echo", undefined, `rate:${(streakEcho.repeatRate * 100).toFixed(1)}pct|null:${(streakEcho.repeatRateNull * 100).toFixed(1)}pct`)} />;
+                                })()}
                                 <div className="flex flex-col gap-3 mt-2">
                                     <div className="flex items-center justify-between text-xs border-b border-line pb-2">
                                         <span className="text-ink-muted">Single Repeat P(t | t-1):</span>
@@ -1521,6 +1662,12 @@ export const InsightsScreen = () => {
                                     { label: "Mean |z|", value: `${pairCorr.meanAbsZ.toFixed(2)}σ`, hint: "overall deviation" },
                                 ]}
                             >
+                                {(() => {
+                                    const p = pairCorr.topPositive[0];
+                                    const z = pairCorr.maxZ;
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `pair ${p?.a ?? "—"}–${p?.b ?? "—"}`, `${p?.count ?? 0} hits`, z, "pair", p ? `pair-${p.a}-${p.b}` : undefined, `minz:${pairCorr.minZ.toFixed(2)}`)} />;
+                                })()}
                                 <PairCorrelationHeatmap stats={pairCorr} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -1540,6 +1687,11 @@ export const InsightsScreen = () => {
                                     { label: "95% Bound", value: `±${autocorr.bound95.toFixed(3)}`, hint: "white-noise threshold" },
                                 ]}
                             >
+                                {(() => {
+                                    const r = autocorr.lags[0]?.rSum ?? 0;
+                                    const tone = Math.abs(r) < 0.05 ? "null" : r > 0 ? "signal" : "watch";
+                                    return <PanelVerdict {...directionVerdict(tone, "lag-1 momentum", undefined, `r1:${r.toFixed(3)}`)} />;
+                                })()}
                                 <CorrelogramChart stats={autocorr} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -1559,6 +1711,12 @@ export const InsightsScreen = () => {
                                     { label: "3-Draw Union", value: `${multiLag.threeDrawUnionHits.toFixed(2)} hits`, hint: `vs ${multiLag.expectedThreeDrawUnion.toFixed(2)} exp` },
                                 ]}
                             >
+                                {(() => {
+                                    const best = [...multiLag.rows].sort((x, y) => zOf(y.meanRepeats, y.expectedRepeats) - zOf(x.meanRepeats, x.expectedRepeats))[0];
+                                    const z = zOf(best.meanRepeats, best.expectedRepeats);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...directionVerdict(tone, `lag-${best.lag} carry`, fmtZ(z), `lag:${best.lag}|hits:${best.meanRepeats.toFixed(3)}`)} />;
+                                })()}
                                 <ObservedExpectedBarChart
                                     items={multiLag.rows.map((r) => ({
                                         label: `L${r.lag}`,
@@ -1589,6 +1747,12 @@ export const InsightsScreen = () => {
                                     { label: "Top promoted", value: promo.topPromotedNumber ? `Ball ${promo.topPromotedNumber.number}` : "—", hint: `${promo.topPromotedNumber?.count} times` },
                                 ]}
                             >
+                                {(() => {
+                                    const row = promo.rows.find((r) => r.lag === 1) ?? promo.rows[0];
+                                    const z = zOf(row.promotedCount, (total * 6) / 48);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `ball ${promo.topPromotedNumber?.number ?? "—"}`, `${row.promotedCount} promotions`, z, "promotion", promo.topPromotedNumber ? `ball-${promo.topPromotedNumber.number}` : undefined, `rate:${(promo.lag1Rate * 100).toFixed(1)}pct`)} />;
+                                })()}
                                 <ObservedExpectedBarChart
                                     items={promo.rows.slice(0, 8).map((r) => ({
                                         label: `Lag ${r.lag}`,
@@ -1620,6 +1784,11 @@ export const InsightsScreen = () => {
                                     { label: "±2 Lift", value: `${neighbors.lift2.toFixed(2)}x`, hint: "observed / expected" },
                                 ]}
                             >
+                                {(() => {
+                                    const z = zOf(neighbors.plusMinus1Hits, neighbors.expectedPlusMinus1);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, "±1 halo hits", `${neighbors.plusMinus1Hits.toFixed(2)} hits/draw`, z, "halo", undefined, `lift:${neighbors.lift1.toFixed(2)}|exp:${neighbors.expectedPlusMinus1.toFixed(2)}`)} />;
+                                })()}
                                 <div className="grid grid-cols-2 gap-3 p-2">
                                     <div className="flex flex-col items-center justify-center rounded-lg border border-line bg-surface-2 p-3 text-center">
                                         <p className="text-[10px] font-semibold text-ink-subtle uppercase">±1 Adjacent Halo</p>
@@ -1650,6 +1819,11 @@ export const InsightsScreen = () => {
                                     { label: "Top pair", value: mirrors.topMirrorPair ? `${mirrors.topMirrorPair.a}–${mirrors.topMirrorPair.b}` : "—", hint: `${mirrors.topMirrorPair?.count} draws` },
                                 ]}
                             >
+                                {(() => {
+                                    const z = zOf(mirrors.bolakBalikPairsSeen, mirrors.expectedBolakBalik);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, "bolak-balik mirror pairs", `${mirrors.bolakBalikPairsSeen} hits`, z, "mirror", undefined, `exp:${mirrors.expectedBolakBalik.toFixed(1)}`)} />;
+                                })()}
                                 <div className="space-y-2 p-2">
                                     <div className="flex justify-between items-center border-b border-line pb-1.5 text-xs">
                                         <span className="text-ink">Same-draw (50−n) pairs</span>
@@ -1677,6 +1851,12 @@ export const InsightsScreen = () => {
                                 family="Structure"
                                 className="lg:col-span-6"
                             >
+                                {(() => {
+                                    let best = 0;
+                                    for (const row of featureCorr.matrix) for (const v of row) if (Math.abs(v) > Math.abs(best)) best = v;
+                                    const tone = Math.abs(best) >= 0.3 ? "signal" : Math.abs(best) <= 0.1 ? "null" : "watch";
+                                    return <PanelVerdict {...directionVerdict(tone, "feature coupling", undefined, `r:${best.toFixed(3)}`)} />;
+                                })()}
                                 <SmallCorrelationGrid labels={featureCorr.features} matrix={featureCorr.matrix} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -1717,6 +1897,7 @@ export const InsightsScreen = () => {
                                     { label: "Total families", value: stratConsensus.familyScores.length, hint: `${league?.strategies.length ?? 263} rules scored` },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Strategy consensus" />
                                 <ButterflySplitChart
                                     rows={stratConsensus.familyScores.slice(0, 10).map((f) => ({
                                         label: f.family,
@@ -1745,6 +1926,12 @@ export const InsightsScreen = () => {
                                     { label: "Top Lift", value: `${latestTriggers.topFollowers[0]?.liftRatio.toFixed(2)}×`, hint: "over null" },
                                 ]}
                             >
+                                {(() => {
+                                    const f = latestTriggers.topFollowers[0];
+                                    const z = zOf(f?.triggerVotes ?? 0, 6 * (f?.nullRate ?? 6 / 49));
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `ball ${f?.number ?? "—"}`, `${f?.triggerVotes ?? 0}/6 follow hits`, z, "follower", f ? `ball-${f.number}` : undefined, `lift:${f?.liftRatio.toFixed(2)}`)} />;
+                                })()}
                                 <div className="flex flex-wrap gap-1.5 mt-2 mb-3">
                                     {latestTriggers.topFollowers.slice(0, 7).map((r) => (
                                         <CandidateBallChip key={r.number} number={r.number} sublabel={`${r.liftRatio.toFixed(2)}×`} />
@@ -1794,6 +1981,12 @@ export const InsightsScreen = () => {
                                     { label: "Lag-2 Leader", value: `Ball ${[...harmonicMultiLag.rows].sort((a,b)=>b.lag2Score-a.lag2Score)[0]?.number}`, hint: "1-skip follower" },
                                 ]}
                             >
+                                {(() => {
+                                    const top = harmonicMultiLag.topHarmonicPicks[0];
+                                    const z = top?.harmonicScore ?? 0;
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...directionVerdict(tone, "harmonic resonance", fmtZ(z), `ball:${top?.number}|score:${z.toFixed(2)}`)} />;
+                                })()}
                                 <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                         <thead>
@@ -1836,6 +2029,12 @@ export const InsightsScreen = () => {
                                     { label: "Isolated", value: `Ball ${hubCentrality.isolatedBalls[0]?.number}`, hint: `${hubCentrality.isolatedBalls[0]?.degreePositiveZ} positive partners` },
                                 ]}
                             >
+                                {(() => {
+                                    const h = hubCentrality.topHubs[0];
+                                    const z = zOf(h?.degreePositiveZ ?? 0, expectedPairMeetings * 2);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `ball ${h?.number ?? "—"}`, `${h?.degreePositiveZ ?? 0} strong partners`, z, "hub", h ? `ball-${h.number}` : undefined, `exp:${(expectedPairMeetings * 2).toFixed(1)}`)} />;
+                                })()}
                                 <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                         <thead>
@@ -1878,6 +2077,7 @@ export const InsightsScreen = () => {
                                     { label: "Sum Pair z", value: `+${bestCompanions.topTriplets[0]?.sumPairZ.toFixed(2)}σ`, hint: "triplet synergy" },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Greedy companions" />
                                 <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                         <thead>
@@ -1922,6 +2122,13 @@ export const InsightsScreen = () => {
                                     { label: "Expected Hits", value: "12.2%", hint: "6/49 baseline" },
                                 ]}
                             >
+                                {(() => {
+                                    const p = additionalCompanions.topCompanions[0];
+                                    const lift = p?.liftRatio ?? 1;
+                                    const z = zOf(lift, 1);
+                                    const tone = lift >= 1.5 ? "signal" : lift <= 1.1 ? "null" : "watch";
+                                    return <PanelVerdict {...countVerdict(tone, `ball ${p?.number ?? "—"}`, `${p?.companionHits ?? 0} extra-ball hits`, z, "companion", p ? `ball-${p.number}` : undefined, `lift:${lift.toFixed(2)}`)} />;
+                                })()}
                                 <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                         <thead>
@@ -1960,6 +2167,12 @@ export const InsightsScreen = () => {
                                     { label: "Top t+1 Echo", value: `Ball ${knnTwins.tPlusOneBallTallies[0]?.number ?? "—"}`, hint: `${knnTwins.tPlusOneBallTallies[0]?.votes ?? 0} next-draw hits` },
                                 ]}
                             >
+                                {(() => {
+                                    const t = knnTwins.tPlusOneBallTallies[0];
+                                    const z = zOf(t?.votes ?? 0, (knnTwins.k * 6) / 49);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `ball ${t?.number ?? "—"}`, `${t?.votes ?? 0} next-draw hits`, z, "echo", t ? `ball-${t.number}` : undefined, `exp:${((knnTwins.k * 6) / 49).toFixed(2)}`)} />;
+                                })()}
                                 <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                         <thead>
@@ -2014,6 +2227,18 @@ export const InsightsScreen = () => {
                                     { label: "Draws in band", value: formatNumber(band.count), hint: `of ${formatNumber(total)}` },
                                 ]}
                             >
+                                {(() => {
+                                    const tone = bandTone(analysis.sum.mean, 115, 185);
+                                    return (
+                                        <PanelVerdict
+                                            tone={tone}
+                                            label={tone === "watch" ? `Avoid sums outside 115–185 (now ${analysis.sum.mean.toFixed(1)})` : "No edge — any shape is as good"}
+                                            {...(tone === "watch" ? { avoid: "sum-outside-115-185" } : {})}
+                                            detail={`mean ${analysis.sum.mean.toFixed(1)} vs band 115–185`}
+                                            metric={`mean:${analysis.sum.mean.toFixed(1)}|band:115-185`}
+                                        />
+                                    );
+                                })()}
                                 <div className="grid items-center gap-3 lg:grid-cols-[minmax(0,1fr)_11rem]">
                                     <SumHistogram bins={sumBins} mean={analysis.sum.mean} median={analysis.sum.median} band={band} totalDraws={total} />
                                     <DonutChart
@@ -2045,6 +2270,7 @@ export const InsightsScreen = () => {
                                     { label: "Longest run", value: formatNumber(analysis.consecutive.drawRate * total), hint: "draws with a pair" },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Sum trend" />
                                 <SumTrend points={sums} band={{ lo: band.lo, hi: band.hi }} mean={analysis.sum.mean} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -2064,6 +2290,19 @@ export const InsightsScreen = () => {
                                     { label: "Odd in pool", value: ODD_POOL, hint: "of 49 numbers" },
                                 ]}
                             >
+                                {(() => {
+                                    const value = analysis.oddEven.indexOf(Math.max(...analysis.oddEven));
+                                    const tone = bandTone(value, 2, 4);
+                                    return (
+                                        <PanelVerdict
+                                            tone={tone}
+                                            label={tone === "watch" ? `Avoid odd counts outside 2–4 (now ${value})` : "No edge — any shape is as good"}
+                                            {...(tone === "watch" ? { avoid: "odd-outside-2-4" } : {})}
+                                            detail={`modal ${value} odd per draw`}
+                                            metric={`modal:${value}|band:2-4`}
+                                        />
+                                    );
+                                })()}
                                 <CountDistributionChart
                                     counts={analysis.oddEven}
                                     unit="odd numbers"
@@ -2090,6 +2329,19 @@ export const InsightsScreen = () => {
                                     { label: "Low in pool", value: LOW_POOL, hint: "of 49 numbers" },
                                 ]}
                             >
+                                {(() => {
+                                    const value = analysis.lowHigh.indexOf(Math.max(...analysis.lowHigh));
+                                    const tone = bandTone(value, 2, 4);
+                                    return (
+                                        <PanelVerdict
+                                            tone={tone}
+                                            label={tone === "watch" ? `Avoid low counts outside 2–4 (now ${value})` : "No edge — any shape is as good"}
+                                            {...(tone === "watch" ? { avoid: "low-outside-2-4" } : {})}
+                                            detail={`modal ${value} low per draw`}
+                                            metric={`modal:${value}|band:2-4`}
+                                        />
+                                    );
+                                })()}
                                 <CountDistributionChart
                                     counts={analysis.lowHigh}
                                     unit="low numbers (≤ 24)"
@@ -2141,6 +2393,7 @@ export const InsightsScreen = () => {
                                     { label: "Cells", value: 49, hint: "odd × high" },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Composition" />
                                 <CompositionMatrix cells={composition} />
                             </InsightPanel>
                         )}
@@ -2160,6 +2413,18 @@ export const InsightsScreen = () => {
                                     { label: "Most common", value: deltas.rows.reduce((best, row) => (row.count > best.count ? row : best), deltas.rows[0])?.gap ?? "—", hint: "gap size" },
                                 ]}
                             >
+                                {(() => {
+                                    const tone = bandTone(deltas.observedAverage, 6.5, 8);
+                                    return (
+                                        <PanelVerdict
+                                            tone={tone}
+                                            label={tone === "watch" ? `Avoid mean gaps outside 6.5–8.0 (now ${deltas.observedAverage.toFixed(2)})` : "No edge — any shape is as good"}
+                                            {...(tone === "watch" ? { avoid: "gap-outside-6.5-8" } : {})}
+                                            detail={`mean gap ${deltas.observedAverage.toFixed(2)}`}
+                                            metric={`mean:${deltas.observedAverage.toFixed(2)}|band:6.5-8`}
+                                        />
+                                    );
+                                })()}
                                 <DeltaProfile stats={deltas} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -2179,6 +2444,13 @@ export const InsightsScreen = () => {
                                     { label: "Expected mid", value: positions[2]?.expectedMedian ?? "—", hint: "position 3" },
                                 ]}
                             >
+                                {(() => {
+                                    const worst = [...positions].sort((a, b) => Math.abs(b.observedMedian - b.expectedMedian) - Math.abs(a.observedMedian - a.expectedMedian))[0];
+                                    const idx = positions.indexOf(worst) + 1;
+                                    const z = zOf(worst.observedMedian, worst.expectedMedian);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `position ${idx}`, `median ${worst.observedMedian.toFixed(0)}`, z, "position", `position-${idx}`, `exp:${worst.expectedMedian}`)} />;
+                                })()}
                                 <PositionLadder rows={positions} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -2198,6 +2470,18 @@ export const InsightsScreen = () => {
                                     { label: "Modal span", value: spans.mostCommonSpan, hint: "most frequent" },
                                 ]}
                             >
+                                {(() => {
+                                    const tone = bandTone(spans.observedMean, 33, 43);
+                                    return (
+                                        <PanelVerdict
+                                            tone={tone}
+                                            label={tone === "watch" ? `Avoid spans outside 33–43 (now ${spans.observedMean.toFixed(1)})` : "No edge — any shape is as good"}
+                                            {...(tone === "watch" ? { avoid: "span-outside-33-43" } : {})}
+                                            detail={`mean span ${spans.observedMean.toFixed(1)}`}
+                                            metric={`mean:${spans.observedMean.toFixed(1)}|band:33-43`}
+                                        />
+                                    );
+                                })()}
                                 <ObservedExpectedBarChart
                                     items={spans.rows.filter((r) => r.span >= 20 && r.span % 3 === 0).map((r) => ({
                                         label: `${r.span}`,
@@ -2228,6 +2512,18 @@ export const InsightsScreen = () => {
                                     { label: "AC ≥ 7 share", value: `${(acValues.rateAbove6 * 100).toFixed(1)}%`, hint: "complex lines" },
                                 ]}
                             >
+                                {(() => {
+                                    const tone = bandTone(acValues.observedMean, 6, 9);
+                                    return (
+                                        <PanelVerdict
+                                            tone={tone}
+                                            label={tone === "watch" ? `Avoid AC values outside 6–9 (now ${acValues.observedMean.toFixed(2)})` : "No edge — any shape is as good"}
+                                            {...(tone === "watch" ? { avoid: "ac-outside-6-9" } : {})}
+                                            detail={`mean AC ${acValues.observedMean.toFixed(2)}`}
+                                            metric={`mean:${acValues.observedMean.toFixed(2)}|band:6-9`}
+                                        />
+                                    );
+                                })()}
                                 <ObservedExpectedBarChart
                                     items={acValues.rows.map((r) => ({
                                         label: `AC ${r.ac}`,
@@ -2259,6 +2555,19 @@ export const InsightsScreen = () => {
                                     { label: "Digit 0 pool", value: "4 balls", hint: "vs 5 for 1–9" },
                                 ]}
                             >
+                                {(() => {
+                                    const modal = [...tailDigits.distinctTailCounts].sort((a, b) => b.count - a.count)[0];
+                                    const tone = bandTone(modal.distinct, 4, 6);
+                                    return (
+                                        <PanelVerdict
+                                            tone={tone}
+                                            label={tone === "watch" ? `Avoid distinct tails outside 4–6 (now ${modal.distinct})` : "No edge — any shape is as good"}
+                                            {...(tone === "watch" ? { avoid: "tails-outside-4-6" } : {})}
+                                            detail={`modal ${modal.distinct} endings`}
+                                            metric={`modal:${modal.distinct}|band:4-6`}
+                                        />
+                                    );
+                                })()}
                                 <ObservedExpectedBarChart
                                     items={tailDigits.distinctTailCounts.map((r) => ({
                                         label: `${r.distinct} Endings`,
@@ -2289,6 +2598,19 @@ export const InsightsScreen = () => {
                                     { label: "No adjacent", value: `${(runs.adjacentPairCounts[0].share * 100).toFixed(1)}%`, hint: "of all draws" },
                                 ]}
                             >
+                                {(() => {
+                                    const modal = [...runs.adjacentPairCounts].sort((a, b) => b.count - a.count)[0];
+                                    const tone = bandTone(modal.pairs, 0, 2);
+                                    return (
+                                        <PanelVerdict
+                                            tone={tone}
+                                            label={tone === "watch" ? `Avoid consecutive-pair counts outside 0–2 (now ${modal.pairs})` : "No edge — any shape is as good"}
+                                            {...(tone === "watch" ? { avoid: "pairs-outside-0-2" } : {})}
+                                            detail={`modal ${modal.pairs} consecutive pairs`}
+                                            metric={`modal:${modal.pairs}|band:0-2`}
+                                        />
+                                    );
+                                })()}
                                 <ObservedExpectedBarChart
                                     items={runs.adjacentPairCounts.map((r) => ({
                                         label: r.label,
@@ -2320,6 +2642,7 @@ export const InsightsScreen = () => {
                                     { label: "Cross hit", value: `${(slipGeo.diagonalHits[3].observedRate * 100).toFixed(1)}%`, hint: `exp ${(slipGeo.diagonalHits[3].expectedRate * 100).toFixed(1)}%` },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Playslip geometry" />
                                 <ObservedExpectedBarChart
                                     items={slipGeo.diagonalHits.map((h) => ({
                                         label: h.name,
@@ -2350,6 +2673,12 @@ export const InsightsScreen = () => {
                                     { label: "Pool residue", value: "Balanced", hint: "5 or 6 balls each" },
                                 ]}
                             >
+                                {(() => {
+                                    const top = [...digiRoots.roots].sort((a, b) => b.count - a.count)[0];
+                                    const z = zOf(top.count, top.expectedShare * total);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `root ${top.root}`, `${top.count} hits`, z, "root", `root-${top.root}`, `exp:${(top.expectedShare * total).toFixed(1)}`)} />;
+                                })()}
                                 <ObservedExpectedBarChart
                                     items={digiRoots.roots.map((r) => ({
                                         label: `Root ${r.root}`,
@@ -2389,6 +2718,7 @@ export const InsightsScreen = () => {
                                     },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="3-Tier zones" />
                                 <ObservedExpectedBarChart
                                     items={tercileMatrix.topPatterns.slice(0, 6).map((p) => ({
                                         label: p.pattern,
@@ -2420,6 +2750,7 @@ export const InsightsScreen = () => {
                                     { label: "Distinct Cells", value: "6.0", hint: "zero ball collisions" },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="7×7 Grid dispersion" />
                                 <ObservedExpectedBarChart
                                     items={rowColDispersion.rowsCoverageDistribution.map((r) => ({
                                         label: `${r.rows} rows`,
@@ -2451,6 +2782,7 @@ export const InsightsScreen = () => {
                                     { label: "Clumpy Lines", value: `${gapEntropy.lowEntropyPct.toFixed(1)}%`, hint: "entropy < 0.70" },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Gap spacing entropy" />
                                 <div className="flex flex-col gap-3 mt-2">
                                     <div className="flex items-center justify-between text-xs border-b border-line pb-2">
                                         <span className="text-ink-muted">Well-Spread Draws (H ≥ 0.85):</span>
@@ -2481,7 +2813,7 @@ export const InsightsScreen = () => {
                             <InsightPanel
                                 number={pNum("panel-color-waves")}
                                 section="Folklore"
-                                title="Mark Six colour waves (紅藍綠波)"
+                                title="Mark Six colour waves"
                                 caption="Red wave (17 balls), Blue wave (16 balls) and Green wave (16 balls) hit counts."
                                 id="panel-color-waves"
                                 family="Mark Six Charts"
@@ -2492,6 +2824,7 @@ export const InsightsScreen = () => {
                                     { label: "Green balls", value: "16", hint: "expected 1.96" },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Colour waves" />
                                 <ObservedExpectedBarChart
                                     items={colorWaves.waves.map((w) => ({
                                         label: w.name,
@@ -2511,17 +2844,18 @@ export const InsightsScreen = () => {
                             <InsightPanel
                                 number={pNum("panel-wuxing")}
                                 section="Folklore"
-                                title="2026 Na-Yin Five Elements (五行)"
+                                title="2026 Na-Yin Five Elements"
                                 caption="Bing-Wu Fire Horse element sets (Metal, Wood, Water, Fire, Earth) vs fair share."
                                 id="panel-wuxing"
                                 family="Mark Six Charts"
                                 className="lg:col-span-6"
                                 stats={[
-                                    { label: "Fire (火)", value: `${wuXing.elements[0].balls} balls`, hint: `${wuXing.elements[0].observedRate.toFixed(2)} hits` },
-                                    { label: "Metal (金)", value: `${wuXing.elements[1].balls} balls`, hint: `${wuXing.elements[1].observedRate.toFixed(2)} hits` },
-                                    { label: "Water (水)", value: `${wuXing.elements[2].balls} balls`, hint: `${wuXing.elements[2].observedRate.toFixed(2)} hits` },
+                                    { label: "Fire", value: `${wuXing.elements[0].balls} balls`, hint: `${wuXing.elements[0].observedRate.toFixed(2)} hits` },
+                                    { label: "Metal", value: `${wuXing.elements[1].balls} balls`, hint: `${wuXing.elements[1].observedRate.toFixed(2)} hits` },
+                                    { label: "Water", value: `${wuXing.elements[2].balls} balls`, hint: `${wuXing.elements[2].observedRate.toFixed(2)} hits` },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Five elements" />
                                 <ObservedExpectedBarChart
                                     items={wuXing.elements.map((e) => ({
                                         label: e.name,
@@ -2548,10 +2882,11 @@ export const InsightsScreen = () => {
                                 className="lg:col-span-6"
                                 stats={[
                                     { label: "Top Zodiac", value: zodiacs.topAnimal, hint: "highest hits" },
-                                    { label: "Horse (马)", value: "5 balls", hint: "ruling year" },
-                                    { label: "Clash Rat (鼠)", value: "4 balls", hint: "clash animal" },
+                                    { label: "Horse", value: "5 balls", hint: "ruling year" },
+                                    { label: "Clash Rat", value: "4 balls", hint: "clash animal" },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="12 Zodiacs" />
                                 <ObservedExpectedBarChart
                                     items={zodiacs.zodiacs.map((z) => ({
                                         label: z.animal.split(" ")[0],
@@ -2582,6 +2917,7 @@ export const InsightsScreen = () => {
                                     { label: "Digit 7 hits/draw", value: luckyDigits.digit7Stats.observedRate.toFixed(2), hint: `exp ${luckyDigits.digit7Stats.expectedRate.toFixed(2)}` },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Lucky digits" />
                                 <div className="space-y-2 p-2">
                                     {[luckyDigits.digit4Stats, luckyDigits.digit8Stats, luckyDigits.digit7Stats, luckyDigits.repdigitsStats].map((st) => (
                                         <div key={st.name} className="flex justify-between items-center border-b border-line pb-1 text-xs">
@@ -2611,6 +2947,7 @@ export const InsightsScreen = () => {
                                     { label: "Squares (7)", value: `${mathSeqs.sequences[2].observedRate.toFixed(2)} hits`, hint: `exp ${mathSeqs.sequences[2].expectedRate.toFixed(2)}` },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Math sequences" />
                                 <ObservedExpectedBarChart
                                     items={mathSeqs.sequences.map((s) => ({
                                         label: s.name,
@@ -2641,6 +2978,7 @@ export const InsightsScreen = () => {
                                     { label: "Lunar Cycle", value: "29.53 days", hint: "synodic period" },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Lo Shu & Moon" />
                                 <ObservedExpectedBarChart
                                     items={loShu.moonPhases.map((m) => {
                                         const shortName =
@@ -2683,6 +3021,7 @@ export const InsightsScreen = () => {
                                     { label: "Pool Share", value: "15 / 49 primes", hint: "30.6% of balls" },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Prime balance" />
                                 <ObservedExpectedBarChart
                                     items={primeDistribution.rows.map((d) => ({
                                         label: `${d.primes} primes`,
@@ -2725,6 +3064,11 @@ export const InsightsScreen = () => {
                                     { label: "Draws tested", value: formatNumber(repeaters.evaluated), hint: "each against the last" },
                                 ]}
                             >
+                                {(() => {
+                                    const z = zOf(repeaters.observedAverage, repeaters.expectedAverage);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, "repeater flow", `${repeaters.observedAverage.toFixed(2)} repeats/draw`, z, "repeater", undefined, `exp:${repeaters.expectedAverage.toFixed(2)}`)} />;
+                                })()}
                                 <RepeatersFlow stats={repeaters} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -2744,6 +3088,12 @@ export const InsightsScreen = () => {
                                     { label: "Expected", value: additional.expected.toFixed(1), hint: "times per number" },
                                 ]}
                             >
+                                {(() => {
+                                    const c = additional.hottest?.count ?? 0;
+                                    const z = zOf(c, additional.expected);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `additional ball ${additional.hottest?.number ?? "—"}`, `${formatNumber(c)} times`, z, "additional ball", additional.hottest ? `ball-${additional.hottest.number}` : undefined, `exp:${additional.expected.toFixed(1)}`)} />;
+                                })()}
                                 <AdditionalBall stats={additional} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -2763,6 +3113,12 @@ export const InsightsScreen = () => {
                                     { label: "Spread", value: months.spread.toFixed(1), hint: "best minus worst" },
                                 ]}
                             >
+                                {(() => {
+                                    const busiest = [...months.monthlyMean].sort((a, b) => b.draws - a.draws)[0];
+                                    const z = zOf(busiest.draws, total / 12);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `month ${busiest.month}`, `${formatNumber(busiest.draws)} draws`, z, "month", `month-${busiest.month}`, `share:${((busiest.draws / total) * 100).toFixed(1)}pct|null:8.3pct`)} />;
+                                })()}
                                 <MonthHeatmap stats={months} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -2782,6 +3138,12 @@ export const InsightsScreen = () => {
                                     { label: "Special draws", value: formatNumber(fridayDraws), hint: "on Fridays" },
                                 ]}
                             >
+                                {(() => {
+                                    const busiest = [...weekdayDays].sort((a, b) => b.count - a.count)[0];
+                                    const z = zOf(busiest.count, (total * 2) / 7);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, busiest.label, `${formatNumber(busiest.count)} draws`, z, "weekday", `weekday-${busiest.label.toLowerCase()}`, `share:${((busiest.count / total) * 100).toFixed(1)}pct|null:28.6pct`)} />;
+                                })()}
                                 <WeekdayChart days={weekdayDays} className="mt-2" />
                             </InsightPanel>
                         )}
@@ -2801,6 +3163,14 @@ export const InsightsScreen = () => {
                                     { label: "Top Pick", value: `Ball ${upcomingCalendar.topWeekdayLeaders[0]?.number ?? "—"}`, hint: `Score ${(upcomingCalendar.topWeekdayLeaders[0]?.compositeCalendarScore ?? 0).toFixed(2)}` },
                                 ]}
                             >
+                                {(() => {
+                                    const leaders = upcomingCalendar.topWeekdayLeaders;
+                                    const mean = leaders.reduce((sum, l) => sum + l.compositeCalendarScore, 0) / Math.max(leaders.length, 1);
+                                    const top = leaders[0];
+                                    const z = zOf(top?.compositeCalendarScore ?? 0, mean);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `ball ${top?.number ?? "—"}`, `score ${(top?.compositeCalendarScore ?? 0).toFixed(1)}`, z, "calendar pick", top ? `ball-${top.number}` : undefined, `mean:${mean.toFixed(1)}`)} />;
+                                })()}
                                 <div className="flex flex-wrap gap-1.5 mt-2 mb-2">
                                     {upcomingCalendar.topWeekdayLeaders.slice(0, 7).map((p) => (
                                         <CandidateBallChip key={p.number} number={p.number} sublabel={`+${p.compositeCalendarScore.toFixed(1)}`} />
@@ -2822,6 +3192,12 @@ export const InsightsScreen = () => {
                                 family="Pattern"
                                 className="lg:col-span-6"
                             >
+                                {(() => {
+                                    const pair = analysis.consecutive.topPairs[0];
+                                    const z = zOf(pair?.count ?? 0, expectedPairMeetings);
+                                    const tone = toneForZ(z);
+                                    return <PanelVerdict {...countVerdict(tone, `run pair ${pair?.a ?? "—"}–${pair?.b ?? "—"}`, `${pair?.count ?? 0} hits`, z, "pattern", pair ? `pair-${pair.a}-${pair.b}` : undefined, `exp:${expectedPairMeetings.toFixed(1)}`)} />;
+                                })()}
                                 <div className="grid grid-cols-2 gap-2">
                                     <Gauge
                                         value={analysis.consecutive.drawRate}
@@ -2867,6 +3243,7 @@ export const InsightsScreen = () => {
                                     { label: "Odd/Even Draw", value: `${weekdaySplit.oddDrawSumMean.toFixed(1)} / ${weekdaySplit.evenDrawSumMean.toFixed(1)}`, hint: "mean sums" },
                                 ]}
                             >
+                                <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Mon vs Thu" />
                                 <ButterflySplitChart
                                     rows={weekdaySplit.topMonBiased.slice(0, 3).concat(weekdaySplit.topThuBiased.slice(0, 3)).map((r) => ({
                                         label: `Ball ${r.number}`,
@@ -2922,11 +3299,16 @@ export const InsightsScreen = () => {
                                 { label: "Neutral Balls", value: `${rsiStats.neutralCount} / 49`, hint: "35 ≤ RSI ≤ 65" },
                             ]}
                         >
+                            {(() => {
+                                const r = rsiStats.hottest[0]?.rsi ?? 50;
+                                const tone = r > 65 ? "signal" : r < 35 ? "watch" : "null";
+                                return <PanelVerdict {...directionVerdict(tone, "RSI momentum", undefined, `rsi:${r}`)} />;
+                            })()}
                             <OscillatorBandChart
                                 items={rsiStats.balls.map((b) => ({
                                     number: b.number,
                                     value: b.rsi,
-                                    label: b.regime,
+                                    label: humanizeStatus(b.regime),
                                 }))}
                                 overbought={65}
                                 oversold={35}
@@ -2952,6 +3334,11 @@ export const InsightsScreen = () => {
                                 { label: "Signal Crosses", value: `${macdStats.crossOvers.length} active`, hint: "recent trend pivots" },
                             ]}
                         >
+                            {(() => {
+                                const net = (macdStats.topBullish[0]?.histogram ?? 0) + (macdStats.topBearish[0]?.histogram ?? 0);
+                                const tone = net > 0 ? "signal" : net < 0 ? "watch" : "null";
+                                return <PanelVerdict {...directionVerdict(tone, "MACD velocity", undefined, `net:${net}`)} />;
+                            })()}
                             <OscillatorBandChart
                                 items={macdStats.balls.map((b) => ({
                                     number: b.number,
@@ -2980,10 +3367,23 @@ export const InsightsScreen = () => {
                             className="lg:col-span-6"
                             stats={[
                                 { label: "Current Bandwidth", value: `${(bollingerStats.currentBandwidth * 100).toFixed(1)}%`, hint: bollingerStats.isSqueezed ? "SQUEEZE ACTIVE" : "normal width" },
-                                { label: "Current %B", value: `${(bollingerStats.currentPercentB * 100).toFixed(0)}%`, hint: bollingerStats.regime },
+                                { label: "Current %B", value: `${(bollingerStats.currentPercentB * 100).toFixed(0)}%`, hint: humanizeStatus(bollingerStats.regime) },
                                 { label: "Mean Bandwidth", value: `${(bollingerStats.meanBandwidth * 100).toFixed(1)}%`, hint: "20-draw historical" },
                             ]}
                         >
+                            {(() => {
+                                const p = bollingerStats.recentPoints[bollingerStats.recentPoints.length - 1];
+                                const tone = bandTone(p?.sum ?? 150, p?.lower ?? 120, p?.upper ?? 180);
+                                return (
+                                    <PanelVerdict
+                                        tone={tone}
+                                        label={tone === "watch" ? `Avoid sums outside ${p?.lower.toFixed(0)}–${p?.upper.toFixed(0)} (now ${p?.sum})` : "No edge — any shape is as good"}
+                                        {...(tone === "watch" ? { avoid: "sum-outside-band" } : {})}
+                                        detail={`sum ${p?.sum} vs band ${p?.lower.toFixed(0)}–${p?.upper.toFixed(0)}`}
+                                        metric={`sum:${p?.sum}|band:${p?.lower.toFixed(0)}-${p?.upper.toFixed(0)}`}
+                                    />
+                                );
+                            })()}
                             <EnvelopeBandChart
                                 points={bollingerStats.recentPoints.map((p) => ({
                                     label: p.draw,
@@ -3012,6 +3412,11 @@ export const InsightsScreen = () => {
                                 { label: "Confluent Cold", value: `${multiHorizonStats.confluentCold.length} balls`, hint: "z25 < -1.2 & z50 < -1.0" },
                             ]}
                         >
+                            {(() => {
+                                const z = (multiHorizonStats.confluentHot[0]?.compositeZ ?? 0) + (multiHorizonStats.confluentCold[0]?.compositeZ ?? 0);
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...directionVerdict(tone, "multi-horizon confluence", fmtZ(z), `z:${z.toFixed(2)}`)} />;
+                            })()}
                             <div className="text-xs space-y-2 mt-2">
                                 <p className="font-semibold text-text">Confluent Momentum Leaders:</p>
                                 <div className="flex flex-wrap gap-1.5">
@@ -3047,6 +3452,11 @@ export const InsightsScreen = () => {
                                 { label: "Compressing Balls", value: `${emaRibbonStats.compressingCount} balls`, hint: "ribbon width ≤ 0.015" },
                             ]}
                         >
+                            {(() => {
+                                const net = emaRibbonStats.expandingCount - emaRibbonStats.compressingCount;
+                                const tone = net > 0 ? "signal" : net < 0 ? "watch" : "null";
+                                return <PanelVerdict {...directionVerdict(tone, "ribbon trend", undefined, `expanding:${emaRibbonStats.expandingCount}|compressing:${emaRibbonStats.compressingCount}`)} />;
+                            })()}
                             <div className="text-xs space-y-2 mt-2">
                                 <p className="font-semibold text-text">Top Trend Spread Leaders:</p>
                                 <div className="flex flex-wrap gap-1.5">
@@ -3074,6 +3484,11 @@ export const InsightsScreen = () => {
                                 { label: "Overbought Balls", value: `${stochStats.overboughtBalls.length}`, hint: "%K ≥ 80" },
                             ]}
                         >
+                            {(() => {
+                                const net = stochStats.overboughtBalls.length - stochStats.oversoldBalls.length;
+                                const tone = net > 0 ? "signal" : net < 0 ? "watch" : "null";
+                                return <PanelVerdict {...directionVerdict(tone, "%K position", undefined, `ob:${stochStats.overboughtBalls.length}|os:${stochStats.oversoldBalls.length}`)} />;
+                            })()}
                             <OscillatorBandChart
                                 items={stochStats.ballStoch.map((b) => ({
                                     number: b.number,
@@ -3104,6 +3519,10 @@ export const InsightsScreen = () => {
                                 { label: "Structural Break", value: cusumStats.hasBreak ? "DETECTED" : "NONE", hint: "h = 5.0σ threshold" },
                             ]}
                         >
+                            {(() => {
+                                const tone = cusumStats.hasBreak ? (cusumStats.driftDirection === "positive" ? "signal" : "watch") : "null";
+                                return <PanelVerdict {...directionVerdict(tone, "sum drift", undefined, `maxdev:${cusumStats.maxDeviation}`)} />;
+                            })()}
                             <EnvelopeBandChart
                                 points={cusumStats.recentPoints.map((p) => ({
                                     label: p.draw,
@@ -3130,9 +3549,21 @@ export const InsightsScreen = () => {
                             className="lg:col-span-6"
                             stats={[
                                 { label: "Hurst Exponent (H)", value: `${hurstStats.hurstExponent}`, hint: "null = 0.50" },
-                                { label: "Regime", value: hurstStats.regime.replace(/_/g, " "), hint: hurstStats.pnlImpact },
+                                { label: "Regime", value: humanizeStatus(hurstStats.regime), hint: hurstStats.pnlImpact },
                             ]}
                         >
+                            {(() => {
+                                const tone = bandTone(hurstStats.hurstExponent, 0.45, 0.55);
+                                return (
+                                    <PanelVerdict
+                                        tone={tone}
+                                        label={tone === "watch" ? `Avoid H outside 0.45–0.55 (now ${hurstStats.hurstExponent})` : "No edge — any shape is as good"}
+                                        {...(tone === "watch" ? { avoid: "hurst-outside-0.45-0.55" } : {})}
+                                        detail={`H ${hurstStats.hurstExponent} vs null 0.50`}
+                                        metric={`h:${hurstStats.hurstExponent}|band:0.45-0.55`}
+                                    />
+                                );
+                            })()}
                             <ScatterRegressionChart
                                 points={hurstStats.rsPoints.map((p) => ({
                                     x: p.logN,
@@ -3164,6 +3595,7 @@ export const InsightsScreen = () => {
                                 { label: "Information Redundancy", value: `${entropyStats.informationRedundancy}%`, hint: "compressibility" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Shannon entropy" />
                             <div className="text-xs space-y-2 mt-2">
                                 <p className="text-text leading-relaxed">
                                     The 6/49 draw stream exhibits <strong className="text-primary">{entropyStats.relativeEntropyPct}%</strong> of theoretical maximum Shannon entropy. Outcome redundancy is under 0.1%, proving near-perfect algorithmic unpredictability.
@@ -3184,9 +3616,10 @@ export const InsightsScreen = () => {
                             stats={[
                                 { label: "Empirical Gini", value: `${giniStats.giniCoefficient}`, hint: "0 = perfect equality" },
                                 { label: "Theoretical Null Gini", value: `${giniStats.theoreticalExpectedGini}`, hint: "binomial(1238, 6/49)" },
-                                { label: "Inequality Assessment", value: giniStats.inequalityAssessment.replace(/_/g, " "), hint: "conforms to cage null" },
+                                { label: "Inequality Assessment", value: humanizeStatus(giniStats.inequalityAssessment), hint: "conforms to cage null" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Gini concentration" />
                             <SurvivalHazardChart
                                 points={giniStats.lorenzCurve.map((p) => ({
                                     step: p.cumulativePopulationPct,
@@ -3217,11 +3650,23 @@ export const InsightsScreen = () => {
                                 { label: "Top Clustered Ball", value: `Ball ${fanoStats.topClustered[0]?.number}`, hint: `Fano ${fanoStats.topClustered[0]?.fano} (bursty)` },
                             ]}
                         >
+                            {(() => {
+                                const tone = bandTone(fanoStats.meanFano, 0.9, 1.1);
+                                return (
+                                    <PanelVerdict
+                                        tone={tone}
+                                        label={tone === "watch" ? `Avoid Fano outside 0.90–1.10 (now ${fanoStats.meanFano})` : "No edge — any shape is as good"}
+                                        {...(tone === "watch" ? { avoid: "fano-outside-0.9-1.1" } : {})}
+                                        detail={`Fano ${fanoStats.meanFano} vs Poisson 1.00`}
+                                        metric={`fano:${fanoStats.meanFano}|band:0.9-1.1`}
+                                    />
+                                );
+                            })()}
                             <OscillatorBandChart
                                 items={fanoStats.ballFano.map((b) => ({
                                     number: b.number,
                                     value: Math.round(b.fano * 50),
-                                    label: `Fano ${b.fano} (${b.regime})`,
+                                    label: `Fano ${b.fano} (${humanizeStatus(b.regime)})`,
                                 }))}
                                 minVal={30}
                                 maxVal={70}
@@ -3249,6 +3694,12 @@ export const InsightsScreen = () => {
                                 { label: "Median Survival", value: `${kaplanStats.medianSurvivalDraws} draws`, hint: "geometric median" },
                             ]}
                         >
+                            {(() => {
+                                const peak = [...kaplanStats.hazardCurve].sort((a, b) => b.hazardRate - a.hazardRate)[0];
+                                const z = zOf(peak.hazardRate, peak.expectedHazardRate);
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, `skip ${peak.skip}`, `${(peak.hazardRate * 100).toFixed(1)}% hazard`, z, "hazard", `skip-${peak.skip}`, `null:${(peak.expectedHazardRate * 100).toFixed(1)}pct`)} />;
+                            })()}
                             <SurvivalHazardChart
                                 points={kaplanStats.hazardCurve.map((p) => ({
                                     step: p.skip,
@@ -3279,6 +3730,19 @@ export const InsightsScreen = () => {
                                 { label: "Median Ratio", value: `${cycleStats.medianRatio}x`, hint: "healthy rotation" },
                             ]}
                         >
+                            {(() => {
+                                const value = cycleStats.highestRatios[0]?.ratio ?? cycleStats.medianRatio;
+                                const tone = bandTone(value, 0.4, 2);
+                                return (
+                                    <PanelVerdict
+                                        tone={tone}
+                                        label={tone === "watch" ? `Avoid cycle ratios outside 0.40–2.00 (now ${value})` : "No edge — any shape is as good"}
+                                        {...(tone === "watch" ? { avoid: "cycle-outside-0.4-2" } : {})}
+                                        detail={`top ratio ${value}x`}
+                                        metric={`ratio:${value}|band:0.4-2`}
+                                    />
+                                );
+                            })()}
                             <OscillatorBandChart
                                 items={cycleStats.balls.map((b) => ({
                                     number: b.number,
@@ -3308,7 +3772,7 @@ export const InsightsScreen = () => {
                             stats={[
                                 { label: "Hot-Hand Z", value: `${formatSigned(hotHandStats.hotHandZScore, 2)}σ`, hint: `${hotHandStats.streakHitsObserved} hits vs ${hotHandStats.streakHitsExpected} exp` },
                                 { label: "Fallacy Z", value: `${formatSigned(hotHandStats.fallacyZScore, 2)}σ`, hint: `${hotHandStats.coldReversionObserved} hits vs ${hotHandStats.coldReversionExpected} exp` },
-                                { label: "Verdict", value: hotHandStats.verdict.replace(/_/g, " "), hint: "|z| < 1.96 null adherence" },
+                                { label: "Verdict", value: humanizeStatus(hotHandStats.verdict), hint: "|z| < 1.96 null adherence" },
                             ]}
                         >
                             <div className="text-xs space-y-2 mt-2">
@@ -3334,6 +3798,12 @@ export const InsightsScreen = () => {
                                 { label: "Matrix χ² p-val", value: `p = ${markovStats.chiSquareP}`, hint: "global null consistency" },
                             ]}
                         >
+                            {(() => {
+                                const t = markovStats.topTransitions[0];
+                                const z = zOf(t?.count ?? 0, (t?.count ?? 0) / Math.max(t?.lift ?? 1, 0.01));
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, `${t?.from} → ${t?.to}`, `${t?.count ?? 0} hits`, z, "transition", t ? `pair-${t.from}-${t.to}` : undefined, `lift:${t?.lift}`)} />;
+                            })()}
                             <TransitionMatrixHeatmap
                                 topTransitions={markovStats.topTransitions}
                                 ariaLabel="Top directed Markov lag-1 transition lifts"
@@ -3357,6 +3827,11 @@ export const InsightsScreen = () => {
                                 { label: "Extreme Vol Prob", value: `${((volRegimeStats.lowVolProbability + volRegimeStats.highVolProbability) * 100).toFixed(0)}%`, hint: "low or high tails" },
                             ]}
                         >
+                            {(() => {
+                                const regime = String(volRegimeStats.currentRegime).toLowerCase();
+                                const tone = regime.startsWith("high") ? "signal" : regime.startsWith("low") ? "watch" : "null";
+                                return <PanelVerdict {...directionVerdict(tone, "sum volatility", undefined, `regime:${regime}`)} />;
+                            })()}
                             <div className="grid grid-cols-3 gap-2 mt-2 font-mono text-xs text-center">
                                 {volRegimeStats.transitionMatrix.slice(0, 3).map((t, idx) => (
                                     <div key={idx} className="rounded bg-surface-2 p-2 border border-line">
@@ -3380,9 +3855,14 @@ export const InsightsScreen = () => {
                             stats={[
                                 { label: "Regression Slope (β)", value: `${reversionStats.slope}`, hint: "negative = mean-reverting" },
                                 { label: "R² Goodness", value: `${reversionStats.rSquared}`, hint: "variance explained" },
-                                { label: "Reversion Strength", value: reversionStats.reversionStrength.replace(/_/g, " "), hint: "law of large numbers" },
+                                { label: "Reversion Strength", value: humanizeStatus(reversionStats.reversionStrength), hint: "law of large numbers" },
                             ]}
                         >
+                            {(() => {
+                                const slope = reversionStats.slope;
+                                const tone = slope > 0 ? "signal" : slope < 0 ? "watch" : "null";
+                                return <PanelVerdict {...directionVerdict(tone, "reversion slope", undefined, `beta:${slope}|r2:${reversionStats.rSquared}`)} />;
+                            })()}
                             <ScatterRegressionChart
                                 points={reversionStats.scatterPoints.map((p) => ({
                                     x: p.priorResidual,
@@ -3414,6 +3894,7 @@ export const InsightsScreen = () => {
                                 { label: "Active Sweep", value: `${couponStats.currentSweepSeenCount} / 49`, hint: `${couponStats.unseenInCurrentSweep.length} unseen balls` },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Coupon-collector sweep" />
                             <div className="text-xs space-y-2 mt-2">
                                 <p className="text-ink-subtle">Unseen balls in current sweep:</p>
                                 <div className="flex flex-wrap gap-1 font-mono text-xs">
@@ -3445,6 +3926,18 @@ export const InsightsScreen = () => {
                                 { label: "Current Sum", value: `${atrStats.currentSum}`, hint: atrStats.isOutsideChannel ? "OUTSIDE CHANNEL" : "inside channel" },
                             ]}
                         >
+                            {(() => {
+                                const tone = bandTone(atrStats.currentSum, atrStats.channelLower, atrStats.channelUpper);
+                                return (
+                                    <PanelVerdict
+                                        tone={tone}
+                                        label={tone === "watch" ? `Avoid sums outside ${atrStats.channelLower}–${atrStats.channelUpper} (now ${atrStats.currentSum})` : "No edge — any shape is as good"}
+                                        {...(tone === "watch" ? { avoid: `sum-outside-${atrStats.channelLower}-${atrStats.channelUpper}` } : {})}
+                                        detail={`sum ${atrStats.currentSum} vs channel ${atrStats.channelLower}–${atrStats.channelUpper}`}
+                                        metric={`sum:${atrStats.currentSum}|band:${atrStats.channelLower}-${atrStats.channelUpper}`}
+                                    />
+                                );
+                            })()}
                             <div className="text-xs space-y-2 mt-2">
                                 <p className="text-text">
                                     Current 1.5× ATR Volatility Channel: <strong className="font-mono text-primary">{atrStats.channelLower}</strong> to <strong className="font-mono text-primary">{atrStats.channelUpper}</strong>.
@@ -3468,6 +3961,12 @@ export const InsightsScreen = () => {
                                 { label: "Top 6 Composite", value: quantStats.top6Picks.map((p) => p.number).join(", "), hint: "omnibus line" },
                             ]}
                         >
+                            {(() => {
+                                const top = quantStats.top6Picks[0];
+                                const z = zOf(top?.totalComposite ?? 0, 0);
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, `ball ${top?.number ?? "—"}`, `score ${(top?.totalComposite ?? 0).toFixed(2)}`, z, "composite", top ? `ball-${top.number}` : undefined)} />;
+                            })()}
                             <OscillatorBandChart
                                 items={quantStats.scores.map((s) => ({
                                     number: s.number,
@@ -3500,6 +3999,12 @@ export const InsightsScreen = () => {
                                 { label: "Expected in Top 6", value: `${bayesianInclusion.expectedHitsInTop6} balls`, hint: "cumulative expectation" },
                             ]}
                         >
+                            {(() => {
+                                const top = bayesianInclusion.topPicks[0];
+                                const z = top?.zScore ?? 0;
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, `ball ${top?.number ?? "—"}`, `${((top?.posteriorProb ?? 0) * 100).toFixed(2)}% posterior`, z, "posterior", top ? `ball-${top.number}` : undefined, `prior:${(((top?.priorProb ?? 6 / 49)) * 100).toFixed(2)}pct`)} />;
+                            })()}
                             <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                     <thead>
@@ -3542,6 +4047,7 @@ export const InsightsScreen = () => {
                                 { label: "≥2 Hits in 10d", value: `${dormancyBreakout.continuationRate.toFixed(1)}%`, hint: "continuation rate" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Dormancy breakout" />
                             <div className="flex flex-col gap-2 mt-2">
                                 <span className="text-xs text-ink-subtle">Active breakout balls currently within 10 draws of ending drought:</span>
                                 <div className="flex flex-wrap gap-1.5">
@@ -3572,6 +4078,7 @@ export const InsightsScreen = () => {
                                 { label: "Top Negative", value: `Ball ${ballChiResiduals.topNegativeResiduals[0]?.number}`, hint: `${ballChiResiduals.topNegativeResiduals[0]?.residual.toFixed(1)} draws` },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Ball χ² residuals" />
                             <ObservedExpectedBarChart
                                 items={ballChiResiduals.topPositiveResiduals.slice(0, 4).concat(ballChiResiduals.topNegativeResiduals.slice(0, 4)).map((r) => ({
                                     label: `Ball ${r.number}`,
@@ -3609,6 +4116,12 @@ export const InsightsScreen = () => {
                                 { label: "Expected Null", value: `${mistikLama.totalExpected}`, hint: "hypergeometric" },
                             ]}
                         >
+                            {(() => {
+                                const top = [...mistikLama.pairOccurrences].sort((a, b) => b.observed - a.observed)[0];
+                                const z = zOf(top.observed, (total * 6) / 49);
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, `pair ${top.pair}`, `${top.observed} hits`, z, "digit pair", `pair-${top.pair.replace(/\D+/g, "-")}`)} />;
+                            })()}
                             <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
                                 {mistikLama.pairOccurrences.map((p) => (
                                     <div key={p.pair} className="rounded bg-surface-2 p-1.5 border border-line">
@@ -3635,6 +4148,12 @@ export const InsightsScreen = () => {
                                 { label: "Expected Null", value: `${mistikBaru.totalExpected}`, hint: "hypergeometric" },
                             ]}
                         >
+                            {(() => {
+                                const top = [...mistikBaru.pairOccurrences].sort((a, b) => b.observed - a.observed)[0];
+                                const z = zOf(top.observed, (total * 6) / 49);
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, `pair ${top.pair}`, `${top.observed} hits`, z, "digit pair", `pair-${top.pair.replace(/\D+/g, "-")}`)} />;
+                            })()}
                             <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
                                 {mistikBaru.pairOccurrences.map((p) => (
                                     <div key={p.pair} className="rounded bg-surface-2 p-1.5 border border-line">
@@ -3661,6 +4180,12 @@ export const InsightsScreen = () => {
                                 { label: "Expected Null", value: `${indeks.totalExpected}`, hint: "uniform null" },
                             ]}
                         >
+                            {(() => {
+                                const top = [...indeks.pairOccurrences].sort((a, b) => b.observed - a.observed)[0];
+                                const z = zOf(top.observed, (total * 6) / 49);
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, `pair ${top.pair}`, `${top.observed} hits`, z, "digit pair", `pair-${top.pair.replace(/\D+/g, "-")}`)} />;
+                            })()}
                             <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
                                 {indeks.pairOccurrences.map((p) => (
                                     <div key={p.pair} className="rounded bg-surface-2 p-1.5 border border-line">
@@ -3687,6 +4212,12 @@ export const InsightsScreen = () => {
                                 { label: "Shadow Pairs", value: `${taysen.digitPairs.length} pairs`, hint: "classic 2D table" },
                             ]}
                         >
+                            {(() => {
+                                const top = [...taysen.digitPairs].sort((a, b) => b.coHits - a.coHits)[0];
+                                const z = zOf(top.coHits, (total * 6) / 49);
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, `shadow pair ${top.digit}↔${top.shadow}`, `${top.coHits} hits`, z, "shadow pair", `pair-${top.digit}-${top.shadow}`)} />;
+                            })()}
                             <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
                                 {taysen.digitPairs.map((p) => (
                                     <div key={`${p.digit}-${p.shadow}`} className="rounded bg-surface-2 p-1.5 border border-line">
@@ -3712,6 +4243,7 @@ export const InsightsScreen = () => {
                                 { label: "Total Waves", value: `${halfWaves.waves.length}`, hint: "6 wave classes" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Mark Six half-waves" />
                             <div className="grid grid-cols-3 gap-2 mt-2 font-mono text-xs text-center">
                                 {halfWaves.waves.map((w) => (
                                     <div key={w.name} className="rounded bg-surface-2 p-2 border border-line">
@@ -3737,6 +4269,12 @@ export const InsightsScreen = () => {
                                 { label: "Top Wave", value: quarterWaves.topWaves[0]?.name ?? "—", hint: `${quarterWaves.topWaves[0]?.count} picks` },
                             ]}
                         >
+                            {(() => {
+                                const top = quarterWaves.topWaves[0];
+                                const z = zOf(top?.count ?? 0, (total * 6) / 49);
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, `wave ${top?.name ?? "—"}`, `${top?.count ?? 0} picks`, z, "wave", top ? `wave-${String(top.name).toLowerCase().replace(/\s+/g, "-")}` : undefined, `entropy:${quarterWaves.entropyBits}bits`)} />;
+                            })()}
                             <div className="text-xs space-y-2 mt-2">
                                 <p className="font-semibold text-text">Leading Quarter-Waves:</p>
                                 <div className="flex flex-wrap gap-1.5 font-mono text-xs">
@@ -3764,6 +4302,7 @@ export const InsightsScreen = () => {
                                 { label: "Theoretical Null", value: `${ledStrokes.theoreticalMeanStrokes}`, hint: "expected segments" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="7-Segment LED density" />
                             <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
                                 {ledStrokes.strokeDistribution.map((d) => (
                                     <div key={d.strokes} className="rounded bg-surface-2 p-1.5 border border-line">
@@ -3781,7 +4320,7 @@ export const InsightsScreen = () => {
                                 number={pNum("panel-ganzhi")}
                             section="Togel & Folklore"
                             title="60-Day Sexagenary Ganzhi Stem/Branch almanac"
-                            caption="Correlates draw dates with Chinese Heavenly Stems (天干) and Na-Yin five elements (五行)."
+                            caption="Correlates draw dates with the Heavenly Stems and the Na-Yin five elements."
                             id="panel-ganzhi"
                             family="Almanac & Time"
                             className="lg:col-span-6"
@@ -3790,6 +4329,12 @@ export const InsightsScreen = () => {
                                 { label: "Distribution", value: ganzhi.dominantElement, hint: "even phase spread" },
                             ]}
                         >
+                            {(() => {
+                                const top = [...ganzhi.stems].sort((a, b) => b.count - a.count)[0];
+                                const z = zOf(top.count, (total * 6) / 49);
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, `stem ${top.stem}`, `${top.count} draws`, z, "stem", `stem-${String(top.stem).toLowerCase()}`)} />;
+                            })()}
                             <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
                                 {ganzhi.stems.slice(0, 5).map((s) => (
                                     <div key={s.stem} className="rounded bg-surface-2 p-1.5 border border-line">
@@ -3815,6 +4360,12 @@ export const InsightsScreen = () => {
                                 { label: "Expected Rate", value: "41.2%", hint: "1 - (45/49)^6" },
                             ]}
                         >
+                            {(() => {
+                                const top = [...pythagorean.masterNumbersHits].sort((a, b) => b.count - a.count)[0];
+                                const z = zOf(top.count, (total * 6) / 49);
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, `ball ${top.number}`, `${top.count} hits`, z, "master number", `ball-${top.number}`, `rate:${pythagorean.ticketMasterRate}pct`)} />;
+                            })()}
                             <div className="grid grid-cols-4 gap-2 mt-2 font-mono text-xs text-center">
                                 {pythagorean.masterNumbersHits.map((m) => (
                                     <div key={m.number} className="rounded bg-surface-2 p-2 border border-line">
@@ -3841,6 +4392,7 @@ export const InsightsScreen = () => {
                                 { label: "Mod 7 Uniform", value: "PASS", hint: "p > 0.05" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Modular residue sieve" />
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 All modular classes (mod 3, mod 5, mod 7) conform strictly to discrete uniform expectations with zero residue clustering.
                             </p>
@@ -3851,17 +4403,18 @@ export const InsightsScreen = () => {
                         <InsightPanel
                                 number={pNum("panel-combined-digit-sum")}
                             section="Togel & Folklore"
-                            title="Combined digit sum parity (合單 / 合雙)"
+                            title="Combined digit sum parity"
                             caption="Asian lottery metric summing tens digit and units digit: 합단 (odd digit sum) vs 합쌍 (even digit sum)."
                             id="panel-combined-digit-sum"
                             family="Folk & Culture"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "He Dan (合單)", value: `${digitSum.heDanRate}%`, hint: `${digitSum.heDanCount} balls` },
-                                { label: "He Shuang (合雙)", value: `${(100 - digitSum.heDanRate).toFixed(1)}%`, hint: `${digitSum.heShuangCount} balls` },
+                                { label: "He Dan (odd)", value: `${digitSum.heDanRate}%`, hint: `${digitSum.heDanCount} balls` },
+                                { label: "He Shuang (even)", value: `${(100 - digitSum.heDanRate).toFixed(1)}%`, hint: `${digitSum.heShuangCount} balls` },
                                 { label: "Theoretical Null", value: `${digitSum.expectedRate}%`, hint: "25/49 balls in pool" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Combined digit sum" />
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 Digit-sum parity matches the 25/49 theoretical pool composition with less than 0.2% variance.
                             </p>
@@ -3882,6 +4435,7 @@ export const InsightsScreen = () => {
                                 { label: "Triple Tail Rate", value: `${homologous.tripleTailRate}%`, hint: "≥3 balls share tail" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Twin/triple tail clusters" />
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 In 6/49 draws, homologous tail collisions occur in over 80% of all winning lines by basic birthday-problem mechanics.
                             </p>
@@ -3902,6 +4456,7 @@ export const InsightsScreen = () => {
                                 { label: "AP-4 Observed", value: `${((stepLadder.ap4DrawsObserved / total) * 100).toFixed(1)}%`, hint: `exp ${stepLadder.ap4ExpectedRate}%` },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Step-ladder AP-4 traps" />
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 Arithmetic progression sequences appear rarely in actual draws (under 3% for AP-3 and under 0.1% for AP-4), confirming that forced linear step sequences match historical draws significantly less frequently than dispersed sequences.
                             </p>
@@ -3923,6 +4478,17 @@ export const InsightsScreen = () => {
                                 { label: "Post-Calendar Pool", value: "18 / 49 numbers", hint: "36.7% of balls" },
                             ]}
                         >
+                            {(() => {
+                                const tiers = [
+                                    { name: "tier-1", row: threeTierCalendar.tier1DoubleCalendar },
+                                    { name: "tier-2", row: threeTierCalendar.tier2DaysOnly },
+                                    { name: "tier-3", row: threeTierCalendar.tier3PostCalendar },
+                                ];
+                                const top = [...tiers].sort((a, b) => b.row.count - a.row.count)[0];
+                                const z = zOf(top.row.count, (total * 6) / 49);
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, top.name.replace("-", " "), `${formatNumber(top.row.count)} picks`, z, "tier", top.name, `count:${top.row.count}`)} />;
+                            })()}
                             <ObservedExpectedBarChart
                                 items={[
                                     {
@@ -3985,6 +4551,7 @@ export const InsightsScreen = () => {
                                 { label: "Exact 6-Ball Repeats", value: "0", hint: "zero identical draws" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Quad collisions" />
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 With C(49,6) = 13,983,816 possible lines, zero exact 6-number repetitions have ever occurred in Singapore Pools history.
                             </p>
@@ -4005,6 +4572,7 @@ export const InsightsScreen = () => {
                                 { label: "Cage Drift", value: "NONE", hint: crossEra.driftAssessment },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Cross-era audit" />
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 {crossEra.driftAssessment}
                             </p>
@@ -4025,6 +4593,10 @@ export const InsightsScreen = () => {
                                 { label: "Observed Max Gap", value: `${gapExtremes?.maxGapMean ?? 17.4}`, hint: `exp ${gapExtremes?.theoreticalMaxGapMean ?? 17.4}` },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf((gapExtremes?.minGapMean ?? 0) + (gapExtremes?.maxGapMean ?? 0), (gapExtremes?.theoreticalMinGapMean ?? 0) + (gapExtremes?.theoreticalMaxGapMean ?? 0));
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `min:${gapExtremes?.minGapMean}|max:${gapExtremes?.maxGapMean}|${metricZ(z)}`)} />;
+                            })()}
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 Internal line gaps strictly track uniform composition theory: the smallest gap averages 1.8, reflecting the frequent occurrence of consecutive pairs.
                             </p>
@@ -4045,6 +4617,10 @@ export const InsightsScreen = () => {
                                 { label: "Mean Skewness", value: `${lineSd?.meanLineSkewness ?? 0.0}`, hint: `exp ${lineSd?.theoreticalSkewness ?? 0.0}` },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf(lineSd?.meanLineSd ?? 0, lineSd?.theoreticalLineSd ?? 0);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `sd:${lineSd?.meanLineSd}|exp:${lineSd?.theoreticalLineSd}|${metricZ(z)}`)} />;
+                            })()}
                             <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 Line standard deviations center on 14.1 with zero systematic skewness, conforming to uniform sampling.
                             </p>
@@ -4108,6 +4684,12 @@ export const InsightsScreen = () => {
                                 { label: "All Distinct", value: `${pokerTails?.hands[0]?.observedPct ?? 15.1}%`, hint: `exp ${pokerTails?.hands[0]?.expectedPct ?? 15.1}%` },
                             ]}
                         >
+                            {(() => {
+                                const hands = pokerTails?.hands ?? [];
+                                const observed = hands.reduce((sum, h) => sum + h.observedPct, 0);
+                                const expected = hands.reduce((sum, h) => sum + h.expectedPct, 0);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(zOf(observed, expected)) >= 2, `observed:${observed.toFixed(1)}pct|expected:${expected.toFixed(1)}pct`)} />;
+                            })()}
                             <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                     <thead>
@@ -4157,6 +4739,12 @@ export const InsightsScreen = () => {
                                 { label: "Active Signals", value: "8 Signals", hint: "zero payout math" },
                             ]}
                         >
+                            {(() => {
+                                const top = confluenceBoard?.rankedBalls[0];
+                                const z = zOf(top?.signalsPassed ?? 0, (8 * 6) / 49);
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, `ball ${top?.number ?? "—"}`, `${top?.signalsPassed ?? 0}/8 signals`, z, "confluence", top ? `ball-${top.number}` : undefined, `chance:${((8 * 6) / 49).toFixed(2)}`)} />;
+                            })()}
                             <div className="flex flex-wrap gap-1.5 mt-2 mb-3">
                                 {confluenceBoard?.rankedBalls.slice(0, 12).map((c) => (
                                     <CandidateBallChip key={c.number} number={c.number} sublabel={`${c.signalsPassed}/8` } rank={c.rank} />
@@ -4218,6 +4806,7 @@ export const InsightsScreen = () => {
                                 { label: "Filters Checked", value: envelopeStats.filters.length, hint: "orthogonal checks" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="8-Filter envelope" />
                             <ObservedExpectedBarChart
                                 items={envelopeStats.filters.map((f) => ({
                                     label: ENVELOPE_FILTER_LABELS[f.filterName] ?? f.filterName,
@@ -4249,6 +4838,7 @@ export const InsightsScreen = () => {
                                 { label: "Selected In-Zone", value: `${sortedLine.slice(0, 6).filter((n, idx) => { const s = slotQuantiles.slots[idx]; return s ? n >= s.p25 && n <= s.p75 : false; }).length} / ${Math.min(sortedLine.length, 6)}`, hint: "current line slots" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Slot quantiles" />
                             <SlotQuantileBandChart slots={slotQuantiles.slots} currentLine={sortedLine} className="mt-2" />
                         </InsightPanel>
                     )}
@@ -4268,6 +4858,7 @@ export const InsightsScreen = () => {
                                 { label: "Greedy 8 Pool 2+", value: `${greedyCoverage.greedy8TwoPlusCoverPct.toFixed(1)}%`, hint: "8-ball coverage" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Greedy coverage" />
                             <div className="flex flex-col gap-3 mt-2">
                                 <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface-2 p-2.5">
                                     <div className="flex items-center justify-between text-xs">
@@ -4306,6 +4897,7 @@ export const InsightsScreen = () => {
                                 { label: "Pool 20 2+ Match", value: `${poolCapture.rows.find((r)=>r.poolSize===20)?.empirical2Plus ?? 0}%`, hint: "empirical capture" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Pool capture curve" />
                             <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                     <thead>
@@ -4348,6 +4940,7 @@ export const InsightsScreen = () => {
                                 { label: "Sys 12 (924 lines)", value: "924 tickets", hint: "C(12,6)" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="System multipliers" />
                             <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                     <thead>
@@ -4390,6 +4983,7 @@ export const InsightsScreen = () => {
                                 { label: "Savings", value: "99.4%", hint: "ticket reduction" },
                             ]}
                         >
+                            <PanelVerdict tone="null" label="No edge — reference lens, pick any line" detail="Covering wheels" />
                             <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                     <thead>
@@ -4432,6 +5026,12 @@ export const InsightsScreen = () => {
                                 { label: "Base 3+ Chance", value: `${keyBallLift[0]?.chanceMatch3Plus.toFixed(2)}%`, hint: "unanchored line" },
                             ]}
                         >
+                            {(() => {
+                                const lift = Math.max(...keyBallLift.map((k) => k.multiplierVsBase));
+                                const z = zOf(lift, 1);
+                                const tone = lift >= 1.5 ? "signal" : lift <= 1.1 ? "null" : "watch";
+                                return <PanelVerdict {...countVerdict(tone, "banker wheel", `${lift.toFixed(2)}x lift`, z, "lift", undefined, `lift:${lift.toFixed(2)}|null:1`)} />;
+                            })()}
                             <div className="mt-2 overflow-x-auto">
                                     <table className="w-full border-collapse text-left text-xs">
                                     <thead>
@@ -4474,6 +5074,12 @@ export const InsightsScreen = () => {
                                 { label: "Families Graded", value: `${familyLeaderboard?.families.length ?? 0} families`, hint: "pure match count" },
                             ]}
                         >
+                            {(() => {
+                                const row = familyLeaderboard?.families.find((f) => f.family === familyLeaderboard?.topFamily.family) ?? familyLeaderboard?.families[0];
+                                const z = zOf(row?.meanHits ?? 0, row?.expectedHits ?? 1);
+                                const tone = toneForZ(z);
+                                return <PanelVerdict {...countVerdict(tone, `family ${row?.family ?? "—"}`, `${(row?.meanHits ?? 0).toFixed(2)} mean hits`, z, "family", row ? `family-${String(row.family).toLowerCase().replace(/\s+/g, "-")}` : undefined, `exp:${(row?.expectedHits ?? 0).toFixed(2)}`)} />;
+                            })()}
                             <div className="overflow-x-auto mt-2">
                                 <table className="w-full border-collapse text-left text-xs min-w-[560px]">
                                     <thead>
@@ -4525,6 +5131,10 @@ export const InsightsScreen = () => {
                                 { label: "Extreme", value: formatNumber(mahalanobis.extremeCount), hint: "past the p95" },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf(mahalanobis.meanD2, 6);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `meand2:${mahalanobis.meanD2.toFixed(2)}|null:6|${metricZ(z)}`)} />;
+                            })()}
                             <ObservedExpectedBarChart
                                 items={[
                                     {
@@ -4599,6 +5209,11 @@ export const InsightsScreen = () => {
                                 },
                             ]}
                         >
+                            {(() => {
+                                const observed = curvature.flipShares[2] + curvature.flipShares[3];
+                                const nullShare = curvature.flipNull[2] + curvature.flipNull[3];
+                                return <PanelVerdict {...edgeVerdict(Math.abs(zOf(observed, nullShare)) >= 2, `zigzag:${pct(observed)}|null:${pct(nullShare)}`)} />;
+                            })()}
                             <CurvatureProfileChart
                                 gapMedian={curvature.bands.gapMedian}
                                 gapP25={curvature.bands.gapP25}
@@ -4628,6 +5243,10 @@ export const InsightsScreen = () => {
                                 { label: "Max |A+A|", value: "21", hint: "zero collisions" },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf(sidon.meanSumset, sidon.nullMeanSumset);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `mean:${sidon.meanSumset.toFixed(2)}|null:${sidon.nullMeanSumset.toFixed(2)}|${metricZ(z)}`)} />;
+                            })()}
                             <ObservedExpectedBarChart
                                 items={sidon.observedDistribution.map((share, index) => ({
                                     label: `|A+A| ${index + 11}`,
@@ -4656,6 +5275,10 @@ export const InsightsScreen = () => {
                                 { label: "Mean gyration", value: constellation.meanGyration.toFixed(2), hint: "radius of gyration" },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf(constellation.meanMst, constellation.latticeMstMean);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `mst:${constellation.meanMst.toFixed(2)}|lattice:${constellation.latticeMstMean.toFixed(2)}|${metricZ(z)}`)} />;
+                            })()}
                             <ConstellationMstBoardChart
                                 points={(constellation.latest?.stats.cells ?? []).map((cell) => ({
                                     ball: cell.ball,
@@ -4689,6 +5312,9 @@ export const InsightsScreen = () => {
                                 { label: "Components", value: subgraph.meanComponents.toFixed(2), hint: "over positive edges" },
                             ]}
                         >
+                            {(() => {
+                                return <PanelVerdict {...edgeVerdict(Math.abs(subgraph.meanPairZ) >= 2, `meanpairz:${subgraph.meanPairZ.toFixed(3)}`)} />;
+                            })()}
                             <OscillatorBandChart
                                 items={subgraph.rows.slice(-60).map((row) => ({
                                     number: row.draw,
@@ -4735,6 +5361,10 @@ export const InsightsScreen = () => {
                                 },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf(coprime.meanCoprimePairs, coprime.expectedCoprimePairs);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `coprime:${coprime.meanCoprimePairs.toFixed(2)}|null:${coprime.expectedCoprimePairs.toFixed(2)}|${metricZ(z)}`)} />;
+                            })()}
                             <ObservedExpectedBarChart
                                 items={coprime.observedDistribution.map((share, index) => ({
                                     label: `${index} pairs`,
@@ -4763,6 +5393,10 @@ export const InsightsScreen = () => {
                                 { label: "Reflection |μ−25|", value: torus.meanReflection.toFixed(2), hint: "symmetry offset" },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf(torus.meanMaxGap, torus.nullMeanMaxGap);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `maxgap:${torus.meanMaxGap.toFixed(2)}|null:${torus.nullMeanMaxGap.toFixed(2)}|${metricZ(z)}`)} />;
+                            })()}
                             <ObservedExpectedBarChart
                                 items={torus.observedDistribution.map((share, index) => ({
                                     label: `gap ${index + 1}`,
@@ -4795,6 +5429,9 @@ export const InsightsScreen = () => {
                                 { label: "Mean hits", value: resonance.meanHits.toFixed(2), hint: `null ${resonance.meanExpected.toFixed(2)}` },
                             ]}
                         >
+                            {(() => {
+                                return <PanelVerdict {...edgeVerdict(Math.abs(resonance.meanZ) >= 2, `meanz:${resonance.meanZ.toFixed(3)}|hits:${resonance.meanHits.toFixed(2)}`)} />;
+                            })()}
                             <ObservedExpectedBarChart
                                 items={resonance.rows.map((row) => ({
                                     label: row.label,
@@ -4827,11 +5464,15 @@ export const InsightsScreen = () => {
                             family="Sequence"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Mean W₁", value: wasserstein.medianW1.toFixed(2), hint: `null ${wasserstein.expectedW1.toFixed(2)}` },
+                                { label: "Mean W₁", value: wasserstein.meanW1.toFixed(2), hint: `null ${wasserstein.expectedW1.toFixed(2)}` },
                                 { label: "Quiet / jump", value: `${wasserstein.quietCount} / ${wasserstein.jumpCount}`, hint: "inside vs past the p95" },
                                 { label: "Reversion", value: wasserstein.reversionCorrelation.toFixed(3), hint: "lag-1 correlation" },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf(wasserstein.medianW1, wasserstein.expectedW1);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `w1:${wasserstein.medianW1.toFixed(2)}|null:${wasserstein.expectedW1.toFixed(2)}|${metricZ(z)}`)} />;
+                            })()}
                             <EnvelopeBandChart
                                 points={wasserstein.envelope.slice(-120)}
                                 valueLabel="W₁"
@@ -4847,16 +5488,20 @@ export const InsightsScreen = () => {
                             number={pNum("panel-lempel-ziv")}
                             section="Stream dynamics"
                             title="Lempel-Ziv algorithmic complexity"
-                            caption="The Kaspar-Schuster normalized LZ76 complexity of the chronological sum and parity streams over rolling 100-draw windows, against the Bernoulli(½) target."
+                            caption="The Kaspar-Schuster parse of the chronological sum stream over rolling 100-draw windows — the archive's phrase count against the same window of its shuffled twin."
                             id="panel-lempel-ziv"
                             family="Indicators"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Mean c_norm", value: lempelZiv.meanComplexity.toFixed(3), hint: "rolling 100-draw" },
-                                { label: "Shuffled null", value: lempelZiv.shuffledBaseline.toFixed(3), hint: "same stream, shuffled" },
+                                { label: "Mean phrases", value: lempelZiv.meanPhraseCount.toFixed(2), hint: "per 100-draw window" },
+                                { label: "Shuffled null", value: lempelZiv.nullPhraseCount.toFixed(2), hint: "same stream, shuffled" },
                                 { label: "Π ceiling", value: pct(lempelZivCeiling(lempelZiv)), hint: "Feder–Merhav bound" },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf(lempelZiv.meanComplexity, lempelZiv.shuffledBaseline);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `cnorm:${lempelZiv.meanComplexity.toFixed(3)}|shuffled:${lempelZiv.shuffledBaseline.toFixed(3)}|${metricZ(z)}`)} />;
+                            })()}
                             <EnvelopeBandChart
                                 points={lempelZivPoints(lempelZiv)}
                                 valueLabel="c_norm"
@@ -4872,21 +5517,27 @@ export const InsightsScreen = () => {
                             number={pNum("panel-spectral-periodogram")}
                             section="Stream dynamics"
                             title="Spectral periodogram & Fisher's test"
-                            caption="The exact DFT spectrum of the draw sums, with Fisher's exact test for periodicity and the balls whose dominant harmonic points at the next draw."
+                            caption="The DFT spectrum of the draw sums, with Fisher's test for periodicity against the white-noise null and the balls whose dominant harmonic points at the next draw."
                             id="panel-spectral-periodogram"
                             family="Indicators"
                             className="lg:col-span-12"
                             stats={[
                                 { label: "Dominant P*", value: `${spectral.dominantPeriod.toFixed(1)} draws`, hint: "sum series" },
                                 { label: "Fisher g", value: spectral.fisherG.toFixed(2), hint: `threshold ${spectral.gThreshold.toFixed(2)}` },
-                                { label: "Exact p", value: spectral.fisherP < 0.001 ? "<0.001" : spectral.fisherP.toFixed(4), hint: "white-noise null" },
+                                { label: "White-noise p", value: spectral.fisherP < 0.001 ? "<0.001" : spectral.fisherP.toFixed(4), hint: "vs the exponential null" },
                                 { label: "Phase leader", value: spectral.phaseAligned[0] ? `Ball ${spectral.phaseAligned[0].ball}` : "—", hint: "next draw" },
                             ]}
                         >
+                            {(() => {
+                                const deviation = spectral.fisherP < 0.01;
+                                return <PanelVerdict {...edgeVerdict(deviation, `g:${spectral.fisherG.toFixed(2)}|p:${spectral.fisherP.toFixed(4)}`)} />;
+                            })()}
                             <div className="mt-2 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
                                 <PeriodogramSpectrumChart
                                     spectrum={spectral.spectrum}
+                                    g={spectral.fisherG}
                                     gThreshold={spectral.gThreshold}
+                                    significancePower={spectral.sum.significancePower}
                                     dominantPeriod={spectral.dominantPeriod}
                                     pValue={spectral.fisherP}
                                 />
@@ -4924,12 +5575,16 @@ export const InsightsScreen = () => {
                                 { label: "Mean λ", value: hawkes.meanIntensity.toFixed(3), hint: "across the 49 balls" },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf(hawkes.meanIntensity, hawkes.baseRate);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `lambda:${hawkes.meanIntensity.toFixed(4)}|base:${hawkes.baseRate.toFixed(4)}|${metricZ(z)}`)} />;
+                            })()}
                             <ScatterRegressionChart
                                 points={hawkes.rows.map((row) => ({
                                     x: row.excitation,
                                     y: row.intensity,
                                     label: `Ball ${row.ball}`,
-                                    sublabel: `branching ${row.branching.toFixed(2)}`,
+                                    sublabel: `excitation z ${row.excitationZ.toFixed(2)}`,
                                 }))}
                                 xName="kernel-weighted appearances"
                                 yName="arrival intensity λ"
@@ -4954,6 +5609,10 @@ export const InsightsScreen = () => {
                                 { label: "Laminarity", value: pct(rqa.laminarity), hint: "on vertical runs" },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf(rqa.recurrenceRate, rqa.null);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `rr:${pct(rqa.recurrenceRate)}|null:${pct(rqa.null)}|${metricZ(z)}`)} />;
+                            })()}
                             <RecurrenceMatrixPlot matrix={rqa.matrix} size={rqa.size} className="mt-2" />
                         </InsightPanel>
                     )}
@@ -4973,6 +5632,10 @@ export const InsightsScreen = () => {
                                 { label: "Cold pool", value: `${unionDepletion.liveColdPool.length} balls`, hint: "never seen lately" },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf(unionDepletion.crossoverHorizon, unionDepletion.crossoverAnalytic);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `lstar:${unionDepletion.crossoverHorizon}|analytic:${unionDepletion.crossoverAnalytic.toFixed(1)}|${metricZ(z)}`)} />;
+                            })()}
                             <UnionPartitionCurveChart
                                 rows={unionDepletion.rows}
                                 crossoverHorizon={unionDepletion.crossoverHorizon}
@@ -4996,6 +5659,10 @@ export const InsightsScreen = () => {
                                 { label: "Trailing motif", value: permutation.trailingMotif, hint: "last three sums" },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf(permutation.entropyD4, 1);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `hperm:${permutation.entropyD4.toFixed(3)}|null:1|${metricZ(z)}`)} />;
+                            })()}
                             <OrdinalMotifBarChart
                                 shares={permutation.motifShares}
                                 nullShare={permutation.motifNull}
@@ -5012,27 +5679,32 @@ export const InsightsScreen = () => {
                             number={pNum("panel-jensen-shannon-turnover")}
                             section="Stream dynamics"
                             title="Jensen-Shannon distributional turnover"
-                            caption="How fast the 49-ball share distribution turns over — a 15-draw window against a 45-draw baseline — with the finite-window sampling floor."
+                            caption="How fast the 49-ball share distribution turns over — a 15-draw window against the 45-draw baseline that contains it — against a null that nests the same way."
                             id="panel-jensen-shannon-turnover"
                             family="Sequence"
                             className="lg:col-span-6"
                             stats={[
                                 { label: "Mean D_JS", value: turnover.meanDivergence.toFixed(4), hint: "bits" },
-                                { label: "Sampling floor", value: turnover.samplingFloor.toFixed(4), hint: "two random windows" },
-                                { label: "Jaccard turnover", value: pct(turnover.jaccardRate), hint: "set churn per draw" },
+                                { label: "Null median", value: turnover.nullMedian.toFixed(4), hint: "matched 15-in-45 null" },
+                                { label: "Above null", value: pct(turnover.aboveNullShare), hint: "of windows" },
                             ]}
                         >
+                            {(() => {
+                                const z = zOf(turnover.meanDivergence, turnover.nullMedian);
+                                return <PanelVerdict {...edgeVerdict(Math.abs(z) >= 2, `djs:${turnover.meanDivergence.toFixed(4)}|nullmedian:${turnover.nullMedian.toFixed(4)}|${metricZ(z)}`)} />;
+                            })()}
                             <EnvelopeBandChart
                                 points={turnover.rows.slice(-120).map((row) => ({
                                     label: row.label,
                                     value: row.divergence,
-                                    upper: turnover.samplingFloor,
-                                    lower: 0,
+                                    upper: turnover.nullP95,
+                                    lower: turnover.nullP5,
+                                    ma: turnover.nullMedian,
                                 }))}
                                 valueLabel="D_JS"
-                                channelLabel="sampling floor"
+                                channelLabel="null p5-p95"
                                 className="mt-2"
-                                ariaLabel="Jensen-Shannon divergence between the fast and baseline windows"
+                                ariaLabel="Jensen-Shannon divergence between the fast and baseline windows against the matched null band"
                             />
                             <div className="mt-2 grid grid-cols-2 gap-3">
                                 <div className="min-w-0">

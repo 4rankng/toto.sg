@@ -1141,9 +1141,9 @@ export function colorWaveStats(draws: Draw[]): ColorWaveStats {
 
     const n = draws.length;
     const waves = [
-        { name: "Red Wave (紅波)", color: "#ff5c8a", balls: 17, observedHits: n > 0 ? redHits / n : 0, expectedHits: (17 * 6) / 49 },
-        { name: "Blue Wave (藍波)", color: "#35d6ff", balls: 16, observedHits: n > 0 ? blueHits / n : 0, expectedHits: (16 * 6) / 49 },
-        { name: "Green Wave (綠波)", color: "#2ee6c5", balls: 16, observedHits: n > 0 ? greenHits / n : 0, expectedHits: (16 * 6) / 49 },
+        { name: "Red Wave", color: "#ff5c8a", balls: 17, observedHits: n > 0 ? redHits / n : 0, expectedHits: (17 * 6) / 49 },
+        { name: "Blue Wave", color: "#35d6ff", balls: 16, observedHits: n > 0 ? blueHits / n : 0, expectedHits: (16 * 6) / 49 },
+        { name: "Green Wave", color: "#2ee6c5", balls: 16, observedHits: n > 0 ? greenHits / n : 0, expectedHits: (16 * 6) / 49 },
     ];
 
     // Probability of 3+ hits: C(16,3)*C(33,3)/TOTAL_LINES + ... = ~0.33
@@ -1157,10 +1157,10 @@ export function colorWaveStats(draws: Draw[]): ColorWaveStats {
 }
 
 export interface WuXingStats {
-    elements: { name: string; chinese: string; balls: number; observedRate: number; expectedRate: number; color: string }[];
+    elements: { name: string; balls: number; observedRate: number; expectedRate: number; color: string }[];
 }
 
-/** 2026 Bing-Wu (丙午) Na-Yin Five Elements (五行). Matches strategies.json partition. */
+/** 2026 Bing-Wu Na-Yin Five Elements. Matches the strategies.json partition. */
 export function wuXingStats(draws: Draw[]): WuXingStats {
     const metal = new Set([4, 5, 18, 19, 26, 27, 34, 35, 42, 43]); // 10
     const wood = new Set([8, 9, 16, 17, 24, 25, 38, 39, 46, 47]); // 10
@@ -1186,11 +1186,11 @@ export function wuXingStats(draws: Draw[]): WuXingStats {
 
     const n = draws.length;
     const elements = [
-        { name: "Fire (火)", chinese: "火", balls: fire.size, observedRate: n > 0 ? counts.fire / n : 0, expectedRate: (fire.size * 6) / 49, color: "var(--color-heat-hot)" },
-        { name: "Metal (金)", chinese: "金", balls: metal.size, observedRate: n > 0 ? counts.metal / n : 0, expectedRate: (metal.size * 6) / 49, color: "var(--color-gold)" },
-        { name: "Water (水)", chinese: "水", balls: water.size, observedRate: n > 0 ? counts.water / n : 0, expectedRate: (water.size * 6) / 49, color: "var(--color-heat-cold)" },
-        { name: "Wood (木)", chinese: "木", balls: wood.size, observedRate: n > 0 ? counts.wood / n : 0, expectedRate: (wood.size * 6) / 49, color: "var(--color-primary)" },
-        { name: "Earth (土)", chinese: "土", balls: earth.size, observedRate: n > 0 ? counts.earth / n : 0, expectedRate: (earth.size * 6) / 49, color: "var(--color-bronze)" },
+        { name: "Fire", balls: fire.size, observedRate: n > 0 ? counts.fire / n : 0, expectedRate: (fire.size * 6) / 49, color: "var(--color-heat-hot)" },
+        { name: "Metal", balls: metal.size, observedRate: n > 0 ? counts.metal / n : 0, expectedRate: (metal.size * 6) / 49, color: "var(--color-gold)" },
+        { name: "Water", balls: water.size, observedRate: n > 0 ? counts.water / n : 0, expectedRate: (water.size * 6) / 49, color: "var(--color-heat-cold)" },
+        { name: "Wood", balls: wood.size, observedRate: n > 0 ? counts.wood / n : 0, expectedRate: (wood.size * 6) / 49, color: "var(--color-primary)" },
+        { name: "Earth", balls: earth.size, observedRate: n > 0 ? counts.earth / n : 0, expectedRate: (earth.size * 6) / 49, color: "var(--color-bronze)" },
     ];
 
     return { elements };
@@ -1204,18 +1204,18 @@ export interface ZodiacStats {
 /** 12 Zodiac / Togel Shio columns: 2026 Year of Horse (Horse = {1, 13, 25, 37, 49}). */
 export function zodiacStats(draws: Draw[]): ZodiacStats {
     const ANIMALS = [
-        { animal: "Horse (马)", offset: 1, balls: 5 }, // 1, 13, 25, 37, 49
-        { animal: "Goat (羊)", offset: 2, balls: 4 },
-        { animal: "Monkey (猴)", offset: 3, balls: 4 },
-        { animal: "Rooster (鸡)", offset: 4, balls: 4 },
-        { animal: "Dog (狗)", offset: 5, balls: 4 },
-        { animal: "Pig (猪)", offset: 6, balls: 4 },
-        { animal: "Rat (鼠 - Clash)", offset: 7, balls: 4 },
-        { animal: "Ox (牛)", offset: 8, balls: 4 },
-        { animal: "Tiger (虎)", offset: 9, balls: 4 },
-        { animal: "Rabbit (兔)", offset: 10, balls: 4 },
-        { animal: "Dragon (龙)", offset: 11, balls: 4 },
-        { animal: "Snake (蛇)", offset: 0, balls: 4 }, // 12, 24, 36, 48
+        { animal: "Horse", offset: 1, balls: 5 }, // 1, 13, 25, 37, 49
+        { animal: "Goat", offset: 2, balls: 4 },
+        { animal: "Monkey", offset: 3, balls: 4 },
+        { animal: "Rooster", offset: 4, balls: 4 },
+        { animal: "Dog", offset: 5, balls: 4 },
+        { animal: "Pig", offset: 6, balls: 4 },
+        { animal: "Rat (clash year)", offset: 7, balls: 4 },
+        { animal: "Ox", offset: 8, balls: 4 },
+        { animal: "Tiger", offset: 9, balls: 4 },
+        { animal: "Rabbit", offset: 10, balls: 4 },
+        { animal: "Dragon", offset: 11, balls: 4 },
+        { animal: "Snake", offset: 0, balls: 4 }, // 12, 24, 36, 48
     ];
 
     const hitCounts = new Uint32Array(12);
@@ -1435,7 +1435,7 @@ export interface LoShuLunarStats {
     moonPhases: { phase: string; draws: number; meanSum: number; expectedMean: number }[];
 }
 
-/** Lo Shu 3x3 Magic Square (洛書九宮) and Astronomical Lunar Phase correlation. */
+/** Lo Shu 3x3 Magic Square and Astronomical Lunar Phase correlation. */
 export function loShuLunarStats(draws: Draw[]): LoShuLunarStats {
     // Lo Shu 9 cells mod 9:
     // Palace 1..9
@@ -1447,7 +1447,7 @@ export function loShuLunarStats(draws: Draw[]): LoShuLunarStats {
         }
     }
 
-    const PALACE_NAMES = ["Kan (坎 1)", "Kun (坤 2)", "Zhen (震 3)", "Xun (巽 4)", "Center (中 5)", "Qian (乾 6)", "Dui (兑 7)", "Gen (艮 8)", "Li (离 9)"];
+    const PALACE_NAMES = ["Kan 1", "Kun 2", "Zhen 3", "Xun 4", "Center 5", "Qian 6", "Dui 7", "Gen 8", "Li 9"];
     const n = draws.length;
 
     const loShuCells = PALACE_NAMES.map((palace, i) => {
@@ -1468,13 +1468,13 @@ export function loShuLunarStats(draws: Draw[]): LoShuLunarStats {
     const REF_NEW_MOON = Date.UTC(2000, 0, 6, 18, 14);
 
     const PHASE_NAMES = [
-        "New Moon (朔)",
+        "New Moon",
         "Waxing Crescent",
-        "First Quarter (上弦)",
+        "First Quarter",
         "Waxing Gibbous",
-        "Full Moon (望)",
+        "Full Moon",
         "Waning Gibbous",
-        "Last Quarter (下弦)",
+        "Last Quarter",
         "Waning Crescent",
     ];
 

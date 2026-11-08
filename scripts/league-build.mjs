@@ -46,6 +46,7 @@ import { buildIndicatorFoldStats, INDICATOR_RULES, INDICATOR_STRATEGIES } from "
 import { buildSequenceDynamicsContext, SEQUENCE_DYNAMICS_RULES, SEQUENCE_DYNAMICS_STRATEGIES } from "./lib/sequence-dynamics-rules.mjs";
 
 const DATA_DIR = fileURLToPath(new URL("../public/data/", import.meta.url));
+
 const CACHE_PATH = fileURLToPath(new URL("../data/league-cache.json", import.meta.url));
 const CACHE_VERSION = 1;
 

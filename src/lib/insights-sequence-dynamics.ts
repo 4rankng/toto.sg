@@ -1253,6 +1253,8 @@ export interface WassersteinTransportStats {
     rows: WassersteinRow[];
     /** The exact analytical E[W1] for two independent draws. */
     expectedW1: number;
+    /** The mean W1 over the archive's transitions. */
+    meanW1: number;
     medianW1: number;
     p05W1: number;
     p95W1: number;
@@ -1316,6 +1318,7 @@ export function computeWassersteinTransportStats(draws: readonly Draw[]): Wasser
     return {
         rows,
         expectedW1: expected,
+        meanW1: values.length > 0 ? values.reduce((acc, v) => acc + v, 0) / values.length : 0,
         medianW1: median,
         p05W1: p05,
         p95W1: p95,
@@ -1340,10 +1343,18 @@ export function computeWassersteinTransportStats(draws: readonly Draw[]): Wasser
  * that is not a prefix of an already-used phrase is taken. Tracking every
  * used prefix in a set keeps the whole parse linear in the stream length.
  */
-export function kasparSchusterComplexity(stream: readonly number[]): number {
+/**
+ * The number of phrases in the Kaspar-Schuster parse — the finite-sample
+ * algorithmic complexity of a binary stream.
+ *
+ * The normalized form (below) saturates at 1 for any stream short enough to
+ * parse, because the normalization factor 1 + ½·log2(n) already accounts for
+ * the whole phrase count a random binary stream of length n produces. The
+ * raw count is the part that still moves.
+ */
+export function kasparSchusterPhraseCount(stream: readonly number[]): number {
     const n = stream.length;
-    if (n === 0) return 0;
-    if (n === 1) return 1;
+    if (n <= 1) return n;
 
     const bits = stream.map((v) => (v > 0 ? "1" : "0"));
     const used = new Set<string>();
@@ -1365,6 +1376,15 @@ export function kasparSchusterComplexity(stream: readonly number[]): number {
         position += best;
     }
 
+    return phraseCount;
+}
+
+export function kasparSchusterComplexity(stream: readonly number[]): number {
+    const n = stream.length;
+    if (n === 0) return 0;
+    if (n === 1) return 1;
+
+    const phraseCount = kasparSchusterPhraseCount(stream);
     const normalized = (phraseCount * (1 + 0.5 * Math.log2(n))) / n;
     return Math.min(1, Math.max(0, normalized));
 }
@@ -1378,8 +1398,15 @@ export interface LempelZivStats {
     shuffledBaseline: number;
     /** The Feder-Merhav predictability ceiling of the parity stream. */
     predictabilityCeiling: number;
-    /** The rolling 100-draw window of the sum stream's complexity. */
-    rolling: { label: string; value: number; upper: number; lower: number }[];
+    /**
+     * The rolling 100-draw window of the sum stream's algorithmic
+     * complexity, in phrases, against the same window of the shuffled twin.
+     */
+    rolling: { label: string; value: number; nullValue: number; normalized: number }[];
+    /** The mean phrase count per 100-draw window in the archive. */
+    meanPhraseCount: number;
+    /** The mean phrase count per 100-draw window of the shuffled twin. */
+    nullPhraseCount: number;
     /** The mean normalized complexity of both streams. */
     meanComplexity: number;
     /** The asymptotic Bernoulli(1/2) target. */
@@ -1393,7 +1420,8 @@ export function computeLempelZivComplexityStats(draws: readonly Draw[]): LempelZ
     const sumStream: number[] = sums.map((sum) => (sum > medianSum ? 1 : 0));
     const parityStream: number[] = sums.map((sum) => (sum % 2 === 0 ? 1 : 0));
 
-    // A deterministic shuffle for the null baseline.
+    // A deterministic shuffle for the null baseline. The same shuffle gives
+    // the rolling null: the shuffled twin's window at the same place.
     const rng = seededRandom(0x1e3a);
     const shuffled = [...sumStream];
     for (let i = shuffled.length - 1; i > 0; i -= 1) {
@@ -1401,15 +1429,16 @@ export function computeLempelZivComplexityStats(draws: readonly Draw[]): LempelZ
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
-    const rolling: { label: string; value: number; upper: number; lower: number }[] = [];
+    // The phrase count is the part of the measure that still moves: the
+    // normalized form saturates at 1 for every window of this length.
+    const rolling: { label: string; value: number; nullValue: number; normalized: number }[] = [];
     const windowSize = 100;
     for (let end = windowSize; end <= sumStream.length; end += 1) {
-        const slice = sumStream.slice(end - windowSize, end);
         rolling.push({
             label: String(draws[end - 1].draw),
-            value: kasparSchusterComplexity(slice),
-            upper: 1,
-            lower: 0,
+            value: kasparSchusterPhraseCount(sumStream.slice(end - windowSize, end)),
+            nullValue: kasparSchusterPhraseCount(shuffled.slice(end - windowSize, end)),
+            normalized: kasparSchusterComplexity(sumStream.slice(end - windowSize, end)),
         });
     }
 
@@ -1422,7 +1451,11 @@ export function computeLempelZivComplexityStats(draws: readonly Draw[]): LempelZ
     const predictabilityCeiling = 1 - inverseBinaryEntropy(entropyRate);
 
     const meanComplexity =
+        rolling.length > 0 ? rolling.reduce((acc, point) => acc + point.normalized, 0) / rolling.length : 0;
+    const meanPhraseCount =
         rolling.length > 0 ? rolling.reduce((acc, point) => acc + point.value, 0) / rolling.length : 0;
+    const nullPhraseCount =
+        rolling.length > 0 ? rolling.reduce((acc, point) => acc + point.nullValue, 0) / rolling.length : 0;
 
     return {
         sumStream,
@@ -1430,6 +1463,8 @@ export function computeLempelZivComplexityStats(draws: readonly Draw[]): LempelZ
         shuffledBaseline: kasparSchusterComplexity(shuffled),
         predictabilityCeiling,
         rolling,
+        meanPhraseCount,
+        nullPhraseCount,
         meanComplexity,
         asymptoticTarget: 1,
     };
@@ -1454,19 +1489,47 @@ export interface PeriodogramResult {
     dominantFrequency: number;
     /** Fisher's g statistic: the largest ordinate over the mean ordinate. */
     g: number;
-    /** Fisher's exact p-value for periodicity. */
+    /** Fisher's p-value for periodicity under the white-noise null. */
     pValue: number;
     /** The g threshold at p = 0.05. */
     gThreshold: number;
+    /** The mean ordinate — the white-noise reference level of the spectrum. */
+    meanOrdinate: number;
+    /**
+     * The power level a dominant ordinate would need to clear to be
+     * significant: the g threshold expressed back on the power axis.
+     */
+    significancePower: number;
     /** The phase of the dominant harmonic, in radians. */
     dominantPhase: number;
 }
 
-/** The Fisher g threshold at a given p, for `count` ordinates. */
+/**
+ * Fisher's g critical value at a given p, for `count` ordinates.
+ *
+ * Under the white-noise null the periodogram ordinates are i.i.d.
+ * Exponential(1), so the largest one exceeds the mean by a factor g only
+ * when P(max > g · mean) = p. With the mean at its expectation that is
+ * 1 − (1 − e^(−g))^count = p, which solves to
+ *
+ *   g_c = −ln(1 − (1 − p)^(1/count))
+ *
+ * A Monte Carlo over 20,000 exponential draws puts the empirical 95th
+ * percentile at 9.162 for 512 ordinates against the 9.209 this formula
+ * returns.
+ */
 export const fisherGThreshold = (count: number, p = 0.05): number => {
     if (count < 2) return Number.NaN;
-    const x = p ** (1 / (count - 1));
-    return x * count;
+    return -Math.log(1 - (1 - p) ** (1 / count));
+};
+
+/**
+ * The p-value of an observed Fisher g under the same white-noise null:
+ * P(g ≥ g_obs) = 1 − (1 − e^(−g_obs))^count.
+ */
+export const fisherGPValue = (g: number, count: number): number => {
+    if (count < 2 || !(g > 0)) return 1;
+    return 1 - (1 - Math.exp(-g)) ** count;
 };
 
 /**
@@ -1560,6 +1623,8 @@ export function periodogramOf(signal: ArrayLike<number>): PeriodogramResult {
             g: 0,
             pValue: 1,
             gThreshold: Number.NaN,
+            meanOrdinate: 0,
+            significancePower: Number.NaN,
             dominantPhase: 0,
         };
     }
@@ -1581,10 +1646,10 @@ export function periodogramOf(signal: ArrayLike<number>): PeriodogramResult {
 
     const meanOrdinate = total / count;
     const g = meanOrdinate > 0 ? dominantPower / meanOrdinate : 0;
-    // Fisher's exact test: under white noise the largest ordinate over the
-    // sum of all ordinates follows Beta(count-1, 1).
-    const x = total > 0 ? dominantPower / total : 0;
-    const pValue = count > 1 ? 1 - x ** (count - 1) : 1;
+    // Fisher's test for white noise: under the null the ordinates are i.i.d.
+    // Exponential(1), so the largest ordinate's factor over the mean carries
+    // the periodicity evidence.
+    const pValue = fisherGPValue(g, count);
 
     return {
         power,
@@ -1596,6 +1661,8 @@ export function periodogramOf(signal: ArrayLike<number>): PeriodogramResult {
         g,
         pValue,
         gThreshold: fisherGThreshold(count, 0.05),
+        meanOrdinate,
+        significancePower: fisherGThreshold(count, 0.05) * meanOrdinate,
         dominantPhase: Math.atan2(im[dominantIndex + 1], re[dominantIndex + 1]),
     };
 }
@@ -1706,7 +1773,7 @@ export interface HawkesBallRow {
     /** The live arrival intensity at the next draw. */
     intensity: number;
     /** The self-excitation z-score: positive = exciting, negative = refractory. */
-    branching: number;
+    excitationZ: number;
     /** The kernel-weighted recent appearances. */
     excitation: number;
 }
@@ -1755,8 +1822,11 @@ export function computeHawkesPointProcessStats(draws: readonly Draw[]): HawkesPo
         const excitation = hits[ball - 1];
         rows.push({
             ball,
-            intensity: baseRate + PICKS * excitation,
-            branching: (excitation - baseRate * weightSum) / zScale,
+            // The intensity is the marginal appearance rate plus what the
+            // recent history adds — no second factor of PICKS, which would
+            // inflate it six-fold.
+            intensity: baseRate + excitation,
+            excitationZ: (excitation - baseRate * weightSum) / zScale,
             excitation,
         });
     }
@@ -2133,8 +2203,14 @@ export interface JensenShannonTurnoverStats {
     rows: JensenShannonRow[];
     /** The mean divergence over the sliding windows. */
     meanDivergence: number;
-    /** The finite-window sampling floor — the divergence two independent windows of the same length produce. */
-    samplingFloor: number;
+    /** The median divergence of the structurally matched null. */
+    nullMedian: number;
+    /** The 5th percentile of the null. */
+    nullP5: number;
+    /** The 95th percentile of the null. */
+    nullP95: number;
+    /** The share of windows whose divergence exceeds the null median. */
+    aboveNullShare: number;
     /** The Jaccard turnover rate. */
     jaccardRate: number;
     /** The balls whose share rose most in the fast window. */
@@ -2192,31 +2268,45 @@ export function computeJensenShannonTurnoverStats(draws: readonly Draw[]): Jense
         divergenceTotal += divergence;
     }
 
-    // The finite-window sampling floor: the divergence two independent
-    // windows of the same lengths produce from the same pooled distribution.
-    const pooled = sharesOf(draws.slice(-Math.max(baseWindow, draws.length)));
+    // The finite-window null. The observed statistic compares the last 15
+    // draws against the 45 that contain them, so the null has to nest the
+    // same way: 45 draws sampled from the archive's own pooled distribution,
+    // with the last 15 of them compared against all 45. Sampling two
+    // INDEPENDENT windows instead would put the null on a different scale
+    // than the observation, and the gap between them would mean nothing.
+    const pooled = sharesOf(draws);
     const rng = seededRandom(0x51f7);
-    const floors: number[] = [];
-    for (let trial = 0; trial < 200; trial += 1) {
-        const sample = (size: number): Float64Array => {
-            const counts = new Float64Array(POOL);
-            for (let i = 0; i < size * PICKS; i += 1) {
+    const nulls: number[] = [];
+    for (let trial = 0; trial < 400; trial += 1) {
+        const baseCounts = new Float64Array(POOL);
+        const fastCounts = new Float64Array(POOL);
+        for (let k = 0; k < baseWindow; k += 1) {
+            const drawCounts = new Float64Array(POOL);
+            for (let i = 0; i < PICKS; i += 1) {
                 let u = rng();
                 let ball = 1;
                 for (; ball < POOL; ball += 1) {
                     u -= pooled[ball - 1];
                     if (u <= 0) break;
                 }
-                counts[Math.min(ball, POOL) - 1] += 1;
+                drawCounts[Math.min(ball, POOL) - 1] += 1;
+                baseCounts[Math.min(ball, POOL) - 1] += 1;
             }
-            const total = size * PICKS || 1;
-            for (let i = 0; i < POOL; i += 1) counts[i] /= total;
-            return counts;
-        };
-        floors.push(jensenShannonBits(sample(fastWindow), sample(baseWindow)));
+            if (k >= baseWindow - fastWindow) {
+                for (let i = 0; i < POOL; i += 1) fastCounts[i] += drawCounts[i];
+            }
+        }
+        const baseShares = new Float64Array(POOL);
+        for (let i = 0; i < POOL; i += 1) baseShares[i] = baseCounts[i] / (baseWindow * PICKS);
+        const fastShares = new Float64Array(POOL);
+        for (let i = 0; i < POOL; i += 1) fastShares[i] = fastCounts[i] / (fastWindow * PICKS);
+        nulls.push(jensenShannonBits(fastShares, baseShares));
     }
-    floors.sort((a, b) => a - b);
-    const samplingFloor = floors[Math.floor(floors.length / 2)] ?? 0;
+    nulls.sort((a, b) => a - b);
+    const nullQuantile = (q: number): number => nulls[Math.min(nulls.length - 1, Math.floor(q * nulls.length))] ?? 0;
+    const nullP5 = nullQuantile(0.05);
+    const nullMedian = nullQuantile(0.5);
+    const nullP95 = nullQuantile(0.95);
 
     // The live movers: the fast window against the baseline window.
     const liveFast = sharesOf(draws.slice(-fastWindow));
@@ -2227,10 +2317,14 @@ export function computeJensenShannonTurnoverStats(draws: readonly Draw[]): Jense
     }
 
     const count = rows.length || 1;
+    const aboveNullShare = count > 0 ? rows.filter((row) => row.divergence > nullMedian).length / count : 0;
     return {
         rows,
         meanDivergence: divergenceTotal / count,
-        samplingFloor,
+        nullMedian,
+        nullP5,
+        nullP95,
+        aboveNullShare,
         jaccardRate: jaccardTotal / count,
         topGainers: [...movers].sort((a, b) => b.shareDelta - a.shareDelta).slice(0, 6),
         topLosers: [...movers].sort((a, b) => a.shareDelta - b.shareDelta).slice(0, 6),

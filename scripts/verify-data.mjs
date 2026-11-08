@@ -239,6 +239,8 @@ const checkPrizeEvents = (events, league, draws) => {
     }
 };
 
+
+
 const main = async () => {
     const read = async (name) => JSON.parse(await readFile(`${DATA_DIR}${name}`, "utf8"));
 
@@ -256,6 +258,7 @@ const main = async () => {
 
     const playbook = await read("cross-panel-playbook.json");
     checkCrossPanelPlaybook(playbook, league);
+
 
 
     if (failures.length > 0) {

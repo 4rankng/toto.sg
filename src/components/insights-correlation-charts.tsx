@@ -547,6 +547,12 @@ export function ObservedExpectedBarChart({
     const slot = plotW / items.length;
     const barW = Math.max(3, slot - 10);
 
+    // Labels are only drawn when they fit their slot. A dense row (22 gaps,
+    // say) would otherwise print every tick on top of its neighbour.
+    const longestLabel = items.reduce((max_, item) => Math.max(max_, item.label.length), 0);
+    const labelWidth = longestLabel * 5.4;
+    const labelStep = Math.max(1, Math.ceil(labelWidth / slot));
+
     return (
         <div ref={hostRef} className={cx("relative", className)} role="img" aria-label="Comparison of observed vs expected bars.">
             <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" aria-hidden="true">
@@ -588,15 +594,17 @@ export function ObservedExpectedBarChart({
                                 strokeWidth={1.8}
                                 strokeDasharray="3 2"
                             />
-                            <text
-                                x={x + barW / 2}
-                                y={baseline + 16}
-                                textAnchor="middle"
-                                fontSize={9.5}
-                                fill="var(--color-ink-muted)"
-                            >
-                                {item.label}
-                            </text>
+                            {i % labelStep === 0 && (
+                                <text
+                                    x={x + barW / 2}
+                                    y={baseline + 16}
+                                    textAnchor="middle"
+                                    fontSize={9.5}
+                                    fill="var(--color-ink-muted)"
+                                >
+                                    {item.label}
+                                </text>
+                            )}
                         </g>
                     );
                 })}

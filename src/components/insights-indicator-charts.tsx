@@ -9,6 +9,20 @@ import { useState } from "react";
 import { ChartTooltip, useChartTooltip } from "@/components/chart-tooltip";
 import { cx } from "@/utils/cx";
 
+/**
+ * A compact number for an axis label or a tooltip: 0.0017680168 becomes
+ * "0.0018" and 1234.5 becomes "1234.5". Raw floats never reach the reader.
+ */
+export const compactNumber = (value: number): string => {
+    if (!Number.isFinite(value)) return "—";
+    const abs = Math.abs(value);
+    if (abs === 0) return "0";
+    if (abs >= 1000) return value.toFixed(0);
+    if (abs >= 100) return value.toFixed(1);
+    if (abs >= 1) return value.toFixed(2);
+    return value.toFixed(4);
+};
+
 /* ------------------------------------------------------------------ *
  * 1. Oscillator Band Chart (49-ball strip with overbought/oversold bands)
  * ------------------------------------------------------------------ */
@@ -249,8 +263,15 @@ export function EnvelopeBandChart({
     }
 
     const allVals = points.flatMap((p) => [p.value, p.upper, p.lower]);
-    const minVal = Math.min(...allVals) - 5;
-    const maxVal = Math.max(...allVals) + 5;
+    // The axis is fitted to the data it carries. A fixed unit padding swamps
+    // small-valued series (a divergence in bits, a normalized complexity) and
+    // flattens them into a straight line, so the pad is a share of the span.
+    let minVal = Math.min(...allVals);
+    let maxVal = Math.max(...allVals);
+    const span = maxVal - minVal;
+    const pad = span > 0 ? span * 0.12 : Math.max(Math.abs(maxVal) * 0.12, 1);
+    minVal -= pad;
+    maxVal += pad;
 
     const valToY = (v: number) => {
         const ratio = (v - minVal) / (maxVal - minVal || 1);
@@ -320,6 +341,16 @@ export function EnvelopeBandChart({
                     stroke="var(--color-secondary)"
                     strokeWidth={1.8}
                 />
+
+                {/* The value scale */}
+                <line x1={padLeft} y1={padTop + plotH} x2={padLeft + plotW} y2={padTop + plotH} stroke="var(--color-line-strong)" strokeWidth={1} />
+                <text x={padLeft - 6} y={padTop + 4} textAnchor="end" fontSize={9} fontFamily="var(--font-mono)" fill="var(--color-ink-subtle)">
+                    {/* Axis ticks: one decimal for small spans, integer rounding once large. */}
+                    {Math.abs(maxVal) >= 100 ? String(Math.round(maxVal)) : maxVal.toFixed(1)}
+                </text>
+                <text x={padLeft - 6} y={padTop + plotH} textAnchor="end" fontSize={9} fontFamily="var(--font-mono)" fill="var(--color-ink-subtle)">
+                    {Math.abs(minVal) >= 100 ? String(Math.round(minVal)) : minVal.toFixed(1)}
+                </text>
 
                 {/* Interactive Points */}
                 {points.map((p, i) => {
@@ -638,8 +669,8 @@ export function ScatterRegressionChart({
                             onPointerEnter={(e) => {
                                 setHoverIdx(idx);
                                 show(e, p.label || `Point ${idx + 1}`, [
-                                    `${xName}: ${p.x}`,
-                                    `${yName}: ${p.y}`,
+                                    `${xName}: ${compactNumber(p.x)}`,
+                                    `${yName}: ${compactNumber(p.y)}`,
                                     p.sublabel ? p.sublabel : "",
                                 ].filter(Boolean));
                             }}
@@ -653,10 +684,10 @@ export function ScatterRegressionChart({
 
                 {/* Axis Extrema */}
                 <text x={padLeft} y={height - 8} textAnchor="start" fill="var(--color-ink-subtle)" fontSize={9} fontFamily="var(--font-mono)">
-                    {minX}
+                    {compactNumber(minX)}
                 </text>
                 <text x={padLeft + plotW} y={height - 8} textAnchor="end" fill="var(--color-ink-subtle)" fontSize={9} fontFamily="var(--font-mono)">
-                    {maxX}
+                    {compactNumber(maxX)}
                 </text>
             </svg>
             {tip && <ChartTooltip tip={tip} />}

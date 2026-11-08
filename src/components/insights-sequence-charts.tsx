@@ -439,11 +439,18 @@ export function CurvatureProfileChart({
 export interface PeriodogramSpectrumChartProps {
     /** The spectrum, ordered by period. */
     spectrum: { period: number; power: number }[];
-    /** Fisher's g threshold at p = 0.05. */
+    /** Fisher's observed g — the dominant ordinate over the mean ordinate. */
+    g: number;
+    /** Fisher's g critical value at p = 0.05. */
     gThreshold: number;
+    /**
+     * The power level a dominant ordinate has to clear to be significant —
+     * the g threshold expressed back on the power axis.
+     */
+    significancePower: number;
     /** The dominant cycle length. */
     dominantPeriod: number;
-    /** Fisher's exact p-value. */
+    /** Fisher's p-value under the white-noise null. */
     pValue: number;
     className?: string;
     ariaLabel?: string;
@@ -451,11 +458,13 @@ export interface PeriodogramSpectrumChartProps {
 
 export function PeriodogramSpectrumChart({
     spectrum,
+    g,
     gThreshold,
+    significancePower,
     dominantPeriod,
     pValue,
     className,
-    ariaLabel = "DFT periodogram of the draw sums with Fisher's exact significance threshold",
+    ariaLabel = "DFT periodogram of the draw sums with Fisher's significance threshold",
 }: PeriodogramSpectrumChartProps) {
     const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
     const [hoverIdx, setHoverIdx] = useState<number | null>(null);
@@ -471,15 +480,17 @@ export function PeriodogramSpectrumChart({
     const plotH = height - padTop - padBottom;
 
     // Only the short cycles matter for the chart; the tail is flat noise.
+    // The spectrum arrives in DECREASING period order (the bin index runs
+    // against the cycle length), so the visible window is sorted back into
+    // ascending period before it is scaled.
     const maxPeriod = 60;
-    const visible = spectrum.filter((point) => point.period <= maxPeriod);
-    const points = visible.length > 0 ? visible : spectrum.slice(0, 60);
+    const visible = spectrum.filter((point) => point.period <= maxPeriod).sort((a, b) => a.period - b.period);
+    const points = visible.length > 0 ? visible : [...spectrum].sort((a, b) => a.period - b.period).slice(0, 60);
 
-    const maxPower = Math.max(1e-9, ...points.map((point) => point.power));
-    const xOf = (period: number) => {
-        const max = points.length > 0 ? points[points.length - 1].period : maxPeriod;
-        return padLeft + (period / Math.max(1, max)) * plotW;
-    };
+    // The threshold has to fit on the axis, or the line it marks never shows.
+    const maxPower = Math.max(1e-9, ...points.map((point) => point.power), significancePower > 0 ? significancePower : 0);
+    const axisMax = points.length > 0 ? points[points.length - 1].period : maxPeriod;
+    const xOf = (period: number) => padLeft + (period / Math.max(1, axisMax)) * plotW;
     const yOf = (power: number) => padTop + plotH * (1 - power / maxPower);
 
     const line = points.map((point, i) => `${i === 0 ? "M" : "L"}${xOf(point.period).toFixed(1)},${yOf(point.power).toFixed(1)}`).join(" ");
@@ -501,8 +512,8 @@ export function PeriodogramSpectrumChart({
                             setHoverIdx(i);
                             show(e, `Period ${point.period.toFixed(1)} draws`, [
                                 `Power: ${point.power.toFixed(3)}`,
-                                `Fisher g: ${gThreshold.toFixed(2)} threshold`,
-                                `Exact p: ${pValue < 0.001 ? "<0.001" : pValue.toFixed(4)}`,
+                                `Fisher g: ${g.toFixed(2)} (threshold ${gThreshold.toFixed(2)})`,
+                                `White-noise p: ${pValue < 0.001 ? "<0.001" : pValue.toFixed(4)}`,
                             ]);
                         }}
                         onPointerLeave={() => {
@@ -541,17 +552,29 @@ export function PeriodogramSpectrumChart({
                 </text>
 
                 {/* Fisher's significance threshold, expressed on the power axis */}
-                {gThreshold > 0 && gThreshold <= maxPower && (
-                    <line
-                        x1={padLeft}
-                        y1={yOf(gThreshold)}
-                        x2={padLeft + plotW}
-                        y2={yOf(gThreshold)}
-                        stroke="var(--color-heat-hot)"
-                        strokeWidth={1}
-                        strokeDasharray="5 4"
-                        strokeOpacity={0.85}
-                    />
+                {significancePower > 0 && significancePower <= maxPower && (
+                    <>
+                        <line
+                            x1={padLeft}
+                            y1={yOf(significancePower)}
+                            x2={padLeft + plotW}
+                            y2={yOf(significancePower)}
+                            stroke="var(--color-heat-hot)"
+                            strokeWidth={1}
+                            strokeDasharray="5 4"
+                            strokeOpacity={0.85}
+                        />
+                        <text
+                            x={padLeft + plotW}
+                            y={yOf(significancePower) + 11}
+                            textAnchor="end"
+                            fontSize={8.5}
+                            fontFamily="var(--font-mono)"
+                            fill="var(--color-heat-hot)"
+                        >
+                            p = 0.05 threshold
+                        </text>
+                    </>
                 )}
 
                 <text x={padLeft - 6} y={padTop + 4} textAnchor="end" fontSize={8.5} fontFamily="var(--font-mono)" fill="var(--color-ink-subtle)">
@@ -573,7 +596,7 @@ export function PeriodogramSpectrumChart({
                         {tick}
                     </text>
                 ))}
-                <text x={padLeft + plotW} y={height - 8} textAnchor="end" fontSize={8.5} fontFamily="var(--font-mono)" fill="var(--color-ink-faint)">
+                <text x={padLeft + plotW} y={padTop - 4} textAnchor="end" fontSize={8.5} fontFamily="var(--font-mono)" fill="var(--color-ink-faint)">
                     cycle length (draws)
                 </text>
             </svg>
@@ -944,7 +967,8 @@ export function OrdinalMotifBarChart({
                     );
                 })}
 
-                {/* The i.i.d. baseline */}
+                {/* The i.i.d. baseline, with its legend in the corner — the
+                    last bar's own value label sits on this line. */}
                 <line
                     x1={padLeft}
                     y1={yOf(nullShare)}
@@ -954,15 +978,24 @@ export function OrdinalMotifBarChart({
                     strokeWidth={1.2}
                     strokeDasharray="5 4"
                 />
+                <line
+                    x1={padLeft + 2}
+                    y1={padTop + 6}
+                    x2={padLeft + 16}
+                    y2={padTop + 6}
+                    stroke="var(--color-heat-hot)"
+                    strokeWidth={1.2}
+                    strokeDasharray="4 3"
+                />
                 <text
-                    x={padLeft + plotW}
-                    y={yOf(nullShare) - 4}
-                    textAnchor="end"
+                    x={padLeft + 20}
+                    y={padTop + 9}
+                    textAnchor="start"
                     fontSize={8.5}
                     fontFamily="var(--font-mono)"
                     fill="var(--color-heat-hot)"
                 >
-                    i.i.d. 16.67%
+                    i.i.d. {(nullShare * 100).toFixed(2)}%
                 </text>
 
                 <text x={padLeft - 6} y={padTop + 4} textAnchor="end" fontSize={8.5} fontFamily="var(--font-mono)" fill="var(--color-ink-subtle)">

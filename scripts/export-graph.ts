@@ -153,7 +153,7 @@ const nodes = Array.from({ length: 49 }, (_, i) => {
         // The sequence-dynamics scalars — flat, so NetworkX reads them as
         // ordinary node attributes.
         hawkes_intensity: r2(hawkesBy.get(num)!.intensity),
-        hawkes_branching: r2(hawkesBy.get(num)!.branching),
+        hawkes_excitation_z: r2(hawkesBy.get(num)!.excitationZ),
         spectral_period: r2(spectralBy.get(num)!.dominantPeriod),
         spectral_fisher_g: r2(spectralBy.get(num)!.g),
         in_union_5: unionFive.has(num) ? 1 : 0,
@@ -304,7 +304,7 @@ writeFileSync(
             "z25", "z50", "z100", "composite_z", "rsi14", "ema_fast", "ema_slow", "ema_spread",
             "bayes_posterior", "bayes_z", "confluence_passed", "confluence_score", "bot_votes",
             "hub_centrality", "hub_degree_pos_z",
-            "hawkes_intensity", "hawkes_branching", "spectral_period", "spectral_fisher_g", "in_union_5",
+            "hawkes_intensity", "hawkes_excitation_z", "spectral_period", "spectral_fisher_g", "in_union_5",
         ],
         nodes.map((n) => [
             n.id, n.coords[0], n.coords[1], n.parity, n.decade_tier, n.is_prime, n.current_gap,
@@ -314,7 +314,7 @@ writeFileSync(
             n.rsi_14, n.ema.fast, n.ema.slow, n.ema.spread,
             n.bayes_posterior, n.bayes_z, n.confluence_passed, n.confluence_score, n.bot_votes,
             n.hub_centrality, n.hub_degree_pos_z,
-            n.hawkes_intensity, n.hawkes_branching, n.spectral_period, n.spectral_fisher_g, n.in_union_5,
+            n.hawkes_intensity, n.hawkes_excitation_z, n.spectral_period, n.spectral_fisher_g, n.in_union_5,
         ]),
     ),
 );

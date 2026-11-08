@@ -13,7 +13,7 @@
 //   * dayOfficers: officer k = (days since 2014-10-09 mod 12) + 1 seeds
 //     {k, k+12, k+24, k+36, k+48} ∩ 1..49; arithmetic completion.
 //   * flyStarAnnual: Period-9 annual chart; center star for year Y is
-//     wrap9(2 − (Y − 2024)) (2024=3碧, 2026=1白); palaces descend along the
+//     wrap9(2 − (Y − 2024)) (2024 = 3, 2026 = 1); palaces descend along the
 //     Lo Shu path. Monthly advances the annual center by (month − 1).
 //   * mansion28: mansion j = days mod 28; its ball orbit is {j, j+28, j+7, …}
 //     (7 balls, stride 28 on the 49 ring) — the doc's "4-5 ball subset" is
@@ -22,8 +22,8 @@
 //     lunar-phase series (day-accurate); moon age = days since the most recent
 //     new moon; the lunar day's 28-mansion orbit is the affinity set.
 //   * plumBlossom: (month + day) mod 8 → upper trigram, (month + day + hour)
-//     mod 8 → lower (hour numeral 10 = 酉, the 18:30 SGT draw hour);
-//     trigram n (乾1兑2离3震4巽5坎6艮7坤8) maps to {n, n+8, …, n+40} ∩ 1..49.
+//     mod 8 → lower (hour numeral 10, the 18:30 SGT draw hour);
+//     trigram n (1..8 in the fixed palace order) maps to {n, n+8, …, n+40} ∩ 1..49.
 //   * sunSign: the sign's classical ruler r seeds {r, r+9, r+18, r+27, r+36}.
 //   * biorhythm: cycles 23/28/33 from 2014-10-09; ball b is on a cycle's peak
 //     when b mod cycle ∈ {5-8 physical, 6-10 emotional, 7-11 intellectual}.
@@ -279,7 +279,7 @@ export const CATALOG_ALMANAC_RULES = {
     },
     plumBlossom: (p, t, r, ctx) => {
         const { month, day } = monthDayOf(ctx.dateIso);
-        const hour = 10; // 酉 — the 18:30 SGT draw hour numeral
+        const hour = 10; // the 18:30 SGT draw hour numeral
         const upper = (((month + day) % 8) || 8);
         const lower = (((month + day + hour) % 8) || 8);
         const balls = [...trigramBalls(upper), ...trigramBalls(lower)];
@@ -810,16 +810,16 @@ export const CATALOG_ALMANAC_ROWS = tuples([
     // Almanac & Time (12)
     ["biorhythm", "Almanac & Time", "Three biorhythm cycles (physical 23d, emotional 28d, intellectual 33d) from a fixed epoch; balls mapped to the cycle days at peak."],
     ["dayHexagram", "Almanac & Time", "Hexagram h = (day-of-year − 1) mod 64 + 1; its yang-line ball set from the I-Ching table seeds the line; arithmetic completion ((h + 10k − 1) mod 49 + 1)."],
-    ["dayOfficers", "Almanac & Time", "The 建除十二神 (12 day-officers) officer of the draw date maps to a fixed ball set; arithmetic completion."],
+    ["dayOfficers", "Almanac & Time", "The 12 day-officers of the draw date map to a fixed ball set; arithmetic completion."],
     ["dayRoot", "Almanac & Time", "Root u = digit-sum of the date dd.mm.yyyy reduced to one digit; seeds u and u+45 (or u−4), arithmetic completion."],
-    ["flyStarAnnual", "Almanac & Time", "The annual Flying Star (玄空飞星) chart of the current year — star numbers mapped to balls."],
+    ["flyStarAnnual", "Almanac & Time", "The annual Flying Star chart of the current year — star numbers mapped to balls."],
     ["flyStarMonthly", "Almanac & Time", "The MONTHLY flying-star chart layered on the annual — the visiting star's set."],
     ["mansion28", "Almanac & Time", "The 28 lunar mansions mapped onto 1-49; play the current date's mansion set."],
     ["moonAge", "Almanac & Time", "Moon age (days since new moon) of the draw date; each moon-day has an affinity set (lunar 28-mansion sub-sets); form-ranked."],
     ["moonList", "Almanac & Time", "Lunar-calendar number list for the draw date."],
-    ["plumBlossom", "Almanac & Time", "梅花易数 plum-blossom divination for the draw timestamp: hour+day+month numerals reduced, mapped to trigram ball sets."],
+    ["plumBlossom", "Almanac & Time", "Plum-blossom divination for the draw timestamp: hour+day+month numerals reduced, mapped to trigram ball sets."],
     ["sunSign", "Almanac & Time", "The current Western zodiac sign's traditional ruler numbers."],
-    ["wealthGod", "Almanac & Time", "财神 wealth-god auspicious set (8-tilted numerology)."],
+    ["wealthGod", "Almanac & Time", "Wealth-god auspicious set (8-tilted numerology)."],
     // Folk & Culture (10)
     ["angelNum", "Folk & Culture", "Angel-number numerology: balls whose number or digit-pattern matches the day's angel number class, form-ranked."],
     ["bolakBalik", "Folk & Culture", "Reverse the digits of each of the last draw's balls (e.g. 26→62, 7→70→ rejected, 13→31); keep valid 1-49 transforms; ensemble fill."],
@@ -843,7 +843,7 @@ export const CATALOG_ALMANAC_ROWS = tuples([
     ["wxMetal", "Mark Six Charts", "Metal element set (4,9 stems: {4,9,14,19,24,29,34,39,44,49}), form-ranked."],
     ["wxWater", "Mark Six Charts", "Water element set [1, 14, 15, 22, 23, 30, 31, 44, 45], form-ranked."],
     ["wxWood", "Mark Six Charts", "Wood element set (3,8 mod-10 stems: {3,8,13,18,23,28,33,38,43,48}), form-ranked."],
-    // Other (48)
+    // Other (36)
     ["addlTailChase", "Other", "One ball sharing the last ADDITIONAL ball's last digit + ensemble fill."],
     ["affinityAnchor", "Other", "Anchor one of the top-5 positive-z pairs; fill 4 slots with balls whose pair-z with BOTH anchors lies in [−1,+1] (neutral); ensemble fill the rest."],
     ["alternatorChase", "Other", "Length of the trailing hit/miss alternation run (positive when currently absent — the due side of an alternating rhythm)."],
@@ -860,7 +860,7 @@ export const CATALOG_ALMANAC_ROWS = tuples([
     ["ewma75", "Other", "EWMA of hits with half-life 75 draws."],
     ["fibGaps", "Other", "Sorted gaps drawn from {1,2,3,5,8} (Fibonacci), start 1-11, span fit to sum band."],
     ["haloExpand", "Other", "Two balls from the ±1 WRAPAROUND halo (1↔49 wrap) of the previous draw, ensemble fill."],
-    ["heSumParity", "Other", "Compute each candidate ball's digit-sum parity; from the ensemble top pool take the 3 highest odd-digit-sum balls + the 3 highest even-digit-sum balls — the Chinese he-sum (合数) parity balance."],
+    ["heSumParity", "Other", "Compute each candidate ball's digit-sum parity; from the ensemble top pool take the 3 highest odd-digit-sum balls + the 3 highest even-digit-sum balls — the he-sum parity balance."],
     ["hitMissEdge", "Other", "Per-ball P(hit | missed previous) − P(hit | hit previous) — the raw transition edge."],
     ["ignition2of10", "Other", "Indicator of exactly 2 hits in the last 10 draws (early ignition); balls with ≥4 hits in 10 are banned."],
     ["pairSum51", "Other", "One pair summing to 51 + structural fill."],
@@ -880,18 +880,19 @@ export const CATALOG_ALMANAC_ROWS = tuples([
     ["tailHotPair", "Other", "2 balls from the hottest tail digit of the last 20 draws + ensemble fill."],
     ["twiceFive", "Other", "Indicator of exactly 2 hits in the last 5 draws."],
     ["zigzagParity", "Other", "Strictly alternating odd/even when sorted (parities 010101 or 101010), sum 115-185."],
-    ["zodDog", "Other", "The Dog zodiac column of the Mark-Six board {9, 21, 33, 45} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodDragon", "Other", "The Dragon zodiac column of the Mark-Six board {3, 15, 27, 39} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodGoat", "Other", "The Goat zodiac column of the Mark-Six board {12, 24, 36, 48} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodHorse", "Other", "The Horse zodiac column of the Mark-Six board {1, 13, 25, 37, 49} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodMonkey", "Other", "The Monkey zodiac column of the Mark-Six board {11, 23, 35, 47} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodOx", "Other", "The Ox zodiac column of the Mark-Six board {6, 18, 30, 42} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodPig", "Other", "The Pig zodiac column of the Mark-Six board {8, 20, 32, 44} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodRabbit", "Other", "The Rabbit zodiac column of the Mark-Six board {4, 16, 28, 40} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodRat", "Other", "The Rat zodiac column of the Mark-Six board {7, 19, 31, 43} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodRooster", "Other", "The Rooster zodiac column of the Mark-Six board {10, 22, 34, 46} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodSnake", "Other", "The Snake zodiac column of the Mark-Six board {2, 14, 26, 38} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodTiger", "Other", "The Tiger zodiac column of the Mark-Six board {5, 17, 29, 41} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
+    // Zodiac (12) — the twelve animal columns of the Mark-Six board.
+    ["zodDog", "Zodiac", "The Dog zodiac column of the Mark-Six board {9, 21, 33, 45} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
+    ["zodDragon", "Zodiac", "The Dragon zodiac column of the Mark-Six board {3, 15, 27, 39} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
+    ["zodGoat", "Zodiac", "The Goat zodiac column of the Mark-Six board {12, 24, 36, 48} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
+    ["zodHorse", "Zodiac", "The Horse zodiac column of the Mark-Six board {1, 13, 25, 37, 49} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
+    ["zodMonkey", "Zodiac", "The Monkey zodiac column of the Mark-Six board {11, 23, 35, 47} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
+    ["zodOx", "Zodiac", "The Ox zodiac column of the Mark-Six board {6, 18, 30, 42} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
+    ["zodPig", "Zodiac", "The Pig zodiac column of the Mark-Six board {8, 20, 32, 44} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
+    ["zodRabbit", "Zodiac", "The Rabbit zodiac column of the Mark-Six board {4, 16, 28, 40} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
+    ["zodRat", "Zodiac", "The Rat zodiac column of the Mark-Six board {7, 19, 31, 43} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
+    ["zodRooster", "Zodiac", "The Rooster zodiac column of the Mark-Six board {10, 22, 34, 46} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
+    ["zodSnake", "Zodiac", "The Snake zodiac column of the Mark-Six board {2, 14, 26, 38} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
+    ["zodTiger", "Zodiac", "The Tiger zodiac column of the Mark-Six board {5, 17, 29, 41} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
 ]);
 
 /** The league rows this module evaluates. */

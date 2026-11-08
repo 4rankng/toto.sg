@@ -1,6 +1,6 @@
 import { cx } from "@/utils/cx";
 
-/** Muted tone per strategy family — 27 families, one fixed colour each. */
+/** Muted tone per strategy family — 28 families, one fixed colour each. */
 const FAMILY_TONE: Record<string, string> = {
     "Almanac & Time": "bg-fam-01/12 text-fam-01 ring-fam-01/25",
     Blends: "bg-fam-02/12 text-fam-02 ring-fam-02/25",
@@ -24,6 +24,7 @@ const FAMILY_TONE: Record<string, string> = {
     Sequence: "bg-fam-16/12 text-fam-16 ring-fam-16/25",
     Sequences: "bg-fam-17/12 text-fam-17 ring-fam-17/25",
     "Seed Hunters": "bg-fam-27/12 text-fam-27 ring-fam-27/25",
+    Zodiac: "bg-fam-28/12 text-fam-28 ring-fam-28/25",
     Skip: "bg-fam-25/12 text-fam-25 ring-fam-25/25",
     Structure: "bg-fam-19/12 text-fam-19 ring-fam-19/25",
     "Sum Band": "bg-fam-20/12 text-fam-20 ring-fam-20/25",

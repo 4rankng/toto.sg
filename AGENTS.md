@@ -25,8 +25,6 @@ make verify:nulls   # npm run verify:nulls — re-derive them from the archive a
 every line-shape statistic and rewrites the block between the `BEGIN/END
 GENERATED NULL TABLES` sentinels in `src/lib/insights-sequence-dynamics.ts`.
 
-**Never hand-edit inside those sentinels** — `make nulls` overwrites them.
-
 ### Why offline, and what it costs
 
 | Statistic | Exact null over | Enumeration |
@@ -158,9 +156,9 @@ not just a lint rule.
 | `public/data/analysis.json`, `strategies.json`, `cross-panel-playbook.json`, `prize-events.json`, `graph.json` | **generated** artifacts — never hand-edit |
 | `public/data/graph-*.csv` | **generated** CSV exports of `graph.json` |
 | `data/league-cache.json` | the evaluation cache — **generated** |
-| `src/lib/insights-sequence-dynamics.ts` | the two deep sequence galleries' calculators + the live deep-scan |
+| `src/lib/insights-sequence-dynamics.ts` | the two deep sequence galleries' calculators + the live deep-scan evaluator |
 | `src/components/insights-sequence-charts.tsx` | the six sequence SVG charts |
-| `src/components/product/sequence-blueprint-bar.tsx` | `CandidateBallChip` + `SequenceBlueprintWorkbench` |
+| `src/components/product/sequence-blueprint-bar.tsx` | `CandidateBallChip` — the tappable ball chip bound to the play-slip line |
 | `src/pages/insights-screen.tsx` | the 128-panel gallery index |
 | `scripts/offline-null-tables.mjs` | the offline null-table generator |
 | `scripts/verify-sequence-nulls.ts` | the numeric self-check for those nulls |
