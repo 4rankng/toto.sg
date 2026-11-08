@@ -49,6 +49,63 @@
         0 28px 60px -46px color-mix(in oklab, var(--color-primary) 65%, transparent);
 }
 
+/* HUD corner brackets — two L-shaped accent ticks marking a card as an instrument. */
+@utility hud-corners {
+    position: relative;
+
+    &::before,
+    &::after {
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        pointer-events: none;
+    }
+
+    &::before {
+        top: -1px;
+        left: -1px;
+        border-top: 2px solid color-mix(in oklab, var(--color-accent) 60%, transparent);
+        border-left: 2px solid color-mix(in oklab, var(--color-accent) 60%, transparent);
+    }
+
+    &::after {
+        bottom: -1px;
+        right: -1px;
+        border-bottom: 2px solid color-mix(in oklab, var(--color-accent) 60%, transparent);
+        border-right: 2px solid color-mix(in oklab, var(--color-accent) 60%, transparent);
+    }
+}
+
+@keyframes beacon {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.35;
+    }
+}
+
+@utility animate-beacon {
+    animation: beacon 1.6s ease-in-out infinite;
+}
+
+@keyframes tick {
+    0%,
+    45% {
+        opacity: 1;
+    }
+    55%,
+    100% {
+        opacity: 0.25;
+    }
+}
+
+@utility animate-tick {
+    animation: tick 2s steps(1) infinite;
+}
+
 
 @utility scrollbar-hide {
     /* For Webkit-based browsers (Chrome, Safari and Opera) */
