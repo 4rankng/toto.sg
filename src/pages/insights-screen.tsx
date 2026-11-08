@@ -6,8 +6,12 @@ import {
     Hash01,
     Lightning01,
     SearchSm,
+    Target05,
     TrendUp01,
+    Users01,
 } from "@untitledui/icons";
+import { CandidateBallChip, SequenceBlueprintBar } from "@/components/product/sequence-blueprint-bar";
+import { useLineBuilder } from "@/providers/line-builder-provider";
 import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
 import { PageHeader } from "@/components/product/page-header";
@@ -22,7 +26,6 @@ import {
     CompositionMatrix,
     DeltaProfile,
     GapVolcano,
-    JackpotTrend,
     MonthHeatmap,
     PositionLadder,
     RepeatersFlow,
@@ -42,6 +45,7 @@ import {
     EnvelopeBandChart,
     OscillatorBandChart,
     ScatterRegressionChart,
+    SlotQuantileBandChart,
     SurvivalHazardChart,
     TransitionMatrixHeatmap,
 } from "@/components/insights-indicator-charts";
@@ -70,7 +74,6 @@ import {
     compositionMatrix,
     deltaStats,
     gapStats,
-    jackpotStats,
     monthStats,
     positionLadder,
     repeaterStats,
@@ -146,9 +149,39 @@ import {
     computePythagoreanStats,
     computeQuarterWaveStats,
     computeStepLadderAp4Stats,
+    computeThreeTierCalendarStats,
     computeTaysenStats,
     computeWaldWolfowitzRunsStats,
 } from "@/lib/insights-togel-systems";
+import {
+    computeAdditionalCompanionStats,
+    computeBallChiSquareResiduals,
+    computeBayesianInclusionStats,
+    computeBestCompanionAndCliquesStats,
+    computeBoardRowColDispersion,
+    computeCandidatePoolCaptureCurve,
+    computeCoveringWheelGuarantees,
+    computeDormancyBreakoutStats,
+    computeFamilyMatchLeaderboard,
+    computeGapSpacingEntropyStats,
+    computeGreedyMatchCoverageStats,
+    computeHarmonicMultiLagTriggerStats,
+    computeKeyBallMatchLift,
+    computeKnnTwinDrawsStats,
+    computeLatestDrawTriggerStats,
+    computeMasterConfluenceBoard,
+    computeMultiWindowVelocityStats,
+    computePairGraphCentralityStats,
+    computePersonalSkipQuantileStats,
+    computePrimeCountDistribution,
+    computeSequenceEnvelopeStats,
+    computeSevenBallExposureStats,
+    computeSlotQuantileZones,
+    computeStreakAndEchoStats,
+    computeSystemMatchMultipliers,
+    computeTercileZoneMatrix,
+    computeUpcomingCalendarAffinityStats,
+} from "@/lib/insights-sequence-blueprint";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
 
@@ -191,7 +224,7 @@ interface IndexPanel {
     label: string;
 }
 
-/** The six galleries in reading order with their panels. */
+/** The nine galleries in reading order with all 112 panels. */
 const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
     {
         id: "the-numbers",
@@ -207,6 +240,10 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
             { id: "panel-triples", label: "Triples" },
             { id: "panel-last-50", label: "Last 50" },
             { id: "panel-bounce-back", label: "Return by skip" },
+            { id: "panel-seven-ball-exposure", label: "7-Ball exposure" },
+            { id: "panel-velocity-matrix", label: "Velocity matrix" },
+            { id: "panel-personal-skip-quantiles", label: "Skip quantiles" },
+            { id: "panel-streak-echo", label: "Streak echoes" },
         ],
     },
     {
@@ -221,6 +258,12 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
             { id: "panel-mirrors", label: "Mirror twins & cermin" },
             { id: "panel-feature-correlation", label: "Feature correlation" },
             { id: "panel-strategy-consensus", label: "Strategy consensus" },
+            { id: "panel-latest-draw-triggers", label: "Latest triggers" },
+            { id: "panel-harmonic-multi-lag", label: "Harmonic multi-lag" },
+            { id: "panel-hub-centrality", label: "Hub centrality" },
+            { id: "panel-best-companions", label: "Greedy companions" },
+            { id: "panel-additional-companions", label: "7th Ball companions" },
+            { id: "panel-knn-twin-draws", label: "k-NN twin draws" },
         ],
     },
     {
@@ -240,6 +283,9 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
             { id: "panel-runs", label: "Run anatomy" },
             { id: "panel-playslip-geometry", label: "Playslip geometry" },
             { id: "panel-digital-root", label: "Digital root" },
+            { id: "panel-tercile-matrix", label: "3-Tier zones" },
+            { id: "panel-row-col-dispersion", label: "7×7 Grid dispersion" },
+            { id: "panel-gap-entropy", label: "Gap spacing entropy" },
         ],
     },
     {
@@ -252,6 +298,7 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
             { id: "panel-lucky-digits", label: "Lucky digits" },
             { id: "panel-math-sequences", label: "Math sequences" },
             { id: "panel-lunar", label: "Lo Shu & Moon" },
+            { id: "panel-prime-distribution", label: "Prime balance" },
         ],
     },
     {
@@ -262,7 +309,7 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
             { id: "panel-additional", label: "Additional ball" },
             { id: "panel-month", label: "Month of year" },
             { id: "panel-weekday", label: "Weekday" },
-            { id: "panel-jackpot", label: "Jackpots" },
+            { id: "panel-upcoming-calendar", label: "Calendar affinity" },
             { id: "panel-patterns", label: "Patterns" },
             { id: "panel-weekday-split", label: "Mon vs Thu" },
             { id: "panel-chi-square", label: "Randomness audit" },
@@ -292,6 +339,9 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
             { id: "panel-coupon-sweep", label: "Coupon-collector sweep" },
             { id: "panel-atr-channel", label: "ATR-14 channel" },
             { id: "panel-composite-quant", label: "Composite quant scorecard" },
+            { id: "panel-bayesian-inclusion", label: "Bayesian inclusion" },
+            { id: "panel-dormancy-breakout", label: "Dormancy breakout" },
+            { id: "panel-ball-chi-residuals", label: "Ball χ² residuals" },
         ],
     },
     {
@@ -311,6 +361,7 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
             { id: "panel-combined-digit-sum", label: "Combined digit sum (合單)" },
             { id: "panel-homologous-clusters", label: "Twin/triple tail clusters" },
             { id: "panel-step-ladder", label: "Step-ladder AP-4 traps" },
+            { id: "panel-three-tier-calendar", label: "3-Tier calendar balance" },
         ],
     },
     {
@@ -326,14 +377,32 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
             { id: "panel-poker-tails", label: "NIST poker-hand tails" },
         ],
     },
+    {
+        id: "blueprint",
+        label: "Sequence blueprint & covering",
+        panels: [
+            { id: "panel-master-confluence", label: "8-Signal confluence" },
+            { id: "panel-envelope-filters", label: "8-Filter envelope" },
+            { id: "panel-slot-quantiles", label: "Slot quantiles" },
+            { id: "panel-greedy-coverage", label: "Greedy coverage" },
+            { id: "panel-pool-capture", label: "Pool capture curve" },
+            { id: "panel-system-multipliers", label: "System multipliers" },
+            { id: "panel-covering-wheels", label: "Covering wheels" },
+            { id: "panel-key-ball-lift", label: "Key-ball lift" },
+            { id: "panel-family-match-leaderboard", label: "Family match leaderboard" },
+        ],
+    },
 ];
 
-/** Every panel in reading order, numbered the way the panels are numbered. */
+/** Every panel in reading order, numbered 1..112. */
 const PANEL_INDEX = SECTIONS.flatMap((section) => section.panels).map((panel, index) => ({
     id: panel.id,
     label: panel.label,
     number: index + 1,
 }));
+
+const PANEL_NUMBERS = new Map<string, number>(PANEL_INDEX.map((p) => [p.id, p.number]));
+const pNum = (id: string) => PANEL_NUMBERS.get(id) ?? 1;
 
 const pct = (value: number) => `${Math.round(value * 100)}%`;
 
@@ -406,6 +475,8 @@ export const InsightsScreen = () => {
 
     const [activeSection, setActiveSection] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState<string>("");
+
+    const { line } = useLineBuilder();
 
     const { data: analysis, isLoading: analysisLoading, error: analysisError } = useJson<Analysis>("/data/analysis.json");
     const { data: draws, isLoading: drawsLoading, error: drawsError } = useJson<Draw[]>("/data/draws.json");
@@ -526,7 +597,6 @@ export const InsightsScreen = () => {
     const positions = useMemo(() => positionLadder(eraDraws), [eraDraws]);
     const months = useMemo(() => monthStats(eraDraws), [eraDraws]);
     const additional = useMemo(() => additionalStats(eraDraws), [eraDraws]);
-    const group1 = useMemo(() => (analysis ? jackpotStats(analysis.group1ByYear) : null), [analysis]);
 
     /** New gambler analytics & correlation calculators. */
     const coldPairs = useMemo(() => coldPairStats(eraDraws), [eraDraws]);
@@ -599,12 +669,53 @@ export const InsightsScreen = () => {
 
     /* Gallery 8: Forensics & randomness audits */
     const quadCollisions = useMemo(() => computeHistoricalQuadCollisionStats(eraDraws), [eraDraws]);
-    const crossEra = useMemo(() => computeCrossEraReplicationStats(), []);
+    const crossEra = useMemo(() => computeCrossEraReplicationStats(draws ?? undefined), [draws]);
     const gapExtremes = useMemo(() => computeGapExtremesStats(eraDraws), [eraDraws]);
     const lineSd = useMemo(() => computeLineSdSkewStats(eraDraws), [eraDraws]);
     const runsTest = useMemo(() => computeWaldWolfowitzRunsStats(eraDraws), [eraDraws]);
     const ksTest = useMemo(() => computeKsUniformityStats(eraDraws), [eraDraws]);
     const pokerTails = useMemo(() => computePokerTailTestStats(eraDraws), [eraDraws]);
+
+    const latestDraw = useMemo(() => eraDraws[eraDraws.length - 1], [eraDraws]);
+
+    /* Gallery 1-9 Blueprint and Match Analytics Memos */
+    const sevenBallExposure = useMemo(() => computeSevenBallExposureStats(eraDraws), [eraDraws]);
+    const velocityMatrix = useMemo(() => computeMultiWindowVelocityStats(eraDraws), [eraDraws]);
+    const skipQuantiles = useMemo(() => computePersonalSkipQuantileStats(eraDraws), [eraDraws]);
+    const streakEcho = useMemo(() => computeStreakAndEchoStats(eraDraws), [eraDraws]);
+
+    const latestTriggers = useMemo(() => computeLatestDrawTriggerStats(eraDraws), [eraDraws]);
+    const harmonicMultiLag = useMemo(() => computeHarmonicMultiLagTriggerStats(eraDraws), [eraDraws]);
+    const hubCentrality = useMemo(() => computePairGraphCentralityStats(eraDraws), [eraDraws]);
+    const bestCompanions = useMemo(() => computeBestCompanionAndCliquesStats(eraDraws), [eraDraws]);
+    const additionalCompanions = useMemo(() => computeAdditionalCompanionStats(eraDraws), [eraDraws]);
+    const knnTwins = useMemo(() => computeKnnTwinDrawsStats(eraDraws), [eraDraws]);
+
+    const tercileMatrix = useMemo(() => computeTercileZoneMatrix(eraDraws), [eraDraws]);
+    const rowColDispersion = useMemo(() => computeBoardRowColDispersion(eraDraws), [eraDraws]);
+    const gapEntropy = useMemo(() => computeGapSpacingEntropyStats(eraDraws), [eraDraws]);
+
+    const primeDistribution = useMemo(() => computePrimeCountDistribution(eraDraws), [eraDraws]);
+    const upcomingCalendar = useMemo(() => computeUpcomingCalendarAffinityStats(eraDraws), [eraDraws]);
+
+    const bayesianInclusion = useMemo(() => computeBayesianInclusionStats(eraDraws), [eraDraws]);
+    const dormancyBreakout = useMemo(() => computeDormancyBreakoutStats(eraDraws), [eraDraws]);
+    const ballChiResiduals = useMemo(() => computeBallChiSquareResiduals(eraDraws), [eraDraws]);
+
+    const threeTierCalendar = useMemo(() => computeThreeTierCalendarStats(eraDraws), [eraDraws]);
+
+    const confluenceBoard = useMemo(() => (analysis ? computeMasterConfluenceBoard(eraDraws, analysis, league ?? undefined) : null), [eraDraws, analysis, league]);
+    const envelopeStats = useMemo(() => computeSequenceEnvelopeStats(eraDraws), [eraDraws]);
+    const slotQuantiles = useMemo(() => computeSlotQuantileZones(eraDraws), [eraDraws]);
+    const greedyCoverage = useMemo(() => computeGreedyMatchCoverageStats(eraDraws), [eraDraws]);
+    const poolCapture = useMemo(() => {
+        const candidateBalls = confluenceBoard ? confluenceBoard.rankedBalls.map((r) => r.number) : Array.from({ length: 49 }, (_, i) => i + 1);
+        return computeCandidatePoolCaptureCurve(eraDraws, candidateBalls);
+    }, [eraDraws, confluenceBoard]);
+    const systemMultipliers = useMemo(() => computeSystemMatchMultipliers(), []);
+    const coveringWheels = useMemo(() => computeCoveringWheelGuarantees(), []);
+    const keyBallLift = useMemo(() => computeKeyBallMatchLift(), []);
+    const familyLeaderboard = useMemo(() => (league ? computeFamilyMatchLeaderboard(league) : null), [league]);
 
     const compositionMisses = useMemo(() => {
         return [...composition].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 4);
@@ -623,7 +734,7 @@ export const InsightsScreen = () => {
 
     if (analysisLoading || drawsLoading || leagueLoading) return <InsightsSkeleton />;
 
-    if (analysisError || drawsError || leagueError || !analysis || !draws || !league || !gaps || !group1 || !stratConsensus) {
+    if (analysisError || drawsError || leagueError || !analysis || !draws || !league || !gaps || !stratConsensus) {
         return (
             <Panel title="Statistics unavailable" description={analysisError?.message ?? drawsError?.message ?? leagueError?.message ?? "An analysis file is missing."}>
                 <p className="text-sm text-ink-muted">Run `npm run refresh`, then reload.</p>
@@ -675,15 +786,26 @@ export const InsightsScreen = () => {
                 description="Empirical match-count analytics across the 6/49 era — frequency, correlations, geometry, folklore and indicators, each evaluated against exact combinatorial null models. No payout analysis: the goal is data for picking lines with as many matching numbers as possible."
             />
 
-            {/* The headline numbers: 6 console KPI cards. */}
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+            {/* The headline numbers: 8 console KPI cards. */}
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">
                 <KpiCard label="Draws" value={formatNumber(total)} hint="6/49 era" icon={Hash01} tone="primary" />
                 <KpiCard label="Mean sum" value={analysis.sum.mean.toFixed(1)} hint={`median ${analysis.sum.median}`} icon={BarChart01} tone="secondary" />
                 <KpiCard label="Most seen" value={hot?.number ?? "—"} hint={hot ? `${formatNumber(hot.count)} draws` : undefined} icon={Lightning01} tone="gold" />
                 <KpiCard label="Least seen" value={cold?.number ?? "—"} hint={cold ? `${formatNumber(cold.count)} draws` : undefined} icon={Activity} tone="neutral" />
                 <KpiCard label="Overdue" value={gaps.overdueCount} hint="of 49 numbers" icon={Clock} tone="primary" />
                 <KpiCard label="Top pair" value={pairs[0] ? `${pairs[0].a}–${pairs[0].b}` : "—"} hint={pairs[0] ? `${formatNumber(pairs[0].count)} draws together` : undefined} icon={TrendUp01} tone="gold" />
+                <KpiCard label="8-Signal #1" value={confluenceBoard?.rankedBalls[0]?.number ? `Ball ${confluenceBoard.rankedBalls[0].number}` : "—"} hint={confluenceBoard?.rankedBalls[0] ? `${confluenceBoard.rankedBalls[0].signalsPassed}/8 signals` : undefined} icon={Target05} tone="primary" />
+                <KpiCard label="Bot consensus" value={stratConsensus.topVoted[0] ? `Ball ${stratConsensus.topVoted[0].number}` : "—"} hint={stratConsensus.topVoted[0] ? `${stratConsensus.topVoted[0].votes} bot votes` : undefined} icon={Users01} tone="secondary" />
             </div>
+
+            {/* Live interactive sequence blueprint builder */}
+            <SequenceBlueprintBar
+                latestDraw={latestDraw}
+                confluence={confluenceBoard ?? undefined}
+                followers={latestTriggers}
+                greedy={greedyCoverage}
+                league={league ?? undefined}
+            />
 
             {/* The interactive gallery navigation bar with search and pills. */}
             <nav aria-label="Insights sections" className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-2.5">
@@ -752,7 +874,7 @@ export const InsightsScreen = () => {
                     <MasonryGrid>
                         {isVisible("panel-frequency", "the-numbers") && (
                             <InsightPanel
-                                number={1}
+                                number={pNum("panel-frequency")}
                                 section="The numbers"
                                 title="Number frequency"
                                 caption={`How many of the ${formatNumber(total)} draws each number appeared in.`}
@@ -778,7 +900,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-gap-tracker", "the-numbers") && (
                             <InsightPanel
-                                number={2}
+                                number={pNum("panel-gap-tracker")}
                                 section="The numbers"
                                 title="Gap tracker"
                                 caption="Draws since each number last came up — the longer the bar, the longer the wait."
@@ -797,7 +919,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-timeline", "the-numbers") && (
                             <InsightPanel
-                                number={3}
+                                number={pNum("panel-timeline")}
                                 section="The numbers"
                                 title="Timeline heat strip"
                                 caption={`The last ${TIMELINE_WINDOW} draws against all 49 numbers, newest on the right. The ringed cell is the additional number.`}
@@ -811,7 +933,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-streaks", "the-numbers") && (
                             <InsightPanel
-                                number={4}
+                                number={pNum("panel-streaks")}
                                 section="The numbers"
                                 title="Streak ribbons"
                                 caption={`A dot for every hit in the last ${STREAK_WINDOW} draws, sorted by how often each number turned up in the last ten.`}
@@ -830,7 +952,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-decades", "the-numbers") && (
                             <InsightPanel
-                                number={5}
+                                number={pNum("panel-decades")}
                                 section="The numbers"
                                 title="Decade spread"
                                 caption="Numbers per draw from each decade, year by year, with the all-time average on the right."
@@ -849,7 +971,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-pairs", "the-numbers") && (
                             <InsightPanel
-                                number={6}
+                                number={pNum("panel-pairs")}
                                 section="The numbers"
                                 title="Most common pairs"
                                 caption="The 10 pairs that appeared in the same draw most often."
@@ -891,7 +1013,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-cold-pairs", "the-numbers") && (
                             <InsightPanel
-                                number={7}
+                                number={pNum("panel-cold-pairs")}
                                 section="The numbers"
                                 title="Coldest & missing pairs"
                                 caption="The pairs that rarely or haven't appeared together for the longest absence."
@@ -935,7 +1057,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-triples", "the-numbers") && (
                             <InsightPanel
-                                number={8}
+                                number={pNum("panel-triples")}
                                 section="The numbers"
                                 title="Most common triples"
                                 caption="3-number combinations sharing the same draw most often out of 18,424 possible triples."
@@ -975,7 +1097,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-last-50", "the-numbers") && (
                             <InsightPanel
-                                number={9}
+                                number={pNum("panel-last-50")}
                                 section="The numbers"
                                 title="Last 50 vs all time"
                                 caption={`Appearances in the last ${RECENT_WINDOW} draws against ${movement.expected.toFixed(1)} expected.`}
@@ -1006,7 +1128,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-bounce-back", "the-numbers") && (
                             <InsightPanel
-                                number={10}
+                                number={pNum("panel-bounce-back")}
                                 section="The numbers"
                                 title="Return rate by skip (Bounce-back)"
                                 caption="Empirical probability P(hit | current skip band) testing gambler's fallacy against the 12.24% null."
@@ -1034,6 +1156,176 @@ export const InsightsScreen = () => {
                                 />
                             </InsightPanel>
                         )}
+
+                        {isVisible("panel-seven-ball-exposure", "the-numbers") && (
+                            <InsightPanel
+                                number={pNum("panel-seven-ball-exposure")}
+                                section="The numbers"
+                                title="7-Ball main+extra exposure"
+                                caption="Hit count and frequency when considering all 7 drawn balls (6 main + 1 additional) vs 6 main balls."
+                                id="panel-seven-ball-exposure"
+                                family="Frequency"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Top 7-Ball", value: `Ball ${sevenBallExposure.topExposed[0]?.number}`, hint: `${sevenBallExposure.topExposed[0]?.totalExposure} hits (${(sevenBallExposure.topExposed[0]?.totalRate * 100).toFixed(1)}%)` },
+                                    { label: "Max Extra Boost", value: `Ball ${sevenBallExposure.topAdditionalBoosted[0]?.number}`, hint: `+${sevenBallExposure.topAdditionalBoosted[0]?.additionalCount} extra balls` },
+                                    { label: "Expected 7-Ball", value: `${(sevenBallExposure.expectedTotalRate * 100).toFixed(1)}%`, hint: "14.29% chance" },
+                                ]}
+                            >
+                                <div className="overflow-x-auto mt-2">
+                                    <table className="w-full text-xs">
+                                        <thead>
+                                            <tr className="border-b border-line text-ink-subtle">
+                                                <th className={th}>Ball</th>
+                                                <th className={thNum}>Main (6)</th>
+                                                <th className={thNum}>Extra (1)</th>
+                                                <th className={thNum}>Total (7)</th>
+                                                <th className={thNum}>Rate</th>
+                                                <th className={thNum}>z-Score</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-line-soft font-mono">
+                                            {sevenBallExposure.topExposed.slice(0, 8).map((r) => (
+                                                <tr key={r.number}>
+                                                    <td className={td}><CandidateBallChip number={r.number} /></td>
+                                                    <td className={tdNum}>{r.mainCount}</td>
+                                                    <td className={tdNum}>{r.additionalCount}</td>
+                                                    <td className={tdNum}>{r.totalExposure}</td>
+                                                    <td className={tdNum}>{(r.totalRate * 100).toFixed(1)}%</td>
+                                                    <td className={tdNum}>{formatSigned(r.zScoreTotal, 2)}σ</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-velocity-matrix", "the-numbers") && (
+                            <InsightPanel
+                                number={pNum("panel-velocity-matrix")}
+                                section="The numbers"
+                                title="Multi-window velocity matrix"
+                                caption="Standardized hit velocity z-scores across rolling 5, 10, 20, and 50 draw horizons to detect emerging vs cooling momentum."
+                                id="panel-velocity-matrix"
+                                family="Momentum"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Top Speed (10d)", value: `Ball ${velocityMatrix.topSpeed10[0]?.number}`, hint: `${velocityMatrix.topSpeed10[0]?.hits10} hits in 10d` },
+                                    { label: "Accelerating", value: velocityMatrix.acceleratingBalls.length, hint: "numbers picking up" },
+                                    { label: "Cooling", value: velocityMatrix.coolingBalls.length, hint: "numbers slowing down" },
+                                ]}
+                            >
+                                <div className="overflow-x-auto mt-2">
+                                    <table className="w-full text-xs">
+                                        <thead>
+                                            <tr className="border-b border-line text-ink-subtle">
+                                                <th className={th}>Ball</th>
+                                                <th className={thNum}>5d</th>
+                                                <th className={thNum}>10d</th>
+                                                <th className={thNum}>25d</th>
+                                                <th className={thNum}>50d</th>
+                                                <th className={thNum}>Acceleration</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-line-soft font-mono">
+                                            {velocityMatrix.acceleratingBalls.slice(0, 8).map((r) => (
+                                                <tr key={r.number}>
+                                                    <td className={td}><CandidateBallChip number={r.number} /></td>
+                                                    <td className={tdNum}>{r.hits5}</td>
+                                                    <td className={tdNum}>{r.hits10}</td>
+                                                    <td className={tdNum}>{r.hits25}</td>
+                                                    <td className={tdNum}>{r.hits50}</td>
+                                                    <td className={tdNum}><span className="text-primary font-semibold">{formatSigned(r.acceleration * 100, 1)}%</span></td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-personal-skip-quantiles", "the-numbers") && (
+                            <InsightPanel
+                                number={pNum("panel-personal-skip-quantiles")}
+                                section="The numbers"
+                                title="Personal skip quantiles & stretch"
+                                caption="Each ball's current absence compared against its own historical 25th, median (50th), and 75th percentile skip intervals."
+                                id="panel-personal-skip-quantiles"
+                                family="Gaps"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Sweet Zone", value: skipQuantiles.sweetZoneBalls.length, hint: "in personal IQR" },
+                                    { label: "Dormant", value: skipQuantiles.dormantBalls.length, hint: "past personal p75" },
+                                    { label: "Underdue", value: skipQuantiles.underdueBalls.length, hint: "below personal p25" },
+                                ]}
+                            >
+                                <div className="overflow-x-auto mt-2">
+                                    <table className="w-full text-xs">
+                                        <thead>
+                                            <tr className="border-b border-line text-ink-subtle">
+                                                <th className={th}>Ball</th>
+                                                <th className={thNum}>Current Skip</th>
+                                                <th className={thNum}>p25</th>
+                                                <th className={thNum}>Median</th>
+                                                <th className={thNum}>p75</th>
+                                                <th className={thNum}>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-line-soft font-mono">
+                                            {skipQuantiles.sweetZoneBalls.slice(0, 8).map((r) => (
+                                                <tr key={r.number}>
+                                                    <td className={td}><CandidateBallChip number={r.number} /></td>
+                                                    <td className={tdNum}><span className="text-gold font-semibold">{r.currentSkip}d</span></td>
+                                                    <td className={tdNum}>{r.p25}d</td>
+                                                    <td className={tdNum}>{r.median}d</td>
+                                                    <td className={tdNum}>{r.p75}d</td>
+                                                    <td className={tdNum}><span className="text-primary font-semibold">{r.status}</span></td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-streak-echo", "the-numbers") && (
+                            <InsightPanel
+                                number={pNum("panel-streak-echo")}
+                                section="The numbers"
+                                title="Consecutive echoes & repeat decay"
+                                caption="Empirical probability of a ball reappearing 1 draw later (back-to-back), 2 draws later (1-skip echo), or 3 draws later."
+                                id="panel-streak-echo"
+                                family="Frequency"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Repeat Rate (t-1)", value: `${(streakEcho.repeatRate * 100).toFixed(1)}%`, hint: `exp ${(streakEcho.repeatRateNull * 100).toFixed(1)}%` },
+                                    { label: "Skip-1 Echo Rate", value: `${(streakEcho.skipOneEchoRate * 100).toFixed(1)}%`, hint: `exp ${(streakEcho.skipOneEchoNull * 100).toFixed(1)}%` },
+                                    { label: "Active Echo Balls", value: streakEcho.activeEchoBalls.length, hint: "drawn t-2, skipped t-1" },
+                                ]}
+                            >
+                                <div className="flex flex-col gap-3 mt-2">
+                                    <div className="flex items-center justify-between text-xs border-b border-line pb-2">
+                                        <span className="text-ink-muted">Single Repeat P(t | t-1):</span>
+                                        <span className="font-mono text-ink">{(streakEcho.repeatRate * 100).toFixed(1)}% (null: 12.2%)</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs border-b border-line pb-2">
+                                        <span className="text-ink-muted">Double Repeat P(t | t-1, t-2):</span>
+                                        <span className="font-mono text-ink">{(streakEcho.doubleRepeatRate * 100).toFixed(1)}% (null: 12.2%)</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs border-b border-line pb-2">
+                                        <span className="text-ink-muted">Skip-1 Echo P(t | t-2, miss t-1):</span>
+                                        <span className="font-mono text-ink">{(streakEcho.skipOneEchoRate * 100).toFixed(1)}% (null: 12.2%)</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        <span className="text-[11px] text-ink-subtle w-full mb-1">Active candidate echo balls from draw t-2:</span>
+                                        {streakEcho.activeEchoBalls.map((b) => (
+                                            <CandidateBallChip key={b} number={b} />
+                                        ))}
+                                    </div>
+                                </div>
+                            </InsightPanel>
+                        )}
                     </MasonryGrid>
                 </section>
             )}
@@ -1047,7 +1339,7 @@ export const InsightsScreen = () => {
                     <MasonryGrid>
                         {isVisible("panel-pair-correlation", "correlations") && (
                             <InsightPanel
-                                number={11}
+                                number={pNum("panel-pair-correlation")}
                                 section="Correlations"
                                 title="49×49 Pair correlation matrix"
                                 caption="Standardized residual z-scores for all 1,176 pairs: pink sits above chance, blue below."
@@ -1089,7 +1381,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-autocorrelation", "correlations") && (
                             <InsightPanel
-                                number={12}
+                                number={pNum("panel-autocorrelation")}
                                 section="Correlations"
                                 title="Draw autocorrelation (Lags 1–20)"
                                 caption="Correlation of draw sum with previous draws up to 20 draws back. All points stay within the 95% null band."
@@ -1108,7 +1400,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-multi-lag", "correlations") && (
                             <InsightPanel
-                                number={13}
+                                number={pNum("panel-multi-lag")}
                                 section="Correlations"
                                 title="Multi-lag carry-over decay"
                                 caption="Mean count of numbers repeating from draws 1 to 12 steps back vs expected 0.735."
@@ -1138,7 +1430,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-additional-promotion", "correlations") && (
                             <InsightPanel
-                                number={14}
+                                number={pNum("panel-additional-promotion")}
                                 section="Correlations"
                                 title="7th Ball promotion rate"
                                 caption="How often the previous draw's additional ball is drawn as a main winning number in the next draw."
@@ -1169,7 +1461,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-neighbors", "correlations") && (
                             <InsightPanel
-                                number={15}
+                                number={pNum("panel-neighbors")}
                                 section="Correlations"
                                 title="Neighbor pull (±1, ±2)"
                                 caption="Hits landed on numbers immediately adjacent to the previous draw's winning balls."
@@ -1199,7 +1491,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-mirrors", "correlations") && (
                             <InsightPanel
-                                number={16}
+                                number={pNum("panel-mirrors")}
                                 section="Correlations"
                                 title="Mirror twins (50−n) & Bolak-Balik"
                                 caption="Symmetric pairs (n + m = 50) and Indonesian Togel digit swaps (cermin) vs chance."
@@ -1231,7 +1523,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-feature-correlation", "correlations") && (
                             <InsightPanel
-                                number={17}
+                                number={pNum("panel-feature-correlation")}
                                 section="Correlations"
                                 title="Within-draw feature correlation"
                                 caption="Pearson correlation r between structural properties of the same draw."
@@ -1245,7 +1537,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-strategy-consensus", "correlations") && (
                             <InsightPanel
-                                number={18}
+                                number={pNum("panel-strategy-consensus")}
                                 section="Correlations"
                                 title={`${league?.strategies.length ?? 263}-Strategy consensus & family z-score`}
                                 caption={`Wisdom of the crowd across ${league?.strategies.length ?? 263} strategies, and mean z-score walk-forward performance by family.`}
@@ -1291,6 +1583,265 @@ export const InsightsScreen = () => {
                                 />
                             </InsightPanel>
                         )}
+
+                        {isVisible("panel-latest-draw-triggers", "correlations") && (
+                            <InsightPanel
+                                number={pNum("panel-latest-draw-triggers")}
+                                section="Correlations"
+                                title="Latest draw trigger followers"
+                                caption="Top numbers historically triggered by the exact 6 winning balls of the most recent draw (lag-1 follower conditional lift)."
+                                id="panel-latest-draw-triggers"
+                                family="Correlation"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Latest Draw", value: `#${latestTriggers.latestDrawNo}`, hint: "trigger source" },
+                                    { label: "Top Follower", value: `Ball ${latestTriggers.topFollowers[0]?.number}`, hint: `${(latestTriggers.topFollowers[0]?.pooledFollowerRate * 100).toFixed(1)}% rate` },
+                                    { label: "Top Lift", value: `${latestTriggers.topFollowers[0]?.liftRatio.toFixed(2)}×`, hint: "over null" },
+                                ]}
+                            >
+                                <div className="flex flex-wrap gap-1.5 mt-2 mb-3">
+                                    {latestTriggers.topFollowers.slice(0, 7).map((r) => (
+                                        <CandidateBallChip key={r.number} number={r.number} sublabel={`${r.liftRatio.toFixed(2)}×`} />
+                                    ))}
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-xs">
+                                        <thead>
+                                            <tr className="border-b border-line text-ink-subtle">
+                                                <th className={th}>Follower</th>
+                                                <th className={thNum}>Rate</th>
+                                                <th className={thNum}>Baseline</th>
+                                                <th className={thNum}>Lift</th>
+                                                <th className={thNum}>Trigger Votes</th>
+                                                <th className={thNum}>z-Score</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-line-soft font-mono">
+                                            {latestTriggers.topFollowers.slice(0, 6).map((r) => (
+                                                <tr key={r.number}>
+                                                    <td className={td}><CandidateBallChip number={r.number} /></td>
+                                                    <td className={tdNum}>{(r.pooledFollowerRate * 100).toFixed(1)}%</td>
+                                                    <td className={tdNum}>{(r.nullRate * 100).toFixed(1)}%</td>
+                                                    <td className={tdNum}><span className="text-primary font-semibold">{r.liftRatio.toFixed(2)}×</span></td>
+                                                    <td className={tdNum}>{r.triggerVotes} / 6</td>
+                                                    <td className={tdNum}>{formatSigned(r.zScore, 2)}σ</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-harmonic-multi-lag", "correlations") && (
+                            <InsightPanel
+                                number={pNum("panel-harmonic-multi-lag")}
+                                section="Correlations"
+                                title="Harmonic multi-lag resonance"
+                                caption="Multi-lag conditional follower lift weighted harmonically across Lags 1 (1.0×), 2 (0.5×), and 3 (0.33×)."
+                                id="panel-harmonic-multi-lag"
+                                family="Correlation"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Top Harmonic", value: `Ball ${harmonicMultiLag.topHarmonicPicks[0]?.number}`, hint: `Score ${harmonicMultiLag.topHarmonicPicks[0]?.harmonicScore}` },
+                                    { label: "Lag-1 Leader", value: `Ball ${[...harmonicMultiLag.rows].sort((a,b)=>b.lag1Score-a.lag1Score)[0]?.number}`, hint: "immediate follower" },
+                                    { label: "Lag-2 Leader", value: `Ball ${[...harmonicMultiLag.rows].sort((a,b)=>b.lag2Score-a.lag2Score)[0]?.number}`, hint: "1-skip follower" },
+                                ]}
+                            >
+                                <div className="overflow-x-auto mt-2">
+                                    <table className="w-full text-xs">
+                                        <thead>
+                                            <tr className="border-b border-line text-ink-subtle">
+                                                <th className={th}>Ball</th>
+                                                <th className={thNum}>Lag 1</th>
+                                                <th className={thNum}>Lag 2</th>
+                                                <th className={thNum}>Lag 3</th>
+                                                <th className={thNum}>Harmonic Score</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-line-soft font-mono">
+                                            {harmonicMultiLag.topHarmonicPicks.slice(0, 7).map((r) => (
+                                                <tr key={r.number}>
+                                                    <td className={td}><CandidateBallChip number={r.number} /></td>
+                                                    <td className={tdNum}>{r.lag1Score.toFixed(2)}</td>
+                                                    <td className={tdNum}>{r.lag2Score.toFixed(2)}</td>
+                                                    <td className={tdNum}>{r.lag3Score.toFixed(2)}</td>
+                                                    <td className={tdNum}><span className="text-primary font-semibold">{r.harmonicScore.toFixed(2)}</span></td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-hub-centrality", "correlations") && (
+                            <InsightPanel
+                                number={pNum("panel-hub-centrality")}
+                                section="Correlations"
+                                title="Pair graph eigenvector hubs"
+                                caption="Network centrality and degree of positive correlation in the 49-ball pairwise co-occurrence graph."
+                                id="panel-hub-centrality"
+                                family="Correlation"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Super Hub", value: `Ball ${hubCentrality.topHubs[0]?.number}`, hint: `${hubCentrality.topHubs[0]?.degreePositiveZ} positive partners` },
+                                    { label: "Top Partner", value: `${hubCentrality.topHubs[0]?.number} & ${hubCentrality.topHubs[0]?.topPartner.partner}`, hint: `z = +${hubCentrality.topHubs[0]?.topPartner.zScore.toFixed(2)}σ` },
+                                    { label: "Isolated", value: `Ball ${hubCentrality.isolatedBalls[0]?.number}`, hint: `${hubCentrality.isolatedBalls[0]?.degreePositiveZ} positive partners` },
+                                ]}
+                            >
+                                <div className="overflow-x-auto mt-2">
+                                    <table className="w-full text-xs">
+                                        <thead>
+                                            <tr className="border-b border-line text-ink-subtle">
+                                                <th className={th}>Ball</th>
+                                                <th className={thNum}>Partners (z≥1σ)</th>
+                                                <th className={thNum}>Sum Pair z</th>
+                                                <th className={th}>Top Companion</th>
+                                                <th className={thNum}>Pair z</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-line-soft font-mono">
+                                            {hubCentrality.topHubs.slice(0, 6).map((r) => (
+                                                <tr key={r.number}>
+                                                    <td className={td}><CandidateBallChip number={r.number} /></td>
+                                                    <td className={tdNum}>{r.degreePositiveZ}</td>
+                                                    <td className={tdNum}>{formatSigned(r.sumPairZ, 1)}</td>
+                                                    <td className={td}><CandidateBallChip number={r.topPartner.partner} /></td>
+                                                    <td className={tdNum}><span className="text-primary">+{r.topPartner.zScore.toFixed(2)}σ</span></td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-best-companions", "correlations") && (
+                            <InsightPanel
+                                number={pNum("panel-best-companions")}
+                                section="Correlations"
+                                title="Greedy companion graph & cliques"
+                                caption="Highest co-occurring ball triplets and cliques discovered by greedy maximal clique traversal on the pair graph."
+                                id="panel-best-companions"
+                                family="Correlation"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Top Triplet", value: `${bestCompanions.topTriplets[0]?.triplet.join("–")}`, hint: `${bestCompanions.topTriplets[0]?.coOccurrences} draws together` },
+                                    { label: "Min Pair z", value: `+${bestCompanions.topTriplets[0]?.minPairZ.toFixed(2)}σ`, hint: "weakest link" },
+                                    { label: "Sum Pair z", value: `+${bestCompanions.topTriplets[0]?.sumPairZ.toFixed(2)}σ`, hint: "triplet synergy" },
+                                ]}
+                            >
+                                <div className="overflow-x-auto mt-2">
+                                    <table className="w-full text-xs">
+                                        <thead>
+                                            <tr className="border-b border-line text-ink-subtle">
+                                                <th className={th}>Triplet Clique</th>
+                                                <th className={thNum}>Meetings</th>
+                                                <th className={thNum}>Min Pair z</th>
+                                                <th className={thNum}>Sum Pair z</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-line-soft font-mono">
+                                            {bestCompanions.topTriplets.slice(0, 6).map((t, idx) => (
+                                                <tr key={idx}>
+                                                    <td className={td}>
+                                                        <div className="flex items-center gap-1">
+                                                            {t.triplet.map((b) => <CandidateBallChip key={b} number={b} />)}
+                                                        </div>
+                                                    </td>
+                                                    <td className={tdNum}>{t.coOccurrences}</td>
+                                                    <td className={tdNum}>+{t.minPairZ.toFixed(2)}σ</td>
+                                                    <td className={tdNum}><span className="text-primary font-semibold">+{t.sumPairZ.toFixed(2)}σ</span></td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-additional-companions", "correlations") && (
+                            <InsightPanel
+                                number={pNum("panel-additional-companions")}
+                                section="Correlations"
+                                title="7th Ball companion drag"
+                                caption="Which main balls appear most frequently when a 7th additional ball was drawn in Singapore Pools history."
+                                id="panel-additional-companions"
+                                family="Correlation"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Top Companion", value: `Ball ${additionalCompanions.topCompanions[0]?.number}`, hint: `${additionalCompanions.topCompanions[0]?.companionHits} extra draws` },
+                                    { label: "Top Lift", value: `${additionalCompanions.topCompanions[0]?.liftRatio.toFixed(2)}×`, hint: "over null" },
+                                    { label: "Expected Hits", value: "12.2%", hint: "6/49 baseline" },
+                                ]}
+                            >
+                                <div className="overflow-x-auto mt-2">
+                                    <table className="w-full text-xs">
+                                        <thead>
+                                            <tr className="border-b border-line text-ink-subtle">
+                                                <th className={th}>Main Ball</th>
+                                                <th className={thNum}>Companion Hits</th>
+                                                <th className={thNum}>Lift Ratio</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-line-soft font-mono">
+                                            {additionalCompanions.topCompanions.slice(0, 7).map((p) => (
+                                                <tr key={p.number}>
+                                                    <td className={td}><CandidateBallChip number={p.number} /></td>
+                                                    <td className={tdNum}>{p.companionHits}</td>
+                                                    <td className={tdNum}><span className="text-primary font-semibold">{p.liftRatio.toFixed(2)}×</span></td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-knn-twin-draws", "correlations") && (
+                            <InsightPanel
+                                number={pNum("panel-knn-twin-draws")}
+                                section="Correlations"
+                                title="k-NN historical twin draws"
+                                caption="Historical draws most similar to the latest winning draw, and the balls that subsequently appeared in the very next draw (t+1)."
+                                id="panel-knn-twin-draws"
+                                family="Pattern"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Nearest Neighbors", value: `k = ${knnTwins.k}`, hint: "twin draw sample" },
+                                    { label: "Max Overlap", value: `${knnTwins.twinDraws[0]?.ballOverlap ?? 0} balls`, hint: "historical similarity" },
+                                    { label: "Top t+1 Echo", value: `Ball ${knnTwins.tPlusOneBallTallies[0]?.number ?? "—"}`, hint: `${knnTwins.tPlusOneBallTallies[0]?.votes ?? 0} next-draw hits` },
+                                ]}
+                            >
+                                <div className="overflow-x-auto mt-2">
+                                    <table className="w-full text-xs">
+                                        <thead>
+                                            <tr className="border-b border-line text-ink-subtle">
+                                                <th className={th}>Historical Draw</th>
+                                                <th className={th}>Date</th>
+                                                <th className={thNum}>Overlap</th>
+                                                <th className={th}>Next Draw (t+1)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-line-soft font-mono">
+                                            {knnTwins.twinDraws.slice(0, 5).map((d) => (
+                                                <tr key={d.historicalDrawNo}>
+                                                    <td className={td}>#{d.historicalDrawNo}</td>
+                                                    <td className={td}>{d.date}</td>
+                                                    <td className={tdNum}><span className="text-primary font-semibold">{d.ballOverlap} / 6</span></td>
+                                                    <td className={td}>
+                                                        <div className="flex items-center gap-1">
+                                                            {d.subsequentWinningNumbers.slice(0, 4).map((b) => <CandidateBallChip key={b} number={b} />)}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </InsightPanel>
+                        )}
                     </MasonryGrid>
                 </section>
             )}
@@ -1304,7 +1855,7 @@ export const InsightsScreen = () => {
                     <MasonryGrid>
                         {isVisible("panel-sum", "the-lines") && (
                             <InsightPanel
-                                number={19}
+                                number={pNum("panel-sum")}
                                 section="The lines"
                                 title="Sum of the six numbers"
                                 caption="How often each total came up, in bands of ten. Shaded band holds most draws."
@@ -1335,7 +1886,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-sum-trend", "the-lines") && (
                             <InsightPanel
-                                number={20}
+                                number={pNum("panel-sum-trend")}
                                 section="The lines"
                                 title="Sum trend"
                                 caption={`Rolling ${SUM_TREND_WINDOW}-draw mean of the draw sum.`}
@@ -1354,7 +1905,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-odd", "the-lines") && (
                             <InsightPanel
-                                number={21}
+                                number={pNum("panel-odd")}
                                 section="The lines"
                                 title="Odd numbers per draw"
                                 caption={`Average ${oddExpected.toFixed(2)} of the six are odd.`}
@@ -1380,7 +1931,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-low", "the-lines") && (
                             <InsightPanel
-                                number={22}
+                                number={pNum("panel-low")}
                                 section="The lines"
                                 title="Low numbers per draw"
                                 caption={`Number 24 or below. Average ${lowExpected.toFixed(2)} of six.`}
@@ -1407,7 +1958,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-composition", "the-lines") && (
                             <InsightPanel
-                                number={23}
+                                number={pNum("panel-composition")}
                                 section="The lines"
                                 title="Composition matrix"
                                 caption="Odd count against high count. Pink sits above the fair share, blue below it."
@@ -1450,7 +2001,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-delta", "the-lines") && (
                             <InsightPanel
-                                number={24}
+                                number={pNum("panel-delta")}
                                 section="The lines"
                                 title="Delta profile"
                                 caption="The gaps between adjacent picks inside a single draw."
@@ -1469,7 +2020,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-position", "the-lines") && (
                             <InsightPanel
-                                number={25}
+                                number={pNum("panel-position")}
                                 section="The lines"
                                 title="Sorted-position ladder"
                                 caption="Where each sorted position lands in the draw. The pale band is the fair-cage range."
@@ -1488,7 +2039,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-span", "the-lines") && (
                             <InsightPanel
-                                number={26}
+                                number={pNum("panel-span")}
                                 section="The lines"
                                 title="Line span (max − min)"
                                 caption="Difference between the highest and lowest winning ball vs exact combinatorial distribution."
@@ -1518,7 +2069,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-ac-value", "the-lines") && (
                             <InsightPanel
-                                number={27}
+                                number={pNum("panel-ac-value")}
                                 section="The lines"
                                 title="Arithmetic Complexity (AC value)"
                                 caption="Distinct differences among picks minus 5. Values 7–9 hold 80%+ of random draws."
@@ -1549,7 +2100,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-tail-digits", "the-lines") && (
                             <InsightPanel
-                                number={28}
+                                number={pNum("panel-tail-digits")}
                                 section="The lines"
                                 title="Tail digits & distinct endings"
                                 caption="Frequency of last digits (0–9) and how many distinct endings occur per draw."
@@ -1579,7 +2130,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-runs", "the-lines") && (
                             <InsightPanel
-                                number={29}
+                                number={pNum("panel-runs")}
                                 section="The lines"
                                 title="Run anatomy & arithmetic progressions"
                                 caption="Consecutive pair occurrences (50% have none, 40% have one) and 3-term AP sequences."
@@ -1610,7 +2161,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-playslip-geometry", "the-lines") && (
                             <InsightPanel
-                                number={30}
+                                number={pNum("panel-playslip-geometry")}
                                 section="The lines"
                                 title="7×7 Playslip geometry"
                                 caption="Observed hits on slip diagonals, 4 corners, and center cross vs fair expectation."
@@ -1640,7 +2191,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-digital-root", "the-lines") && (
                             <InsightPanel
-                                number={31}
+                                number={pNum("panel-digital-root")}
                                 section="The lines"
                                 title="Digital root & mod 9 balance"
                                 caption="Sum digital root (1–9) and ball mod 9 residue shares vs uniform 11.1% expectation."
@@ -1668,6 +2219,99 @@ export const InsightsScreen = () => {
                                 />
                             </InsightPanel>
                         )}
+
+                        {isVisible("panel-tercile-matrix", "the-lines") && (
+                            <InsightPanel
+                                number={pNum("panel-tercile-matrix")}
+                                section="The lines"
+                                title="3-Tier zone balance (1–16, 17–33, 34–49)"
+                                caption="Historical distribution of draws across Low (1–16), Mid (17–33), and High (34–49) third-of-board zones."
+                                id="panel-tercile-matrix"
+                                family="Geometry"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Modal Pattern", value: tercileMatrix.modalPattern, hint: "most frequent tier split" },
+                                    { label: "Top Pattern", value: tercileMatrix.topPatterns[0]?.pattern ?? "2-2-2", hint: `${(tercileMatrix.topPatterns[0]?.observedRate ?? 0).toFixed(1)}% draws` },
+                                    { label: "Expected Rate", value: `${(tercileMatrix.topPatterns[0]?.expectedRate ?? 0).toFixed(1)}%`, hint: "hypergeometric null" },
+                                ]}
+                            >
+                                <ObservedExpectedBarChart
+                                    items={tercileMatrix.topPatterns.slice(0, 6).map((p) => ({
+                                        label: p.pattern,
+                                        observedValue: p.observedRate,
+                                        expectedValue: p.expectedRate,
+                                        formattedObserved: `${p.observedRate.toFixed(1)}% (${p.count}d)`,
+                                        formattedExpected: `${p.expectedRate.toFixed(1)}%`,
+                                        tone: p.observedRate >= p.expectedRate ? "primary" : "secondary",
+                                    }))}
+                                    maxValue={25}
+                                    orientation="vertical"
+                                    className="mt-2"
+                                />
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-row-col-dispersion", "the-lines") && (
+                            <InsightPanel
+                                number={pNum("panel-row-col-dispersion")}
+                                section="The lines"
+                                title="7×7 Grid row & column dispersion"
+                                caption="Dispersion of numbers across the standard 7×7 Singapore Pools bet slip layout."
+                                id="panel-row-col-dispersion"
+                                family="Geometry"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Mean Distinct Rows", value: `${rowColDispersion.distinctRowsMean} rows`, hint: "of 7 rows" },
+                                    { label: "Mean Distinct Cols", value: `${rowColDispersion.distinctColsMean} cols`, hint: "of 7 columns" },
+                                    { label: "Distinct Cells", value: "6.0", hint: "zero ball collisions" },
+                                ]}
+                            >
+                                <ObservedExpectedBarChart
+                                    items={rowColDispersion.rowsCoverageDistribution.map((r) => ({
+                                        label: `${r.rows} rows`,
+                                        observedValue: r.pct,
+                                        expectedValue: r.rows === 5 ? 55 : r.rows === 6 ? 25 : 15,
+                                        formattedObserved: `${r.pct.toFixed(1)}%`,
+                                        formattedExpected: "typical",
+                                        tone: "primary",
+                                    }))}
+                                    maxValue={65}
+                                    orientation="vertical"
+                                    className="mt-2"
+                                />
+                            </InsightPanel>
+                        )}
+
+                        {isVisible("panel-gap-entropy", "the-lines") && (
+                            <InsightPanel
+                                number={pNum("panel-gap-entropy")}
+                                section="The lines"
+                                title="Gap spacing Shannon entropy"
+                                caption="Normalized Shannon information entropy of sequential gap spacing measuring whether drawn numbers cluster or spread evenly."
+                                id="panel-gap-entropy"
+                                family="Geometry"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Mean Entropy", value: `${gapEntropy.meanEntropy.toFixed(2)}`, hint: "normalized (0..1)" },
+                                    { label: "Sweet Range", value: gapEntropy.sweetEntropyRange, hint: "optimal dispersion" },
+                                    { label: "Clumpy Lines", value: `${gapEntropy.lowEntropyPct.toFixed(1)}%`, hint: "entropy < 0.70" },
+                                ]}
+                            >
+                                <div className="flex flex-col gap-3 mt-2">
+                                    <div className="flex items-center justify-between text-xs border-b border-line pb-2">
+                                        <span className="text-ink-muted">Well-Spread Draws (H ≥ 0.85):</span>
+                                        <span className="font-mono text-primary font-semibold">{gapEntropy.highEntropyPct.toFixed(1)}%</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs border-b border-line pb-2">
+                                        <span className="text-ink-muted">Clumpy / Clustered Draws (H &lt; 0.70):</span>
+                                        <span className="font-mono text-ink-muted">{gapEntropy.lowEntropyPct.toFixed(1)}%</span>
+                                    </div>
+                                    <p className="text-xs text-ink-subtle leading-relaxed">
+                                        Over 70% of historical draws fall within the {gapEntropy.sweetEntropyRange} entropy zone. Highly clustered lines with tiny gaps match significantly fewer draws.
+                                    </p>
+                                </div>
+                            </InsightPanel>
+                        )}
                     </MasonryGrid>
                 </section>
             )}
@@ -1681,7 +2325,7 @@ export const InsightsScreen = () => {
                     <MasonryGrid>
                         {isVisible("panel-color-waves", "folklore") && (
                             <InsightPanel
-                                number={32}
+                                number={pNum("panel-color-waves")}
                                 section="Folklore"
                                 title="Mark Six colour waves (紅藍綠波)"
                                 caption="Red wave (17 balls), Blue wave (16 balls) and Green wave (16 balls) hit counts."
@@ -1711,7 +2355,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-wuxing", "folklore") && (
                             <InsightPanel
-                                number={33}
+                                number={pNum("panel-wuxing")}
                                 section="Folklore"
                                 title="2026 Na-Yin Five Elements (五行)"
                                 caption="Bing-Wu Fire Horse element sets (Metal, Wood, Water, Fire, Earth) vs fair share."
@@ -1741,7 +2385,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-zodiac", "folklore") && (
                             <InsightPanel
-                                number={34}
+                                number={pNum("panel-zodiac")}
                                 section="Folklore"
                                 title="12 Zodiac / Togel Shio columns"
                                 caption="Zodiac columns (Horse holds 5 balls in 2026; others hold 4) vs fair share."
@@ -1771,7 +2415,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-lucky-digits", "folklore") && (
                             <InsightPanel
-                                number={35}
+                                number={pNum("panel-lucky-digits")}
                                 section="Folklore"
                                 title="Lucky digits vs Tetraphobia (4)"
                                 caption="Cage hit rates for Asian folklore numbers, against the per-ball expectation."
@@ -1800,7 +2444,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-math-sequences", "folklore") && (
                             <InsightPanel
-                                number={36}
+                                number={pNum("panel-math-sequences")}
                                 section="Folklore"
                                 title="Math sequences (Primes, Fib, Squares)"
                                 caption="Appearances of famous sequences in TOTO draws vs expected random density."
@@ -1830,7 +2474,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-lunar", "folklore") && (
                             <InsightPanel
-                                number={37}
+                                number={pNum("panel-lunar")}
                                 section="Folklore"
                                 title="Lo Shu 9-palace & Moon phases"
                                 caption="Lo Shu magic square palace density and mean sum by astronomical synodic moon phase."
@@ -1857,6 +2501,37 @@ export const InsightsScreen = () => {
                                 />
                             </InsightPanel>
                         )}
+
+                        {isVisible("panel-prime-distribution", "folklore") && (
+                            <InsightPanel
+                                number={pNum("panel-prime-distribution")}
+                                section="Folklore"
+                                title="Prime / composite balance"
+                                caption="Exact breakdown of primes (15 numbers: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47) per 6-ball line."
+                                id="panel-prime-distribution"
+                                family="Folklore"
+                                className="lg:col-span-6"
+                                stats={[
+                                    { label: "Recommended Mix", value: "1–3 Primes", hint: "sweet spot" },
+                                    { label: "2 Primes Rate", value: `${primeDistribution.rows[2]?.observedPct.toFixed(1)}%`, hint: `exp ${primeDistribution.rows[2]?.expectedPct.toFixed(1)}%` },
+                                    { label: "Pool Share", value: "15 / 49 primes", hint: "30.6% of balls" },
+                                ]}
+                            >
+                                <ObservedExpectedBarChart
+                                    items={primeDistribution.rows.map((d) => ({
+                                        label: `${d.primes} primes`,
+                                        observedValue: d.observedPct,
+                                        expectedValue: d.expectedPct,
+                                        formattedObserved: `${d.observedPct.toFixed(1)}% (${d.count}d)`,
+                                        formattedExpected: `${d.expectedPct.toFixed(1)}%`,
+                                        tone: d.observedPct >= d.expectedPct ? "primary" : "secondary",
+                                    }))}
+                                    maxValue={45}
+                                    orientation="vertical"
+                                    className="mt-2"
+                                />
+                            </InsightPanel>
+                        )}
                     </MasonryGrid>
                 </section>
             )}
@@ -1871,7 +2546,7 @@ export const InsightsScreen = () => {
                     <MasonryGrid>
                         {isVisible("panel-repeaters", "the-cage") && (
                             <InsightPanel
-                                number={38}
+                                number={pNum("panel-repeaters")}
                                 section="The cage"
                                 title="Repeaters flow"
                                 caption="How many numbers carried over from the previous draw."
@@ -1890,7 +2565,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-additional", "the-cage") && (
                             <InsightPanel
-                                number={39}
+                                number={pNum("panel-additional")}
                                 section="The cage"
                                 title="Additional ball"
                                 caption="How often each number came up as the seventh ball."
@@ -1909,7 +2584,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-month", "the-cage") && (
                             <InsightPanel
-                                number={40}
+                                number={pNum("panel-month")}
                                 section="The cage"
                                 title="Month of year"
                                 caption="Mean sum by calendar month and year, with the draws behind each cell."
@@ -1928,7 +2603,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-weekday", "the-cage") && (
                             <InsightPanel
-                                number={41}
+                                number={pNum("panel-weekday")}
                                 section="The cage"
                                 title="Weekday"
                                 caption="Draws per weekday, with the mean sum above each bar."
@@ -1945,28 +2620,35 @@ export const InsightsScreen = () => {
                             </InsightPanel>
                         )}
 
-                        {isVisible("panel-jackpot", "the-cage") && (
+                        {isVisible("panel-upcoming-calendar", "the-cage") && (
                             <InsightPanel
-                                number={42}
+                                number={pNum("panel-upcoming-calendar")}
                                 section="The cage"
-                                title="Group 1 by year"
-                                caption="Winning tickets per year, with the three biggest jackpots marked in gold."
-                                id="panel-jackpot"
-                                family="Pari-mutuel"
+                                title="Upcoming calendar draw affinity"
+                                caption="Historical draw affinity for the exact upcoming calendar date, matching day-of-month and weekday tendencies."
+                                id="panel-upcoming-calendar"
+                                family="Almanac & Time"
                                 className="lg:col-span-4"
                                 stats={[
-                                    { label: "Total wins", value: formatNumber(group1.totalWins), hint: "Group 1 tickets" },
-                                    { label: "Biggest", value: `S$${(group1.peak.max / 1_000_000).toFixed(1)}M`, hint: group1.peak.year },
-                                    { label: "Years", value: group1.years.length, hint: "with a Group 1" },
+                                    { label: "Target Weekday", value: upcomingCalendar.targetWeekday, hint: "upcoming draw" },
+                                    { label: "Target Half", value: upcomingCalendar.targetMonthHalf, hint: "day of month" },
+                                    { label: "Top Pick", value: `Ball ${upcomingCalendar.topWeekdayLeaders[0]?.number ?? "—"}`, hint: `Score ${(upcomingCalendar.topWeekdayLeaders[0]?.compositeCalendarScore ?? 0).toFixed(2)}` },
                                 ]}
                             >
-                                <JackpotTrend stats={group1} height={284} className="mt-2" />
+                                <div className="flex flex-wrap gap-1.5 mt-2 mb-2">
+                                    {upcomingCalendar.topWeekdayLeaders.slice(0, 7).map((p) => (
+                                        <CandidateBallChip key={p.number} number={p.number} sublabel={`+${p.compositeCalendarScore.toFixed(1)}`} />
+                                    ))}
+                                </div>
+                                <p className="text-xs text-ink-subtle mt-2 leading-relaxed">
+                                    Historical draws sharing weekday ({upcomingCalendar.targetWeekday}) and month interval ({upcomingCalendar.targetMonthHalf}) reveal empirical clustering tendencies for upcoming draw cycles.
+                                </p>
                             </InsightPanel>
                         )}
 
                         {isVisible("panel-patterns", "the-cage") && (
                             <InsightPanel
-                                number={43}
+                                number={pNum("panel-patterns")}
                                 section="The cage"
                                 title="Patterns"
                                 caption="How often a draw repeats itself."
@@ -2006,7 +2688,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-weekday-split", "the-cage") && (
                             <InsightPanel
-                                number={44}
+                                number={pNum("panel-weekday-split")}
                                 section="The cage"
                                 title="Monday vs Thursday ball split"
                                 caption="Hit rate differential between Monday and Thursday draws across all 49 numbers."
@@ -2034,7 +2716,7 @@ export const InsightsScreen = () => {
 
                         {isVisible("panel-chi-square", "the-cage") && (
                             <InsightPanel
-                                number={45}
+                                number={pNum("panel-chi-square")}
                                 section="The cage"
                                 title="Chi-square (χ²) randomness audit"
                                 caption="Standard statistical goodness-of-fit tests verifying cage randomness across 5 orthogonal dimensions."
@@ -2061,7 +2743,7 @@ export const InsightsScreen = () => {
                 <LazyGallerySection id="indicators" title="6. Indicators & oscillators" forceMount={forceMount}>
                     {isVisible("panel-rsi", "indicators") && (
                         <InsightPanel
-                            number={46}
+                                number={pNum("panel-rsi")}
                             section="Indicators"
                             title="Per-ball Wilder RSI-14 oscillator"
                             caption="14-draw Relative Strength Index per ball. Standard overbought (>65) and oversold (<35) momentum regimes."
@@ -2091,7 +2773,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-macd", "indicators") && (
                         <InsightPanel
-                            number={47}
+                                number={pNum("panel-macd")}
                             section="Indicators"
                             title="MACD (12/26/9) velocity & signal crossover"
                             caption="12-draw vs 26-draw exponential moving average histogram of ball occurrences, showing short-term acceleration."
@@ -2123,7 +2805,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-bollinger", "indicators") && (
                         <InsightPanel
-                            number={48}
+                                number={pNum("panel-bollinger")}
                             section="Indicators"
                             title="Bollinger sum bands (%B & volatility squeeze)"
                             caption="20-draw moving average sum with ±2σ envelope. Bandwidth squeeze signals imminent volatility expansion."
@@ -2152,7 +2834,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-multi-horizon", "indicators") && (
                         <InsightPanel
-                            number={49}
+                                number={pNum("panel-multi-horizon")}
                             section="Indicators"
                             title="Multi-horizon standardized Z-scores (25d / 50d / 100d)"
                             caption="Confluent momentum vs regression across 25, 50, and 100 draw horizons."
@@ -2187,7 +2869,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-ema-ribbon", "indicators") && (
                         <InsightPanel
-                            number={50}
+                                number={pNum("panel-ema-ribbon")}
                             section="Indicators"
                             title="EMA ribbons (EMA-8, 13, 21, 34, 55)"
                             caption="Multi-period exponential ribbons measuring trend alignment and compression across draw series."
@@ -2214,7 +2896,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-stochastic", "indicators") && (
                         <InsightPanel
-                            number={51}
+                                number={pNum("panel-stochastic")}
                             section="Indicators"
                             title="Stochastic oscillator (%K / %D)"
                             caption="14-draw stochastic position within rolling appearance range. Identifies overbought (>80) and oversold (<20) clusters."
@@ -2243,7 +2925,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-cusum", "indicators") && (
                         <InsightPanel
-                            number={52}
+                                number={pNum("panel-cusum")}
                             section="Indicators"
                             title="CUSUM structural drift & break detector"
                             caption="Cumulative sum of draw sum residuals from theoretical mean 150. Tracks macro cage drifts."
@@ -2273,7 +2955,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-hurst", "indicators") && (
                         <InsightPanel
-                            number={53}
+                                number={pNum("panel-hurst")}
                             section="Indicators"
                             title="Hurst exponent (R/S rescaled range analysis)"
                             caption="Measures long-memory persistence: H=0.50 denotes pure random walk, H>0.50 trending, H<0.50 mean-reverting."
@@ -2303,7 +2985,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-shannon-entropy", "indicators") && (
                         <InsightPanel
-                            number={54}
+                                number={pNum("panel-shannon-entropy")}
                             section="Indicators"
                             title="Shannon information entropy vs maximum null"
                             caption="Measures outcome randomness in bits: empirical entropy compared to theoretical max log2(49) = 5.615 bits."
@@ -2326,7 +3008,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-gini", "indicators") && (
                         <InsightPanel
-                            number={55}
+                                number={pNum("panel-gini")}
                             section="Indicators"
                             title="Gini concentration & Lorenz curve of appearances"
                             caption="Evaluates ball appearance inequality across 1,238 draws against binomial null expectation."
@@ -2356,7 +3038,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-fano", "indicators") && (
                         <InsightPanel
-                            number={56}
+                                number={pNum("panel-fano")}
                             section="Indicators"
                             title="Fano dispersion index (σ² / μ)"
                             caption="Variance-to-mean ratio across 25-draw sub-windows. Poisson processes yield Fano ≈ 1.0; sub-Poisson indicates clockwork regular spacing."
@@ -2388,7 +3070,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-kaplan-meier", "indicators") && (
                         <InsightPanel
-                            number={57}
+                                number={pNum("panel-kaplan-meier")}
                             section="Indicators"
                             title="Kaplan–Meier discrete hazard & survival curve"
                             caption="Conditional probability of a ball appearing at skip t given absence up to t, plotted against geometric null p=6/49."
@@ -2418,7 +3100,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-cycle-ratio", "indicators") && (
                         <InsightPanel
-                            number={58}
+                                number={pNum("panel-cycle-ratio")}
                             section="Indicators"
                             title="Personal cycle ratio (Current skip ÷ Empirical cycle)"
                             caption="Ratio of current absence to each ball's historical appearance frequency. >2.5x indicates hyper-overdue status."
@@ -2450,7 +3132,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-hot-hand", "indicators") && (
                         <InsightPanel
-                            number={59}
+                                number={pNum("panel-hot-hand")}
                             section="Indicators"
                             title="Hot-hand vs gambler's fallacy scoreboard"
                             caption="Empirical test: do numbers on 1–2 draw streaks repeat more often than overdue numbers (skip >18) return? Both compared to exact binomial nulls."
@@ -2473,7 +3155,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-markov", "indicators") && (
                         <InsightPanel
-                            number={60}
+                                number={pNum("panel-markov")}
                             section="Indicators"
                             title="49×49 Markov lag-1 transition matrix lift"
                             caption="Empirical conditional probability P(ball b at t | ball a at t-1) normalized by the uniform cage rate (6/49)². Highlights directed pairwise triggers."
@@ -2496,7 +3178,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-volatility-regime", "indicators") && (
                         <InsightPanel
-                            number={61}
+                                number={pNum("panel-volatility-regime")}
                             section="Indicators"
                             title="Draw sum volatility regime transition matrix"
                             caption="Categorizes draws into Low (<122), Normal (122–178), and High (>178) sum volatility regimes with Markov transition probabilities."
@@ -2522,7 +3204,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-mean-reversion", "indicators") && (
                         <InsightPanel
-                            number={62}
+                                number={pNum("panel-mean-reversion")}
                             section="Indicators"
                             title="Regression-to-the-mean slope (ΔFreq vs Initial Residual)"
                             caption="40-draw frequency change plotted against prior standardized residual. Negative slope quantifies mechanical regression to the mean."
@@ -2553,7 +3235,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-coupon-sweep", "indicators") && (
                         <InsightPanel
-                            number={63}
+                                number={pNum("panel-coupon-sweep")}
                             section="Indicators"
                             title="Coupon-collector 49-ball sweep velocity"
                             caption="Number of draws required to observe all 49 balls. Theoretical harmonic expectation is 36.6 draws."
@@ -2584,7 +3266,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-atr-channel", "indicators") && (
                         <InsightPanel
-                            number={64}
+                                number={pNum("panel-atr-channel")}
                             section="Indicators"
                             title="Average True Range (ATR-14) sum channel"
                             caption="14-draw Average True Range envelope on draw sums, identifying extreme breakout volatility draws."
@@ -2607,7 +3289,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-composite-quant", "indicators") && (
                         <InsightPanel
-                            number={65}
+                                number={pNum("panel-composite-quant")}
                             section="Indicators"
                             title="6-Factor composite quant scorecard"
                             caption="Combines 10-draw velocity, survival hazard, Markov trigger, pair hub centrality, weekday skew, and era frequency into an omnibus score."
@@ -2636,6 +3318,109 @@ export const InsightsScreen = () => {
                             />
                         </InsightPanel>
                     )}
+
+                    {isVisible("panel-bayesian-inclusion", "indicators") && (
+                        <InsightPanel
+                            number={pNum("panel-bayesian-inclusion")}
+                            section="Indicators"
+                            title="Empirical Bayesian posterior inclusion"
+                            caption="Empirical Bayes shrinkage with exponential historical decay isolating persistent signal from noise."
+                            id="panel-bayesian-inclusion"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Top Posterior", value: `Ball ${bayesianInclusion.topPicks[0]?.number}`, hint: `${(bayesianInclusion.topPicks[0]?.posteriorProb * 100).toFixed(2)}% prob` },
+                                { label: "Top Pick z", value: `+${bayesianInclusion.topPicks[0]?.zScore.toFixed(2)}σ`, hint: "shrinkage score" },
+                                { label: "Expected in Top 6", value: `${bayesianInclusion.expectedHitsInTop6} balls`, hint: "cumulative expectation" },
+                            ]}
+                        >
+                            <div className="overflow-x-auto mt-2">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-line text-ink-subtle">
+                                            <th className={th}>Rank</th>
+                                            <th className={th}>Ball</th>
+                                            <th className={thNum}>Posterior Prob</th>
+                                            <th className={thNum}>Prior Prob</th>
+                                            <th className={thNum}>z-Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-line-soft font-mono">
+                                        {bayesianInclusion.topPicks.slice(0, 6).map((r) => (
+                                            <tr key={r.number}>
+                                                <td className={td}>#{r.rank}</td>
+                                                <td className={td}><CandidateBallChip number={r.number} /></td>
+                                                <td className={tdNum}><span className="text-primary font-semibold">{(r.posteriorProb * 100).toFixed(2)}%</span></td>
+                                                <td className={tdNum}>{(r.priorProb * 100).toFixed(2)}%</td>
+                                                <td className={tdNum}>{formatSigned(r.zScore, 2)}σ</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-dormancy-breakout", "indicators") && (
+                        <InsightPanel
+                            number={pNum("panel-dormancy-breakout")}
+                            section="Indicators"
+                            title="Dormancy breakout continuation"
+                            caption="Post-drought hit acceleration after a ball experiences an extended drought (≥15 draws of absence)."
+                            id="panel-dormancy-breakout"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Breakouts Seen", value: dormancyBreakout.totalBreakoutsObserved, hint: "drought ends" },
+                                { label: "Next 10d Mean", value: `${dormancyBreakout.hitsInNext10DrawsMean.toFixed(2)} hits`, hint: `null ${dormancyBreakout.hitsInNext10DrawsNull.toFixed(2)}` },
+                                { label: "≥2 Hits in 10d", value: `${dormancyBreakout.continuationRate.toFixed(1)}%`, hint: "continuation rate" },
+                            ]}
+                        >
+                            <div className="flex flex-col gap-2 mt-2">
+                                <span className="text-xs text-ink-subtle">Active breakout balls currently within 10 draws of ending drought:</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {dormancyBreakout.activeBreakoutBalls.length > 0 ? (
+                                        dormancyBreakout.activeBreakoutBalls.map((b) => (
+                                            <CandidateBallChip key={b.number} number={b.number} sublabel={`${b.drawsSinceBreakout}d ago`} />
+                                        ))
+                                    ) : (
+                                        <span className="text-xs text-ink-muted">No balls currently in active breakout window.</span>
+                                    )}
+                                </div>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-ball-chi-residuals", "indicators") && (
+                        <InsightPanel
+                            number={pNum("panel-ball-chi-residuals")}
+                            section="Indicators"
+                            title="Ball standardized residuals"
+                            caption="Standardized Pearson residuals (Observed - Expected) / √Expected across all 49 numbers from chi-square goodness-of-fit."
+                            id="panel-ball-chi-residuals"
+                            family="Controls"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Total χ²", value: ballChiResiduals.totalChiSquare.toFixed(1), hint: `df = ${ballChiResiduals.degreesOfFreedom}` },
+                                { label: "Top Positive", value: `Ball ${ballChiResiduals.topPositiveResiduals[0]?.number}`, hint: `+${ballChiResiduals.topPositiveResiduals[0]?.residual.toFixed(1)} draws` },
+                                { label: "Top Negative", value: `Ball ${ballChiResiduals.topNegativeResiduals[0]?.number}`, hint: `${ballChiResiduals.topNegativeResiduals[0]?.residual.toFixed(1)} draws` },
+                            ]}
+                        >
+                            <ObservedExpectedBarChart
+                                items={ballChiResiduals.topPositiveResiduals.slice(0, 4).concat(ballChiResiduals.topNegativeResiduals.slice(0, 4)).map((r) => ({
+                                    label: `Ball ${r.number}`,
+                                    observedValue: r.observed,
+                                    expectedValue: r.expected,
+                                    formattedObserved: `${r.observed} (${formatSigned(r.residual, 1)})`,
+                                    formattedExpected: `${r.expected.toFixed(1)}`,
+                                    tone: r.residual >= 0 ? "primary" : "secondary",
+                                }))}
+                                maxValue={Math.max(...ballChiResiduals.rows.map((r) => r.observed)) + 15}
+                                orientation="vertical"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
                 </LazyGallerySection>
             )}
 
@@ -2646,7 +3431,7 @@ export const InsightsScreen = () => {
                 <LazyGallerySection id="togel" title="7. Togel, Mark Six & almanac" forceMount={forceMount}>
                     {isVisible("panel-mistik-lama", "togel") && (
                         <InsightPanel
-                            number={66}
+                                number={pNum("panel-mistik-lama")}
                             section="Togel & Folklore"
                             title="Indonesian Togel Mistik Lama digit echo"
                             caption="Evaluates traditional 0↔1, 2↔5, 3↔8, 4↔7, 6↔9 tail digit mutation pairs against cage random baseline."
@@ -2672,7 +3457,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-mistik-baru", "togel") && (
                         <InsightPanel
-                            number={67}
+                                number={pNum("panel-mistik-baru")}
                             section="Togel & Folklore"
                             title="Togel Mistik Baru modern digit mutations"
                             caption="Modern Indonesian 0↔8, 1↔7, 2↔6, 3↔9, 4↔5 digit pairing frequencies."
@@ -2698,7 +3483,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-indeks", "togel") && (
                         <InsightPanel
-                            number={68}
+                                number={pNum("panel-indeks")}
                             section="Togel & Folklore"
                             title="Togel Indeks (±5 modulo 10) balance"
                             caption="Indeks transformations (0↔5, 1↔6, 2↔7, 3↔8, 4↔9) matching opposite halves of decimal digits."
@@ -2724,7 +3509,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-taysen", "togel") && (
                         <InsightPanel
-                            number={69}
+                                number={pNum("panel-taysen")}
                             section="Togel & Folklore"
                             title="Taysen / Angka Pelarian 2D shadow pairings"
                             caption="Tracks traditional Taysen digit shadow mappings (1↔4, 2↔9, 3↔6, 5↔8, 0↔7)."
@@ -2749,7 +3534,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-half-waves", "togel") && (
                         <InsightPanel
-                            number={70}
+                                number={pNum("panel-half-waves")}
                             section="Togel & Folklore"
                             title="Mark Six 6-Wave colour × parity distribution"
                             caption="Hong Kong Mark Six half-wave balance across Red/Blue/Green and Odd/Even."
@@ -2774,7 +3559,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-quarter-waves", "togel") && (
                         <InsightPanel
-                            number={71}
+                                number={pNum("panel-quarter-waves")}
                             section="Togel & Folklore"
                             title="Mark Six 12-Bucket quarter-wave decomposition"
                             caption="Decomposes 49 balls across Colour (3) × Half (2) × Parity (2) into 12 fine-grained buckets."
@@ -2801,7 +3586,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-led-strokes", "togel") && (
                         <InsightPanel
-                            number={72}
+                                number={pNum("panel-led-strokes")}
                             section="Togel & Folklore"
                             title="7-Segment LED digital stroke density"
                             caption="Total physical LED display segments required to illuminate winning numbers (e.g. 1 uses 2 segments, 8 uses 7)."
@@ -2827,7 +3612,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-ganzhi", "togel") && (
                         <InsightPanel
-                            number={73}
+                                number={pNum("panel-ganzhi")}
                             section="Togel & Folklore"
                             title="60-Day Sexagenary Ganzhi Stem/Branch almanac"
                             caption="Correlates draw dates with Chinese Heavenly Stems (天干) and Na-Yin five elements (五行)."
@@ -2852,7 +3637,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-pythagorean", "togel") && (
                         <InsightPanel
-                            number={74}
+                                number={pNum("panel-pythagorean")}
                             section="Togel & Folklore"
                             title="Pythagorean Master Numbers (11, 22, 33, 44)"
                             caption="Occurrences and draw coverage of double-digit master numbers in Western and Asian numerology."
@@ -2877,7 +3662,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-modular-sieve", "togel") && (
                         <InsightPanel
-                            number={75}
+                                number={pNum("panel-modular-sieve")}
                             section="Togel & Folklore"
                             title="Modular residue sieve (mod 3, 5, 7)"
                             caption="Verifies that numbers selected follow uniform distributions across modular arithmetic residue classes."
@@ -2898,7 +3683,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-combined-digit-sum", "togel") && (
                         <InsightPanel
-                            number={76}
+                                number={pNum("panel-combined-digit-sum")}
                             section="Togel & Folklore"
                             title="Combined digit sum parity (合單 / 合雙)"
                             caption="Asian lottery metric summing tens digit and units digit: 합단 (odd digit sum) vs 합쌍 (even digit sum)."
@@ -2919,7 +3704,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-homologous-clusters", "togel") && (
                         <InsightPanel
-                            number={77}
+                                number={pNum("panel-homologous-clusters")}
                             section="Togel & Folklore"
                             title="Twin & triple homologous tail clusters"
                             caption="Frequency of draws containing 2 or 3 balls sharing identical tail digits (e.g. 7, 17, 37)."
@@ -2939,12 +3724,12 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-step-ladder", "togel") && (
                         <InsightPanel
-                            number={78}
+                            number={pNum("panel-step-ladder")}
                             section="Togel & Folklore"
-                            title="Step-ladder AP-3 / AP-4 arithmetic progression traps"
+                            title="Step-ladder AP-3 / AP-4 progression patterns"
                             caption="Frequency of draws containing arithmetic progressions of length 3 or 4 (e.g. 10-20-30 or 7-14-21)."
                             id="panel-step-ladder"
-                            family="Pari-mutuel"
+                            family="Pattern"
                             className="lg:col-span-6"
                             stats={[
                                 { label: "AP-3 Observed", value: `${((stepLadder.ap3DrawsObserved / total) * 100).toFixed(1)}%`, hint: `exp ${stepLadder.ap3ExpectedRate}%` },
@@ -2952,8 +3737,57 @@ export const InsightsScreen = () => {
                             ]}
                         >
                             <p className="text-xs text-text-subtle leading-relaxed mt-2">
-                                While AP lines appear rarely in draws, casual punters heavily over-bet step-ladder patterns, severely depressing payouts if hit.
+                                Arithmetic progression sequences appear rarely in actual draws (under 3% for AP-3 and under 0.1% for AP-4), confirming that forced linear step sequences match historical draws significantly less frequently than dispersed sequences.
                             </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-three-tier-calendar", "togel") && (
+                        <InsightPanel
+                            number={pNum("panel-three-tier-calendar")}
+                            section="Togel & Folklore"
+                            title="Three-tier calendar date balance"
+                            caption="Historical distribution of numbers matching Tier 1 (1–12 months), Tier 2 (13–31 days), and Tier 3 (32–49 post-calendar)."
+                            id="panel-three-tier-calendar"
+                            family="Structure"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Modal Tier Split", value: threeTierCalendar.modalComposition, hint: "T1-T2-T3 distribution" },
+                                { label: "High Post-Calendar", value: `${threeTierCalendar.drawsWithHighPostCalendarPct.toFixed(1)}%`, hint: "≥3 balls in 32–49" },
+                                { label: "Post-Calendar Pool", value: "18 / 49 numbers", hint: "36.7% of balls" },
+                            ]}
+                        >
+                            <ObservedExpectedBarChart
+                                items={[
+                                    {
+                                        label: "Tier 1: 1–12 (Months)",
+                                        observedValue: threeTierCalendar.tier1DoubleCalendar.pctOfAllPicks,
+                                        expectedValue: threeTierCalendar.tier1DoubleCalendar.expectedPct,
+                                        formattedObserved: `${threeTierCalendar.tier1DoubleCalendar.pctOfAllPicks.toFixed(1)}% (${threeTierCalendar.tier1DoubleCalendar.count} picks)`,
+                                        formattedExpected: `${threeTierCalendar.tier1DoubleCalendar.expectedPct.toFixed(1)}%`,
+                                        tone: "primary",
+                                    },
+                                    {
+                                        label: "Tier 2: 13–31 (Days)",
+                                        observedValue: threeTierCalendar.tier2DaysOnly.pctOfAllPicks,
+                                        expectedValue: threeTierCalendar.tier2DaysOnly.expectedPct,
+                                        formattedObserved: `${threeTierCalendar.tier2DaysOnly.pctOfAllPicks.toFixed(1)}% (${threeTierCalendar.tier2DaysOnly.count} picks)`,
+                                        formattedExpected: `${threeTierCalendar.tier2DaysOnly.expectedPct.toFixed(1)}%`,
+                                        tone: "primary",
+                                    },
+                                    {
+                                        label: "Tier 3: 32–49 (Post-Cal)",
+                                        observedValue: threeTierCalendar.tier3PostCalendar.pctOfAllPicks,
+                                        expectedValue: threeTierCalendar.tier3PostCalendar.expectedPct,
+                                        formattedObserved: `${threeTierCalendar.tier3PostCalendar.pctOfAllPicks.toFixed(1)}% (${threeTierCalendar.tier3PostCalendar.count} picks)`,
+                                        formattedExpected: `${threeTierCalendar.tier3PostCalendar.expectedPct.toFixed(1)}%`,
+                                        tone: "primary",
+                                    },
+                                ]}
+                                maxValue={45}
+                                orientation="vertical"
+                                className="mt-2"
+                            />
                         </InsightPanel>
                     )}
                 </LazyGallerySection>
@@ -2972,7 +3806,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-quad-collisions", "systems-ev") && (
                         <InsightPanel
-                            number={79}
+                                number={pNum("panel-quad-collisions")}
                             section="Forensics"
                             title="1,892-Draw archive quadruple collision search"
                             caption="Scans all 1,892 draws since 2008 for 4-ball, 5-ball, and 6-ball identical line repetitions."
@@ -2993,7 +3827,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-cross-era-audit", "systems-ev") && (
                         <InsightPanel
-                            number={80}
+                                number={pNum("panel-cross-era-audit")}
                             section="Forensics"
                             title="6/45 era vs 6/49 era cross-audit replication"
                             caption="Correlates historical frequencies between the 6/45 era (1997–2014) and 6/49 era (2014–present) to detect mechanical cage drift."
@@ -3013,7 +3847,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-gap-extremes", "systems-ev") && (
                         <InsightPanel
-                            number={81}
+                                number={pNum("panel-gap-extremes")}
                             section="Forensics"
                             title="Min & max internal line gap extremes"
                             caption="Calculates consecutive differences between sorted winning numbers within individual draws."
@@ -3033,7 +3867,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-line-sd-skew", "systems-ev") && (
                         <InsightPanel
-                            number={82}
+                                number={pNum("panel-line-sd-skew")}
                             section="Forensics"
                             title="Line standard deviation & skewness"
                             caption="Evaluates the dispersion and asymmetry of the 6 balls within each draw against theoretical cage distributions."
@@ -3053,7 +3887,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-runs-test", "systems-ev") && (
                         <InsightPanel
-                            number={83}
+                                number={pNum("panel-runs-test")}
                             section="Forensics"
                             title="Wald–Wolfowitz non-parametric runs test"
                             caption="Tests whether sequences of draw sums falling above or below the median 150 exhibit serial dependence."
@@ -3074,7 +3908,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-ks-uniformity", "systems-ev") && (
                         <InsightPanel
-                            number={84}
+                                number={pNum("panel-ks-uniformity")}
                             section="Forensics"
                             title="Kolmogorov–Smirnov uniformity test"
                             caption="Non-parametric Kolmogorov–Smirnov test comparing the empirical cumulative distribution against the discrete uniform null."
@@ -3095,7 +3929,7 @@ export const InsightsScreen = () => {
 
                     {isVisible("panel-poker-tails", "systems-ev") && (
                         <InsightPanel
-                            number={85}
+                                number={pNum("panel-poker-tails")}
                             section="Forensics"
                             title="NIST / Poker-hand tail classification"
                             caption="Classifies draw tail digits into standard poker hand categories: All Distinct, One Pair, Two Pair, Three of a Kind, and Full House."
@@ -3133,6 +3967,375 @@ export const InsightsScreen = () => {
                         </InsightPanel>
                     )}
 
+                </LazyGallerySection>
+            )}
+
+            {/* ---------------------------------------------------------------- *
+             * 9. Sequence blueprint & covering math
+             * ---------------------------------------------------------------- */}
+            {(activeSection === "all" || activeSection === "blueprint") && (
+                <LazyGallerySection id="blueprint" title="9. Sequence blueprint & covering" forceMount={forceMount}>
+                    {isVisible("panel-master-confluence", "blueprint") && (
+                        <InsightPanel
+                            number={pNum("panel-master-confluence")}
+                            section="Blueprint"
+                            title="8-Signal master confluence board"
+                            caption="Confluence scoring synthesizing 8 independent statistical signals (Exposure, Velocity, Skip, Follower, Hub, Calendar, Bayes, Bot Consensus)."
+                            id="panel-master-confluence"
+                            family="Blueprint"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "#1 Pick", value: `Ball ${confluenceBoard?.rankedBalls[0]?.number ?? "—"}`, hint: `${confluenceBoard?.rankedBalls[0]?.signalsPassed ?? 0}/8 signals` },
+                                { label: "Top 6 Line", value: confluenceBoard ? confluenceBoard.top6ConfluenceLine.join(", ") : "—", hint: "confluence line" },
+                                { label: "Top 8 Pool", value: confluenceBoard ? confluenceBoard.top8CandidatePool.join(", ") : "—", hint: "expanded pool" },
+                                { label: "Active Signals", value: "8 Signals", hint: "zero payout math" },
+                            ]}
+                        >
+                            <div className="flex flex-wrap gap-1.5 mt-2 mb-3">
+                                {confluenceBoard?.rankedBalls.slice(0, 12).map((c) => (
+                                    <CandidateBallChip key={c.number} number={c.number} sublabel={`${c.signalsPassed}/8` } rank={c.rank} />
+                                ))}
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-line text-ink-subtle">
+                                            <th className={th}>Rank</th>
+                                            <th className={th}>Ball</th>
+                                            <th className={thNum}>Passed</th>
+                                            <th className={thNum}>Composite</th>
+                                            <th className={thNum}>Freq z</th>
+                                            <th className={thNum}>Vel z</th>
+                                            <th className={thNum}>Sweet Zone</th>
+                                            <th className={thNum}>Follow z</th>
+                                            <th className={thNum}>Hub z</th>
+                                            <th className={thNum}>Cal z</th>
+                                            <th className={thNum}>Bayes</th>
+                                            <th className={thNum}>Bots</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-line-soft font-mono">
+                                        {confluenceBoard?.rankedBalls.slice(0, 10).map((r) => (
+                                            <tr key={r.number}>
+                                                <td className={td}>#{r.rank}</td>
+                                                <td className={td}><CandidateBallChip number={r.number} /></td>
+                                                <td className={tdNum}><span className="text-primary font-bold">{r.signalsPassed}/8</span></td>
+                                                <td className={tdNum}>{r.compositeScore.toFixed(2)}</td>
+                                                <td className={tdNum}>{r.frequencyZ.toFixed(2)}</td>
+                                                <td className={tdNum}>{r.velocityZ.toFixed(2)}</td>
+                                                <td className={tdNum}>{r.sweetZone ? "YES" : "—"}</td>
+                                                <td className={tdNum}>{r.followerLiftZ.toFixed(2)}</td>
+                                                <td className={tdNum}>{r.hubCentralityZ.toFixed(2)}</td>
+                                                <td className={tdNum}>{r.weekdayZ.toFixed(2)}</td>
+                                                <td className={tdNum}>{(r.bayesianProb * 100).toFixed(1)}%</td>
+                                                <td className={tdNum}>{r.strategyVotes}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-envelope-filters", "blueprint") && (
+                        <InsightPanel
+                            number={pNum("panel-envelope-filters")}
+                            section="Blueprint"
+                            title="Combinatorial 8-filter sweet-spot envelope"
+                            caption="Historical pass rates across 8 orthogonal sequence filters: Sum (115–185), Odd (2–4), Low (2–4), Span (25–45), AC (≥7), Consecutive (≤1), Primes (1–3), and Decades (3–5)."
+                            id="panel-envelope-filters"
+                            family="Blueprint"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "≥7 Filters Passed", value: `${envelopeStats.sevenPlusPassRate.toFixed(1)}%`, hint: "sweet-spot rate" },
+                                { label: "Filters in Suite", value: "8 Filters", hint: "combinatorial envelope" },
+                                { label: "Filters Checked", value: envelopeStats.filters.length, hint: "orthogonal checks" },
+                            ]}
+                        >
+                            <ObservedExpectedBarChart
+                                items={envelopeStats.filters.map((f) => ({
+                                    label: f.filterName,
+                                    observedValue: f.historicalPassRate,
+                                    expectedValue: 75,
+                                    formattedObserved: `${f.historicalPassRate.toFixed(1)}%`,
+                                    formattedExpected: f.sweetRange,
+                                    tone: f.historicalPassRate >= 70 ? "primary" : "secondary",
+                                }))}
+                                maxValue={100}
+                                orientation="vertical"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-slot-quantiles", "blueprint") && (
+                        <InsightPanel
+                            number={pNum("panel-slot-quantiles")}
+                            section="Blueprint"
+                            title="Positional slot quantile envelopes (P1–P6)"
+                            caption="Empirical interquartile and 90% ranges for sorted positions 1 to 6 across all draws, with live candidate line overlay."
+                            id="panel-slot-quantiles"
+                            family="Blueprint"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Slot 1 Median", value: `Ball ${slotQuantiles.slots[0]?.median ?? 7}`, hint: `IQR ${slotQuantiles.slots[0]?.p25}–${slotQuantiles.slots[0]?.p75}` },
+                                { label: "Slot 6 Median", value: `Ball ${slotQuantiles.slots[5]?.median ?? 43}`, hint: `IQR ${slotQuantiles.slots[5]?.p25}–${slotQuantiles.slots[5]?.p75}` },
+                                { label: "Selected In-Zone", value: `${line.filter((n, idx) => { const s = slotQuantiles.slots[idx]; return s ? n >= s.p25 && n <= s.p75 : false; }).length} / ${Math.min(line.length, 6)}`, hint: "current line slots" },
+                            ]}
+                        >
+                            <SlotQuantileBandChart slots={slotQuantiles.slots} currentLine={line} className="mt-2" />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-greedy-coverage", "blueprint") && (
+                        <InsightPanel
+                            number={pNum("panel-greedy-coverage")}
+                            section="Blueprint"
+                            title="Greedy coverage lines (2+ and 3+ match)"
+                            caption="Algorithmic multi-line sets generated to maximize historical 2+ and 3+ match coverage using minimal ticket budgets."
+                            id="panel-greedy-coverage"
+                            family="Blueprint"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Greedy 6 2+ Cover", value: `${greedyCoverage.greedy6TwoPlusCoverPct.toFixed(1)}%`, hint: "draws matching ≥2" },
+                                { label: "Greedy 6 3+ Cover", value: `${greedyCoverage.greedy6ThreePlusCoverPct.toFixed(1)}%`, hint: "draws matching ≥3" },
+                                { label: "Greedy 8 Pool 2+", value: `${greedyCoverage.greedy8TwoPlusCoverPct.toFixed(1)}%`, hint: "8-ball coverage" },
+                            ]}
+                        >
+                            <div className="flex flex-col gap-3 mt-2">
+                                <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface-2 p-2.5">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="font-semibold text-primary">Optimal 6-Ball Greedy Line</span>
+                                        <span className="font-mono text-ink">{greedyCoverage.greedy6TwoPlusCoverPct.toFixed(1)}% (2+)</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {greedyCoverage.greedy6BallLine.map((b) => <CandidateBallChip key={b} number={b} />)}
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface-2 p-2.5">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="font-semibold text-secondary">Optimal 8-Ball Candidate Pool</span>
+                                        <span className="font-mono text-ink">{greedyCoverage.greedy8TwoPlusCoverPct.toFixed(1)}% (2+)</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {greedyCoverage.greedy8BallPool.map((b) => <CandidateBallChip key={b} number={b} />)}
+                                    </div>
+                                </div>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-pool-capture", "blueprint") && (
+                        <InsightPanel
+                            number={pNum("panel-pool-capture")}
+                            section="Blueprint"
+                            title="Candidate pool capture curve (8→20 balls)"
+                            caption="How many winning numbers are captured as candidate pool size scales from 8 to 20 balls."
+                            id="panel-pool-capture"
+                            family="Blueprint"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Pool 12 2+ Match", value: `${poolCapture.rows.find((r)=>r.poolSize===12)?.empirical2Plus ?? 0}%`, hint: `null ${poolCapture.rows.find((r)=>r.poolSize===12)?.hyper2Plus ?? 0}%` },
+                                { label: "Pool 18 3+ Match", value: `${poolCapture.rows.find((r)=>r.poolSize===18)?.empirical3Plus ?? 0}%`, hint: `null ${poolCapture.rows.find((r)=>r.poolSize===18)?.hyper3Plus ?? 0}%` },
+                                { label: "Pool 20 2+ Match", value: `${poolCapture.rows.find((r)=>r.poolSize===20)?.empirical2Plus ?? 0}%`, hint: "empirical capture" },
+                            ]}
+                        >
+                            <div className="overflow-x-auto mt-2">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-line text-ink-subtle">
+                                            <th className={th}>Pool Size</th>
+                                            <th className={thNum}>Empirical 2+</th>
+                                            <th className={thNum}>Hyper 2+ Null</th>
+                                            <th className={thNum}>Empirical 3+</th>
+                                            <th className={thNum}>Hyper 3+ Null</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-line-soft font-mono">
+                                        {poolCapture.rows.map((c) => (
+                                            <tr key={c.poolSize}>
+                                                <td className={td}><span className="font-semibold text-primary">{c.poolSize} Balls</span></td>
+                                                <td className={tdNum}>{c.empirical2Plus}%</td>
+                                                <td className={tdNum}>{c.hyper2Plus}%</td>
+                                                <td className={tdNum}><span className="text-primary font-semibold">{c.empirical3Plus}%</span></td>
+                                                <td className={tdNum}>{c.hyper3Plus}%</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-system-multipliers", "blueprint") && (
+                        <InsightPanel
+                            number={pNum("panel-system-multipliers")}
+                            section="Covering"
+                            title="System 7–12 match multipliers"
+                            caption="Exact combinatorial guarantee multipliers: how many winning pairs, triples, and quads are generated when a System bet matches k numbers."
+                            id="panel-system-multipliers"
+                            family="Covering"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Sys 7 (7 lines)", value: "7 tickets", hint: "C(7,6)" },
+                                { label: "Sys 8 (28 lines)", value: "28 tickets", hint: "C(8,6)" },
+                                { label: "Sys 12 (924 lines)", value: "924 tickets", hint: "C(12,6)" },
+                            ]}
+                        >
+                            <div className="overflow-x-auto mt-2">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-line text-ink-subtle">
+                                            <th className={th}>System</th>
+                                            <th className={thNum}>Tickets</th>
+                                            <th className={thNum}>If 4 Hits</th>
+                                            <th className={thNum}>If 5 Hits</th>
+                                            <th className={thNum}>If 6 Hits</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-line-soft font-mono">
+                                        {systemMultipliers.map((s) => (
+                                            <tr key={s.systemType}>
+                                                <td className={td}><span className="font-semibold text-primary">{s.systemType}</span></td>
+                                                <td className={tdNum}>{s.equivalentLines}</td>
+                                                <td className={tdNum}>{s.if4Matches.match4}× 4-m</td>
+                                                <td className={tdNum}>{s.if5Matches.match5}× 5-m</td>
+                                                <td className={tdNum}>{s.if6Matches.match6}× G1 + {s.if6Matches.match5}× G2</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-covering-wheels", "blueprint") && (
+                        <InsightPanel
+                            number={pNum("panel-covering-wheels")}
+                            section="Covering"
+                            title="Covering wheel guarantees (C(v,6,m))"
+                            caption="Standard mathematical covering designs providing unconditional 3-if-3, 3-if-4, or 4-if-4 guarantees at a fraction of full-system cost."
+                            id="panel-covering-wheels"
+                            family="Covering"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "C(12,6,3,3)", value: "6 tickets", hint: "vs 924 full" },
+                                { label: "C(14,6,3,3)", value: "9 tickets", hint: "vs 3,003 full" },
+                                { label: "Savings", value: "99.4%", hint: "ticket reduction" },
+                            ]}
+                        >
+                            <div className="overflow-x-auto mt-2">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-line text-ink-subtle">
+                                            <th className={th}>Design</th>
+                                            <th className={th}>Guarantee</th>
+                                            <th className={thNum}>Wheeled Tickets</th>
+                                            <th className={thNum}>Full System</th>
+                                            <th className={thNum}>Efficiency</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-line-soft font-mono">
+                                        {coveringWheels.map((w, idx) => (
+                                            <tr key={idx}>
+                                                <td className={td}><span className="font-semibold text-primary">{w.designName}</span></td>
+                                                <td className={td}>{w.guarantee}</td>
+                                                <td className={tdNum}>{w.linesRequired}</td>
+                                                <td className={tdNum}>{w.fullSystemLines}</td>
+                                                <td className={tdNum}><span className="text-gold font-semibold">{w.lineSavingsPct}% saved</span></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-key-ball-lift", "blueprint") && (
+                        <InsightPanel
+                            number={pNum("panel-key-ball-lift")}
+                            section="Covering"
+                            title="Key-ball (banker) match lift"
+                            caption="Combinatorial lift and risk profile when fixing 1 or 2 'banker' key numbers across all wheeled combinations."
+                            id="panel-key-ball-lift"
+                            family="Covering"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "1 Banker Lift", value: `${keyBallLift[1]?.multiplierVsBase.toFixed(2)}×`, hint: "when banker hits" },
+                                { label: "2 Bankers Lift", value: `${keyBallLift[2]?.multiplierVsBase.toFixed(2)}×`, hint: "when both hit" },
+                                { label: "Base 3+ Chance", value: `${keyBallLift[0]?.chanceMatch3Plus.toFixed(2)}%`, hint: "unanchored line" },
+                            ]}
+                        >
+                            <div className="overflow-x-auto mt-2">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-line text-ink-subtle">
+                                            <th className={th}>Anchors</th>
+                                            <th className={thNum}>2+ Match %</th>
+                                            <th className={thNum}>3+ Match %</th>
+                                            <th className={thNum}>4+ Match %</th>
+                                            <th className={thNum}>Lift Multiplier</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-line-soft font-mono">
+                                        {keyBallLift.map((k) => (
+                                            <tr key={k.anchorsLocked}>
+                                                <td className={td}><span className="font-semibold text-primary">{k.anchorsLocked} Banker{k.anchorsLocked !== 1 ? "s" : ""}</span></td>
+                                                <td className={tdNum}>{k.chanceMatch2Plus.toFixed(1)}%</td>
+                                                <td className={tdNum}>{k.chanceMatch3Plus.toFixed(2)}%</td>
+                                                <td className={tdNum}>{k.chanceMatch4Plus.toFixed(3)}%</td>
+                                                <td className={tdNum}><span className="text-primary font-semibold">{k.multiplierVsBase.toFixed(2)}×</span></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-family-match-leaderboard", "blueprint") && (
+                        <InsightPanel
+                            number={pNum("panel-family-match-leaderboard")}
+                            section="Blueprint"
+                            title="League family match-count leaderboard"
+                            caption="Empirical performance ranking across all 15 strategy families graded purely on match count (mean hits and 2+ hit rate), zero payout math."
+                            id="panel-family-match-leaderboard"
+                            family="Blueprint"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Top Family", value: familyLeaderboard?.topFamily.family ?? "—", hint: `${(familyLeaderboard?.topFamily.meanHits ?? 0).toFixed(2)} mean hits` },
+                                { label: "Best 2+ Rate", value: `${((familyLeaderboard?.topFamily.twoPlusRate ?? 0) * 100).toFixed(1)}%`, hint: "hit rate" },
+                                { label: "Families Graded", value: `${familyLeaderboard?.families.length ?? 0} families`, hint: "pure match count" },
+                            ]}
+                        >
+                            <div className="overflow-x-auto mt-2">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-line text-ink-subtle">
+                                            <th className={th}>Family</th>
+                                            <th className={thNum}>Strategies</th>
+                                            <th className={thNum}>Mean Hits</th>
+                                            <th className={thNum}>Expected</th>
+                                            <th className={thNum}>2+ Rate</th>
+                                            <th className={th}>Best Strategy</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-line-soft font-mono">
+                                        {familyLeaderboard?.families.map((f) => (
+                                            <tr key={f.family}>
+                                                <td className={td}><span className="font-semibold text-ink">{f.family}</span></td>
+                                                <td className={tdNum}>{f.strategyCount}</td>
+                                                <td className={tdNum}><span className="text-primary font-semibold">{f.meanHits.toFixed(2)}</span></td>
+                                                <td className={tdNum}>{f.expectedHits.toFixed(2)}</td>
+                                                <td className={tdNum}>{(f.twoPlusRate * 100).toFixed(1)}%</td>
+                                                <td className={td}><span className="text-ink-muted">{f.topStrategyName}</span></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </InsightPanel>
+                    )}
                 </LazyGallerySection>
             )}
 
