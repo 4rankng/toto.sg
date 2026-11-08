@@ -181,7 +181,10 @@ export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, li
                         </button>
                     ))}
                 </div>
+
             </div>
+
+            <HeatLegend />
 
             <div
                 ref={gridRef}
