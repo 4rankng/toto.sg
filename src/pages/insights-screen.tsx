@@ -2522,7 +2522,7 @@ export const InsightsScreen = () => {
                                 caption="Exact breakdown of primes (15 numbers: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47) per 6-ball line."
                                 id="panel-prime-distribution"
                                 family="Folklore"
-                                className="lg:col-span-6"
+                                className="lg:col-span-12"
                                 stats={[
                                     { label: "Recommended Mix", value: "1–3 Primes", hint: "sweet spot" },
                                     { label: "2 Primes Rate", value: `${primeDistribution.rows[2]?.observedPct.toFixed(1)}%`, hint: `exp ${primeDistribution.rows[2]?.expectedPct.toFixed(1)}%` },
@@ -3206,7 +3206,7 @@ export const InsightsScreen = () => {
                             <div className="grid grid-cols-3 gap-2 mt-2 font-mono text-xs text-center">
                                 {volRegimeStats.transitionMatrix.slice(0, 3).map((t, idx) => (
                                     <div key={idx} className="rounded bg-surface-2 p-2 border border-line">
-                                        <span className="text-[10px] text-text-subtle block uppercase">{t.from} → {t.to}</span>
+                                        <span className="text-[10px] text-ink-subtle block uppercase">{t.from} → {t.to}</span>
                                         <span className="font-semibold text-primary">{(t.prob * 100).toFixed(0)}%</span>
                                     </div>
                                 ))}
@@ -3261,7 +3261,7 @@ export const InsightsScreen = () => {
                             ]}
                         >
                             <div className="text-xs space-y-2 mt-2">
-                                <p className="text-text-subtle">Unseen balls in current sweep:</p>
+                                <p className="text-ink-subtle">Unseen balls in current sweep:</p>
                                 <div className="flex flex-wrap gap-1 font-mono text-xs">
                                     {couponStats.unseenInCurrentSweep.slice(0, 10).map((n) => (
                                         <span key={n} className="rounded bg-surface-2 px-1.5 py-0.5 border border-line text-text">
@@ -3269,7 +3269,7 @@ export const InsightsScreen = () => {
                                         </span>
                                     ))}
                                     {couponStats.unseenInCurrentSweep.length > 10 && (
-                                        <span className="text-text-subtle self-center">+{couponStats.unseenInCurrentSweep.length - 10} more</span>
+                                        <span className="text-ink-subtle self-center">+{couponStats.unseenInCurrentSweep.length - 10} more</span>
                                     )}
                                 </div>
                             </div>
@@ -3411,7 +3411,7 @@ export const InsightsScreen = () => {
                             caption="Standardized Pearson residuals (Observed - Expected) / √Expected across all 49 numbers from chi-square goodness-of-fit."
                             id="panel-ball-chi-residuals"
                             family="Controls"
-                            className="lg:col-span-6"
+                            className="lg:col-span-12"
                             stats={[
                                 { label: "Total χ²", value: ballChiResiduals.totalChiSquare.toFixed(1), hint: `df = ${ballChiResiduals.degreesOfFreedom}` },
                                 { label: "Top Positive", value: `Ball ${ballChiResiduals.topPositiveResiduals[0]?.number}`, hint: `+${ballChiResiduals.topPositiveResiduals[0]?.residual.toFixed(1)} draws` },
@@ -3458,7 +3458,7 @@ export const InsightsScreen = () => {
                             <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
                                 {mistikLama.pairOccurrences.map((p) => (
                                     <div key={p.pair} className="rounded bg-surface-2 p-1.5 border border-line">
-                                        <span className="text-[10px] text-text-subtle block">{p.pair}</span>
+                                        <span className="text-[10px] text-ink-subtle block">{p.pair}</span>
                                         <span className="font-semibold text-text">{p.observed}</span>
                                         <span className="text-[10px] text-primary block">{p.ratio}x</span>
                                     </div>
@@ -3484,7 +3484,7 @@ export const InsightsScreen = () => {
                             <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
                                 {mistikBaru.pairOccurrences.map((p) => (
                                     <div key={p.pair} className="rounded bg-surface-2 p-1.5 border border-line">
-                                        <span className="text-[10px] text-text-subtle block">{p.pair}</span>
+                                        <span className="text-[10px] text-ink-subtle block">{p.pair}</span>
                                         <span className="font-semibold text-text">{p.observed}</span>
                                         <span className="text-[10px] text-primary block">{p.ratio}x</span>
                                     </div>
@@ -3510,7 +3510,7 @@ export const InsightsScreen = () => {
                             <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
                                 {indeks.pairOccurrences.map((p) => (
                                     <div key={p.pair} className="rounded bg-surface-2 p-1.5 border border-line">
-                                        <span className="text-[10px] text-text-subtle block">{p.pair}</span>
+                                        <span className="text-[10px] text-ink-subtle block">{p.pair}</span>
                                         <span className="font-semibold text-text">{p.observed}</span>
                                         <span className="text-[10px] text-primary block">{p.ratio}x</span>
                                     </div>
@@ -3536,7 +3536,7 @@ export const InsightsScreen = () => {
                             <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
                                 {taysen.digitPairs.map((p) => (
                                     <div key={`${p.digit}-${p.shadow}`} className="rounded bg-surface-2 p-1.5 border border-line">
-                                        <span className="text-[10px] text-text-subtle block">{p.digit} ↔ {p.shadow}</span>
+                                        <span className="text-[10px] text-ink-subtle block">{p.digit} ↔ {p.shadow}</span>
                                         <span className="font-semibold text-text">{p.coHits}</span>
                                     </div>
                                 ))}
@@ -3561,7 +3561,7 @@ export const InsightsScreen = () => {
                             <div className="grid grid-cols-3 gap-2 mt-2 font-mono text-xs text-center">
                                 {halfWaves.waves.map((w) => (
                                     <div key={w.name} className="rounded bg-surface-2 p-2 border border-line">
-                                        <span className="text-[10px] text-text-subtle block">{w.name}</span>
+                                        <span className="text-[10px] text-ink-subtle block">{w.name}</span>
                                         <span className="font-semibold text-primary">{w.pct}%</span>
                                     </div>
                                 ))}
@@ -3613,7 +3613,7 @@ export const InsightsScreen = () => {
                             <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
                                 {ledStrokes.strokeDistribution.map((d) => (
                                     <div key={d.strokes} className="rounded bg-surface-2 p-1.5 border border-line">
-                                        <span className="text-[10px] text-text-subtle block">{d.strokes} seg</span>
+                                        <span className="text-[10px] text-ink-subtle block">{d.strokes} seg</span>
                                         <span className="font-semibold text-primary">{d.observedPct}%</span>
                                     </div>
                                 ))}
@@ -3639,7 +3639,7 @@ export const InsightsScreen = () => {
                             <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
                                 {ganzhi.stems.slice(0, 5).map((s) => (
                                     <div key={s.stem} className="rounded bg-surface-2 p-1.5 border border-line">
-                                        <span className="text-[10px] text-text-subtle block">{s.stem}</span>
+                                        <span className="text-[10px] text-ink-subtle block">{s.stem}</span>
                                         <span className="font-semibold text-text">{s.count}</span>
                                     </div>
                                 ))}
@@ -3664,7 +3664,7 @@ export const InsightsScreen = () => {
                             <div className="grid grid-cols-4 gap-2 mt-2 font-mono text-xs text-center">
                                 {pythagorean.masterNumbersHits.map((m) => (
                                     <div key={m.number} className="rounded bg-surface-2 p-2 border border-line">
-                                        <span className="text-[10px] text-text-subtle block">Ball {m.number}</span>
+                                        <span className="text-[10px] text-ink-subtle block">Ball {m.number}</span>
                                         <span className="font-semibold text-text">{m.count} hits</span>
                                     </div>
                                 ))}
@@ -3687,7 +3687,7 @@ export const InsightsScreen = () => {
                                 { label: "Mod 7 Uniform", value: "PASS", hint: "p > 0.05" },
                             ]}
                         >
-                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                            <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 All modular classes (mod 3, mod 5, mod 7) conform strictly to discrete uniform expectations with zero residue clustering.
                             </p>
                         </InsightPanel>
@@ -3708,7 +3708,7 @@ export const InsightsScreen = () => {
                                 { label: "Theoretical Null", value: `${digitSum.expectedRate}%`, hint: "25/49 balls in pool" },
                             ]}
                         >
-                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                            <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 Digit-sum parity matches the 25/49 theoretical pool composition with less than 0.2% variance.
                             </p>
                         </InsightPanel>
@@ -3728,7 +3728,7 @@ export const InsightsScreen = () => {
                                 { label: "Triple Tail Rate", value: `${homologous.tripleTailRate}%`, hint: "≥3 balls share tail" },
                             ]}
                         >
-                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                            <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 In 6/49 draws, homologous tail collisions occur in over 80% of all winning lines by basic birthday-problem mechanics.
                             </p>
                         </InsightPanel>
@@ -3748,7 +3748,7 @@ export const InsightsScreen = () => {
                                 { label: "AP-4 Observed", value: `${((stepLadder.ap4DrawsObserved / total) * 100).toFixed(1)}%`, hint: `exp ${stepLadder.ap4ExpectedRate}%` },
                             ]}
                         >
-                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                            <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 Arithmetic progression sequences appear rarely in actual draws (under 3% for AP-3 and under 0.1% for AP-4), confirming that forced linear step sequences match historical draws significantly less frequently than dispersed sequences.
                             </p>
                         </InsightPanel>
@@ -3831,7 +3831,7 @@ export const InsightsScreen = () => {
                                 { label: "Exact 6-Ball Repeats", value: "0", hint: "zero identical draws" },
                             ]}
                         >
-                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                            <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 With C(49,6) = 13,983,816 possible lines, zero exact 6-number repetitions have ever occurred in Singapore Pools history.
                             </p>
                         </InsightPanel>
@@ -3851,7 +3851,7 @@ export const InsightsScreen = () => {
                                 { label: "Cage Drift", value: "NONE", hint: crossEra.driftAssessment },
                             ]}
                         >
-                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                            <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 {crossEra.driftAssessment}
                             </p>
                         </InsightPanel>
@@ -3871,7 +3871,7 @@ export const InsightsScreen = () => {
                                 { label: "Observed Max Gap", value: `${gapExtremes?.maxGapMean ?? 17.4}`, hint: `exp ${gapExtremes?.theoreticalMaxGapMean ?? 17.4}` },
                             ]}
                         >
-                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                            <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 Internal line gaps strictly track uniform composition theory: the smallest gap averages 1.8, reflecting the frequent occurrence of consecutive pairs.
                             </p>
                         </InsightPanel>
@@ -3891,7 +3891,7 @@ export const InsightsScreen = () => {
                                 { label: "Mean Skewness", value: `${lineSd?.meanLineSkewness ?? 0.0}`, hint: `exp ${lineSd?.theoreticalSkewness ?? 0.0}` },
                             ]}
                         >
-                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                            <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 Line standard deviations center on 14.1 with zero systematic skewness, conforming to uniform sampling.
                             </p>
                         </InsightPanel>
@@ -3912,7 +3912,7 @@ export const InsightsScreen = () => {
                                 { label: "Null Verdict", value: runsTest?.isRandom ? "RANDOM" : "NON-RANDOM", hint: "independence confirmed" },
                             ]}
                         >
-                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                            <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 The Wald–Wolfowitz test yields z = {runsTest?.zScore}σ (p = {runsTest?.pValue}), confirming complete independence between consecutive draw sums.
                             </p>
                         </InsightPanel>
@@ -3933,7 +3933,7 @@ export const InsightsScreen = () => {
                                 { label: "KS Verdict", value: ksTest?.isUniform ? "UNIFORM" : "ANOMALY", hint: "passes at α=0.01" },
                             ]}
                         >
-                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                            <p className="text-xs text-ink-subtle leading-relaxed mt-2">
                                 The empirical distribution function matches the uniform null with D = {ksTest?.dStatistic}, well within the critical threshold {ksTest?.criticalD}.
                             </p>
                         </InsightPanel>
@@ -3947,7 +3947,7 @@ export const InsightsScreen = () => {
                             caption="Classifies draw tail digits into standard poker hand categories: All Distinct, One Pair, Two Pair, Three of a Kind, and Full House."
                             id="panel-poker-tails"
                             family="Structure"
-                            className="lg:col-span-6"
+                            className="lg:col-span-12"
                             stats={[
                                 { label: "One Pair (5 tails)", value: `${pokerTails?.hands[1]?.observedPct ?? 50.4}%`, hint: `exp ${pokerTails?.hands[1]?.expectedPct ?? 50.4}%` },
                                 { label: "Two Pair (4 tails)", value: `${pokerTails?.hands[2]?.observedPct ?? 23.3}%`, hint: `exp ${pokerTails?.hands[2]?.expectedPct ?? 23.3}%` },
@@ -3957,7 +3957,7 @@ export const InsightsScreen = () => {
                             <div className="mt-2">
                                 <table className="w-full border-collapse text-left text-xs">
                                     <thead>
-                                        <tr className="border-b border-line text-text-subtle">
+                                        <tr className="border-b border-line text-ink-subtle">
                                             <th className={th}>Hand Category</th>
                                             <th className={thNum}>Count</th>
                                             <th className={thNum}>Observed %</th>
@@ -4271,7 +4271,7 @@ export const InsightsScreen = () => {
                             caption="Combinatorial lift and risk profile when fixing 1 or 2 'banker' key numbers across all wheeled combinations."
                             id="panel-key-ball-lift"
                             family="Covering"
-                            className="lg:col-span-6"
+                            className="lg:col-span-12"
                             stats={[
                                 { label: "1 Banker Lift", value: `${keyBallLift[1]?.multiplierVsBase.toFixed(2)}×`, hint: "when banker hits" },
                                 { label: "2 Bankers Lift", value: `${keyBallLift[2]?.multiplierVsBase.toFixed(2)}×`, hint: "when both hit" },
@@ -4313,15 +4313,15 @@ export const InsightsScreen = () => {
                             caption="Empirical performance ranking across all 15 strategy families graded purely on match count (mean hits and 2+ hit rate), zero payout math."
                             id="panel-family-match-leaderboard"
                             family="Blueprint"
-                            className="lg:col-span-6"
+                            className="lg:col-span-12"
                             stats={[
                                 { label: "Top Family", value: familyLeaderboard?.topFamily.family ?? "—", hint: `${(familyLeaderboard?.topFamily.meanHits ?? 0).toFixed(2)} mean hits` },
-                                { label: "Best 2+ Rate", value: `${((familyLeaderboard?.topFamily.twoPlusRate ?? 0) * 100).toFixed(1)}%`, hint: "hit rate" },
+                                { label: "Best 2+ Rate", value: `${(familyLeaderboard?.topFamily.twoPlusRate ?? 0).toFixed(1)}%`, hint: "hit rate" },
                                 { label: "Families Graded", value: `${familyLeaderboard?.families.length ?? 0} families`, hint: "pure match count" },
                             ]}
                         >
-                            <div className="mt-2">
-                                <table className="w-full border-collapse text-left text-xs">
+                            <div className="overflow-x-auto mt-2">
+                                <table className="w-full border-collapse text-left text-xs min-w-[560px]">
                                     <thead>
                                         <tr className="border-b border-line text-ink-subtle">
                                             <th className={th}>Family</th>
@@ -4335,12 +4335,12 @@ export const InsightsScreen = () => {
                                     <tbody className="divide-y divide-line-soft font-mono">
                                         {familyLeaderboard?.families.map((f) => (
                                             <tr key={f.family}>
-                                                <td className={td}><span className="font-semibold text-ink">{f.family}</span></td>
+                                                <td className={td}><span className="font-semibold text-ink whitespace-nowrap">{f.family}</span></td>
                                                 <td className={tdNum}>{f.strategyCount}</td>
                                                 <td className={tdNum}><span className="text-primary font-semibold">{f.meanHits.toFixed(2)}</span></td>
                                                 <td className={tdNum}>{f.expectedHits.toFixed(2)}</td>
-                                                <td className={tdNum}>{(f.twoPlusRate * 100).toFixed(1)}%</td>
-                                                <td className={td}><span className="text-ink-muted">{f.topStrategyName}</span></td>
+                                                <td className={tdNum}>{f.twoPlusRate.toFixed(1)}%</td>
+                                                <td className={td}><span className="text-ink-muted whitespace-nowrap">{f.topStrategyName}</span></td>
                                             </tr>
                                         ))}
                                     </tbody>
