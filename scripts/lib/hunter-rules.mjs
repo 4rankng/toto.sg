@@ -189,27 +189,26 @@ export function hunterLine(v, t, lastDraw) {
     return [...choice6(rng, pool.length)].map((i) => rolled[i]).sort((a, b) => a - b);
 }
 
-/** The nine registered hunters: id, name, family, description, seed v. */
+/** The nine registered hunters: id, name, seed v. */
 const HUNTERS = [
-    ["hunterEclipse", "Eclipse Hunter", 928, "Draw #3924 (23 Nov 2023) — tilt-rolled PCG64 seed v=928, the top of the searched pack (22 prizes)."],
-    ["hunterNova", "Nova Hunter", 10677, "Draw #3815 (7 Nov 2022) — tilt-rolled PCG64 seed v=10677 (20 prizes)."],
-    ["hunterVega", "Vega Hunter", 6436, "Draw #3468 (22 Apr 2019) — tilt-rolled PCG64 seed v=6436 (18 prizes)."],
-    ["hunterSirius", "Sirius Hunter", 4756, "Draw #3483 (13 Jun 2019) — tilt-rolled PCG64 seed v=4756 (18 prizes)."],
-    ["hunterOrion", "Orion Hunter", 2612, "Draw #3437 (3 Jan 2019) — tilt-rolled PCG64 seed v=2612 (16 prizes)."],
-    ["hunterAurora", "Aurora Hunter", 3142, "Draw #4150 (22 Jan 2026) — tilt-rolled PCG64 seed v=3142 (16 prizes)."],
-    ["hunterComet", "Comet Hunter", 11145, "Draw #3513 (26 Sep 2019) — tilt-rolled PCG64 seed v=11145 (15 prizes)."],
-    ["hunterLyra", "Lyra Hunter", 9682, "Draw #4210 (20 Aug 2026) — tilt-rolled PCG64 seed v=9682 (12 prizes)."],
-    ["hunterPhoenix", "Phoenix Hunter", 1542, "Draw #3514 (30 Sep 2019) — tilt-rolled PCG64 seed v=1542 (10 prizes)."],
+    ["hunterEclipse", "Eclipse Hunter", 928],
+    ["hunterNova", "Nova Hunter", 10677],
+    ["hunterVega", "Vega Hunter", 6436],
+    ["hunterSirius", "Sirius Hunter", 4756],
+    ["hunterOrion", "Orion Hunter", 2612],
+    ["hunterAurora", "Aurora Hunter", 3142],
+    ["hunterComet", "Comet Hunter", 11145],
+    ["hunterLyra", "Lyra Hunter", 9682],
+    ["hunterPhoenix", "Phoenix Hunter", 1542],
 ];
 
 const HUNTER_FAMILY = "Seed Hunters";
-const HUNTER_PREFIX = "Blocks the previous draw's seven balls, tilt-rolls the remaining 43 and PCG64-samples six at a per-fold seed — a mined seed, not a method: 12,000 variants were searched over the archive for their one Group-2 fold";
 
-export const HUNTER_STRATEGIES = HUNTERS.map(([id, name, v, note]) => [
+export const HUNTER_STRATEGIES = HUNTERS.map(([id, name, v]) => [
     id,
     name,
     HUNTER_FAMILY,
-    `${HUNTER_PREFIX} (${note}). Searched-in hits carry no out-of-sample power; from draw #4233 every hunter plays live at the 1-in-2,330,636 base rate.`,
+    `Per-fold PCG64 sampler (seed v=${v}) — blocks the previous draw, samples six from the remaining 43.`,
 ]);
 
 export const HUNTER_RULES = Object.fromEntries(
