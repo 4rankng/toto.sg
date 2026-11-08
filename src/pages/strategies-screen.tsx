@@ -11,7 +11,7 @@ import { KpiCard } from "@/components/product/kpi-card";
 import { PageHeader } from "@/components/product/page-header";
 import { RecentHits } from "@/components/product/recent-hits";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
-import { type StrategiesFile, type StrategyRow, formatDate, formatNumber, formatSigned, useJson } from "@/lib/data";
+import { type Draw, type StrategiesFile, type StrategyRow, formatDate, formatNumber, formatSigned, useJson } from "@/lib/data";
 import { lineAcValue } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
 import { useLineBuilder } from "@/providers/line-builder-provider";
@@ -27,6 +27,10 @@ const SORTS: { id: SortKey; label: string }[] = [
     { id: "recent12", label: "Recent 12" },
 ];
 
+const TIERS = ["g1", "g2", "g3", "g4", "g5", "g6", "g7"] as const;
+
+/** Live per-ball form across the archived draws: how due, hot and frequent. */
+type BallForm = { skip: number; last10: number; allTime: number };
 
 const LeagueSkeleton = () => (
     <DataLoading label="Loading the strategies">
@@ -35,10 +39,17 @@ const LeagueSkeleton = () => (
     </DataLoading>
 );
 
-/** The expanded body of a strategy with Ticket X-Ray diagnostics. */
-const StrategyDetail = ({ row, chance, onLoadInPlaySlip, className }: {
+/** The expanded body of a strategy: performance vs chance + pick forensics. */
+const StrategyDetail = ({
+    row,
+    chance,
+    ballForms,
+    onLoadInPlaySlip,
+    className,
+}: {
     row: StrategyRow;
     chance: StrategiesFile["meta"]["chance"];
+    ballForms: Map<number, BallForm> | null;
     onLoadInPlaySlip: (numbers: number[]) => void;
     className?: string;
 }) => {
@@ -46,7 +57,12 @@ const StrategyDetail = ({ row, chance, onLoadInPlaySlip, className }: {
     const sum = sorted.reduce((a, b) => a + b, 0);
     const ac = lineAcValue(sorted);
     const span = sorted.length > 0 ? sorted[sorted.length - 1] - sorted[0] : 0;
-    const bdays = sorted.filter((n) => n <= 31).length;
+    const odds = sorted.filter((n) => n % 2 === 1).length;
+    const tails = new Set(sorted.map((n) => n % 10)).size;
+    let consec = 0;
+    for (let i = 1; i < sorted.length; i += 1) if (sorted[i] === sorted[i - 1] + 1) consec += 1;
+    const folds = row.evaluatedDraws || 1;
+    const tierChance = (tier: string) => folds * Number(chance[`tier${tier.replace("g", "G")}` as keyof typeof chance] ?? 0);
 
     return (
         <div className={cx("min-w-0 flex flex-col gap-3", className)}>
@@ -69,99 +85,148 @@ const StrategyDetail = ({ row, chance, onLoadInPlaySlip, className }: {
                 </Button>
             </div>
 
-            {/* Current Pick X-Ray Diagnostic Badges */}
-            <div className="rounded-lg border border-line-soft bg-surface-2/40 p-2.5">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                    <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">
-                        Current Pick X-Ray Diagnostics
-                    </p>
-                    <span className="font-mono text-[10px] text-ink-subtle">
-                        {sorted.join(" · ")}
-                    </span>
+            <div className="grid gap-3 lg:grid-cols-12">
+                {/* Walk-forward performance vs chance */}
+                <div className="flex min-w-0 flex-col gap-3 lg:col-span-7">
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+                        <div>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Draws tested</dt>
+                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.evaluatedDraws)}</dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Numbers matched</dt>
+                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                                {formatNumber(row.totalHits ?? 0)} <span className="text-ink-subtle">vs {formatNumber(Math.round(folds * chance.expectedHitsPerLine))}</span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Hit rate — 2+ matched</dt>
+                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                                {row.twoPlusDraws ?? 0}/{row.evaluatedDraws} <span className="text-ink-subtle">vs {Math.round((folds * chance.twoPlusPer100Draws) / 100)}</span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Depth points (2/3/4/5/6 = 1/2/4/8/16)</dt>
+                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                                {row.depthPoints ?? 0} <span className="text-ink-subtle">vs {Math.round((folds * (chance.depthPointsPer100Draws ?? 17.17)) / 100)}</span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize draws</dt>
+                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                                {formatNumber(row.totalPrizes ?? 0)} <span className="text-ink-subtle">vs {Math.round((folds * chance.prizesPer100Draws) / 100)}</span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize quality (3/4/5/6 = 1/2/3/4)</dt>
+                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                                {row.weightedPrizes ?? 0} <span className="text-ink-subtle">vs {Math.round((folds * (chance.weightedPrizesPer100Draws ?? 1.96)) / 100)}</span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matched, last 12 draws</dt>
+                            <dd className="mt-0.5">
+                                <RecentHits hits={row.recent12 ?? 0} draws={12} expectedPerLine={row.expectedHits ?? chance.expectedHitsPerLine} />
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Profit/draw · Score</dt>
+                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                                {formatSigned(row.pnlPerDraw ?? 0, 2)} · {(row.score ?? 0).toFixed(1)} <span className="text-ink-subtle">vs {chance.scoreBaseline}</span>
+                            </dd>
+                        </div>
+                    </dl>
+
+                    {/* G1–G7 hit strip: what the strategy actually hit, per tier */}
+                    <div className="rounded-lg border border-line-soft bg-surface-2/40 p-2.5">
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Hits by prize tier</p>
+                            <span className="font-mono text-[10px] text-ink-subtle">
+                                chance over {formatNumber(folds)} draws: G7 {tierChance("g7").toFixed(0)} · G5 {tierChance("g5").toFixed(1)} · G6 {tierChance("g6").toFixed(1)} · G1–G4 &lt; 0.05 each
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                            {TIERS.map((tier) => {
+                                const hits = row.tierCounts?.[tier] ?? 0;
+                                return (
+                                    <div
+                                        key={tier}
+                                        title={`Expected by chance: ${tierChance(tier).toFixed(2)}`}
+                                        className={cx(
+                                            "rounded border px-1 py-1 text-center",
+                                            hits > 0 ? "border-primary/40 bg-primary/10" : "border-line-soft bg-surface",
+                                        )}
+                                    >
+                                        <p className="text-[9px] font-semibold tracking-wider text-ink-subtle uppercase">{tier.replace("g", "G")}</p>
+                                        <p className={cx("font-mono text-sm font-semibold tabular-nums", hits > 0 ? "text-primary" : "text-ink-faint")}>{hits}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
-                        <p className="text-[10px] text-ink-subtle uppercase">Sum</p>
-                        <p className="font-mono text-xs font-semibold text-ink tabular-nums">{sum}</p>
+
+                {/* The current pick: shape + each ball's live form */}
+                <div className="flex min-w-0 flex-col gap-3 lg:col-span-5">
+                    <div className="rounded-lg border border-line-soft bg-surface-2/40 p-2.5">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                            <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Current pick shape</p>
+                            <span className="font-mono text-[10px] text-ink-subtle">{sorted.join(" · ")}</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                            <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
+                                <p className="text-[10px] text-ink-subtle uppercase">Sum</p>
+                                <p className="font-mono text-xs font-semibold text-ink tabular-nums">{sum}</p>
+                            </div>
+                            <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
+                                <p className="text-[10px] text-ink-subtle uppercase">AC</p>
+                                <p className="font-mono text-xs font-semibold text-primary tabular-nums">{ac}/10</p>
+                            </div>
+                            <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
+                                <p className="text-[10px] text-ink-subtle uppercase">Span</p>
+                                <p className="font-mono text-xs font-semibold text-ink tabular-nums">{span}</p>
+                            </div>
+                            <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
+                                <p className="text-[10px] text-ink-subtle uppercase">Odd/Even</p>
+                                <p className="font-mono text-xs font-semibold text-ink tabular-nums">{odds}/{6 - odds}</p>
+                            </div>
+                            <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
+                                <p className="text-[10px] text-ink-subtle uppercase">Tails</p>
+                                <p className="font-mono text-xs font-semibold text-ink tabular-nums">{tails}/6</p>
+                            </div>
+                            <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
+                                <p className="text-[10px] text-ink-subtle uppercase">Consec</p>
+                                <p className={cx("font-mono text-xs font-semibold tabular-nums", consec > 1 ? "text-heat-hot" : "text-ink")}>{consec}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
-                        <p className="text-[10px] text-ink-subtle uppercase">AC Value</p>
-                        <p className="font-mono text-xs font-semibold text-primary tabular-nums">{ac} / 10</p>
-                    </div>
-                    <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
-                        <p className="text-[10px] text-ink-subtle uppercase">Span</p>
-                        <p className="font-mono text-xs font-semibold text-ink tabular-nums">{span}</p>
-                    </div>
-                    <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
-                        <p className="text-[10px] text-ink-subtle uppercase">Birthday ≤31</p>
-                        <p className={cx("font-mono text-xs font-semibold tabular-nums", bdays >= 5 ? "text-heat-hot" : "text-ink")}>{bdays} / 6</p>
+
+                    {/* Ball form: skip / last-10 / all-time for every picked number */}
+                    <div className="rounded-lg border border-line-soft bg-surface-2/40 p-2.5">
+                        <p className="mb-2 text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">
+                            Ball form — draws since last hit · hits in last 10 · all-time hits
+                        </p>
+                        <table className="w-full border-collapse text-left font-mono text-xs tabular-nums">
+                            <tbody>
+                                {sorted.map((n) => {
+                                    const form = ballForms?.get(n);
+                                    return (
+                                        <tr key={n} className="border-b border-line-soft last:border-0">
+                                            <td className="py-1 pr-2"><Ball n={n} size="sm" /></td>
+                                            <td className={cx("py-1 pr-2", (form?.skip ?? 0) > 16 && "text-heat-hot")}>{form ? form.skip : "—"}</td>
+                                            <td className={cx("py-1 pr-2", (form?.last10 ?? 0) >= 3 && "text-primary")}>{form ? `${form.last10}/10` : "—"}</td>
+                                            <td className="py-1 text-ink-muted">{form ? formatNumber(form.allTime) : "—"}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-
-            {/* Backtest League Math */}
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Draws tested</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.evaluatedDraws)}</dd>
-                </div>
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Numbers matched</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                        {formatNumber(row.totalHits ?? 0)} <span className="text-ink-subtle">vs {formatNumber(Math.round(row.evaluatedDraws * chance.expectedHitsPerLine))} chance</span>
-                    </dd>
-                </div>
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Hit rate — 2+ matched</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                        {row.twoPlusDraws ?? 0}/{row.evaluatedDraws} <span className="text-ink-subtle">vs {Math.round((row.evaluatedDraws * chance.twoPlusPer100Draws) / 100)} chance</span>
-                    </dd>
-                </div>
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matched per draw</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                        {(row.meanHits ?? 0).toFixed(3)} <span className="text-ink-subtle">vs {(row.expectedHits ?? 0).toFixed(3)} chance</span>
-                    </dd>
-                </div>
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize draws</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                        {formatNumber(row.totalPrizes ?? 0)} <span className="text-ink-subtle">vs {Math.round((row.evaluatedDraws * chance.prizesPer100Draws) / 100)} chance</span>
-                    </dd>
-                </div>
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize quality (3/4/5/6 match = 1/2/3/4)</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                        {row.weightedPrizes ?? 0} <span className="text-ink-subtle">vs {Math.round((row.evaluatedDraws * (chance.weightedPrizesPer100Draws ?? 1.96)) / 100)} chance</span>
-                    </dd>
-                </div>
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Best tier hit</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                        {row.bestGroup ? `G${row.bestGroup}` : <span className="text-ink-subtle">—</span>}
-                    </dd>
-                </div>
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matched, last 12 draws</dt>
-                    <dd className="mt-0.5">
-                        <RecentHits hits={row.recent12 ?? 0} draws={12} expectedPerLine={row.expectedHits ?? chance.expectedHitsPerLine} />
-                    </dd>
-                </div>
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Profit per draw</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatSigned(row.pnlPerDraw ?? 0, 2)}</dd>
-                </div>
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Score</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                        {(row.score ?? 0).toFixed(1)} <span className="text-ink-subtle">vs {chance.scoreBaseline} chance</span>
-                    </dd>
-                </div>
-            </dl>
         </div>
     );
 };
-
 
 export const StrategiesScreen = () => {
     const [title, setTitle] = useState("Strategy league");
@@ -171,6 +236,28 @@ export const StrategiesScreen = () => {
     const { setLine } = useLineBuilder();
 
     const { data, isLoading, error } = useJson<StrategiesFile>("/data/strategies.json");
+    const { data: draws } = useJson<Draw[]>("/data/draws.json");
+
+    // Live per-ball form for the expanded rows: draws since each ball last
+    // appeared, its hits in the last 10 draws, and its all-time count.
+    const ballForms = useMemo(() => {
+        if (!draws || draws.length === 0) return null;
+        const forms = new Map<number, BallForm>();
+        for (let n = 1; n <= 49; n += 1) {
+            let skip = draws.length;
+            let last10 = 0;
+            let allTime = 0;
+            for (let i = draws.length - 1; i >= 0; i -= 1) {
+                if (draws[i].numbers.includes(n)) {
+                    allTime += 1;
+                    if (skip === draws.length) skip = draws.length - 1 - i;
+                    if (draws.length - 1 - i < 10) last10 += 1;
+                }
+            }
+            forms.set(n, { skip, last10, allTime });
+        }
+        return forms;
+    }, [draws]);
 
     const handleLoadInPlaySlip = (numbers: number[]) => {
         setLine(numbers);
@@ -236,8 +323,6 @@ export const StrategiesScreen = () => {
         };
         return [...filtered].sort((a, b) => value(b) - value(a));
     }, [data, query, family, sort]);
-
-
 
     if (isLoading) return <LeagueSkeleton />;
 
@@ -337,8 +422,6 @@ export const StrategiesScreen = () => {
                 <KpiCard label="Next draw" value={meta.nextDraw} hint="picks below" icon={Calendar} tone="neutral" />
             </div>
 
-
-
             <Panel
                 isFlush
                 title="All strategies"
@@ -392,7 +475,7 @@ export const StrategiesScreen = () => {
 
                                 {isOpen && (
                                     <div className="border-t border-line-soft bg-surface-2/40 px-4 py-3">
-                                        <StrategyDetail row={row} chance={meta.chance} onLoadInPlaySlip={handleLoadInPlaySlip} />
+                                        <StrategyDetail row={row} chance={meta.chance} ballForms={ballForms} onLoadInPlaySlip={handleLoadInPlaySlip} />
                                     </div>
                                 )}
                             </li>

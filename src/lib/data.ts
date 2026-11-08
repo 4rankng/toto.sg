@@ -102,8 +102,12 @@ export interface StrategyRow {
     effPrizes: number;
     /** Prize quality: matched−2 points per prize draw (chance: 1.96 per 100). */
     weightedPrizes: number;
+    /** Hit depth total: each fold earns 2^(matched−2) — 1/2/4/8/16 for 2–6 matched. */
+    depthPoints: number;
     /** Best prize tier hit over the window (1 = jackpot), or null. */
     bestGroup: number | null;
+    /** Prize draws per tier over the evaluated folds. */
+    tierCounts: Record<"g1" | "g2" | "g3" | "g4" | "g5" | "g6" | "g7", number>;
     pnlPerDraw: number;
     recent12: number;
     rank: number;
@@ -121,6 +125,16 @@ export interface StrategyMeta {
         twoPlusPer100Draws: number;
         prizesPer100Draws: number;
         weightedPrizesPer100Draws: number;
+        /** Chance null for depth points per draw (≈0.1717, i.e. 17.17 per 100). */
+        depthPointsPer100Draws: number;
+        /** Exact per-tier hit probabilities per draw. */
+        tierG1: number;
+        tierG2: number;
+        tierG3: number;
+        tierG4: number;
+        tierG5: number;
+        tierG6: number;
+        tierG7: number;
         scoreBaseline: number;
     };
     families: string[];

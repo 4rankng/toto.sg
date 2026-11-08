@@ -119,6 +119,13 @@ const checkStrategies = (league) => {
         check(Number.isInteger(row?.totalPrizes) && Number.isInteger(row?.effPrizes), `${where}: prize counts must be integers`);
         check(Number.isInteger(row?.weightedPrizes) && row.weightedPrizes >= row.totalPrizes && row.weightedPrizes <= row.totalPrizes * 4, `${where}: weightedPrizes must be 1–4 per prize draw`);
         check(row?.bestGroup === null || (Number.isInteger(row.bestGroup) && row.bestGroup >= 1 && row.bestGroup <= 7), `${where}: bestGroup must be null or 1-7`);
+        check(Number.isInteger(row?.depthPoints) && row.depthPoints >= 0 && row.depthPoints <= league.meta.folds * 16, `${where}: depthPoints must be 0-${league.meta.folds * 16}`);
+        const tiers = row?.tierCounts;
+        const tierKeys = ["g1", "g2", "g3", "g4", "g5", "g6", "g7"];
+        check(
+            tiers && tierKeys.every((t) => Number.isInteger(tiers[t]) && tiers[t] >= 0) && tierKeys.reduce((a, t) => a + tiers[t], 0) === row.totalPrizes,
+            `${where}: tierCounts must hold 7 non-negative integers summing to totalPrizes`,
+        );
         check(Number.isInteger(row?.twoPlusDraws) && row.twoPlusDraws >= 0 && row.twoPlusDraws <= league.meta.folds, `${where}: twoPlusDraws must be 0-${league.meta.folds}`);
         check(Number.isInteger(row?.totalHits) && row.totalHits >= 0 && row.totalHits <= league.meta.folds * 6, `${where}: totalHits must be 0-${league.meta.folds * 6}`);
         check(Number.isFinite(row?.pnlPerDraw), `${where}: pnlPerDraw must be finite`);
