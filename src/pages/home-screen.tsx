@@ -405,7 +405,6 @@ export const HomeScreen = () => {
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-12">
                 <Panel
                     className="lg:col-span-4"
-                    bodyClassName="flex flex-1 flex-col justify-center"
                     title="Number board"
                     description="How often each number appeared across 7 indicator lenses. Colour shows deviation."
                     footer={
