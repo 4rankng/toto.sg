@@ -55,6 +55,7 @@ export function MasonryGrid({ className, children }: MasonryGridProps) {
             grid.style.rowGap = "";
             for (const item of items) {
                 item.style.gridArea = "";
+                item.style.minHeight = "";
             }
         };
 
@@ -75,36 +76,131 @@ export function MasonryGrid({ className, children }: MasonryGridProps) {
             void grid.offsetHeight;
 
             const step = colWidth + GAP_PX;
-            const heights = new Array(12).fill(0);
-            const placements = [];
 
-            for (const item of items) {
+            interface Box {
+                item: HTMLElement;
+                span: number;
+                natural: number;
+                h: number;
+                x: number;
+                y: number;
+            }
+            const boxes: Box[] = items.map((item) => {
                 const r = item.getBoundingClientRect();
-                const span = Math.max(1, Math.min(12, Math.round((r.width + GAP_PX) / step)));
-                const h = Math.ceil(r.height) + GAP_PX;
+                const natural = Math.ceil(r.height);
+                return {
+                    item,
+                    span: Math.max(1, Math.min(12, Math.round((r.width + GAP_PX) / step))),
+                    natural,
+                    h: natural + GAP_PX,
+                    x: 0,
+                    y: 0,
+                };
+            });
 
-                let x = 0;
-                let y = 0;
-                if (span >= 12) {
-                    // Full-width panel: a row break — everyone waits for it.
-                    y = Math.max(...heights);
-                    x = 0;
-                    heights.fill(y + h);
-                } else {
-                    // Shortest window of `span` consecutive columns.
-                    let bestY = Number.POSITIVE_INFINITY;
-                    for (let c = 0; c + span <= 12; c += 1) {
-                        const yy = Math.max(...heights.slice(c, c + span));
-                        if (yy < bestY - 0.5) {
-                            bestY = yy;
-                            x = c;
+            // Bands: runs of partial-width panels between full-width rows.
+            const placements: Box[] = [];
+            let cursor = 0;
+            let band: Box[] = [];
+
+            const flushBand = () => {
+                if (band.length === 0) return;
+                const base = cursor;
+                const placed: Box[] = [];
+
+                if (band.every((b) => b.span === 6) && band.length <= 16) {
+                    // Two equal columns: pick the split whose heights differ least.
+                    const total = band.reduce((m, b) => m + b.h, 0);
+                    let bestMask = 0;
+                    let bestDiff = Number.POSITIVE_INFINITY;
+                    const n = band.length;
+                    for (let mask = 0; mask < 1 << n; mask += 1) {
+                        let left = 0;
+                        for (let i = 0; i < n; i += 1) if (mask & (1 << i)) left += band[i].h;
+                        const diff = Math.abs(total - 2 * left);
+                        if (diff < bestDiff) {
+                            bestDiff = diff;
+                            bestMask = mask;
                         }
                     }
-                    y = bestY;
-                    for (let c = x; c < x + span; c += 1) heights[c] = y + h;
+                    let yl = base;
+                    let yr = base;
+                    band.forEach((b, i) => {
+                        if (bestMask & (1 << i)) {
+                            b.x = 0;
+                            b.y = yl;
+                            yl += b.h;
+                        } else {
+                            b.x = 6;
+                            b.y = yr;
+                            yr += b.h;
+                        }
+                        placed.push(b);
+                    });
+                } else {
+                    // Mixed spans: shortest window of consecutive columns.
+                    const heights = new Array(12).fill(base);
+                    for (const b of band) {
+                        let bestY = Number.POSITIVE_INFINITY;
+                        for (let c = 0; c + b.span <= 12; c += 1) {
+                            const yy = Math.max(...heights.slice(c, c + b.span));
+                            if (yy < bestY - 0.5) {
+                                bestY = yy;
+                                b.x = c;
+                            }
+                        }
+                        b.y = bestY;
+                        for (let c = b.x; c < b.x + b.span; c += 1) heights[c] = b.y + b.h;
+                        placed.push(b);
+                    }
                 }
-                placements.push({ item, x, y, span, h });
+
+                // Close the band flat: grow the last card of any short column
+                // so every column ends on the same line and nothing hollow
+                // opens before the next row.
+                const bandBottom = Math.max(...placed.map((b) => b.y + b.h));
+                for (let c = 0; c < 12; c += 1) {
+                    let last: Box | null = null;
+                    for (const b of placed) {
+                        if (c >= b.x && c < b.x + b.span && (last === null || b.y + b.h > last.y + last.h)) last = b;
+                    }
+                    if (last === null) continue;
+                    // Deficit is the smallest across the columns the card covers.
+                    let deficit = Number.POSITIVE_INFINITY;
+                    for (let cc = last.x; cc < last.x + last.span; cc += 1) {
+                        let colBottom = 0;
+                        for (const b of placed) {
+                            if (cc >= b.x && cc < b.x + b.span) colBottom = Math.max(colBottom, b.y + b.h);
+                        }
+                        deficit = Math.min(deficit, bandBottom - colBottom);
+                    }
+                    if (deficit > 0 && Number.isFinite(deficit)) {
+                        last.h += deficit;
+                        last.natural += deficit;
+                        last.item.style.minHeight = `${last.natural}px`;
+                    }
+                }
+
+                cursor = Math.max(...placed.map((b) => b.y + b.h));
+                placements.push(...placed);
+                band = [];
+            };
+
+            for (const box of boxes) {
+                if (box.span >= 12) {
+                    flushBand();
+                    box.x = 0;
+                    box.y = cursor;
+                    cursor += box.h;
+                    placements.push(box);
+                } else {
+                    // A change between the two-column family (span 6) and any
+                    // other split closes the band, so each run ends flush.
+                    if (band.length > 0 && (band[0].span === 6) !== (box.span === 6)) flushBand();
+                    band.push(box);
+                }
             }
+            flushBand();
 
             // Apply: 1px rows, no flow — every panel gets an explicit area.
             grid.style.gridAutoRows = "1px";
