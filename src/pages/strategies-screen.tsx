@@ -10,7 +10,7 @@ import { KpiCard } from "@/components/product/kpi-card";
 import { PageHeader } from "@/components/product/page-header";
 import { RecentHits } from "@/components/product/recent-hits";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
-import { type GamblerPlaybook, type GamblerStrategy, type StrategiesFile, type StrategyRow, formatDate, formatNumber, formatSigned, useJson } from "@/lib/data";
+import { type StrategiesFile, type StrategyRow, formatDate, formatNumber, formatSigned, useJson } from "@/lib/data";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
 
@@ -78,86 +78,13 @@ const StrategyDetail = ({ row, className }: { row: StrategyRow; className?: stri
     </div>
 );
 
-/** One gambler strategy: the rule, the document's spec line and its live row. */
-const GamblerCard = ({
-    strategy,
-    row,
-    onShow,
-}: {
-    strategy: GamblerStrategy;
-    row: StrategyRow;
-    onShow: () => void;
-}) => (
-    <article className="flex min-w-0 flex-col rounded-lg border border-line bg-surface-2/40 p-2.5">
-        <div className="flex items-baseline gap-2">
-            <span className="font-mono text-[11px] text-ink-subtle tabular-nums">{String(strategy.index).padStart(2, "0")}</span>
-            <h3 className="min-w-0 flex-1 text-[13px] leading-5 font-semibold text-ink">{strategy.name}</h3>
-        </div>
-
-        <p className="mt-1 text-[11px] leading-4 text-ink-muted">{strategy.description}</p>
-
-        <ul className="mt-1.5 space-y-0.5">
-            {strategy.rules.map((rule) => (
-                <li key={rule} className="text-[11px] leading-4 text-ink-muted">
-                    <span className="text-ink-faint">·</span> {rule}
-                </li>
-            ))}
-        </ul>
-
-        <div className="mt-2 flex items-center gap-1.5">
-            <span className="shrink-0 text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Spec line</span>
-            {strategy.specLine.map((n) => (
-                <Ball key={n} n={n} size="xs" />
-            ))}
-        </div>
-
-        <div className="mt-1 flex items-center gap-1.5">
-            <span className="shrink-0 text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Next draw</span>
-            {row.currentPick.map((n) => (
-                <Ball key={n} n={n} size="xs" />
-            ))}
-        </div>
-
-        <dl className="mt-2 grid grid-cols-4 gap-2 border-t border-line-soft pt-2 font-mono text-[11px] text-ink-subtle tabular-nums">
-            <div>
-                <dt className="text-[10px] tracking-[0.06em] uppercase">Score</dt>
-                <dd className="text-ink">{row.score.toFixed(1)}</dd>
-            </div>
-            <div>
-                <dt className="text-[10px] tracking-[0.06em] uppercase">Hits</dt>
-                <dd className="text-ink">{row.meanHits.toFixed(2)}</dd>
-            </div>
-            <div>
-                <dt className="text-[10px] tracking-[0.06em] uppercase">Prizes</dt>
-                <dd className="text-ink">{row.effPrizes}</dd>
-            </div>
-            <div>
-                <dt className="text-[10px] tracking-[0.06em] uppercase">Rank</dt>
-                <dd className="text-ink">{row.rank}</dd>
-            </div>
-        </dl>
-
-        <div className="mt-2 flex items-center justify-between gap-2">
-            <span className="min-w-0 truncate text-[10px] text-ink-faint">
-                Panels {strategy.panels.join(", ")} · {strategy.edge}
-            </span>
-            <button
-                type="button"
-                onClick={onShow}
-                className="shrink-0 text-[11px] font-semibold text-accent transition-colors duration-100 hover:text-accent-strong"
-            >
-                In league →
-            </button>
-        </div>
-    </article>
-);
 
 export const StrategiesScreen = () => {
     const [title, setTitle] = useState("Strategy league");
     usePageTitle(title);
 
     const { data, isLoading, error } = useJson<StrategiesFile>("/data/strategies.json");
-    const { data: playbook } = useJson<GamblerPlaybook>("/data/gambler-playbook.json");
+
     const [searchParams, setSearchParams] = useSearchParams();
     const [query, setQuery] = useState("");
     const [family, setFamily] = useState("all");
@@ -204,15 +131,7 @@ export const StrategiesScreen = () => {
         return [...filtered].sort((a, b) => value(b) - value(a));
     }, [data, query, family, sort]);
 
-    // The gambler playbook pairs each documented strategy with its league row.
-    const gamblerEntries = useMemo(() => {
-        if (!playbook || !data) return [];
-        const byId = new Map(data.strategies.map((row) => [row.id, row]));
-        return playbook.strategies.flatMap((strategy) => {
-            const row = byId.get(strategy.id);
-            return row ? [{ strategy, row }] : [];
-        });
-    }, [playbook, data]);
+
 
     if (isLoading) return <LeagueSkeleton />;
 
@@ -308,31 +227,7 @@ export const StrategiesScreen = () => {
                 <KpiCard label="Next draw" value={meta.nextDraw} hint="picks below" icon={Calendar} tone="neutral" />
             </div>
 
-            {gamblerEntries.length > 0 && (
-                <Panel
-                    title="10 gambler strategies"
-                    description="Cross-panel synthesis: every rule pairs a statistical cage property with a pari-mutuel anti-collision mechanism. The spec line is the source document's illustration; the next-draw line is what the rule actually plays."
-                >
-                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                        {gamblerEntries.map(({ strategy, row }) => (
-                            <GamblerCard
-                                key={strategy.id}
-                                strategy={strategy}
-                                row={row}
-                                onShow={() => {
-                                    // The page opens this family itself, so it
-                                    // must not treat the URL it writes as an
-                                    // incoming link and close the row again.
-                                    appliedFamily.current = "Gambler";
-                                    setFamily("Gambler");
-                                    setSearchParams({ family: "Gambler" }, { replace: true });
-                                    setExpanded(row.id);
-                                }}
-                            />
-                        ))}
-                    </div>
-                </Panel>
-            )}
+
 
             <Panel
                 isFlush
