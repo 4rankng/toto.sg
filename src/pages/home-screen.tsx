@@ -26,7 +26,8 @@ import { useLineBuilder } from "@/providers/line-builder-provider";
 /** League rows shown on the home page. */
 const LEAGUE_ROWS = 5;
 
-/** The countdown reads as one clock line: 02:01:20:41. */
+/** The countdown reads as one instrument: four inset digit tiles with a
+ *  blinking colon between them — 02:01:20:41. */
 const Countdown = ({ days, hours, minutes, seconds }: { days: number; hours: number; minutes: number; seconds: number }) => {
     const units = [
         { value: days, label: "days" },
@@ -39,23 +40,42 @@ const Countdown = ({ days, hours, minutes, seconds }: { days: number; hours: num
         <div
             role="timer"
             aria-label={`${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds to the next draw`}
-            className="flex items-start justify-center gap-0.5 tabular-nums"
+            className="flex items-stretch justify-center gap-1 tabular-nums"
         >
             {units.map((unit, index) => (
-                <div key={unit.label} className="flex items-start">
-                    <div className="flex flex-col items-center">
-                        <span className="font-display text-2xl leading-8 font-semibold tracking-tight text-ink md:text-3xl md:leading-9">
+                <div key={unit.label} className="flex items-stretch">
+                    <div className="flex min-w-[3rem] flex-col items-center rounded-lg bg-surface-inset px-2 py-1.5 ring-1 ring-line ring-inset md:min-w-[3.4rem]">
+                        <span className="font-display text-2xl leading-7 font-semibold tracking-tight text-ink md:text-3xl md:leading-8">
                             {String(unit.value).padStart(2, "0")}
                         </span>
-                        <span className="text-[9px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">{unit.label}</span>
+                        <span className="mt-0.5 text-[9px] font-semibold tracking-[0.16em] text-ink-faint uppercase">{unit.label}</span>
                     </div>
                     {index < units.length - 1 && (
-                        <span aria-hidden="true" className="px-1 font-display text-xl leading-8 font-medium text-ink-faint md:text-2xl md:leading-9">
+                        <span aria-hidden="true" className="animate-tick self-center px-0.5 font-display text-xl leading-none font-medium text-ink-faint md:text-2xl">
                             :
                         </span>
                     )}
                 </div>
             ))}
+        </div>
+    );
+};
+
+/** Fraction of the current draw window elapsed — one thin accent bar. Draws
+ *  run Mon/Thu 18:30 SGT: a Monday target closes the 4-day Thu→Mon window,
+ *  a Thursday target the 3-day Mon→Thu one. Renders nothing when the maths
+ *  is not trustworthy. */
+const WindowGauge = ({ nextDraw, remainingMs }: { nextDraw: Date | null; remainingMs: number }) => {
+    const windowMs = useMemo(() => (nextDraw ? (nextDraw.getDay() === 1 ? 4 : 3) * 24 * 3600 * 1000 : null), [nextDraw]);
+    if (!windowMs || remainingMs < 0 || remainingMs >= windowMs) return null;
+    const pct = Math.min(100, Math.max(0, Math.round((1 - remainingMs / windowMs) * 100)));
+
+    return (
+        <div className="flex items-center gap-2" aria-hidden="true">
+            <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-inset ring-1 ring-line ring-inset">
+                <div className="h-full rounded-full bg-accent shadow-[0_0_10px_0_var(--color-accent)]" style={{ width: `${pct}%` }} />
+            </div>
+            <span className="shrink-0 font-mono text-[9px] font-semibold tracking-[0.12em] text-ink-faint tabular-nums">{pct}%</span>
         </div>
     );
 };
@@ -163,9 +183,8 @@ export const HomeScreen = () => {
         <Panel title="Longest gaps" description="Draws since each number last appeared." isFlush>
             <ol className="flex flex-wrap items-center gap-x-2.5 gap-y-1 px-3 py-2">
                 {(analysis?.overdue.slice(0, 12) ?? []).map((entry) => (
-                    <li key={entry.number} className="inline-flex items-center gap-1">
+                    <li key={entry.number} className="inline-flex" title={`${entry.number}: last drawn ${entry.gap} draws ago`}>
                         <Ball n={entry.number} size="xs" />
-                        <span className="font-mono text-[11px] text-ink-muted tabular-nums">{formatNumber(entry.gap)}</span>
                     </li>
                 ))}
             </ol>
@@ -198,21 +217,29 @@ export const HomeScreen = () => {
                 draw result itself lives in /history. */}
             <div className={`grid items-stretch gap-3${nextDraw ? " lg:grid-cols-[minmax(280px,360px)_1fr]" : ""}`}>
                 {nextDraw && (
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface/70 px-4 py-2.5 lg:flex-col lg:items-start lg:justify-center">
-                        <p className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
-                            Next draw{nextDrawNo ? ` · ${nextDrawNo}` : ""}
-                            {nextIso ? ` · ${formatDate(nextIso)} · ${weekdayOf(nextIso)} · 18:30 SGT` : ""}
+                    <div className="hud-corners panel-glow relative flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-line bg-surface/70 px-4 py-3 lg:flex-col lg:items-stretch lg:justify-center lg:gap-y-3">
+                        <div className="flex items-center gap-2">
+                            <span aria-hidden="true" className="animate-beacon size-1.5 shrink-0 rounded-full bg-accent shadow-[0_0_8px_0_var(--color-accent)]" />
+                            <p className="font-mono text-[10px] font-semibold tracking-[0.12em] text-ink-muted uppercase">
+                                Next draw{nextDrawNo ? ` · ${nextDrawNo}` : ""}
+                            </p>
+                        </div>
+                        <p className="font-mono text-[10px] tracking-[0.12em] text-ink-faint uppercase">
+                            {nextIso ? `${formatDate(nextIso)} · ${weekdayOf(nextIso)} · 18:30 SGT` : ""}
                         </p>
                         {countdown.isPast ? (
                             <p className="text-[11px] text-ink-muted">Waiting for the result.</p>
                         ) : (
-                            <Countdown days={countdown.days} hours={countdown.hours} minutes={countdown.minutes} seconds={countdown.seconds} />
+                            <>
+                                <Countdown days={countdown.days} hours={countdown.hours} minutes={countdown.minutes} seconds={countdown.seconds} />
+                                <WindowGauge nextDraw={nextDraw} remainingMs={countdown.remaining} />
+                            </>
                         )}
                     </div>
                 )}
 
                 {/* The play slip is the page's primary action. */}
-                    <Panel>
+                <Panel className="hud-corners">
                         <LineSlip
                             line={line}
                             size={size}
@@ -262,12 +289,14 @@ export const HomeScreen = () => {
                             latestNumbers={numbers}
                             line={line}
                             onToggle={handleToggle}
+                            onQuickPick={handleQuickPick}
+                            quickPickLabel={quickPickName}
                         />
                     </Panel>
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-3 lg:col-span-7 lg:col-start-6">
-                    <Panel title="Most and least seen" description="Counts across the 6/49 era." isFlush>
+                    <Panel title="Most and least seen" isFlush>
                         <div className="flex flex-col divide-y divide-line-soft">
                             {[
                                 { label: "Most", rows: analysis?.hot.all.slice(0, 12) ?? [] },

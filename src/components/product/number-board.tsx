@@ -99,6 +99,10 @@ interface NumberBoardProps {
     line: number[];
     /** Add, remove or swap a number. */
     onToggle: (n: number) => void;
+    /** Fill the line with a quick pick. */
+    onQuickPick?: () => void;
+    /** The strategy a quick pick came from, shown as feedback. */
+    quickPickLabel?: string | null;
     className?: string;
 }
 
@@ -111,7 +115,7 @@ const CELL_CLASS =
  * count sits from a uniform draw. The tint carries the signal; the text ink is
  * always the same so every count stays readable.
  */
-export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, line, onToggle, className }: NumberBoardProps) {
+export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, line, onToggle, onQuickPick, quickPickLabel, className }: NumberBoardProps) {
     const active = windows.find((window) => window.id === period) ?? windows[0];
     const gridRef = useRef<HTMLDivElement>(null);
     const [roving, setRoving] = useState(0);
@@ -181,9 +185,22 @@ export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, li
                         </button>
                     ))}
                 </div>
-                <p className="font-mono text-[11px] text-ink-subtle tabular-nums">
-                    {active.summary ?? `${active.draws.toLocaleString("en-SG")} draws · expected ${active.expected.toFixed(1)}`}
-                </p>
+                {onQuickPick && (
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={onQuickPick}
+                            className="min-h-9 rounded-lg bg-accent px-3 text-xs font-semibold whitespace-nowrap text-white transition-colors duration-100 hover:bg-accent-strong dark:text-canvas"
+                        >
+                            Quick pick
+                        </button>
+                        {quickPickLabel && (
+                            <p aria-live="polite" className="text-[11px] leading-4 text-ink-subtle">
+                                From <span className="text-ink-muted">{quickPickLabel}</span>
+                            </p>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div
