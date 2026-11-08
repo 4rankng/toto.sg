@@ -131,13 +131,6 @@
     --color-fam-26: light-dark(#7e5c43, #d9a987);
     --color-fam-27: light-dark(#6e5d3a, #cbb878);
     --color-fam-28: light-dark(#9a4040, #e6a3a3);
-
-    /* Play-slip ball hues — one per decade band (1–10 … 41–49). */
-    --color-slip-h1: light-dark(#d9684a, #f4a68f);
-    --color-slip-h2: light-dark(#b98a12, #f2d58f);
-    --color-slip-h3: light-dark(#1f9f78, #86e8c4);
-    --color-slip-h4: light-dark(#1b83c4, #80d6ff);
-    --color-slip-h5: light-dark(#6a54e0, #aa9dff);
 }
 
 /* Play-slip balls: pastel decade-hued ring + tinted fill, dark-mode glow,
@@ -150,12 +143,9 @@
     display: grid;
     place-items: center;
     border-radius: 9999px;
-    border: 2px solid light-dark(
-        color-mix(in srgb, var(--slip-c) 45%, transparent),
-        color-mix(in srgb, var(--slip-c) 60%, transparent)
-    );
-    background: color-mix(in srgb, var(--slip-c) 14%, light-dark(#ffffff, var(--color-surface-inset)));
-    box-shadow: 0 0 30px light-dark(transparent, color-mix(in srgb, var(--slip-c) 20%, transparent));
+    border: 2px solid var(--slip-c);
+    background: var(--color-surface);
+    box-shadow: 0 0 28px -6px light-dark(transparent, var(--slip-c));
     animation: slip-pop 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both;
     animation-delay: var(--slip-d, 0s);
 }
@@ -163,7 +153,7 @@
 .slip-ball i {
     font-style: normal;
     font-weight: 700;
-    font-size: 30cqi;
+    font-size: 38cqi;
     line-height: 1;
     letter-spacing: -0.04em;
     font-variant-numeric: tabular-nums;
@@ -196,6 +186,15 @@
 
 /* Product palette on top of the library's semantic tokens. */
 :root {
+    /* Play-slip ball hues — one per decade band (1–10 … 41–49). Plain tokens,
+       not @theme: nothing generates utilities from them, and @theme prunes
+       variables nothing references. */
+    --color-slip-h1: light-dark(#d9684a, #f4a68f);
+    --color-slip-h2: light-dark(#b98a12, #f2d58f);
+    --color-slip-h3: light-dark(#1f9f78, #86e8c4);
+    --color-slip-h4: light-dark(#1b83c4, #80d6ff);
+    --color-slip-h5: light-dark(#6a54e0, #aa9dff);
+
     /* Brand scale → violet */
     --color-brand-50: #f5f2ff;
     --color-brand-100: #ece7ff;

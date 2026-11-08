@@ -264,20 +264,20 @@ export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel
                 </span>
             </div>
 
-            <div className="slip-rack mx-auto grid w-full max-w-2xl" style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}>
+            <div className="slip-rack mx-auto grid w-full max-w-4xl" style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}>
                 {Array.from({ length: size }, (_, index) => {
                     const number = line[index];
 
                     return (
-                        <div key={index} className="grid aspect-square @container place-items-center">
+                        <div key={index} className="grid aspect-square place-items-center">
                             {number === undefined ? (
-                                <span className="grid aspect-square w-[82%] place-items-center rounded-full border border-dashed border-line-strong font-mono text-[30cqi] leading-none font-semibold text-ink-faint tabular-nums">
+                                <span className="grid aspect-square w-[88%] place-items-center rounded-full border border-dashed border-line-strong font-mono text-[34cqi] leading-none font-semibold text-ink-faint tabular-nums">
                                     –
                                 </span>
                             ) : (
                                 <span
                                     key={number}
-                                    className="slip-ball aspect-square w-[82%]"
+                                    className="slip-ball aspect-square w-[88%]"
                                     style={
                                         {
                                             "--slip-c": `var(--color-slip-h${Math.ceil(number / 10)})`,

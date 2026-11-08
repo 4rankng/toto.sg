@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, Clock, Hash01, Lightning01 } from "@untitledui/icons";
-import { Link } from "react-router";
 import { Ball } from "@/components/balls";
+import { Link } from "react-router";
 import { Panel } from "@/components/panel";
 import { type BoardWindow, HeatLegend, LineSlip, NumberBoard } from "@/components/product/number-board";
 import { PageHeader } from "@/components/product/page-header";
 import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
-import { KpiCard } from "@/components/product/kpi-card";
-import { TicketXRay } from "@/components/product/ticket-xray";
 import { useCountdown } from "@/hooks/use-countdown";
 import {
     type Analysis,
@@ -21,7 +18,7 @@ import {
     weekdayOf,
 } from "@/lib/data";
 import { extendPick, quickPick, randBelow } from "@/lib/quickpick";
-import { analyzeTicket, computeBoardLenses } from "@/lib/ticket-xray";
+import { computeBoardLenses } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
 import { useLineBuilder } from "@/providers/line-builder-provider";
 
@@ -116,11 +113,6 @@ export const HomeScreen = () => {
         return computeBoardLenses(draws, analysis, league ?? undefined);
     }, [draws, analysis, league]);
 
-    const ticketAnalysis = useMemo(
-        () => (draws && line.length >= 6 ? analyzeTicket(line, draws, league ?? undefined) : null),
-        [line, draws, league],
-    );
-
     /** Quick pick is one of the strategies — a random one, every tap. */
     const handleQuickPick = () => {
         if (league && league.strategies.length > 0) {
@@ -133,17 +125,6 @@ export const HomeScreen = () => {
         setQuickPickName(null);
     };
 
-
-    const handleApplyConsensus = () => {
-        if (!league) return;
-        const votes = new Uint16Array(50);
-        for (const s of league.strategies) {
-            for (const n of s.currentPick) votes[n] += 1;
-        }
-        const sortedBalls = Array.from({ length: 49 }, (_, i) => i + 1).sort((a, b) => votes[b] - votes[a]);
-        setLine(sortedBalls.slice(0, size).sort((a, b) => a - b));
-        setQuickPickName("Consensus Top-Picks");
-    };
 
     const handleSizeChange = (next: typeof size) => {
         setQuickPickName(null);
@@ -169,9 +150,6 @@ export const HomeScreen = () => {
     const drawNo = live?.drawNo ?? latest.draw;
     const date = live?.date ?? latest.date;
 
-    const hotBall = analysis?.hot.all[0];
-    const longestGap = analysis?.overdue[0];
-    const era = analysis?.coverage;
     const nextDrawNo = league?.meta.nextDraw ?? 0;
     const nextIso = nextDraw ? nextDraw.toISOString().slice(0, 10) : null;
 
@@ -258,33 +236,7 @@ export const HomeScreen = () => {
                 bare canvas well under the shorter column.
             */}
             <div className="grid items-start gap-3 md:grid-cols-2 md:items-stretch lg:grid-cols-12">
-                <div className="grid grid-cols-2 gap-2 md:col-start-2 md:row-start-1 lg:grid-cols-4 lg:col-span-12 lg:col-start-1 lg:row-start-1">
-<KpiCard label="Draws" value={formatNumber(draws.length)} hint="Since 3 Jul 2008" icon={Hash01} tone="primary" />
-                <KpiCard
-                    label="6/49 era"
-                    value={formatNumber(era?.totalDraws ?? 0)}
-                    hint={era?.firstDate ? `Since ${formatDate(era.firstDate)}` : undefined}
-                    icon={Calendar}
-                    tone="secondary"
-                />
-                <KpiCard
-                    label="Most seen"
-                    value={hotBall ? hotBall.number : "—"}
-                    hint={hotBall ? `${formatNumber(hotBall.count)} times` : undefined}
-                    icon={Lightning01}
-                    tone="gold"
-                />
-                <KpiCard
-                    label="Longest gap"
-                    value={longestGap ? longestGap.number : "—"}
-                    hint={longestGap ? `${formatNumber(longestGap.gap)} draws` : undefined}
-                    icon={Clock}
-                    tone="neutral"
-                />
-            
-                </div>
-
-                <div className="flex min-h-0 min-w-0 flex-col gap-3 md:col-start-1 md:row-start-1 md:row-span-2 lg:col-span-4 lg:col-start-1 lg:row-span-1 lg:row-start-2">
+                <div className="flex min-h-0 min-w-0 flex-col gap-3 lg:col-span-4">
                     <Panel
                         title="Number board"
                         description="How often each number appeared across 7 indicator lenses. Colour shows deviation."
@@ -314,7 +266,7 @@ export const HomeScreen = () => {
                     {longestGapsPanel}
                 </div>
 
-                <div className="flex min-w-0 flex-col gap-3 md:col-start-2 md:row-start-2 lg:col-span-8 lg:col-start-5 lg:row-start-2">
+                <div className="flex min-w-0 flex-col gap-3 lg:col-span-8 lg:col-start-5">
                     <Panel title="Most and least seen" description="Counts across the 6/49 era." isFlush>
                             <div className="grid grid-cols-2 divide-x divide-line-soft">
                                 {[
@@ -335,16 +287,6 @@ export const HomeScreen = () => {
                                 ))}
                             </div>
                     </Panel>
-
-                    {/* The X-Ray reads the slip, so it sits directly below the
-                        slip/most-least pair and spans the full body width — as
-                        a third narrow card it left a dead notch under the
-                        most/least list. */}
-                    <TicketXRay balls={line} result={ticketAnalysis} onApplyConsensus={handleApplyConsensus} />
-
-                    <p className="px-1 text-[11px] leading-4 text-ink-subtle">
-                        Every number is equally likely in every draw. Every line has the same chance of Group 1, whatever the board or the history says.
-                    </p>
                 </div>
             </div>
 
