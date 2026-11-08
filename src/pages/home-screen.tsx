@@ -190,7 +190,7 @@ export const HomeScreen = () => {
     const era = analysis?.coverage;
     const nextDrawNo = league?.meta.nextDraw ?? 0;
     const nextIso = nextDraw ? nextDraw.toISOString().slice(0, 10) : null;
-    const winners = prizes?.g1?.winners ?? (prizes?.g1?.share ? 1 : null);
+    const winners = prizes?.g1?.winners ?? null;
 
     /** Shown under the board on tablets and at the foot of the main column
      *  on desktop; rendering the same node twice keeps the reading order
@@ -253,7 +253,9 @@ export const HomeScreen = () => {
                                             Live
                                         </span>
                                     )}
-                                    <span className="text-[11px] text-ink-subtle">{winners != null ? `${winners} winner${winners === 1 ? "" : "s"}` : "—"}</span>
+                                    <span className="text-[11px] text-ink-subtle">
+                                        {winners == null ? (prizes?.g1?.share != null ? "No winner" : "—") : winners === 0 ? "No winner" : `${winners} winner${winners === 1 ? "" : "s"}`}
+                                    </span>
                                 </div>
                             </div>
 
