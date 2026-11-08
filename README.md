@@ -1,6 +1,6 @@
 # toto.sg
 
-Unofficial Singapore TOTO statistics: the latest result, the full draw archive, number stats, 231 number-picking strategies scored against random picks, and a 7×7 heat board with a System 6/7/8 play slip.
+Unofficial Singapore TOTO statistics: the latest result, the full draw archive, number stats, a ranked strategy league scored against random picks, and a 7×7 heat board with a System 6/7/8 play slip.
 
 Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysis, league scoring) runs offline; the client only renders. No backend — the one serverless component is a Netlify Function that keeps the "latest result" panel fresh between rebuilds.
 
@@ -33,7 +33,7 @@ Node ≥ 18 required. `npm run refresh` is idempotent: it keeps `public/data/dra
 | ----------------------------------- | ------------------- | ------------------------------------------------------------------------- |
 | `public/data/draws.json`            | `npm run refresh`   | 1,892 draws, #2341–#4232, with prize tables where available               |
 | `public/data/analysis.json`         | `npm run refresh`   | 6/49-era statistics (coverage, frequency, hot/cold, sums, pairs, weekday) |
-| `public/data/strategies.json`       | `npm run league`    | 231 ranked strategies + a `meta` block (folds, chance baseline, families) |
+| `public/data/strategies.json`       | `npm run league`    | the ranked strategy league + a `meta` block (folds, chance baseline, families) |
 | `public/data/gambler-playbook.json` | `npm run league`    | The 10 cross-panel gambler strategies: rules, evidence panels, spec lines |
 
 `strategies.json` is a **committed league artifact**: it is re-scored by the league scripts, not by `npm run refresh`, so a routine data refresh never clobbers it. `npm run league` regenerates it in two passes — `league:custom` writes the curated lines and generator rules and drops the placeholder litter, `league:gambler` adds the 10 cross-panel gambler strategies and rewrites `gambler-playbook.json`. `npm run verify:data` checks every artifact — draw ordering, number ranges, analysis sections, and the league contract (ranks form a permutation, scores are 0–100, every current pick holds six unique numbers) — and exits non-zero on drift.
