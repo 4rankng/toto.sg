@@ -54,6 +54,8 @@ const StrategyDetail = ({
     evidencePanels,
     /** The strategy's prize-hit ledger — what the tier tiles expand into. */
     prizeEvents,
+    /** Actual drawn numbers by draw no — the ledger shows the real draw. */
+    drawsByNo,
     className,
 }: {
     row: StrategyRow;
@@ -64,6 +66,7 @@ const StrategyDetail = ({
     /** The Insights panels a documented strategy was read off. */
     evidencePanels?: { anchor: string; label: string }[];
     prizeEvents?: PrizeEvent[];
+    drawsByNo?: Map<number, Draw>;
     className?: string;
 }) => {
     const [openTier, setOpenTier] = useState<string | null>(null);
@@ -153,7 +156,7 @@ const StrategyDetail = ({
                 <div className="min-w-[110px] flex-1 px-3 py-2">
                     <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Score</dt>
                     <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums" title={`Log-normalised to 1–100 against the theoretical ceiling (every fold a Group 1) from ${formatNumber(row.score ?? 0)} raw prize points — each prize hit earns its tier's weight, G7 1 … G1 1M; 100 is the perfect league, the leader sits near 54`}>
-                        {row.score100 ?? 1} <span className="text-ink-muted">/ 100 · {formatNumber(row.score ?? 0)} pts</span>
+                        {row.score100 ?? 1} <span className="text-ink-muted">/ 100</span>
                     </dd>
                 </div>
                 <div className="min-w-[90px] flex-[0.8] px-3 py-2">
@@ -214,18 +217,29 @@ const StrategyDetail = ({
                     </div>
                     {openTier && tierEvents.length > 0 && (
                         <ul className="mt-2 flex flex-col divide-y divide-line-soft">
-                            {tierEvents.map((event) => (
-                                <li key={event.d} className="flex flex-wrap items-center gap-x-2.5 gap-y-1 py-1.5">
-                                    <span className="rounded bg-surface px-1 py-px font-mono text-[10px] font-semibold text-primary-strong ring-1 ring-line-soft ring-inset">G{event.g}</span>
-                                    <span className="font-mono text-[11px] font-semibold text-ink tabular-nums">#{event.d}</span>
-                                    <span className="text-[11px] text-ink-muted">{formatDate(event.date)}</span>
-                                    <span className="ml-auto flex items-center gap-1">
-                                        {[...event.p].sort((a, b) => a - b).map((n) => (
-                                            <Ball key={n} n={n} size="sm" />
-                                        ))}
-                                    </span>
-                                </li>
-                            ))}
+                            {tierEvents.map((event) => {
+                                const drawn = drawsByNo?.get(event.d);
+                                const pick = new Set(event.p);
+                                return (
+                                    <li key={event.d} className="flex flex-wrap items-center gap-x-2.5 gap-y-1 py-1.5">
+                                        <span className="rounded bg-surface px-1 py-px font-mono text-[10px] font-semibold text-primary-strong ring-1 ring-line-soft ring-inset">G{event.g}</span>
+                                        <span className="font-mono text-[11px] font-semibold text-ink tabular-nums">#{event.d}</span>
+                                        <span className="text-[11px] text-ink-muted">{formatDate(event.date)}</span>
+                                        <span
+                                            className="ml-auto flex items-center gap-1"
+                                            title="The actual draw — accent ring marks the balls this strategy matched"
+                                        >
+                                            {drawn
+                                                ? [...drawn.numbers].sort((a, b) => a - b).map((n) => (
+                                                      <Ball key={n} n={n} size="sm" className={pick.has(n) ? "ring-2 ring-accent" : "opacity-40"} />
+                                                  ))
+                                                : [...event.p].sort((a, b) => a - b).map((n) => (
+                                                      <Ball key={n} n={n} size="sm" />
+                                                  ))}
+                                        </span>
+                                    </li>
+                                );
+                            })}
                         </ul>
                     )}
                 </div>
@@ -358,6 +372,9 @@ export const StrategiesScreen = () => {
     // The prize-hit ledger behind the tier tiles' "when did it hit" list.
     const { data: prizeEvents } = useJson<PrizeEventsFile>("/data/prize-events.json");
     const playbookById = useMemo(() => new Map((playbook?.strategies ?? []).map((entry) => [entry.id, entry])), [playbook]);
+    // Actual drawn numbers by draw no — the tier ledger shows the real draw
+    // and accent-rings the balls the strategy matched.
+    const drawsByNo = useMemo(() => new Map((draws ?? []).map((d) => [d.draw, d])), [draws]);
 
     // Live per-ball form for the expanded rows: draws since each ball last
     // appeared, its hits in the last 10 draws, and its all-time count.
@@ -628,6 +645,7 @@ export const StrategiesScreen = () => {
                                             buildRules={playbookById.get(openRow.id)?.rules}
                                             evidencePanels={playbookById.get(openRow.id)?.panels}
                                             prizeEvents={prizeEvents?.strategies?.[openRow.id]}
+                                            drawsByNo={drawsByNo}
                                         />
                                     </div>
                                 )}
