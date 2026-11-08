@@ -1,5 +1,6 @@
 # toto.sg — self-host deploy to https://toto.tingting.vip
 #
+#   make dev      run the Vite dev server locally (http://localhost:5173)
 #   make deploy   regenerate league -> verify data -> build -> push image -> ship -> live check
 #   make ship     just pull + restart the container on the server (image already pushed)
 #   make caddy    ensure the toto.tingting.vip vhost exists and reload Caddy
@@ -20,7 +21,10 @@ PORT   := 172.17.0.1:8090:8080
 VHOST  := toto.tingting.vip
 CADDY  := /opt/vfic/Caddyfile
 
-.PHONY: deploy league verify build login image ship caddy check
+.PHONY: dev deploy league verify build login image ship caddy check
+
+dev:
+	npm run dev
 
 deploy: league verify build image ship check
 
@@ -54,4 +58,3 @@ check:
 	@EXPECTED=$$(node -e "console.log(require('./public/data/strategies.json').strategies.length)"); \
 	 curl -fsS https://$(VHOST)/data/strategies.json | EXPECTED=$$EXPECTED node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);const bad=j.strategies.some(r=>r.score==null);const expected=Number(process.env.EXPECTED);if(j.strategies.length!==expected||bad){console.error('FAIL league: '+j.strategies.length+' strategies, expected '+expected+(bad?', null scores':''));process.exit(1)}console.log('OK league: '+j.strategies.length+' strategies, no null scores')})"
 	@curl -fsS -o /dev/null https://$(VHOST)/strategies && echo "OK /strategies"
-	@curl -fsS -o /dev/null https://$(VHOST)/data/gambler-playbook.json && echo "OK /data/gambler-playbook.json"

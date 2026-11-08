@@ -1,7 +1,10 @@
-// toto.sg — 24 deterministic walk-forward technical indicator & gambler rules.
+// toto.sg — 21 deterministic walk-forward technical indicator rules.
 //
 // Rules consume (prior, target, rng, stats) and return a sorted 6-number line
-// in 1..49 with six unique balls, or null to reject and retry.
+// in 1..49 with six unique balls, or null to reject and retry. The three
+// payout/anti-crowd rules that used to live here (Kelly Anti-Crowd EV,
+// Post-31 Fortress, Double-Calendar Veto) were dropped: the league optimises
+// match count, not prize sharing.
 import {
     RANGE49,
     acValue,
@@ -347,37 +350,6 @@ export const INDICATOR_RULES = {
         return line;
     },
 
-    // 17. Kelly Anti-Crowd EV Shield
-    kellyAntiCrowdEv(prior, target, rng, stats) {
-        const banned = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 28, 38, 48, 17, 25, 33, 41, 49, 13, 19, 31, 37, 43]);
-        const pool = RANGE49.filter((n) => !banned.has(n));
-        const line = sortAsc(sampleK(rng, pool, 6));
-        const sum = lineSum(line);
-        if (sum < 160 || sum > 215) return null;
-        return line;
-    },
-
-    // 18. Post-31 High Payout Fortress
-    post31Fortress(prior, target, rng, stats) {
-        const highPool = RANGE49.filter((n) => n > 31);
-        const midPool = RANGE49.filter((n) => n >= 19 && n <= 31);
-        const line = sortAsc([...sampleK(rng, highPool, 5), ...sampleK(rng, midPool, 1)]);
-        if (consecPairs(line) > 1) return null;
-        const sum = lineSum(line);
-        if (sum < 175) return null;
-        return line;
-    },
-
-    // 19. Double-Calendar Anti-Crush Sieve
-    doubleCalendarVeto(prior, target, rng, stats) {
-        const midPool = RANGE49.filter((n) => n >= 13 && n <= 31);
-        const highPool = RANGE49.filter((n) => n >= 32);
-        const line = sortAsc([...sampleK(rng, midPool, 2), ...sampleK(rng, highPool, 4)]);
-        const sum = lineSum(line);
-        if (sum < 165 || sum > 215) return null;
-        return line;
-    },
-
     // 20. Markov Lag-1 Directed Transition Lift
     markovLag1Lift(prior, target, rng, stats) {
         const lastNums = stats.lastDraw?.numbers ?? [6, 13, 31, 34, 40, 45];
@@ -450,3 +422,28 @@ export const INDICATOR_RULES = {
         return line;
     },
 };
+
+/** The league rows this library evaluates, [id, name, family, description]. */
+export const INDICATOR_STRATEGIES = [
+    ["rsi14Reversal", "Wilder RSI-14 Mean-Reversion Oversold", "Indicators", "Picks from the oversold RSI-14 tier (<42) with line sum locked to 130–185 and Arithmetic Complexity ≥ 7."],
+    ["rsi14TrendBreakout", "Wilder RSI-14 Momentum Breakout", "Indicators", "Harnesses high relative strength (RSI ≥ 54) with a broad 4+ decade spread to avoid cluster clustering."],
+    ["macdBullCross", "MACD 12/26/9 Acceleration Crossover", "Indicators", "Captures positive MACD histogram divergence where short-term exponential velocity outpaces long-term trend."],
+    ["bollingerMeanRevert", "Bollinger 20-Draw Counter-Sum Channel", "Indicators", "Adaptive sum channel: targets lower sum (115–148) after upper-band exhaustion, and upper sum (152–188) after lower troughs."],
+    ["emaGoldenRibbon", "EMA 8/34 Golden Ribbon Spread", "Indicators", "Ranks balls by EMA-8 minus EMA-34 ribbon spread with high Arithmetic Complexity sieve (AC ≥ 7)."],
+    ["hazardPeakWindow", "Kaplan-Meier Hazard Peak Window", "Indicators", "Invests in empirical hazard peaks at skip 0 (repeaters) and skip 5–11; vetoes overdue balls past 22 draws."],
+    ["fanoClockwork", "Fano Clockwork Interval Regularity", "Indicators", "Filters for balls exhibiting clockwork cycle regularity (skips near 6–11 draws) with at most one adjacent pair."],
+    ["hurstRegimeAdapter", "Hurst Exponent Variance-Ratio Sieve", "Indicators", "Sum-variance regime filter requiring centered sum (125–175) and at least 5 distinct ending digits."],
+    ["cusumDriftCounter", "CUSUM Structural Drift Counter-Tilt", "Indicators", "Enforces 3 odd / 3 even parity with modal span (36–44) to correct cumulative sum drift."],
+    ["atrVolatilityChannel", "ATR Volatility Envelope Target", "Indicators", "Pins candidate line sum within ±0.8 standard deviations of the 20-draw mean with AC ≥ 8."],
+    ["zScoreMultiHorizon", "Multi-Horizon (10d & 50d) Z-Confluence", "Indicators", "Demands positive standardized velocity residual simultaneously across 10-draw and 50-draw horizons."],
+    ["togelMistikLama", "Togel Mistik Lama Echo Sieve", "Folk & Culture", "Applies traditional Southeast Asian Mistik Lama permutation (0↔1, 2↔5, 3↔8, 4↔7, 6↔9) to previous draw winners."],
+    ["togelMistikBaru", "Togel Mistik Baru Shadow Sieve", "Folk & Culture", "Applies Mistik Baru shadow shifts (0↔8, 1↔7, 2↔6, 3↔9, 4↔5) with AC ≥ 8 complexity protection."],
+    ["togelIndeksTaysen", "Togel Indeks & Taysen Bridge", "Folk & Culture", "Indeks (±5 mod 10) transform on previous winners combined with anti-crowd high anchors 34, 40, 42, 47."],
+    ["markSixHalfWaveBal", "Mark Six 6-Half-Wave Balance", "Mark Six Charts", "Picks exactly 1 ball from each of the six Colour × Parity half-waves (Red-Odd, Red-Even, Blue-Odd, Blue-Even, Green-Odd, Green-Even)."],
+    ["ganzhiStemHarmony", "Ganzhi Stem Day-Regime Harmony", "Almanac & Time", "Calendar-conditional alignment targeting Monday velocity leaders (18, 23, 34, 39, 47) or Thursday anchors (4, 11, 20, 42, 46)."],
+    ["markovLag1Lift", "Markov Lag-1 Directed Transition Lift", "Sequence", "Harvests empirical 49×49 directed Markov transition counts following the previous draw's winning numbers."],
+    ["couponSweepCompleter", "Coupon-Collector 49-Ball Sweep Completer", "Gap & Due", "Pairs unseen balls from the active 25-draw sweep with short-term velocity leaders to catch the tail of the cycle."],
+    ["cliqueHarmonyTriad", "Positive Co-Occurrence Clique Triad", "Pairs", "Greedy graph clique filtering: picks high-frequency balls with AC ≥ 8 and no arithmetic progressions."],
+    ["orderStatQuantileLock", "Hypergeometric Order-Statistic Quantile Lock", "Structure", "Pins each sorted position x_(1)..x_(6) into its theoretical hypergeometric interquartile range with sum 140–165."],
+    ["multiFactorQuant6", "Multi-Factor 6-Quant Composite Scorecard", "Ensemble", "Linear combination of RSI-14, 10-draw velocity residual, 50-draw velocity, and long-term frequency."],
+];

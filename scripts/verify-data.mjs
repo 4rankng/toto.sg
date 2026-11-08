@@ -1,14 +1,21 @@
 // toto.sg — data artifact contract check. `npm run verify:data`.
 //
-// The site is a static SPA over three committed JSON artifacts. This script
+// The site is a static SPA over two committed JSON artifacts. This script
 // fails loudly when an artifact drifts from the shape the UI expects, so a
 // bad refresh is caught at the pipeline instead of in the browser.
 //
-//   draws.json       array of draws, ascending ids, 6 unique numbers 1-49
+//   draws.json       array of draws, ascending ids and dates, 6 unique
+//                    numbers 1-49, additional never among them
 //   analysis.json    17 analysis sections over the 6/49 era
-//   strategies.json  the strategy league: meta block + ranked strategies
+//   strategies.json  the strategy league: meta block + ranked strategies.
+//                    Fails on duplicate ids / names / descriptions, missing
+//                    metric fields (recent12, pnlPerDraw, score, twoPlusDraws,
+//                    …), payout-family rows, and any drift of the chance nulls
+//                    from the hypergeometric constants the league is scored
+//                    against.
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { CHANCE } from "./lib/league-eval.mjs";
 
 const DATA_DIR = fileURLToPath(new URL("../public/data/", import.meta.url));
 
@@ -34,9 +41,14 @@ const checkDraws = (draws) => {
         check(new Set(draw?.numbers ?? []).size === 6, `${where}: duplicate numbers`);
         check((draw?.numbers ?? []).every(isDraw), `${where}: numbers must be 1-49`);
         check(draw.additional == null || isDraw(draw.additional), `${where}: additional must be 1-49`);
-        if (i > 0) check(draw.draw > draws[i - 1].draw, `${where}: draws must ascend by id`);
+        check(draw.additional == null || !draw.numbers.includes(draw.additional), `${where}: additional must not be a winning number`);
+        if (i > 0) {
+            check(draw.draw > draws[i - 1].draw, `${where}: draws must ascend by id`);
+            check(draw.date > draws[i - 1].date, `${where}: draws must ascend by date`);
+        }
     }
 };
+
 
 const checkAnalysis = (analysis, draws) => {
     const sections = [
@@ -73,30 +85,42 @@ const checkStrategies = (league) => {
     check(typeof league?.meta?.generatedAt === "string", "strategies.json: meta.generatedAt missing");
     check(Number.isInteger(league?.meta?.nextDraw), "strategies.json: meta.nextDraw missing");
     check(Number.isInteger(league?.meta?.folds) && league.meta.folds > 0, "strategies.json: meta.folds must be a positive integer");
-    check(typeof league?.meta?.chance?.expectedHitsPerLine === "number", "strategies.json: meta.chance.expectedHitsPerLine missing");
-    check(typeof league?.meta?.chance?.scoreBaseline === "number", "strategies.json: meta.chance.scoreBaseline missing");
+    for (const key of Object.keys(CHANCE)) {
+        check(league?.meta?.chance?.[key] === CHANCE[key], `strategies.json: meta.chance.${key} must equal the chance constant ${CHANCE[key]}`);
+    }
     check(Array.isArray(league?.meta?.families) && league.meta.families.length > 0, "strategies.json: meta.families missing");
+    const banned = league?.meta?.families?.filter((f) => /pari|gambler|payout/i.test(f)) ?? [];
+    check(banned.length === 0, `strategies.json: payout families are out of scope: ${banned.join(", ")}`);
 
     check(Array.isArray(league?.strategies) && league.strategies.length > 0, "strategies.json: strategies must be a non-empty array");
     if (!Array.isArray(league?.strategies)) return;
 
     const ranks = new Set();
     const seenIds = new Set();
+    const seenNames = new Set();
+    const seenDescriptions = new Set();
     league.strategies.forEach((row, i) => {
         const where = `strategies.json[${i}] (${row?.id ?? "?"})`;
         check(typeof row?.id === "string" && row.id.length > 0, `${where}: missing id`);
         check(!seenIds.has(row?.id), `${where}: duplicate strategy id "${row?.id}"`);
         seenIds.add(row?.id);
         check(typeof row?.name === "string" && row.name.length > 0, `${where}: missing name`);
+        check(!seenNames.has(row?.name), `${where}: duplicate strategy name "${row?.name}"`);
+        seenNames.add(row?.name);
         check(typeof row?.family === "string" && league.meta.families.includes(row.family), `${where}: family "${row?.family}" not in meta.families`);
         check(typeof row?.description === "string" && row.description.length > 0, `${where}: missing description`);
+        check(!seenDescriptions.has(row?.description), `${where}: duplicate description ("${row?.id}") — two rows implementing the same rule`);
+        seenDescriptions.add(row?.description);
         check(Number.isInteger(row?.rank) && row.rank >= 1 && row.rank <= league.strategies.length, `${where}: rank out of range`);
         ranks.add(row.rank);
         check(typeof row?.score === "number" && row.score >= 0 && row.score <= 100, `${where}: score must be 0-100`);
         check(Number.isFinite(row?.meanHits) && Number.isFinite(row?.expectedHits) && Number.isFinite(row?.zScore), `${where}: non-finite metrics`);
         check(Number.isInteger(row?.recent12) && row.recent12 >= 0 && row.recent12 <= 72, `${where}: recent12 must be 0-72 (12 draws × 6 numbers)`);
         check(Number.isInteger(row?.totalPrizes) && Number.isInteger(row?.effPrizes), `${where}: prize counts must be integers`);
+        check(Number.isInteger(row?.twoPlusDraws) && row.twoPlusDraws >= 0 && row.twoPlusDraws <= league.meta.folds, `${where}: twoPlusDraws must be 0-${league.meta.folds}`);
+        check(Number.isInteger(row?.totalHits) && row.totalHits >= 0 && row.totalHits <= league.meta.folds * 6, `${where}: totalHits must be 0-${league.meta.folds * 6}`);
         check(Number.isFinite(row?.pnlPerDraw), `${where}: pnlPerDraw must be finite`);
+        check(Math.abs(row.meanHits - row.totalHits / league.meta.folds) < 0.005, `${where}: meanHits must equal totalHits / folds`);
         check(Array.isArray(row?.currentPick) && row.currentPick.length === 6, `${where}: currentPick must hold 6 numbers`);
         check(new Set(row?.currentPick ?? []).size === 6, `${where}: currentPick has duplicates`);
         check((row?.currentPick ?? []).every(isDraw), `${where}: currentPick must be 1-49`);
@@ -104,29 +128,6 @@ const checkStrategies = (league) => {
     check(ranks.size === league.strategies.length, "strategies.json: ranks must be a permutation of 1..N");
 };
 
-/** The gambler playbook must mirror the league: one row per documented strategy. */
-const checkPlaybook = (playbook, league) => {
-    check(playbook?.meta != null, "gambler-playbook.json: missing meta");
-    check(Array.isArray(playbook?.strategies) && playbook.strategies.length === 10, "gambler-playbook.json: expected 10 strategies");
-    if (!Array.isArray(playbook?.strategies)) return;
-
-    const leagueIds = new Set((league?.strategies ?? []).map((row) => row.id));
-    const seen = new Set();
-    playbook.strategies.forEach((entry, i) => {
-        const where = `gambler-playbook.json[${i}] (${entry?.id ?? "?"})`;
-        check(typeof entry?.id === "string" && entry.id.length > 0, `${where}: missing id`);
-        check(!seen.has(entry?.id), `${where}: duplicate id`);
-        seen.add(entry?.id);
-        check(leagueIds.has(entry?.id), `${where}: no league row with this id`);
-        check(typeof entry?.name === "string" && entry.name.length > 0, `${where}: missing name`);
-        check(typeof entry?.description === "string" && entry.description.length > 0, `${where}: missing description`);
-        check(Array.isArray(entry?.specLine) && entry.specLine.length === 6, `${where}: specLine must hold 6 numbers`);
-        check(new Set(entry?.specLine ?? []).size === 6, `${where}: specLine has duplicates`);
-        check((entry?.specLine ?? []).every(isDraw), `${where}: specLine must be 1-49`);
-        check(Array.isArray(entry?.rules) && entry.rules.length > 0, `${where}: missing rules`);
-        check(Array.isArray(entry?.panels) && entry.panels.length > 0, `${where}: missing evidence panels`);
-    });
-};
 
 const main = async () => {
     const read = async (name) => JSON.parse(await readFile(`${DATA_DIR}${name}`, "utf8"));
@@ -140,8 +141,6 @@ const main = async () => {
     const league = await read("strategies.json");
     checkStrategies(league);
 
-    const playbook = await read("gambler-playbook.json");
-    checkPlaybook(playbook, league);
 
     if (failures.length > 0) {
         console.error(`✗ ${failures.length} data contract failure(s):`);
@@ -154,7 +153,6 @@ const main = async () => {
     console.log(
         `✓ strategies.json ${league.strategies.length} strategies, ${league.meta.families.length} families, baseline ${league.meta.chance.scoreBaseline}`,
     );
-    console.log(`✓ gambler-playbook.json ${playbook.strategies.length} strategies, all matched to league rows`);
 };
 
 main().catch((err) => {

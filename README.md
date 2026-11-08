@@ -8,10 +8,10 @@ Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysi
 
 | Route         | Surface | What it is                                                                                                 |
 | ------------- | ------- | ---------------------------------------------------------------------------------------------------------- |
-| `/`           | Monitor | Latest draw with prize table, next-draw countdown & regime briefing strip, top strategies, 7-lens `NumberBoard` (All time, Last 50, 10-Draw Surge, Skip/Due, RSI-14, G3 EV, Bot Votes), and System 6/7/8 play slip with live `TicketXRay` combinatorial backtester |
-| `/history`    | Explore | Searchable, paginated archive of every draw with payout regime filters (Rollover, Solo G1, Split G1, High/Crowded G3, 3+ Consecutive), expanded draw anatomy (cage metrics, carry-over lag, crowd volume), and "Load in Play Slip →" |
-| `/insights`   | Learn   | 104 panels across 9 galleries: frequency, correlations, autocorrelation, geometry, folklore waves, crowd tax, indicators & oscillators (RSI, MACD, Bollinger, Hurst, Entropy, CUSUM, Kaplan-Meier), Togel & Mark Six almanac, and systems & EV forensics, with viewport-lazy section mounting |
-| `/strategies` | Compare | 263-strategy league across 26 families (including 24 indicator & oscillator strategies) with search, type filter, sorting (Score, Hits, Prizes, Recent 12, G3 EV), current pick X-Ray diagnostics, and "Load in Play Slip →" |
+| `/`           | Monitor | Latest draw with prize table, next-draw countdown & regime briefing strip, top strategies, 6-lens `NumberBoard` (All time, Last 50, 10-Draw Surge, Skip/Due, RSI-14, Bot Votes), and System 6/7/8 play slip with live `TicketXRay` combinatorial backtester |
+| `/history`    | Explore | Searchable, paginated archive of every draw with regime filters, expanded draw anatomy (cage metrics, carry-over lag), and "Load in Play Slip →" |
+| `/insights`   | Learn   | 85 panels across 8 galleries: frequency, correlations, autocorrelation, geometry, folklore waves, indicators & oscillators (RSI, MACD, Bollinger, Hurst, Entropy, CUSUM, Kaplan-Meier), Togel & Mark Six almanac, and randomness forensics, with viewport-lazy section mounting |
+| `/strategies` | Compare | 54-strategy league across 14 families with search, type filter, sorting (Score, Hits, 2+, Prizes, Recent 12), current pick X-Ray diagnostics, chance nulls beside every metric, and "Load in Play Slip →" |
 
 Design language: a dark-first mission-control console — canvas `#041018`, panel surfaces `#07202C`, 1px teal hairlines `#124155`, one signal colour (teal `#2EE6C5`, `#0F9E86` in light mode) with cyan `#35D6FF` as the second data hue, gold for the jackpot, and a cold→hot ramp for the heat board. Type is Sora for display, DM Sans for body, mono for labels and figures. The console is dark by default; the header toggle pins light (`data-theme`).
 
@@ -33,14 +33,20 @@ Node ≥ 18 required. `npm run refresh` is idempotent: it keeps `public/data/dra
 | ----------------------------------- | ------------------- | ------------------------------------------------------------------------- |
 | `public/data/draws.json`            | `npm run refresh`   | 1,892 draws, #2341–#4232, with prize tables where available               |
 | `public/data/analysis.json`         | `npm run refresh`   | 6/49-era statistics (coverage, frequency, hot/cold, sums, pairs, weekday) |
-| `public/data/strategies.json`       | `npm run league`    | the ranked strategy league + a `meta` block (folds, chance baseline, families) |
-| `public/data/gambler-playbook.json` | `npm run league`    | The 10 cross-panel gambler strategies: rules, evidence panels, spec lines |
+| `public/data/strategies.json`       | `npm run league`    | the ranked strategy league + a `meta` block (folds, chance nulls, families) |
+| `data/league-cache.json`             | `npm run league`    | per-(strategy, draw) fold evaluations with rolling prefix-hash validation |
 
-`strategies.json` is a **committed league artifact**: it is re-scored by the league scripts, not by `npm run refresh`, so a routine data refresh never clobbers it. `npm run league` regenerates it in three passes — `league:custom` writes the curated lines and generator rules, `league:gambler` adds the 10 cross-panel gambler strategies and rewrites `gambler-playbook.json`, and `league:indicators` evaluates 24 technical indicator and oscillator strategies. `npm run verify:data` checks every artifact — draw ordering, number ranges, analysis sections, and the league contract (ranks form a permutation, scores are 0–100, every current pick holds six unique numbers) — and exits non-zero on drift.
+`strategies.json` is a **committed league artifact**: it is fully rebuilt by `npm run league` from `draws.json` alone — nothing is carried over from a previous artifact, so every row is reproducible from source. Fold evaluations are cached in `data/league-cache.json` (a committed artifact, never served): each fold is keyed by (strategy, draw) and validated against a rolling SHA-256 prefix hash of the draws before it, so a rerun recomputes only new folds — an appended draw costs exactly one fold per strategy, and an edit inside the archive invalidates precisely the folds whose history changed. `npm run verify:data` checks every artifact — draw ordering (ids and dates), number ranges, additional never among the winners, analysis sections, and the league contract (unique ids/names/descriptions, no payout families, all metric fields present and non-null including `recent12`/`pnlPerDraw`/`score`/`twoPlusDraws`, ranks a permutation, chance nulls equal the hypergeometric constants) — and exits non-zero on drift. CI (`.github/workflows/verify.yml`) reruns the league, verifies the data, and builds on every push and PR, so a hand-edited or corrupted artifact cannot ship.
 
-The 10 gambler strategies come from `toto_10_gambler_strategies.docx`: each pairs a statistical cage property with a pari-mutuel anti-collision mechanism, so none of them repeats a single-variable rule. Their rules live in `scripts/lib/gambler-rules-a.mjs` and `scripts/lib/gambler-rules-b.mjs`; the shared vocabulary (velocity residuals, pair counts, skip gaps, residue and tail classes, playslip geometry) is in `scripts/lib/gambler-stats.mjs`. The document's illustrative line is kept in the playbook as the strategy's *spec line*; the league row always carries the rule's own current pick.
+Strategy league semantics — the contract every row satisfies:
+- **Real data only.** Every score is computed from the archived Singapore Pools draws in `draws.json`.
+- **No lookahead.** Each fold regenerates the line from strictly earlier draws; no fixed line is ever graded against a window it was curated from.
+- **Reproducible.** Rules draw randomness only from `rngFor(id, drawNo)` (mulberry32 seeded by FNV-1a of `id:draw`), so reruns are byte-identical apart from `meta.generatedAt`.
+- **Expanding window.** Every 6/49-era draw after a 50-draw warm-up is a fold (1,188 folds today, growing with every draw) — the full era, never a trailing slice. The warm-up only gives the 50-draw velocity and Bollinger-20 windows their minimum history.
+- **Match count is the goal.** No payout or prize-sharing strategies: rows exist to match numbers, not to dodge co-winners.
+- **Every metric renders with its chance null.** `totalHits` counts matched numbers (chance 73.5 per 100 draws, 0.7347 per draw); `twoPlusDraws` is the hit rate — draws where at least two numbers matched, because a lone 1-number match is chance noise (chance 15.1 per 100 draws); `totalPrizes` counts prize draws, i.e. 3+ matched (chance 1.86 per 100); `recent12` is the total matched over the last 12 draws (chance ≈ 8.8); `score` (0–100) is an index anchored so a chance-performing row scores exactly 45.
 
-Strategy league semantics: each strategy picks six numbers from strictly earlier draws and is scored against the real outcome over 100 walk-forward folds. A draw's matched numbers count only when at least two matched — a lone 1-number match is chance noise and scores zero — so `meanHits` is compared with the chance expectation of 0.3217 per line (0.7347 raw minus the exactly-one-match mass). `zScore` is the standardised difference, and `score` (0–100) is scaled around the chance baseline of 45. `recent12` is the **total** hits over the last 12 draws, not a per-draw count, so it can exceed 12.
+The rule families live in `scripts/lib/`: `curated-rules.mjs` (8 curated archetypes re-encoded as per-fold rules), `generator-rules.mjs` (8 deterministic generator rules), `desk-rules.mjs` (9 desk strategies), `matchrate-rules.mjs` (8 match-rate desk strategies), and `indicator-rules.mjs` (21 technical-indicator rules). The shared walk-forward evaluator and chance constants are `scripts/lib/league-eval.mjs`; `scripts/league-build.mjs` rebuilds the whole league in one pass.
 
 ## Data sources
 - **Historical seed (2008 → 2022)**: [Aloysius-JW/Singapore-ToTo-analysis](https://github.com/Aloysius-JW/Singapore-ToTo-analysis) CSV, draws 2341–3766.
@@ -50,20 +56,18 @@ Analysis and strategy stats use the **6/49 era only** (draws since 9 Oct 2014); 
 
 ## The number board & play slip
 
-`/` carries a 7×7 board of every number from 1 to 49 with 7 interactive lenses:
+`/` carries a 7×7 board of every number from 1 to 49 with 6 interactive lenses:
 - **All time**: 6/49-era frequency from `analysis.json`
 - **Last 50**: Trailing 50-draw frequency
 - **10-Draw Surge**: Short-term momentum z-score
 - **Skip / Due**: Current unhit gap vs median cycle
 - **RSI-14**: 14-draw Relative Strength Index
-- **G3 EV**: Empirical Group 3 payout premium per ball (S$ vs era mean)
-- **Bot Votes**: Consensus selections across all 263 active league strategies
+- **Bot Votes**: Consensus selections across every active league strategy
 
 The play slip beside the board supports **System 6, 7 and 8** lines with live **Ticket X-Ray** analytics:
-- 8-metric indicator grid: Sum, AC value, Span, Odd/Even, Consecutive pairs, Birthday bias (≤31), 3-Term arithmetic progressions, and Distinct tails.
-- Payout forensics: Estimated Group 3 share and crowd collision delta percentage.
-- Full 1,892-draw historical archive backtester evaluating simulated prizes and ROI across all 7 winning tiers (C(N, 6) combinations).
-- Instant presets: `+EV Anti-Crowd` (maximizes historical Group 3 payouts) and `Consensus Pick` (combines top league votes).
+- 7-metric indicator grid: Sum, AC value, Span, Odd/Even, Consecutive pairs, 3-Term arithmetic progressions, and Distinct tails, plus composition flags for rare line shapes.
+- Full 1,892-draw historical backtester: how many numbers the line would have matched in every archived draw, and the prize tiers those matches hit (C(N, 6) combinations).
+- Instant preset: `Consensus Pick` (combines the league's top votes).
 
 ## Deploy to Netlify
 

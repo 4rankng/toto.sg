@@ -93,8 +93,7 @@ async function main() {
     const analysis = computeAnalysis(era);
     await writeFile(ANALYSIS_PATH, `${JSON.stringify(analysis, null, 2)}\n`);
     // strategies.json is the committed strategy league. It is NOT regenerated
-    // here: it is re-scored by the research pipeline, and overwriting it with
-    // a differently shaped artifact would break the league page.
+    // here: `npm run league` rebuilds it fully from this draws.json artifact.
 
     // 5. Summary.
     const noPrize = draws.filter((d) => !d.prizes).length;

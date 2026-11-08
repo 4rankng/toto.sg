@@ -9,10 +9,7 @@
     "preview": "vite preview",
     "refresh": "node scripts/refresh.mjs",
     "verify:data": "node scripts/verify-data.mjs",
-    "league:custom": "node scripts/strategies-custom.mjs",
-    "league:gambler": "node scripts/strategies-gambler.mjs",
-    "league:indicators": "node scripts/strategies-indicators.mjs",
-    "league": "npm run league:custom && npm run league:gambler && npm run league:indicators"
+    "league": "node scripts/league-build.mjs"
   },
   "dependencies": {
     "@internationalized/date": "^3.12.4",

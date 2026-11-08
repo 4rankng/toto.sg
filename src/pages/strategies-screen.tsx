@@ -11,40 +11,22 @@ import { KpiCard } from "@/components/product/kpi-card";
 import { PageHeader } from "@/components/product/page-header";
 import { RecentHits } from "@/components/product/recent-hits";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
-import { type Draw, type StrategiesFile, type StrategyRow, formatDate, formatNumber, formatSgd, formatSigned, useJson } from "@/lib/data";
-import { ballPayoutStats, type BallPayoutStats } from "@/lib/insights-correlations";
+import { type StrategiesFile, type StrategyRow, formatDate, formatNumber, formatSigned, useJson } from "@/lib/data";
 import { lineAcValue } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
 import { useLineBuilder } from "@/providers/line-builder-provider";
 import { cx } from "@/utils/cx";
 
-type SortKey = "score" | "hits" | "prizes" | "recent12" | "g3Ev";
+type SortKey = "score" | "hits" | "twoPlus" | "prizes" | "recent12";
 
 const SORTS: { id: SortKey; label: string }[] = [
     { id: "score", label: "Score" },
     { id: "hits", label: "Hits" },
+    { id: "twoPlus", label: "2+" },
     { id: "prizes", label: "Prizes" },
     { id: "recent12", label: "Recent 12" },
-    { id: "g3Ev", label: "G3 EV" },
 ];
 
-const strategyG3Ev = (row: StrategyRow, ballPayouts: BallPayoutStats | null) => {
-    if (!ballPayouts || !row.currentPick.length) return 0;
-    const sumDelta = row.currentPick.reduce((acc, n) => {
-        const ballRow = ballPayouts.rows[n - 1];
-        return acc + (ballRow?.deltaVsEra ?? 0);
-    }, 0);
-    return Math.round(sumDelta / row.currentPick.length);
-};
-
-const strategyMeanG3 = (row: StrategyRow, ballPayouts: BallPayoutStats | null) => {
-    if (!ballPayouts || !row.currentPick.length) return 1750;
-    const sumG3 = row.currentPick.reduce((acc, n) => {
-        const ballRow = ballPayouts.rows[n - 1];
-        return acc + (ballRow?.meanG3 ?? 1750);
-    }, 0);
-    return Math.round(sumG3 / row.currentPick.length);
-};
 
 const LeagueSkeleton = () => (
     <DataLoading label="Loading the strategies">
@@ -54,14 +36,9 @@ const LeagueSkeleton = () => (
 );
 
 /** The expanded body of a strategy with Ticket X-Ray diagnostics. */
-const StrategyDetail = ({
-    row,
-    ballPayouts,
-    onLoadInPlaySlip,
-    className,
-}: {
+const StrategyDetail = ({ row, chance, onLoadInPlaySlip, className }: {
     row: StrategyRow;
-    ballPayouts: BallPayoutStats | null;
+    chance: StrategiesFile["meta"]["chance"];
     onLoadInPlaySlip: (numbers: number[]) => void;
     className?: string;
 }) => {
@@ -70,8 +47,6 @@ const StrategyDetail = ({
     const ac = lineAcValue(sorted);
     const span = sorted.length > 0 ? sorted[sorted.length - 1] - sorted[0] : 0;
     const bdays = sorted.filter((n) => n <= 31).length;
-    const estG3 = strategyMeanG3(row, ballPayouts);
-    const g3Delta = strategyG3Ev(row, ballPayouts);
 
     return (
         <div className={cx("min-w-0 flex flex-col gap-3", className)}>
@@ -104,7 +79,7 @@ const StrategyDetail = ({
                         {sorted.join(" · ")}
                     </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
                         <p className="text-[10px] text-ink-subtle uppercase">Sum</p>
                         <p className="font-mono text-xs font-semibold text-ink tabular-nums">{sum}</p>
@@ -121,12 +96,6 @@ const StrategyDetail = ({
                         <p className="text-[10px] text-ink-subtle uppercase">Birthday ≤31</p>
                         <p className={cx("font-mono text-xs font-semibold tabular-nums", bdays >= 5 ? "text-heat-hot" : "text-ink")}>{bdays} / 6</p>
                     </div>
-                    <div className="col-span-2 rounded border border-line-soft bg-surface px-2 py-1 text-center sm:col-span-1">
-                        <p className="text-[10px] text-ink-subtle uppercase">Est. G3 Share</p>
-                        <p className={cx("font-mono text-xs font-semibold tabular-nums", g3Delta >= 0 ? "text-primary" : "text-heat-hot")}>
-                            {formatSgd(estG3)} ({g3Delta >= 0 ? "+" : ""}{g3Delta})
-                        </p>
-                    </div>
                 </div>
             </div>
 
@@ -138,24 +107,32 @@ const StrategyDetail = ({
                 </div>
                 <div>
                     <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Numbers matched</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.totalHits}</dd>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                        {formatNumber(row.totalHits ?? 0)} <span className="text-ink-subtle">vs {formatNumber(Math.round(row.evaluatedDraws * chance.expectedHitsPerLine))} chance</span>
+                    </dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Hit rate — 2+ matched</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                        {row.twoPlusDraws ?? 0}/{row.evaluatedDraws} <span className="text-ink-subtle">vs {Math.round((row.evaluatedDraws * chance.twoPlusPer100Draws) / 100)} chance</span>
+                    </dd>
                 </div>
                 <div>
                     <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matched per draw</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.meanHits.toFixed(3)}</dd>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                        {(row.meanHits ?? 0).toFixed(3)} <span className="text-ink-subtle">vs {(row.expectedHits ?? 0).toFixed(3)} chance</span>
+                    </dd>
                 </div>
                 <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Random pick average</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink-muted tabular-nums">{row.expectedHits.toFixed(3)}</dd>
-                </div>
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prizes</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.totalPrizes ?? 0)}</dd>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize draws</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                        {formatNumber(row.totalPrizes ?? 0)} <span className="text-ink-subtle">vs {Math.round((row.evaluatedDraws * chance.prizesPer100Draws) / 100)} chance</span>
+                    </dd>
                 </div>
                 <div>
                     <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matched, last 12 draws</dt>
                     <dd className="mt-0.5">
-                        <RecentHits hits={row.recent12 ?? 0} draws={12} expectedPerLine={row.expectedHits} />
+                        <RecentHits hits={row.recent12 ?? 0} draws={12} expectedPerLine={row.expectedHits ?? chance.expectedHitsPerLine} />
                     </dd>
                 </div>
                 <div>
@@ -164,7 +141,9 @@ const StrategyDetail = ({
                 </div>
                 <div>
                     <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Score</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.score.toFixed(1)}</dd>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                        {(row.score ?? 0).toFixed(1)} <span className="text-ink-subtle">vs {chance.scoreBaseline} chance</span>
+                    </dd>
                 </div>
             </dl>
         </div>
@@ -180,8 +159,6 @@ export const StrategiesScreen = () => {
     const { setLine } = useLineBuilder();
 
     const { data, isLoading, error } = useJson<StrategiesFile>("/data/strategies.json");
-    const { data: draws } = useJson<Draw[]>("/data/draws.json");
-    const ballPayouts = useMemo(() => (draws ? ballPayoutStats(draws) : null), [draws]);
 
     const handleLoadInPlaySlip = (numbers: number[]) => {
         setLine(numbers);
@@ -233,20 +210,20 @@ export const StrategiesScreen = () => {
         const value = (row: StrategyRow) => {
             switch (sort) {
                 case "prizes":
-                    return row.effPrizes;
+                    return row.effPrizes ?? 0;
                 case "hits":
-                    return row.totalHits;
+                    return row.totalHits ?? 0;
+                case "twoPlus":
+                    return row.twoPlusDraws ?? 0;
                 case "recent12":
                     return row.recent12 ?? 0;
-                case "g3Ev":
-                    return strategyG3Ev(row, ballPayouts);
                 case "score":
                 default:
-                    return row.score;
+                    return row.score ?? 0;
             }
         };
         return [...filtered].sort((a, b) => value(b) - value(a));
-    }, [data, query, family, sort, ballPayouts]);
+    }, [data, query, family, sort]);
 
 
 
@@ -261,6 +238,10 @@ export const StrategiesScreen = () => {
     }
 
     const { meta } = data;
+    // Chance nulls scale with the fold count: the meta rates are per 100 draws.
+    const chanceHits = Math.round(meta.folds * meta.chance.expectedHitsPerLine);
+    const chanceTwoPlus = Math.round((meta.folds * meta.chance.twoPlusPer100Draws) / 100);
+    const chancePrizes = Math.round((meta.folds * meta.chance.prizesPer100Draws) / 100);
     const toggle = (id: string) => setExpanded((current) => (current === id ? null : id));
 
     const filters = (
@@ -317,7 +298,7 @@ export const StrategiesScreen = () => {
             <PageHeader
                 kicker="Strategies"
                 title="Strategy league"
-                description={`Score of 45 is chance. Matches count only when at least two numbers hit.`}
+                description={`Every score is expanding walk-forward over ${formatNumber(meta.folds)} real draws — each draw graded only on the history before it — against pure chance: ${formatNumber(chanceHits)} numbers matched, ${formatNumber(chanceTwoPlus)} draws with 2+ matched, ${formatNumber(chancePrizes)} prize draws. Score ${meta.chance.scoreBaseline} = chance.`}
                 meta={
                     <>
                         <span>
@@ -335,12 +316,12 @@ export const StrategiesScreen = () => {
                 <KpiCard label="Strategies" value={formatNumber(data.strategies.length)} hint={`${meta.folds} draws each`} icon={Grid01} tone="primary" />
                 <KpiCard
                     label="Top score"
-                    value={data.strategies.reduce((best, row) => Math.max(best, row.score), 0).toFixed(1)}
-                    hint={[...data.strategies].sort((a, b) => b.score - a.score)[0]?.name}
+                    value={data.strategies.reduce((best, row) => Math.max(best, row.score ?? 0), 0).toFixed(1)}
+                    hint={[...data.strategies].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0]?.name}
                     icon={Award01}
                     tone="gold"
                 />
-                <KpiCard label="Prizes / 100" value={meta.chance.prizesPer100Draws.toFixed(1)} hint="random picks" icon={Coins01} tone="secondary" />
+                <KpiCard label="Prizes / 100" value={meta.chance.prizesPer100Draws.toFixed(1)} hint="chance for any line" icon={Coins01} tone="secondary" />
                 <KpiCard label="Next draw" value={meta.nextDraw} hint="picks below" icon={Calendar} tone="neutral" />
             </div>
 
@@ -349,7 +330,7 @@ export const StrategiesScreen = () => {
             <Panel
                 isFlush
                 title="All strategies"
-                description={`${rows.length} of ${data.strategies.length} · picks for draw ${meta.nextDraw}`}
+                description={`${rows.length} of ${data.strategies.length} · picks for draw ${meta.nextDraw} · chance over ${formatNumber(meta.folds)} draws: ${formatNumber(chanceHits)} hits, ${formatNumber(chanceTwoPlus)} with 2+, ${formatNumber(chancePrizes)} prizes`}
                 actions={filters}
             >
                 <ol className="grid grid-cols-1 gap-px bg-line-soft xl:grid-cols-2">
@@ -378,11 +359,11 @@ export const StrategiesScreen = () => {
                                         <span className="w-20 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">
                                             {sort === "recent12"
                                                 ? `${row.recent12 ?? 0} (L12)`
-                                                : sort === "g3Ev"
-                                                  ? `${strategyG3Ev(row, ballPayouts) >= 0 ? "+" : ""}${strategyG3Ev(row, ballPayouts)} G3`
+                                                : sort === "twoPlus"
+                                                  ? `${row.twoPlusDraws ?? 0}× 2+`
                                                   : sort === "hits"
-                                                    ? `${row.totalHits} hits`
-                                                    : `${row.effPrizes} prizes`}
+                                                    ? `${row.totalHits ?? 0} hits`
+                                                    : `${row.effPrizes ?? 0} prizes`}
                                         </span>
                                     </span>
 
@@ -391,16 +372,15 @@ export const StrategiesScreen = () => {
                                         {row.currentPick.map((n) => (
                                             <Ball key={n} n={n} size="lg" />
                                         ))}
+                                        <span className="ml-auto shrink-0 font-mono text-[10px] text-ink-subtle tabular-nums">
+                                            {row.totalHits ?? 0}/{formatNumber(chanceHits)} hits · 2+ {row.twoPlusDraws ?? 0}/{formatNumber(chanceTwoPlus)}
+                                        </span>
                                     </span>
                                 </button>
 
                                 {isOpen && (
                                     <div className="border-t border-line-soft bg-surface-2/40 px-4 py-3">
-                                        <StrategyDetail
-                                            row={row}
-                                            ballPayouts={ballPayouts}
-                                            onLoadInPlaySlip={handleLoadInPlaySlip}
-                                        />
+                                        <StrategyDetail row={row} chance={meta.chance} onLoadInPlaySlip={handleLoadInPlaySlip} />
                                     </div>
                                 )}
                             </li>

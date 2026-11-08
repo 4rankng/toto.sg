@@ -90,10 +90,13 @@ export interface StrategyRow {
     family: string;
     description: string;
     evaluatedDraws: number;
+    /** Total main numbers matched over the evaluated draws (chance: 73.5 per 100). */
     totalHits: number;
     meanHits: number;
     expectedHits: number;
     zScore: number;
+    /** Draws where at least two numbers matched — the hit rate (chance: 15.1 per 100). */
+    twoPlusDraws: number;
     score: number;
     totalPrizes: number;
     effPrizes: number;
@@ -107,8 +110,11 @@ export interface StrategyMeta {
     generatedAt: string;
     nextDraw: number;
     folds: number;
+    /** The chance nulls every league metric is rendered against. */
     chance: {
         expectedHitsPerLine: number;
+        hitsPer100Draws: number;
+        twoPlusPer100Draws: number;
         prizesPer100Draws: number;
         scoreBaseline: number;
     };
@@ -120,31 +126,6 @@ export interface StrategiesFile {
     strategies: StrategyRow[];
 }
 
-/** One of the 10 cross-panel gambler strategies (public/data/gambler-playbook.json). */
-export interface GamblerStrategy {
-    index: number;
-    id: string;
-    name: string;
-    family: string;
-    description: string;
-    /** The document's illustrative line for the strategy. */
-    specLine: number[];
-    /** The insights panels the strategy is derived from. */
-    panels: number[];
-    edge: string;
-    rules: string[];
-    math: string;
-}
-
-export interface GamblerPlaybook {
-    meta: {
-        generatedAt: string;
-        nextDraw: number;
-        source: string;
-        folds: number;
-    };
-    strategies: GamblerStrategy[];
-}
 
 const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
 const numberFmt = new Intl.NumberFormat("en-SG");
