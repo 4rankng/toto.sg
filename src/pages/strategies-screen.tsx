@@ -39,7 +39,7 @@ const StrategyDetail = ({ row, className }: { row: StrategyRow; className?: stri
                 <span className="font-mono text-[11px] text-ink-subtle tabular-nums">{row.id}</span>
             </div>
         </div>
-        <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4 lg:grid-cols-8">
+        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
             <div>
                 <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Draws tested</dt>
                 <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.evaluatedDraws)}</dd>
@@ -240,7 +240,7 @@ export const StrategiesScreen = () => {
                         const isOpen = expanded === row.id;
 
                         return (
-                            <li key={row.id} className={cx("bg-surface transition-colors duration-100", isOpen && "bg-surface-2/50 xl:col-span-2")}>
+                            <li key={row.id} className={cx("bg-surface transition-colors duration-100", isOpen && "bg-surface-2/50")}>
                                 <button
                                     type="button"
                                     aria-expanded={isOpen}
