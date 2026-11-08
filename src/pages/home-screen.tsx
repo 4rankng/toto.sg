@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Ball } from "@/components/balls";
 import { Link } from "react-router";
 import { Panel } from "@/components/panel";
-import { type BoardWindow, HeatLegend, LineSlip, NumberBoard } from "@/components/product/number-board";
+import { type BoardWindow, HeatLegend, heatColour, heatRingColour, LineSlip, NumberBoard } from "@/components/product/number-board";
 import { PageHeader } from "@/components/product/page-header";
 import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
 import { useCountdown } from "@/hooks/use-countdown";
@@ -113,6 +113,8 @@ export const HomeScreen = () => {
         return computeBoardLenses(draws, analysis, league ?? undefined);
     }, [draws, analysis, league]);
 
+    const activeWindow = windows.find((window) => window.id === period) ?? windows[0];
+
     /** Quick pick is one of the strategies — a random one, every tap. */
     const handleQuickPick = () => {
         if (league && league.strategies.length > 0) {
@@ -196,31 +198,36 @@ export const HomeScreen = () => {
                 }
             />
 
-            {/* The play slip is the page's primary action. */}
-            <Panel>
-                <LineSlip
-                    line={line}
-                    size={size}
-                    onSizeChange={handleSizeChange}
-                    onQuickPick={handleQuickPick}
-                    quickPickLabel={quickPickName}
-                />
-            </Panel>
+            <div className="grid gap-3 lg:grid-cols-3 lg:items-stretch">
+                {/* The play slip is the page's primary action. */}
+                <Panel className="lg:col-span-2">
+                    <LineSlip
+                        line={line}
+                        size={size}
+                        colourOf={(n) => heatColour(activeWindow, n)}
+                        ringOf={(n) => heatRingColour(activeWindow, n)}
+                        onSizeChange={handleSizeChange}
+                        onQuickPick={handleQuickPick}
+                        quickPickLabel={quickPickName}
+                    />
+                </Panel>
 
-            {/* Slim next-draw clock — the draw result itself lives in /history. */}
-            {nextDraw && (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface/70 px-4 py-2.5">
-                    <p className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
-                        Next draw{nextDrawNo ? ` · ${nextDrawNo}` : ""}
-                        {nextIso ? ` · ${formatDate(nextIso)} · ${weekdayOf(nextIso)} · 18:30 SGT` : ""}
-                    </p>
-                    {countdown.isPast ? (
-                        <p className="text-[11px] text-ink-muted">Waiting for the result.</p>
-                    ) : (
-                        <Countdown days={countdown.days} hours={countdown.hours} minutes={countdown.minutes} seconds={countdown.seconds} />
-                    )}
-                </div>
-            )}
+                {/* Slim next-draw clock — the draw result itself lives in /history.
+                    Stacks under the slip on small screens, sits beside it on wide. */}
+                {nextDraw && (
+                    <div className="flex flex-wrap items-center justify-center gap-3 rounded-xl border border-line bg-surface/70 px-4 py-2.5 lg:flex-col lg:justify-center">
+                        <p className="text-center text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
+                            Next draw{nextDrawNo ? ` · ${nextDrawNo}` : ""}
+                            {nextIso ? ` · ${formatDate(nextIso)} · ${weekdayOf(nextIso)} · 18:30 SGT` : ""}
+                        </p>
+                        {countdown.isPast ? (
+                            <p className="text-[11px] text-ink-muted">Waiting for the result.</p>
+                        ) : (
+                            <Countdown days={countdown.days} hours={countdown.hours} minutes={countdown.minutes} seconds={countdown.seconds} />
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/*
                 The columns end at their natural heights. Stretching a card to
@@ -287,6 +294,8 @@ export const HomeScreen = () => {
                                 ))}
                             </div>
                     </Panel>
+
+                    {longestGapsPanel}
                 </div>
             </div>
 

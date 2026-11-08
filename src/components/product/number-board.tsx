@@ -52,6 +52,23 @@ export const heatColour = (window: BoardWindow, number: number) => {
     return `color-mix(in oklab, ${target} ${mix}%, var(--color-heat-neutral))`;
 };
 
+/** Deeper tone of the same heat ramp — the ring around a slip ball, so the
+ *  ring stays visible over the pastel fill. */
+export const heatRingColour = (window: BoardWindow, number: number) => {
+    let z = 0;
+    if (window.zScores && window.zScores[number - 1] !== undefined) {
+        z = window.zScores[number - 1];
+    } else {
+        const count = window.counts[number - 1] ?? 0;
+        z = (count - window.expected) / boardDeviation(window);
+    }
+    const strength = Math.min(1, Math.max(0, (Math.abs(z) - 0.35) / 2.2));
+    if (strength === 0) return "color-mix(in srgb, var(--color-ink) 30%, transparent)";
+    const mix = Math.round(35 + strength * 50);
+    const target = z > 0 ? "var(--color-heat-hot)" : "var(--color-heat-cold)";
+    return `color-mix(in oklab, ${target} ${mix}%, var(--color-heat-neutral))`;
+};
+
 /** The ramp legend: what the cell colours mean. */
 export function HeatLegend({ className }: { className?: string }) {
     return (
@@ -226,8 +243,12 @@ export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, li
 
 interface LineSlipProps {
     line: number[];
-    /** 6, 7 or 8 numbers — System 6, 7 or 8. */
+    /** 6, 7 or 8 numbers — Ordinary, System 7 or System 8. */
     size: LineSize;
+    /** Heat tint for one number — same ramp the board cells wear. */
+    colourOf: (n: number) => string;
+    /** Deeper tone of the same ramp — the ring around a slip ball. */
+    ringOf: (n: number) => string;
     onSizeChange: (size: LineSize) => void;
     onQuickPick: () => void;
     /** The strategy a quick pick came from, shown as feedback. */
@@ -239,7 +260,7 @@ interface LineSlipProps {
  * The line builder. Slots take the heat tint of the number they hold, so the
  * slip and the board read as one surface. System 6, 7 and 8 are supported.
  */
-export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel, className }: LineSlipProps) {
+export function LineSlip({ line, size, colourOf, ringOf, onSizeChange, onQuickPick, quickPickLabel, className }: LineSlipProps) {
     return (
         <div className={cx("flex flex-col gap-3", className)}>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -269,7 +290,7 @@ export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel
                     const number = line[index];
 
                     return (
-                        <div key={index} className="grid aspect-square place-items-center">
+                        <div key={index} className="grid aspect-square @container place-items-center">
                             {number === undefined ? (
                                 <span className="grid aspect-square w-[88%] place-items-center rounded-full border border-dashed border-line-strong font-mono text-[34cqi] leading-none font-semibold text-ink-faint tabular-nums">
                                     –
@@ -280,7 +301,8 @@ export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel
                                     className="slip-ball aspect-square w-[88%]"
                                     style={
                                         {
-                                            "--slip-c": `var(--color-slip-h${Math.ceil(number / 10)})`,
+                                            "--slip-c": ringOf(number),
+                                            "--slip-fill": colourOf(number),
                                             "--slip-d": `${index * 90}ms`,
                                         } as CSSProperties
                                     }
