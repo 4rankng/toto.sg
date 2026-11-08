@@ -265,7 +265,7 @@ export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel
                 </span>
             </div>
 
-            <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}>
+            <div className="grid gap-1.5 mx-auto w-full max-w-2xl" style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}>
                 {Array.from({ length: size }, (_, index) => {
                     const number = line[index];
 
@@ -276,8 +276,13 @@ export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel
                                     –
                                 </span>
                             ) : (
-                                <span className="grid aspect-square w-[82%] place-items-center rounded-full bg-ball font-mono text-[30cqi] leading-none font-semibold text-ball-ink tabular-nums shadow-xs ring-1 ring-line/80 ring-inset">
-                                    {number}
+                                <span
+                                    key={number}
+                                    className="relative grid aspect-square w-[82%] place-items-center overflow-hidden rounded-full bg-gradient-to-b from-accent/20 to-surface-3 shadow-md ring-2 ring-accent/40 animate-rise dark:from-accent/25 dark:to-surface-inset"
+                                    style={{ animationDelay: `${index * 70}ms` }}
+                                >
+                                    <span aria-hidden="true" className="absolute inset-x-[18%] top-[9%] h-[24%] rounded-[50%] bg-white/70 blur-[2px] dark:bg-white/25" />
+                                    <span className="relative font-mono text-[30cqi] leading-none font-bold text-ink tabular-nums">{number}</span>
                                 </span>
                             )}
                         </div>
