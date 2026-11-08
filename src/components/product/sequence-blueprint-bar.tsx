@@ -101,7 +101,7 @@ export function SequenceBlueprintBar({
                                 className={cx(
                                     "rounded px-1.5 py-0.5 font-mono text-xs font-semibold transition-colors",
                                     size === s
-                                        ? "bg-primary text-canvas"
+                                        ? "bg-accent text-canvas"
                                         : "text-ink-subtle hover:text-ink",
                                 )}
                             >
@@ -120,7 +120,7 @@ export function SequenceBlueprintBar({
                                     type="button"
                                     onClick={() => toggle(val)}
                                     title={`Remove ball ${val}`}
-                                    className="group relative flex h-7.5 w-7.5 items-center justify-center rounded-full bg-primary font-mono text-xs font-bold text-canvas transition-transform hover:scale-105 hover:bg-heat-hot"
+                                    className="group relative flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent font-mono text-xs font-bold text-canvas transition-transform hover:scale-105 hover:bg-heat-hot"
                                 >
                                     {val}
                                     <span className="absolute -top-1 -right-1 hidden h-3.5 w-3.5 items-center justify-center rounded-full bg-surface text-[8px] text-ink shadow group-hover:flex">
@@ -197,7 +197,7 @@ export function SequenceBlueprintBar({
                         className={cx(
                             "ml-1 inline-flex items-center gap-1.5 rounded-lg px-3 py-1 font-mono text-xs font-semibold transition-all",
                             line.length >= 6
-                                ? "bg-primary text-canvas shadow hover:opacity-90"
+                                ? "bg-accent text-canvas shadow hover:opacity-90"
                                 : "border border-line bg-surface-inset text-ink-subtle hover:text-ink",
                         )}
                     >
@@ -290,7 +290,7 @@ export function CandidateBallChip({
             className={cx(
                 "group relative inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 font-mono text-xs transition-all",
                 isSelected
-                    ? "border-primary bg-primary text-canvas shadow-sm"
+                    ? "border-primary bg-accent text-canvas shadow-sm"
                     : "border-line bg-surface hover:border-primary hover:bg-surface-2 text-ink",
                 className,
             )}
