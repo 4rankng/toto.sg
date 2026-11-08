@@ -98,6 +98,8 @@ export interface StrategyRow {
     /** Draws where at least two numbers matched — the hit rate (chance: 15.1 per 100). */
     twoPlusDraws: number;
     score: number;
+    /** Display score: raw prize points log-normalised to 1–100 (league leader = 100). */
+    score100: number;
     totalPrizes: number;
     effPrizes: number;
     /** The score itself: each prize draw earns 10^(7−group) — G7 1 … G1 1,000,000, a decade per tier (chance ≈ 43.3 per 100). */

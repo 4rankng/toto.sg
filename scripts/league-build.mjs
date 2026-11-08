@@ -231,6 +231,13 @@ const main = async () => {
         row.rank = i + 1;
     });
 
+    // Display score: raw prize points are decade-weighted (one G3 = 10,000), so
+    // a single mid-tier hit makes five-digit scores while the rest sit near 0.
+    // Normalise to 1–100 on a log scale — order-preserving, top = 100, each
+    // prize tier reads as one visible step, zero-score rows floor at 1.
+    const maxScore = Math.max(...rows.map((row) => row.score));
+    for (const row of rows) row.score100 = 1 + Math.round((99 * Math.log1p(row.score)) / Math.log1p(maxScore));
+
     const league = {
         meta: {
             generatedAt: new Date(Date.now() + 8 * 3600e3).toISOString().replace("Z", "+08:00"),

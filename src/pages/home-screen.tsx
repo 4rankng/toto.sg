@@ -355,7 +355,7 @@ export const HomeScreen = () => {
                                 <div className="flex items-baseline gap-2">
                                     <span className="w-4 shrink-0 font-mono text-[11px] text-ink-subtle tabular-nums">{strategy.rank}</span>
                                     <span className="min-w-0 flex-1 truncate text-[13px] leading-5 font-medium text-ink">{strategy.name}</span>
-                                    <span className="shrink-0 font-mono text-xs font-semibold text-ink tabular-nums">{strategy.score.toFixed(1)}</span>
+                                    <span className="shrink-0 font-mono text-xs font-semibold text-ink tabular-nums" title={`Score 1–100, log-scaled from ${formatNumber(strategy.score)} raw prize points`}>{strategy.score100 ?? 1}</span>
                                 </div>
                                 <div className="mt-1 flex items-center gap-1 pl-6" aria-hidden="true">
                                     {strategy.currentPick.map((n) => (

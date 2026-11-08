@@ -113,125 +113,164 @@ const StrategyDetail = ({
                 </div>
             )}
 
-            <div className="grid gap-3 lg:grid-cols-12">
-                {/* Walk-forward performance vs chance */}
-                <div className="flex min-w-0 flex-col gap-3 lg:col-span-7">
-                    <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5 sm:grid-cols-3 xl:grid-cols-5">
-                        <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Draws tested</dt>
-                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.evaluatedDraws)}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize draws</dt>
-                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                                {formatNumber(row.totalPrizes ?? 0)} <span className="text-ink-subtle">vs {Math.round((folds * chance.prizesPer100Draws) / 100)} chance</span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Score</dt>
-                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums" title="Prize points: each prize hit earns its tier's weight — G7 1, G6 10, G5 100, G4 1k, G3 10k, G2 100k, G1 1M">
-                                {formatNumber(row.score ?? 0)} <span className="text-ink-subtle">pts</span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Profit/draw</dt>
-                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums" title="Average prize money per S$1 line over the window">
-                                {formatSigned(row.pnlPerDraw ?? 0, 2)} <span className="text-ink-subtle">S$/draw</span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Best hit</dt>
-                            <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                                {row.bestGroup != null ? `G${row.bestGroup}` : "—"}
-                            </dd>
-                        </div>
-                    </dl>
+            {/* Walk-forward performance vs chance — one horizontal stat strip */}
+            <dl className="flex flex-wrap items-stretch divide-x divide-line-soft rounded-lg border border-line-soft bg-surface-2/40">
+                <div className="min-w-[120px] flex-1 px-3 py-2">
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Draws tested</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.evaluatedDraws)}</dd>
+                </div>
+                <div className="min-w-[150px] flex-[1.4] px-3 py-2">
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize draws</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                        {formatNumber(row.totalPrizes ?? 0)} <span className="text-ink-subtle">vs {Math.round((folds * chance.prizesPer100Draws) / 100)} chance</span>
+                    </dd>
+                </div>
+                <div className="min-w-[110px] flex-1 px-3 py-2">
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Score</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums" title={`Log-normalised to 1–100 from ${formatNumber(row.score ?? 0)} raw prize points (each prize hit earns its tier's weight — G7 1, G6 10, G5 100, G4 1k, G3 10k, G2 100k, G1 1M)`}>
+                        {row.score100 ?? 1} <span className="text-ink-subtle">/ 100 · {formatNumber(row.score ?? 0)} pts</span>
+                    </dd>
+                </div>
+                <div className="min-w-[140px] flex-[1.3] px-3 py-2">
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Profit/draw</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums" title="Average prize money per S$1 line over the window">
+                        {formatSigned(row.pnlPerDraw ?? 0, 2)} <span className="text-ink-subtle">S$/draw</span>
+                    </dd>
+                </div>
+                <div className="min-w-[90px] flex-[0.8] px-3 py-2">
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Best hit</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                        {row.bestGroup != null ? `G${row.bestGroup}` : "—"}
+                    </dd>
+                </div>
+            </dl>
 
-                    {/* G1–G7 hit strip: what the strategy actually hit, per tier */}
-                    <div className="rounded-lg border border-line-soft bg-surface-2/40 p-2.5">
-                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                            <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Hits by prize tier</p>
-                            <span className="font-mono text-[10px] text-ink-subtle">
-                                chance over {formatNumber(folds)} draws: G7 {tierChance("g7").toFixed(0)} · G5 {tierChance("g5").toFixed(1)} · G6 {tierChance("g6").toFixed(1)} · G1–G4 &lt; 0.05 each
-                            </span>
-                        </div>
-                        <div className="grid grid-cols-7 gap-1">
-                            {TIERS.map((tier) => {
-                                const hits = row.tierCounts?.[tier] ?? 0;
-                                return (
-                                    <div
-                                        key={tier}
-                                        title={`Expected by chance: ${tierChance(tier).toFixed(2)}`}
-                                        className={cx(
-                                            "rounded border px-1 py-1 text-center",
-                                            hits > 0 ? "border-primary/40 bg-primary/10" : "border-line-soft bg-surface",
-                                        )}
-                                    >
-                                        <p className="text-[9px] font-semibold tracking-wider text-ink-subtle uppercase">{tier.replace("g", "G")}</p>
-                                        <p className={cx("font-mono text-sm font-semibold tabular-nums", hits > 0 ? "text-primary" : "text-ink-faint")}>{hits}</p>
-                                    </div>
-                                );
-                            })}
-                        </div>
+            {/* What it hit vs how the pick is built — an equal-height pair */}
+            <div className="grid gap-2.5 lg:grid-cols-12">
+                {/* G1–G7 hit strip: what the strategy actually hit, per tier */}
+                <div className="min-w-0 rounded-lg border border-line-soft bg-surface-2/40 p-2.5 lg:col-span-7">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                        <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Hits by prize tier</p>
+                        <span className="font-mono text-[10px] text-ink-subtle">
+                            chance over {formatNumber(folds)} draws: G7 {tierChance("g7").toFixed(0)} · G5 {tierChance("g5").toFixed(1)} · G6 {tierChance("g6").toFixed(1)} · G1–G4 &lt; 0.05 each
+                        </span>
+                    </div>
+                    <div className="grid grid-cols-7 gap-1">
+                        {TIERS.map((tier) => {
+                            const hits = row.tierCounts?.[tier] ?? 0;
+                            return (
+                                <div
+                                    key={tier}
+                                    title={`Expected by chance: ${tierChance(tier).toFixed(2)}`}
+                                    className={cx(
+                                        "rounded border px-1 py-1 text-center",
+                                        hits > 0 ? "border-primary/40 bg-primary/10" : "border-line-soft bg-surface",
+                                    )}
+                                >
+                                    <p className="text-[9px] font-semibold tracking-wider text-ink-subtle uppercase">{tier.replace("g", "G")}</p>
+                                    <p className={cx("font-mono text-sm font-semibold tabular-nums", hits > 0 ? "text-primary" : "text-ink-faint")}>{hits}</p>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
-                {/* The current pick: shape + each ball's live form */}
-                <div className="flex min-w-0 flex-col gap-3 lg:col-span-5">
-                    <div className="rounded-lg border border-line-soft bg-surface-2/40 p-2.5">
-                        <div className="mb-2 flex items-center justify-between gap-2">
-                            <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Current pick shape</p>
-                            <span className="font-mono text-[10px] text-ink-subtle">{sorted.join(" · ")}</span>
+                {/* The current pick: shape at a glance */}
+                <div className="min-w-0 rounded-lg border border-line-soft bg-surface-2/40 p-2.5 lg:col-span-5">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Current pick shape</p>
+                        <span className="font-mono text-[10px] text-ink-subtle">{sorted.join(" · ")}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+                        <div className="rounded border border-line-soft bg-surface px-1.5 py-1 text-center">
+                            <p className="text-[10px] text-ink-subtle uppercase">Sum</p>
+                            <p className="font-mono text-xs font-semibold text-ink tabular-nums">{sum}</p>
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
-                            <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
-                                <p className="text-[10px] text-ink-subtle uppercase">Sum</p>
-                                <p className="font-mono text-xs font-semibold text-ink tabular-nums">{sum}</p>
-                            </div>
-                            <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
-                                <p className="text-[10px] text-ink-subtle uppercase">AC</p>
-                                <p className="font-mono text-xs font-semibold text-primary tabular-nums">{ac}/10</p>
-                            </div>
-                            <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
-                                <p className="text-[10px] text-ink-subtle uppercase">Span</p>
-                                <p className="font-mono text-xs font-semibold text-ink tabular-nums">{span}</p>
-                            </div>
-                            <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
-                                <p className="text-[10px] text-ink-subtle uppercase">Odd/Even</p>
-                                <p className="font-mono text-xs font-semibold text-ink tabular-nums">{odds}/{6 - odds}</p>
-                            </div>
-                            <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
-                                <p className="text-[10px] text-ink-subtle uppercase">Tails</p>
-                                <p className="font-mono text-xs font-semibold text-ink tabular-nums">{tails}/6</p>
-                            </div>
-                            <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
-                                <p className="text-[10px] text-ink-subtle uppercase">Consec</p>
-                                <p className={cx("font-mono text-xs font-semibold tabular-nums", consec > 1 ? "text-heat-hot" : "text-ink")}>{consec}</p>
-                            </div>
+                        <div className="rounded border border-line-soft bg-surface px-1.5 py-1 text-center">
+                            <p className="text-[10px] text-ink-subtle uppercase">AC</p>
+                            <p className="font-mono text-xs font-semibold text-primary tabular-nums">{ac}/10</p>
+                        </div>
+                        <div className="rounded border border-line-soft bg-surface px-1.5 py-1 text-center">
+                            <p className="text-[10px] text-ink-subtle uppercase">Span</p>
+                            <p className="font-mono text-xs font-semibold text-ink tabular-nums">{span}</p>
+                        </div>
+                        <div className="rounded border border-line-soft bg-surface px-1.5 py-1 text-center">
+                            <p className="text-[10px] text-ink-subtle uppercase">Odd/Even</p>
+                            <p className="font-mono text-xs font-semibold text-ink tabular-nums">{odds}/{6 - odds}</p>
+                        </div>
+                        <div className="rounded border border-line-soft bg-surface px-1.5 py-1 text-center">
+                            <p className="text-[10px] text-ink-subtle uppercase">Tails</p>
+                            <p className="font-mono text-xs font-semibold text-ink tabular-nums">{tails}/6</p>
+                        </div>
+                        <div className="rounded border border-line-soft bg-surface px-1.5 py-1 text-center">
+                            <p className="text-[10px] text-ink-subtle uppercase">Consec</p>
+                            <p className={cx("font-mono text-xs font-semibold tabular-nums", consec > 1 ? "text-heat-hot" : "text-ink")}>{consec}</p>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    {/* Ball form: skip / last-10 / all-time for every picked number */}
-                    <div className="rounded-lg border border-line-soft bg-surface-2/40 p-2.5">
-                        <p className="mb-2 text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">
-                            Ball form — skip · last 10 · all-time
-                        </p>
-                        <table className="w-full border-collapse text-left font-mono text-xs tabular-nums">
-                            <tbody>
+            {/* Ball form: one compact column per picked number */}
+            <div className="rounded-lg border border-line-soft bg-surface-2/40 p-2.5">
+                <p className="mb-2 text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">
+                    Ball form — skip · last 10 · all-time
+                </p>
+                <div className="overflow-x-auto">
+                    <table className="w-full min-w-[380px] border-collapse text-center font-mono text-xs tabular-nums">
+                        <thead>
+                            <tr className="border-b border-line-soft">
+                                <th scope="col" className="py-1 pr-2 text-left text-[9px] font-semibold uppercase tracking-wider text-ink-subtle">
+                                    Ball
+                                </th>
+                                {sorted.map((n) => (
+                                    <th key={n} scope="col" className="px-1 py-1 font-normal">
+                                        <Ball n={n} size="sm" />
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr className="border-b border-line-soft">
+                                <th scope="row" className="py-1 pr-2 text-left text-[10px] font-semibold uppercase tracking-wider text-ink-subtle">
+                                    Skip
+                                </th>
                                 {sorted.map((n) => {
                                     const form = ballForms?.get(n);
                                     return (
-                                        <tr key={n} className="border-b border-line-soft last:border-0">
-                                            <td className="py-1 pr-2"><Ball n={n} size="sm" /></td>
-                                            <td className={cx("py-1 pr-2", (form?.skip ?? 0) > 16 && "text-heat-hot")}>{form ? form.skip : "—"}</td>
-                                            <td className={cx("py-1 pr-2", (form?.last10 ?? 0) >= 3 && "text-primary")}>{form ? `${form.last10}/10` : "—"}</td>
-                                            <td className="py-1 text-ink-muted">{form ? formatNumber(form.allTime) : "—"}</td>
-                                        </tr>
+                                        <td key={n} className={cx("px-1 py-1", (form?.skip ?? 0) > 16 && "font-semibold text-heat-hot")}>
+                                            {form ? form.skip : "—"}
+                                        </td>
                                     );
                                 })}
-                            </tbody>
-                        </table>
-                    </div>
+                            </tr>
+                            <tr className="border-b border-line-soft">
+                                <th scope="row" className="py-1 pr-2 text-left text-[10px] font-semibold uppercase tracking-wider text-ink-subtle">
+                                    Last 10
+                                </th>
+                                {sorted.map((n) => {
+                                    const form = ballForms?.get(n);
+                                    return (
+                                        <td key={n} className={cx("px-1 py-1", (form?.last10 ?? 0) >= 3 && "font-semibold text-primary")}>
+                                            {form ? `${form.last10}/10` : "—"}
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                            <tr>
+                                <th scope="row" className="py-1 pr-2 text-left text-[10px] font-semibold uppercase tracking-wider text-ink-subtle">
+                                    All-time
+                                </th>
+                                {sorted.map((n) => {
+                                    const form = ballForms?.get(n);
+                                    return (
+                                        <td key={n} className="px-1 py-1 text-ink-muted">
+                                            {form ? formatNumber(form.allTime) : "—"}
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -348,6 +387,7 @@ export const StrategiesScreen = () => {
     const { meta } = data;
     // Chance nulls scale with the fold count: the meta rates are per 100 draws.
     const chancePrizes = Math.round((meta.folds * meta.chance.prizesPer100Draws) / 100);
+    const topRow = [...data.strategies].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0];
     const toggle = (id: string) => setExpanded((current) => (current === id ? null : id));
 
     // Wrap rather than scroll: on phones the sort pills were clipped behind
@@ -424,8 +464,8 @@ export const StrategiesScreen = () => {
                 <KpiCard label="Strategies" value={formatNumber(data.strategies.length)} hint={`${meta.folds} draws each`} icon={Grid01} tone="primary" />
                 <KpiCard
                     label="Top score"
-                    value={data.strategies.reduce((best, row) => Math.max(best, row.score ?? 0), 0).toFixed(1)}
-                    hint={[...data.strategies].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0]?.name}
+                    value={String(topRow.score100 ?? 1)}
+                    hint={`${topRow.name} · ${formatNumber(topRow.score)} pts raw`}
                     icon={Award01}
                     tone="gold"
                 />
@@ -478,7 +518,7 @@ export const StrategiesScreen = () => {
                                                     )}
                                                     <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink group-hover:text-accent">{row.name}</span>
                                                     <span className="hidden shrink-0 text-[10px] text-ink-subtle sm:inline">{row.family}</span>
-                                                    <span className="shrink-0 font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score ?? 0}</span>
+                                                    <span className="shrink-0 font-mono text-[13px] font-semibold text-ink tabular-nums" title={`Score 1–100, log-scaled from ${formatNumber(row.score ?? 0)} raw prize points`}>{row.score100 ?? 1}</span>
                                                     <span className="w-20 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">
                                                         {`${row.effPrizes ?? 0} prizes`}
                                                     </span>
