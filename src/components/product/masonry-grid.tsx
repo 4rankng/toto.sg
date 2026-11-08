@@ -28,8 +28,14 @@ const GAP_PX = 12;
 /** The packing only applies once the gallery has its twelve columns. */
 const COLUMNS_QUERY = "(min-width: 64rem)";
 
+
 /** Ignore rounding noise when deciding whether a column really is short. */
 const MIN_STRETCH_PX = 2.5;
+
+/** Cap the fill: a stretch above this stops reading as padding and becomes a
+ *  hollow card — the honest leftover stays a section-foot gap instead. */
+const MAX_STRETCH_PX = 96;
+
 
 interface MasonryGridProps {
     className?: string;
@@ -123,9 +129,10 @@ export function MasonryGrid({ className, children }: MasonryGridProps) {
                 }
 
                 if (room <= MIN_STRETCH_PX) continue;
-                // Grow the card only; its header and chart keep their places and
-                // the extra height reads as padding at the foot of the panel.
-                box.item.style.minHeight = `${Math.ceil(box.height + room)}px`;
+                // Grow the card only, and only by a pad-sized amount; its header
+                // and chart keep their places and the extra height reads as
+                // padding at the foot of the panel, never a hollow card.
+                box.item.style.minHeight = `${Math.ceil(box.height + Math.min(room, MAX_STRETCH_PX))}px`;
                 changed = true;
             }
 
