@@ -442,7 +442,7 @@ export const HistoryScreen = () => {
                             className={cx(
                                 "rounded px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors",
                                 regime === opt.id
-                                    ? "bg-primary text-surface font-semibold shadow-xs"
+                                    ? "bg-accent text-canvas font-semibold shadow-xs"
                                     : "bg-surface-2 text-ink-muted hover:bg-surface-3 hover:text-ink",
                             )}
                         >

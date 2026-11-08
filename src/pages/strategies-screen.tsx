@@ -130,6 +130,18 @@ const StrategyDetail = ({ row, chance, onLoadInPlaySlip, className }: {
                     </dd>
                 </div>
                 <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize quality (3/4/5/6 match = 1/2/3/4)</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                        {row.weightedPrizes ?? 0} <span className="text-ink-subtle">vs {Math.round((row.evaluatedDraws * (chance.weightedPrizesPer100Draws ?? 1.96)) / 100)} chance</span>
+                    </dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Best tier hit</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                        {row.bestGroup ? `G${row.bestGroup}` : <span className="text-ink-subtle">—</span>}
+                    </dd>
+                </div>
+                <div>
                     <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matched, last 12 draws</dt>
                     <dd className="mt-0.5">
                         <RecentHits hits={row.recent12 ?? 0} draws={12} expectedPerLine={row.expectedHits ?? chance.expectedHitsPerLine} />

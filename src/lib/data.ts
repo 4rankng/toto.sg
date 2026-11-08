@@ -100,6 +100,10 @@ export interface StrategyRow {
     score: number;
     totalPrizes: number;
     effPrizes: number;
+    /** Prize quality: matched−2 points per prize draw (chance: 1.96 per 100). */
+    weightedPrizes: number;
+    /** Best prize tier hit over the window (1 = jackpot), or null. */
+    bestGroup: number | null;
     pnlPerDraw: number;
     recent12: number;
     rank: number;
@@ -116,10 +120,12 @@ export interface StrategyMeta {
         hitsPer100Draws: number;
         twoPlusPer100Draws: number;
         prizesPer100Draws: number;
+        weightedPrizesPer100Draws: number;
         scoreBaseline: number;
     };
     families: string[];
 }
+
 
 export interface StrategiesFile {
     meta: StrategyMeta;

@@ -111,7 +111,7 @@ export function OscillatorBandChart({
                     y1={yCenter}
                     x2={padLeft + plotW}
                     y2={yCenter}
-                    stroke="var(--color-border)"
+                    stroke="var(--color-line)"
                     strokeWidth={1}
                 />
                 <line
@@ -129,7 +129,7 @@ export function OscillatorBandChart({
                 <text x={padLeft - 6} y={yOverbought + 3} textAnchor="end" fill="var(--color-heat-hot)" fontSize={9} fontFamily="var(--font-mono)">
                     {overbought}
                 </text>
-                <text x={padLeft - 6} y={yCenter + 3} textAnchor="end" fill="var(--color-text-subtle)" fontSize={9} fontFamily="var(--font-mono)">
+                <text x={padLeft - 6} y={yCenter + 3} textAnchor="end" fill="var(--color-ink-subtle)" fontSize={9} fontFamily="var(--font-mono)">
                     {center}
                 </text>
                 <text x={padLeft - 6} y={yOversold + 3} textAnchor="end" fill="var(--color-secondary)" fontSize={9} fontFamily="var(--font-mono)">
@@ -148,7 +148,7 @@ export function OscillatorBandChart({
                         ? "var(--color-heat-hot)"
                         : isCold
                             ? "var(--color-secondary)"
-                            : "var(--color-text-subtle)";
+                            : "var(--color-ink-subtle)";
 
                     return (
                         <g
@@ -188,7 +188,7 @@ export function OscillatorBandChart({
                                     x={x}
                                     y={padTop + plotH + 14}
                                     textAnchor="middle"
-                                    fill="var(--color-text-subtle)"
+                                    fill="var(--color-ink-subtle)"
                                     fontSize={8.5}
                                     fontFamily="var(--font-mono)"
                                 >
@@ -245,7 +245,7 @@ export function EnvelopeBandChart({
     const plotH = height - padTop - padBottom;
 
     if (points.length < 2) {
-        return <div className="text-sm text-text-subtle p-4">Insufficient data points</div>;
+        return <div className="text-sm text-ink-subtle p-4">Insufficient data points</div>;
     }
 
     const allVals = points.flatMap((p) => [p.value, p.upper, p.lower]);
@@ -306,7 +306,7 @@ export function EnvelopeBandChart({
                     <path
                         d={maD}
                         fill="none"
-                        stroke="var(--color-text-subtle)"
+                        stroke="var(--color-ink-subtle)"
                         strokeWidth={1}
                         strokeDasharray="4 3"
                         strokeOpacity={0.6}
@@ -356,10 +356,10 @@ export function EnvelopeBandChart({
                 })}
 
                 {/* X-axis tick labels */}
-                <text x={padLeft} y={height - 8} textAnchor="start" fill="var(--color-text-subtle)" fontSize={9} fontFamily="var(--font-mono)">
+                <text x={padLeft} y={height - 8} textAnchor="start" fill="var(--color-ink-subtle)" fontSize={9} fontFamily="var(--font-mono)">
                     {points[0].label}
                 </text>
-                <text x={padLeft + plotW} y={height - 8} textAnchor="end" fill="var(--color-text-subtle)" fontSize={9} fontFamily="var(--font-mono)">
+                <text x={padLeft + plotW} y={height - 8} textAnchor="end" fill="var(--color-ink-subtle)" fontSize={9} fontFamily="var(--font-mono)">
                     {points[points.length - 1].label}
                 </text>
             </svg>
@@ -436,7 +436,7 @@ export function SurvivalHazardChart({
                             y1={y}
                             x2={padLeft + plotW}
                             y2={y}
-                            stroke="var(--color-border)"
+                            stroke="var(--color-line)"
                             strokeDasharray="2 3"
                             strokeWidth={1}
                         />
@@ -497,20 +497,20 @@ export function SurvivalHazardChart({
                 {/* Legend at Top Right */}
                 <g transform={`translate(${width - padRight - 120}, ${padTop + 4})`}>
                     <line x1={0} y1={0} x2={16} y2={0} stroke="var(--color-heat-hot)" strokeWidth={2} />
-                    <text x={20} y={3} fill="var(--color-text-subtle)" fontSize={8.5} fontFamily="var(--font-mono)">
+                    <text x={20} y={3} fill="var(--color-ink-subtle)" fontSize={8.5} fontFamily="var(--font-mono)">
                         Observed
                     </text>
                     <line x1={0} y1={12} x2={16} y2={12} stroke="var(--color-primary)" strokeWidth={1.5} strokeDasharray="3 2" />
-                    <text x={20} y={15} fill="var(--color-text-subtle)" fontSize={8.5} fontFamily="var(--font-mono)">
+                    <text x={20} y={15} fill="var(--color-ink-subtle)" fontSize={8.5} fontFamily="var(--font-mono)">
                         Theoretical
                     </text>
                 </g>
 
                 {/* Axis Labels */}
-                <text x={padLeft} y={height - 8} textAnchor="start" fill="var(--color-text-subtle)" fontSize={9} fontFamily="var(--font-mono)">
+                <text x={padLeft} y={height - 8} textAnchor="start" fill="var(--color-ink-subtle)" fontSize={9} fontFamily="var(--font-mono)">
                     0
                 </text>
-                <text x={padLeft + plotW} y={height - 8} textAnchor="end" fill="var(--color-text-subtle)" fontSize={9} fontFamily="var(--font-mono)">
+                <text x={padLeft + plotW} y={height - 8} textAnchor="end" fill="var(--color-ink-subtle)" fontSize={9} fontFamily="var(--font-mono)">
                     {points[points.length - 1]?.step}
                 </text>
             </svg>
@@ -592,7 +592,7 @@ export function ScatterRegressionChart({
                         y1={padTop}
                         x2={scaleX(0)}
                         y2={padTop + plotH}
-                        stroke="var(--color-border)"
+                        stroke="var(--color-line)"
                         strokeWidth={1}
                     />
                 )}
@@ -602,7 +602,7 @@ export function ScatterRegressionChart({
                         y1={scaleY(0)}
                         x2={padLeft + plotW}
                         y2={scaleY(0)}
-                        stroke="var(--color-border)"
+                        stroke="var(--color-line)"
                         strokeWidth={1}
                     />
                 )}
@@ -652,10 +652,10 @@ export function ScatterRegressionChart({
                 })}
 
                 {/* Axis Extrema */}
-                <text x={padLeft} y={height - 8} textAnchor="start" fill="var(--color-text-subtle)" fontSize={9} fontFamily="var(--font-mono)">
+                <text x={padLeft} y={height - 8} textAnchor="start" fill="var(--color-ink-subtle)" fontSize={9} fontFamily="var(--font-mono)">
                     {minX}
                 </text>
-                <text x={padLeft + plotW} y={height - 8} textAnchor="end" fill="var(--color-text-subtle)" fontSize={9} fontFamily="var(--font-mono)">
+                <text x={padLeft + plotW} y={height - 8} textAnchor="end" fill="var(--color-ink-subtle)" fontSize={9} fontFamily="var(--font-mono)">
                     {maxX}
                 </text>
             </svg>
@@ -750,7 +750,7 @@ export function TransitionMatrixHeatmap({
                                 x={x + cellW / 2}
                                 y={y + cellH / 2 - 3}
                                 textAnchor="middle"
-                                fill="var(--color-text)"
+                                fill="var(--color-ink)"
                                 fontSize={11}
                                 fontWeight={600}
                                 fontFamily="var(--font-mono)"
@@ -767,6 +767,205 @@ export function TransitionMatrixHeatmap({
                             >
                                 {t.lift}x lift
                             </text>
+                        </g>
+                    );
+                })}
+            </svg>
+            {tip && <ChartTooltip tip={tip} />}
+        </div>
+    );
+}
+
+/* ------------------------------------------------------------------ *
+ * 6. Slot Quantile Band Chart (Order-Statistic Target Bands)
+ * ------------------------------------------------------------------ */
+
+export interface SlotZoneBandItem {
+    slot: number;
+    p10: number;
+    p25: number;
+    median: number;
+    p75: number;
+    p90: number;
+    theoreticalMean: number;
+}
+
+interface SlotQuantileBandChartProps {
+    slots: SlotZoneBandItem[];
+    currentLine?: number[];
+    className?: string;
+    ariaLabel?: string;
+}
+
+export function SlotQuantileBandChart({
+    slots,
+    currentLine,
+    className,
+    ariaLabel = "Order statistic quantile target zones for sorted slots 1 to 6",
+}: SlotQuantileBandChartProps) {
+    const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
+    const [hoverSlot, setHoverSlot] = useState<number | null>(null);
+
+    const width = Math.max(measured, 320);
+    const height = 210;
+    const padLeft = 46;
+    const padRight = 20;
+    const padTop = 16;
+    const padBottom = 26;
+
+    const plotW = width - padLeft - padRight;
+    const rowH = (height - padTop - padBottom) / (slots.length || 6);
+
+    const scaleX = (val: number) => padLeft + ((val - 1) / 48) * plotW;
+
+    const sortedUserLine = currentLine && currentLine.length >= 6
+        ? [...currentLine].sort((a, b) => a - b)
+        : null;
+
+    return (
+        <div ref={hostRef} className={cx("relative w-full overflow-hidden select-none", className)}>
+            <svg
+                viewBox={`0 0 ${width} ${height}`}
+                className="w-full h-auto block"
+                role="img"
+                aria-label={ariaLabel}
+            >
+                {/* Background Grid Lines across 1..49 */}
+                {[1, 10, 20, 30, 40, 49].map((tick) => {
+                    const x = scaleX(tick);
+                    return (
+                        <g key={tick}>
+                            <line
+                                x1={x}
+                                y1={padTop}
+                                x2={x}
+                                y2={padTop + slots.length * rowH}
+                                stroke="var(--color-line)"
+                                strokeDasharray="2 3"
+                                strokeWidth={1}
+                            />
+                            <text
+                                x={x}
+                                y={height - 8}
+                                textAnchor="middle"
+                                fill="var(--color-ink-subtle)"
+                                fontSize={8.5}
+                                fontFamily="var(--font-mono)"
+                            >
+                                {tick}
+                            </text>
+                        </g>
+                    );
+                })}
+
+                {/* Slots Rows */}
+                {slots.map((s, idx) => {
+                    const y = padTop + idx * rowH;
+                    const centerY = y + rowH / 2;
+                    const x10 = scaleX(s.p10);
+                    const x25 = scaleX(s.p25);
+                    const xMed = scaleX(s.median);
+                    const x75 = scaleX(s.p75);
+                    const x90 = scaleX(s.p90);
+                    const xTheo = scaleX(s.theoreticalMean);
+                    const userVal = sortedUserLine ? sortedUserLine[idx] : null;
+                    const isHovered = hoverSlot === s.slot;
+
+                    return (
+                        <g
+                            key={s.slot}
+                            className="cursor-pointer"
+                            onPointerEnter={(e) => {
+                                setHoverSlot(s.slot);
+                                show(e, `Slot ${s.slot} (Position ${s.slot} of 6)`, [
+                                    `Median: ${s.median}`,
+                                    `Sweet-Spot (p25–p75): ${s.p25} – ${s.p75}`,
+                                    `80% Range (p10–p90): ${s.p10} – ${s.p90}`,
+                                    `Theoretical Mean: ${s.theoreticalMean}`,
+                                    userVal !== null ? `Your Line: Ball ${userVal} (${userVal >= s.p25 && userVal <= s.p75 ? "In Sweet-Spot" : "Outside Core Range"})` : "",
+                                ].filter(Boolean));
+                            }}
+                            onPointerLeave={() => {
+                                setHoverSlot(null);
+                                hide();
+                            }}
+                        >
+                            {/* Slot Label */}
+                            <text
+                                x={padLeft - 8}
+                                y={centerY + 3}
+                                textAnchor="end"
+                                fill={isHovered ? "var(--color-ink)" : "var(--color-ink-subtle)"}
+                                fontSize={9.5}
+                                fontWeight={600}
+                                fontFamily="var(--font-mono)"
+                            >
+                                S{s.slot}
+                            </text>
+
+                            {/* Background Track */}
+                            <line
+                                x1={scaleX(1)}
+                                y1={centerY}
+                                x2={scaleX(49)}
+                                y2={centerY}
+                                stroke="var(--color-line)"
+                                strokeWidth={2}
+                            />
+
+                            {/* Outer 80% Band (p10 to p90) */}
+                            <rect
+                                x={x10}
+                                y={centerY - 6}
+                                width={Math.max(2, x90 - x10)}
+                                height={12}
+                                rx={4}
+                                fill="var(--color-primary)"
+                                fillOpacity={isHovered ? 0.16 : 0.08}
+                            />
+
+                            {/* Core 50% Sweet-Spot Band (p25 to p75) */}
+                            <rect
+                                x={x25}
+                                y={centerY - 7}
+                                width={Math.max(2, x75 - x25)}
+                                height={14}
+                                rx={4}
+                                fill="var(--color-primary)"
+                                fillOpacity={isHovered ? 0.35 : 0.22}
+                                stroke="var(--color-primary)"
+                                strokeWidth={1}
+                                strokeOpacity={0.6}
+                            />
+
+                            {/* Median Mark */}
+                            <line
+                                x1={xMed}
+                                y1={centerY - 9}
+                                x2={xMed}
+                                y2={centerY + 9}
+                                stroke="var(--color-primary)"
+                                strokeWidth={2.5}
+                            />
+
+                            {/* Theoretical Mean diamond */}
+                            <polygon
+                                points={`${xTheo},${centerY - 5} ${xTheo + 3.5},${centerY} ${xTheo},${centerY + 5} ${xTheo - 3.5},${centerY}`}
+                                fill="var(--color-secondary)"
+                                fillOpacity={0.8}
+                            />
+
+                            {/* User Selection Pin if line provided */}
+                            {userVal !== null && (
+                                <circle
+                                    cx={scaleX(userVal)}
+                                    cy={centerY}
+                                    r={4}
+                                    fill="var(--color-gold)"
+                                    stroke="var(--color-canvas)"
+                                    strokeWidth={1.5}
+                                />
+                            )}
                         </g>
                     );
                 })}

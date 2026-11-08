@@ -373,8 +373,8 @@ export const HomeScreen = () => {
             {regime && (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface/70 px-4 py-2.5 text-xs backdrop-blur-sm">
                     <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-                        <span className="font-semibold uppercase tracking-wider text-text flex items-center gap-1.5">
-                            <span className="size-2 rounded-full bg-primary animate-pulse" />
+                        <span className="font-semibold uppercase tracking-wider text-ink flex items-center gap-1.5">
+                            <span className="size-2 rounded-full bg-accent animate-pulse" />
                             Regime Briefing
                         </span>
                         <span className="text-text-subtle">·</span>

@@ -25,7 +25,7 @@ export function PageHeader({ kicker, title, description, meta, actions, classNam
                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                     {kicker && (
                         <span className="flex items-center gap-1.5">
-                            <span aria-hidden="true" className="h-3 w-1 rounded-full bg-primary shadow-[0_0_10px_var(--color-primary)]" />
+                            <span aria-hidden="true" className="h-3 w-1 rounded-full bg-accent shadow-[0_0_10px_var(--color-primary)]" />
                             <span className="font-mono text-[9px] font-semibold tracking-[0.2em] text-primary uppercase">{kicker}</span>
                         </span>
                     )}

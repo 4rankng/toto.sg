@@ -48,12 +48,24 @@ export const CHANCE = {
     hitsPer100Draws: Math.round((3600 / 49) * 10) / 10, // 73.5
     twoPlusPer100Draws: Math.round((1 - pExactly(0) - pExactly(1)) * 1000) / 10, // 15.1
     prizesPer100Draws: Math.round((1 - pExactly(0) - pExactly(1) - pExactly(2)) * 10000) / 100, // 1.86
+    // Prize quality, weighted by matched numbers − 2: a 3-match draw is worth
+    // 1 point, a 4-match 2, a 5-match (G2/G3) 3 and a jackpot (G1) 4 — so the
+    // score rewards deep tiers, not just prize frequency. The additional ball
+    // never changes the weight: G2 weighs like G3, G6 like G7.
+    weightedPrizesPer100Draws:
+        Math.round((pExactly(3) * 1 + pExactly(4) * 2 + pExactly(5) * 3 + pExactly(6) * 4) * 10000) / 100, // 1.96
     scoreBaseline: 45,
 };
-
-/** Score intercept so a chance-performing row scores exactly 45 over `folds` draws. */
-const scoreIntercept = (folds) =>
-    CHANCE.scoreBaseline - 5.5 * ((folds * CHANCE.prizesPer100Draws) / 100) - 0.6 * (CHANCE.expectedHitsPerLine * 12);
+/**
+ * Score index, anchored at 45 = chance, built from chance-relative terms so it
+ * reads the same at any fold count: hit strength (z), prize quality per 100
+ * draws above the weighted chance, and recent form above its 12-draw null.
+ */
+const chanceScore = (zScore, weightedPrizes, folds, recent12) =>
+    CHANCE.scoreBaseline +
+    7.8 * zScore +
+    5.5 * ((weightedPrizes / folds) * 100 - CHANCE.weightedPrizesPer100Draws) +
+    0.6 * (recent12 - CHANCE.expectedHitsPerLine * 12);
 
 /** mulberry32 PRNG. */
 export function mulberry32(seed) {
@@ -134,6 +146,8 @@ export function evaluateStrategy(
     let totalHits = 0;
     let twoPlusDraws = 0;
     let totalPrizes = 0;
+    let weightedPrizes = 0;
+    let bestGroup = null;
     let totalWinnings = 0;
     for (let i = foldStart; i < foldEnd; i++) {
         const draw = era[i];
@@ -158,6 +172,8 @@ export function evaluateStrategy(
         if (matched >= 2) twoPlusDraws += 1; // hit-rate metric: a lone 1-match is noise
         if (group > 0) {
             totalPrizes += 1;
+            weightedPrizes += matched - 2; // 3-match=1 … 6-match=4: deep tiers weigh more
+            if (bestGroup === null || group < bestGroup) bestGroup = group;
             if (cached) {
                 if (cached.s != null) totalWinnings += cached.s;
             } else {
@@ -174,7 +190,7 @@ export function evaluateStrategy(
     const effPrizes = totalPrizes;
     const pnlPerDraw = round2((totalWinnings - folds * STAKE_PER_DRAW) / folds);
     const recent12 = perFoldHits.slice(-12).reduce((a, b) => a + b, 0);
-    const score = round1(Math.min(100, Math.max(0, scoreIntercept(folds) + 7.8 * zScore + 5.5 * effPrizes + 0.6 * recent12)));
+    const score = round1(Math.min(100, Math.max(0, chanceScore(zScore, weightedPrizes, folds, recent12))));
     const currentPick =
         nextPickCache?.get() ??
         generateLine(spec.id, spec.rule, era, nextTarget, prepare ? prepare(era, nextTarget) : undefined);
@@ -192,6 +208,8 @@ export function evaluateStrategy(
         score,
         totalPrizes,
         effPrizes,
+        weightedPrizes,
+        bestGroup,
         pnlPerDraw,
         twoPlusDraws,
         recent12,

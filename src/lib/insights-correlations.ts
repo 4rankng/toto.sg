@@ -1249,6 +1249,97 @@ export interface LuckyDigitStats {
     repdigitsStats: { name: string; balls: number; observedRate: number; expectedRate: number; meanG3: number };
 }
 
+export interface DigitContainmentRow {
+    digit: string;
+    label: string;
+    balls: number[];
+    ballCount: number;
+    totalHits: number;
+    hitsPerDraw: number;
+    expectedHitsPerDraw: number;
+    drawCoveragePct: number;
+    twoPlusDraws: number;
+    zScore: number;
+}
+
+export interface DigitContainmentStats {
+    digits: DigitContainmentRow[];
+    repdigits: DigitContainmentRow;
+    topDigit: string;
+    coldestDigit: string;
+}
+
+/** Pure digit containment hit rates and draw coverage (0..9 and repdigits 11, 22, 33, 44) vs exact hypergeometric null. */
+export function digitContainmentStats(draws: Draw[]): DigitContainmentStats {
+    const n = draws.length;
+    const digitGroups: { digit: string; label: string; balls: number[] }[] = [];
+
+    for (let d = 0; d <= 9; d += 1) {
+        const dStr = String(d);
+        const balls: number[] = [];
+        for (let num = 1; num <= 49; num += 1) {
+            if (String(num).includes(dStr)) balls.push(num);
+        }
+        digitGroups.push({
+            digit: dStr,
+            label: `Digit ${dStr}`,
+            balls,
+        });
+    }
+
+    const computeRow = (item: { digit: string; label: string; balls: number[] }): DigitContainmentRow => {
+        const set = new Set(item.balls);
+        const k = set.size;
+        let hits = 0;
+        let drawsWithHit = 0;
+        let twoPlus = 0;
+
+        for (const draw of draws) {
+            let matched = 0;
+            for (const num of draw.numbers) {
+                if (set.has(num)) matched += 1;
+            }
+            hits += matched;
+            if (matched >= 1) drawsWithHit += 1;
+            if (matched >= 2) twoPlus += 1;
+        }
+
+        const hitsPerDraw = n > 0 ? hits / n : 0;
+        const expectedHits = (k * 6) / 49;
+        const sd = Math.sqrt((n * (k * 6) / 49) * (1 - 6 / 49));
+        const zScore = sd > 0 ? (hits - n * expectedHits) / sd : 0;
+
+        return {
+            digit: item.digit,
+            label: item.label,
+            balls: item.balls,
+            ballCount: k,
+            totalHits: hits,
+            hitsPerDraw: Math.round(hitsPerDraw * 1000) / 1000,
+            expectedHitsPerDraw: Math.round(expectedHits * 1000) / 1000,
+            drawCoveragePct: n > 0 ? Math.round((drawsWithHit / n) * 1000) / 10 : 0,
+            twoPlusDraws: twoPlus,
+            zScore: Math.round(zScore * 100) / 100,
+        };
+    };
+
+    const digits = digitGroups.map(computeRow);
+    const repdigits = computeRow({
+        digit: "rep",
+        label: "Repdigits (11, 22, 33, 44)",
+        balls: [11, 22, 33, 44],
+    });
+
+    const sorted = [...digits].sort((a, b) => b.zScore - a.zScore);
+
+    return {
+        digits,
+        repdigits,
+        topDigit: sorted[0]?.label ?? "Digit 4",
+        coldestDigit: sorted[sorted.length - 1]?.label ?? "Digit 7",
+    };
+}
+
 /** Tetraphobia (Digit 4) vs Prosperity (Digit 8/7) cage hit rates and Group 3 payout impact. */
 export function luckyDigitStats(draws: Draw[]): LuckyDigitStats {
     // 14 numbers containing digit 4: 4, 14, 24, 34, 40..49

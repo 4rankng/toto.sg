@@ -505,6 +505,7 @@ export interface HurstStats {
     regime: "persistent_trending" | "anti_persistent_mean_reverting" | "pure_random_walk";
     rsPoints: { logN: number; logRs: number }[];
     pnlImpact: string;
+    regimeGuidance: string;
 }
 
 export function computeHurstExponentStats(draws: Draw[]): HurstStats {
@@ -555,12 +556,18 @@ export function computeHurstExponentStats(draws: Draw[]): HurstStats {
     // Linear regression slope = H
     const hurst = Math.round(pearsonCorrelation(logNs, logRss) * (stdDev(logRss) / (stdDev(logNs) || 1)) * 100) / 100;
     const regime = hurst > 0.55 ? "persistent_trending" : hurst < 0.45 ? "anti_persistent_mean_reverting" : "pure_random_walk";
+    const guidance = hurst > 0.55
+        ? "Sum bands exhibit mild persistence; trailing sum regimes tend to extend for 2–3 draws."
+        : hurst < 0.45
+            ? "Sum bands show strong anti-persistence; extreme sum draws are swiftly followed by counter-balancing reversals."
+            : "Sum band walk is memoryless; balance sequences around theoretical median sum 150 without chasing trends.";
 
     return {
         hurstExponent: hurst,
         regime,
         rsPoints,
-        pnlImpact: hurst > 0.55 ? "Momentum strategies gain slight edge" : "Mean-reversion / counter-trend has higher Sharpe",
+        pnlImpact: guidance,
+        regimeGuidance: guidance,
     };
 }
 
@@ -1225,9 +1232,30 @@ export function computeCompositeQuantStats(draws: Draw[]): CompositeQuantStats {
 
     // Precalculate components
     const eraCounts = new Uint16Array(POOL + 1);
+    const coMatrix: Uint16Array[] = Array.from({ length: POOL + 1 }, () => new Uint16Array(POOL + 1));
+    const targetWeekday = lastDraw ? (new Date(`${lastDraw.date}T00:00:00Z`).getUTCDay() === 1 ? 4 : 1) : 1;
+    const weekdayCounts = new Uint16Array(POOL + 1);
+    let targetWeekdayDraws = 0;
+
     for (const d of draws) {
         for (const b of d.numbers) eraCounts[b] += 1;
+        const nums = d.numbers;
+        for (let i = 0; i < nums.length; i += 1) {
+            for (let j = i + 1; j < nums.length; j += 1) {
+                coMatrix[nums[i]][nums[j]] += 1;
+                coMatrix[nums[j]][nums[i]] += 1;
+            }
+        }
+        const isTargetWk = new Date(`${d.date}T00:00:00Z`).getUTCDay() === targetWeekday;
+        if (isTargetWk) {
+            targetWeekdayDraws += 1;
+            for (const b of nums) weekdayCounts[b] += 1;
+        }
     }
+
+    const expPairCount = (n * 30) / 2352;
+    const expWkCount = targetWeekdayDraws * NULL_PROB;
+    const sdWk = Math.sqrt(Math.max(1, targetWeekdayDraws * NULL_PROB * (1 - NULL_PROB)));
 
     for (let num = 1; num <= POOL; num += 1) {
         // 1. Velocity: 10-draw count
@@ -1248,11 +1276,16 @@ export function computeCompositeQuantStats(draws: Draw[]): CompositeQuantStats {
         // 3. Markov: trigger from last draw
         const mScore = lastDraw.numbers.includes(num) ? 0.5 : 0;
 
-        // 4. Pair Hub: even/odd balance proxy
-        const pScore = num >= 10 && num <= 40 ? 0.4 : -0.2;
+        // 4. Pair Hub: empirical positive synergy degree
+        let positivePairCount = 0;
+        for (let other = 1; other <= POOL; other += 1) {
+            if (other === num) continue;
+            if (coMatrix[num][other] > expPairCount) positivePairCount += 1;
+        }
+        const pScore = (positivePairCount - 24) / 6;
 
-        // 5. Weekday: bonus
-        const wScore = 0.1;
+        // 5. Weekday: empirical affinity for upcoming draw day (Mon vs Thu)
+        const wScore = (weekdayCounts[num] - expWkCount) / sdWk;
 
         // 6. Era freq
         const eScore = (eraCounts[num] - n * NULL_PROB) / Math.sqrt(n * NULL_PROB * (1 - NULL_PROB));

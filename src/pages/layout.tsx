@@ -94,7 +94,7 @@ export const Layout = () => {
                                         {isActive && (
                                             <span
                                                 aria-hidden="true"
-                                                className="absolute inset-x-2.5 bottom-0 h-[2px] rounded-t-full bg-primary shadow-[0_0_10px_var(--color-primary)]"
+                                                className="absolute inset-x-2.5 bottom-0 h-[2px] rounded-t-full bg-accent shadow-[0_0_10px_var(--color-primary)]"
                                             />
                                         )}
                                     </>
