@@ -206,8 +206,9 @@ const ArchiveSkeleton = () => (
     </DataLoading>
 );
 
-export const HistoryScreen = () => {
-    usePageTitle("Draw history — every TOTO draw");
+export const HistoryScreen = ({ embedded = false }: { embedded?: boolean } = {}) => {
+    // Embedded at the foot of the home page, the home page keeps its title.
+    usePageTitle(embedded ? "Singapore TOTO latest draw" : "Draw history — every TOTO draw");
 
 
     const { data: draws, isLoading, error } = useJson<Draw[]>("/data/draws.json");

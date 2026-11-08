@@ -5,7 +5,6 @@ import { cx } from "@/utils/cx";
 
 const NAV_ITEMS = [
     { to: "/", label: "Home" },
-    { to: "/history", label: "History" },
     { to: "/insights", label: "Insights" },
     { to: "/strategies", label: "Strategies" },
 ];

@@ -4,7 +4,7 @@ import { cx } from "@/utils/cx";
 interface PageHeaderProps {
     /** Small mono label that names the surface. */
     kicker?: string;
-    title: string;
+    title?: string;
     /** One-line summary under the title. */
     description?: ReactNode;
     /** Inline facts rendered next to the kicker. */
@@ -31,7 +31,7 @@ export function PageHeader({ kicker, title, description, meta, actions, classNam
                     )}
                     {meta && <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1 font-mono text-[10px] text-ink-subtle">{meta}</span>}
                 </div>
-                <h1 className="mt-1 font-display text-xl leading-7 font-semibold tracking-[-0.02em] text-ink md:text-2xl md:leading-8">{title}</h1>
+                {title && <h1 className="mt-1 font-display text-xl leading-7 font-semibold tracking-[-0.02em] text-ink md:text-2xl md:leading-8">{title}</h1>}
                 {description && <p className="mt-0.5 max-w-3xl text-xs leading-4 text-ink-muted">{description}</p>}
             </div>
             {actions && <div className="flex shrink-0 flex-wrap items-center gap-3">{actions}</div>}
