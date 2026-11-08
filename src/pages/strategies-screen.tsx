@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Award01, Calendar, ChevronDown, ChevronRight, Coins01, Grid01 } from "@untitledui/icons";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Award01, Calendar, ChevronDown, ChevronRight, Coins01, Grid01 } from "@untitledui/icons";
+import { Link, useSearchParams } from "react-router";
 import { Ball } from "@/components/balls";
-import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { Panel } from "@/components/panel";
@@ -23,7 +22,6 @@ import {
 } from "@/lib/data";
 import { lineAcValue } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
-import { useLineBuilder } from "@/providers/line-builder-provider";
 import { cx } from "@/utils/cx";
 
 type SortKey = "score" | "hits" | "twoPlus" | "prizes" | "recent12";
@@ -56,7 +54,6 @@ const StrategyDetail = ({
     ballForms,
     buildRules,
     evidencePanels,
-    onLoadInPlaySlip,
     className,
 }: {
     row: StrategyRow;
@@ -66,7 +63,6 @@ const StrategyDetail = ({
     buildRules?: string[];
     /** The Insights panels a documented strategy was read off. */
     evidencePanels?: { anchor: string; label: string }[];
-    onLoadInPlaySlip: (numbers: number[]) => void;
     className?: string;
 }) => {
     const sorted = [...row.currentPick].sort((a, b) => a - b);
@@ -90,15 +86,6 @@ const StrategyDetail = ({
                         <span className="font-mono text-[11px] text-ink-subtle tabular-nums">{row.id}</span>
                     </div>
                 </div>
-                <Button
-                    color="secondary"
-                    size="sm"
-                    iconTrailing={ArrowRight}
-                    onPress={() => onLoadInPlaySlip(row.currentPick)}
-                    className="shrink-0"
-                >
-                    Load in Play Slip →
-                </Button>
             </div>
 
             {(buildRules?.length || evidencePanels?.length) && (
@@ -151,7 +138,7 @@ const StrategyDetail = ({
                             </dd>
                         </div>
                         <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Depth points (2/3/4/5/6 = 1/2/4/8/16)</dt>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Depth points</dt>
                             <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
                                 {row.depthPoints ?? 0} <span className="text-ink-subtle">vs {Math.round((folds * (chance.depthPointsPer100Draws ?? 17.17)) / 100)}</span>
                             </dd>
@@ -163,7 +150,7 @@ const StrategyDetail = ({
                             </dd>
                         </div>
                         <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize quality (3/4/5/6 = 1/2/3/4)</dt>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize quality</dt>
                             <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
                                 {row.weightedPrizes ?? 0} <span className="text-ink-subtle">vs {Math.round((folds * (chance.weightedPrizesPer100Draws ?? 1.96)) / 100)}</span>
                             </dd>
@@ -249,7 +236,7 @@ const StrategyDetail = ({
                     {/* Ball form: skip / last-10 / all-time for every picked number */}
                     <div className="rounded-lg border border-line-soft bg-surface-2/40 p-2.5">
                         <p className="mb-2 text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">
-                            Ball form — draws since last hit · hits in last 10 · all-time hits
+                            Ball form — skip · last 10 · all-time
                         </p>
                         <table className="w-full border-collapse text-left font-mono text-xs tabular-nums">
                             <tbody>
@@ -277,8 +264,6 @@ export const StrategiesScreen = () => {
     const [title, setTitle] = useState("Strategy league");
     usePageTitle(title);
 
-    const navigate = useNavigate();
-    const { setLine } = useLineBuilder();
 
     const { data, isLoading, error } = useJson<StrategiesFile>("/data/strategies.json");
     const { data: draws } = useJson<Draw[]>("/data/draws.json");
@@ -308,10 +293,6 @@ export const StrategiesScreen = () => {
         return forms;
     }, [draws]);
 
-    const handleLoadInPlaySlip = (numbers: number[]) => {
-        setLine(numbers);
-        navigate("/");
-    };
 
     const [searchParams, setSearchParams] = useSearchParams();
     const [query, setQuery] = useState("");
@@ -530,7 +511,6 @@ export const StrategiesScreen = () => {
                                             ballForms={ballForms}
                                             buildRules={playbookById.get(row.id)?.rules}
                                             evidencePanels={playbookById.get(row.id)?.panels}
-                                            onLoadInPlaySlip={handleLoadInPlaySlip}
                                         />
                                     </div>
                                 )}
