@@ -216,8 +216,6 @@ const main = async () => {
             seen.add(s[field]);
         }
     }
-    const families = [...new Set(specs.map((s) => s.family))].sort((a, b) => a.localeCompare(b));
-
     // The Phase-2 consensus rules read the base rules' fold lines, so their
     // results depend on WHICH base rules exist. The base set's fingerprint
     // scopes their cache entries: when a base rule is added or removed the
@@ -290,8 +288,19 @@ const main = async () => {
     for (const spec of crossPanelSpecs) {
         rows.push(evaluate(spec, (drawNo, pick) => collectEvent(spec.id, drawNo, pick), baseSetHash));
     }
-    rows.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
-    rows.forEach((row, i) => {
+    // Below-chance cleanup: any strategy whose raw match score lands below
+    // the honest chance baseline (quickpick — seeded uniform 6-of-49) is
+    // dropped from the league table instead of riding along as filler. Every
+    // rule still ran, so the Phase-2 consensus stays whole; only the report
+    // is trimmed.
+    const baseline = rows.find((row) => row.id === "quickpick");
+    if (!baseline) throw new Error("chance baseline row missing: quickpick");
+    const belowBaseline = rows.filter((row) => row.score < baseline.score);
+    const kept = rows.filter((row) => row.score >= baseline.score);
+    const keptIds = new Set(kept.map((row) => row.id));
+
+    kept.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+    kept.forEach((row, i) => {
         row.rank = i + 1;
     });
 
@@ -304,7 +313,7 @@ const main = async () => {
     // a chance-grade row at ~30, zero-score rows floor at 1, and the number
     // stays comparable as the fold count grows.
     const ceiling = (foldEnd - foldStart) * 1_000_000;
-    for (const row of rows) row.score100 = Math.max(1, 1 + Math.round((99 * Math.log1p(row.score)) / Math.log1p(ceiling)));
+    for (const row of kept) row.score100 = Math.max(1, 1 + Math.round((99 * Math.log1p(row.score)) / Math.log1p(ceiling)));
 
     const league = {
         meta: {
@@ -312,9 +321,9 @@ const main = async () => {
             nextDraw: nextDrawNo,
             folds: foldEnd - foldStart,
             chance: CHANCE,
-            families,
+            families: [...new Set(kept.map((row) => row.family))].sort((a, b) => a.localeCompare(b)),
         },
-        strategies: rows,
+        strategies: kept,
     };
     await writeFile(`${DATA_DIR}strategies.json`, JSON.stringify(league, 1), "utf8");
 
@@ -324,14 +333,16 @@ const main = async () => {
     const eventLedger = {
         meta: { generatedAt: league.meta.generatedAt, nextDraw: nextDrawNo, folds: foldEnd - foldStart },
         strategies: Object.fromEntries(
-            specs.map((spec) => [spec.id, (prizeEvents.get(spec.id) ?? []).sort((a, b) => a.d - b.d)]),
+            specs
+                .filter((spec) => keptIds.has(spec.id))
+                .map((spec) => [spec.id, (prizeEvents.get(spec.id) ?? []).sort((a, b) => a.d - b.d)]),
         ),
     };
     await writeFile(`${DATA_DIR}prize-events.json`, JSON.stringify(eventLedger, 1), "utf8");
 
     // The playbook pairs each cross-panel strategy's document evidence with
     // the live league row it produced.
-    const rowById = new Map(rows.map((row) => [row.id, row]));
+    const rowById = new Map(kept.map((row) => [row.id, row]));
     const playbook = {
         meta: {
             generatedAt: league.meta.generatedAt,
@@ -339,7 +350,7 @@ const main = async () => {
             family: "Cross-Panel",
             source: "toto_10_gambler_strategies.docx",
         },
-        strategies: CROSS_PANEL_PLAYBOOK.map((entry) => {
+        strategies: CROSS_PANEL_PLAYBOOK.filter((entry) => keptIds.has(entry.id)).map((entry) => {
             const row = rowById.get(entry.id);
             if (!row) throw new Error(`playbook entry without a league row: ${entry.id}`);
             return {
@@ -396,7 +407,7 @@ const main = async () => {
             "score".padStart(7) +
             "rank".padStart(5),
     );
-    for (const row of rows) {
+    for (const row of kept) {
         console.log(
             row.id.padEnd(21) +
                 row.family.padEnd(16) +
@@ -410,9 +421,10 @@ const main = async () => {
         );
     }
     console.log(
-        `\n${rows.length} strategies over ${foldEnd - foldStart} expanding walk-forward folds ` +
+        `\n${kept.length} strategies over ${foldEnd - foldStart} expanding walk-forward folds ` +
             `(chance: ${CHANCE.hitsPer100Draws} hits, ${CHANCE.twoPlusPer100Draws} draws with 2+, ${CHANCE.prizesPer100Draws} prizes per 100). ` +
-            `Next draw ${nextDrawNo}. Cache: ${hits} fold hits / ${misses} misses, ${pickHits}/${rows.length} current picks reused.`,
+            `${belowBaseline.length} rows below the chance baseline (quickpick, score ${baseline.score}) dropped. ` +
+            `Next draw ${nextDrawNo}. Cache: ${hits} fold hits / ${misses} misses, ${pickHits}/${kept.length} current picks reused.`,
     );
 };
 

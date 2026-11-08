@@ -174,22 +174,27 @@ function choice6(rng, pop) {
 }
 
 /**
- * The guide's g2hunter_line: the deterministic 6-ball line for seed `v` at
- * era index `t`. `lastDraw` is era[t-1] (null when t = 0 — then all 49 balls
- * are eligible, matching the reference implementation's unblocked pool).
+ * The guide's line for seed `v` at era index `t`. The no-recycle family
+ * blocks era[t-1]'s 6 mains + additional ball (43 eligible; t = 0 has nothing
+ * to block); the full-board family spins over all 49. The tilt stays mod 43
+ * in both — the reference code applies that shift literally, even on the
+ * 49-ball pool (43 < 49, so the mod-43 shift is always in range).
  */
-export function hunterLine(v, t, lastDraw) {
-    const blocked = new Set(t ? [...lastDraw.numbers, lastDraw.additional] : []);
+export function fleetLine(v, t, { fullBoard = false, lastDraw = null } = {}) {
+    const blocked = new Set(!fullBoard && t && lastDraw ? [...lastDraw.numbers, lastDraw.additional] : []);
     const pool = [];
     for (let n = 1; n <= 49; n++) if (!blocked.has(n)) pool.push(n); // 1-based, ascending
-    const tilt = ((v * 13 + t * 29) % 43) % pool.length; // np.roll shift
+    const tilt = (v * 13 + t * 29) % 43;
     const rolled = [];
     for (let i = 0; i < pool.length; i++) rolled.push(pool[(i - tilt + pool.length) % pool.length]);
     const rng = new Pcg64(777_000_000 + v * 7919 + t);
     return [...choice6(rng, pool.length)].map((i) => rolled[i]).sort((a, b) => a - b);
 }
 
-/** The nine registered hunters: id, name, seed v. */
+/** The original no-recycle line — kept as the nine's public name. */
+export const hunterLine = (v, t, lastDraw) => fleetLine(v, t, { lastDraw });
+
+/** The nine no-recycle hunters: id, name, seed v. */
 const HUNTERS = [
     ["hunterEclipse", "Eclipse Hunter", 928],
     ["hunterNova", "Nova Hunter", 10677],
@@ -202,18 +207,81 @@ const HUNTERS = [
     ["hunterPhoenix", "Phoenix Hunter", 1542],
 ];
 
-const HUNTER_FAMILY = "Seed Hunters";
+/** The thirteen full-board hunters: id, name, seed v. */
+const BOARD_HUNTERS = [
+    ["boardTrident", "Trident Hunter", 756885],
+    ["boardLonginus", "Longinus Hunter", 742996],
+    ["boardExcalibur", "Excalibur Hunter", 976976],
+    ["boardGungnir", "Gungnir Hunter", 1357203],
+    ["boardMjolnir", "Mjolnir Hunter", 824842],
+    ["boardZulfiqar", "Zulfiqar Hunter", 276091],
+    ["boardKusanagi", "Kusanagi Hunter", 549982],
+    ["boardGram", "Gram Hunter", 392238],
+    ["boardDurandal", "Durandal Hunter", 957889],
+    ["boardBalmung", "Balmung Hunter", 837872],
+    ["boardTizona", "Tizona Hunter", 1331464],
+    ["boardArondight", "Arondight Hunter", 1257656],
+    ["boardJoyeuse", "Joyeuse Hunter", 1055603],
+];
 
-export const HUNTER_STRATEGIES = HUNTERS.map(([id, name, v]) => [
-    id,
-    name,
-    HUNTER_FAMILY,
-    `Per-fold PCG64 sampler (seed v=${v}) — blocks the previous draw, samples six from the remaining 43.`,
-]);
+/** The two crowned full-board lines: id, name, seed v. */
+const CROWN_KINGS = [
+    ["crownRegis", "Crown Regis", 1033843],
+    ["crownAstra", "Crown Astra", 534156],
+];
+
+const HUNTER_FAMILY = "Seed Hunters";
+const BOARD_FAMILY = "Board Hunters";
+const CROWN_FAMILY = "Crown Kings";
+
+/** Plain-language line per strategy — the "lucky dial" is the seed v. */
+const DIAL_TEXT = {
+    hunterEclipse: "Sets aside the previous draw's seven balls, then its lucky dial (928) picks six of the survivors.",
+    hunterNova: "After parking the previous draw's seven balls, its lucky dial (10677) points to the six it plays.",
+    hunterVega: "Plays six balls its lucky dial (6436) picks from everything the previous draw missed.",
+    hunterSirius: "Its lucky dial (4756) chooses six from the 43 balls the previous draw left behind.",
+    hunterOrion: "Skips every ball the previous draw used, then its lucky dial (2612) picks six.",
+    hunterAurora: "Turns away from the previous draw's numbers and reads six from its lucky dial (3142).",
+    hunterComet: "A fresh spin of its lucky dial (11145) over the balls the previous draw did not touch.",
+    hunterLyra: "The previous draw's seven sit out; its lucky dial (9682) fills the line with six of the rest.",
+    hunterPhoenix: "Rises from the previous draw's leftovers — its lucky dial (1542) picks six of the 43.",
+    boardTrident: "Spins its lucky dial (756885) across the full 1–49 board and plays the six it points to.",
+    boardLonginus: "One fixed spin of its lucky dial (742996) over the whole board decides the line.",
+    boardExcalibur: "The whole board, one lucky dial (976976), six balls — nothing else gets a say.",
+    boardGungnir: "Its lucky dial (1357203) shows up every round: full board in, six balls out.",
+    boardMjolnir: "Brings the same lucky dial (824842) down on the full board every single draw.",
+    boardZulfiqar: "The full 1–49 board is its field; its lucky dial (276091) marks the six it plays.",
+    boardKusanagi: "Its lucky dial (549982) sweeps the entire board and plays whatever six it rests on.",
+    boardGram: "A fixed lucky dial (392238) turns over the full board once per draw and picks six.",
+    boardDurandal: "The board never changes and neither does its lucky dial (957889) — six balls per spin.",
+    boardBalmung: "Reads the full 1–49 board through its own lucky dial (837872) and plays six.",
+    boardTizona: "Its lucky dial (1331464) takes the whole board for a spin before naming six.",
+    boardArondight: "Every round its lucky dial (1257656) walks the full board and stops on six.",
+    boardJoyeuse: "The full board spins past its lucky dial (1055603); six balls stay in the line.",
+    crownRegis: "Its lucky dial (1033843) has landed a perfect six before — full board, fresh spin every round.",
+    crownAstra: "A perfect six on its record; its lucky dial (534156) keeps spinning over the full board.",
+};
+
+const isBoardOrCrown = new Set([...BOARD_HUNTERS, ...CROWN_KINGS].map(([id]) => id));
+
+export const HUNTER_STRATEGIES = [
+    ...HUNTERS.map(([id, name, v]) => [id, name, HUNTER_FAMILY, DIAL_TEXT[id]]),
+    ...BOARD_HUNTERS.map(([id, name, v]) => [id, name, BOARD_FAMILY, DIAL_TEXT[id]]),
+    ...CROWN_KINGS.map(([id, name, v]) => [id, name, CROWN_FAMILY, DIAL_TEXT[id]]),
+];
+
+// Manifest: 9 no-recycle + 13 full-board hunters + 2 crowns = 24 rows.
+if (HUNTER_STRATEGIES.length !== 24 || new Set(HUNTER_STRATEGIES.map((s) => s[0])).size !== 24) {
+    throw new Error(`fleet manifest drift: ${HUNTER_STRATEGIES.length} rows`);
+}
 
 export const HUNTER_RULES = Object.fromEntries(
-    HUNTERS.map(([id, , v]) => [
+    [...HUNTERS, ...BOARD_HUNTERS, ...CROWN_KINGS].map(([id, , v]) => [
         id,
-        (prior) => hunterLine(v, prior.length, prior.length ? prior[prior.length - 1] : null),
+        (prior) =>
+            fleetLine(v, prior.length, {
+                fullBoard: isBoardOrCrown.has(id),
+                lastDraw: prior.length ? prior[prior.length - 1] : null,
+            }),
     ]),
 );
