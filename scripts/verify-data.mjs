@@ -9,10 +9,17 @@
 //   analysis.json    17 analysis sections over the 6/49 era
 //   strategies.json  the strategy league: meta block + ranked strategies.
 //                    Fails on duplicate ids / names / descriptions, missing
-//                    metric fields (recent12, pnlPerDraw, score, twoPlusDraws,
-//                    …), payout-family rows, and any drift of the chance nulls
+//                    metric fields (recent12, score, twoPlusDraws, …),
+//                    payout-family rows, and any drift of the chance nulls
 //                    from the hypergeometric constants the league is scored
 //                    against.
+//   prize-events.json
+//                    the prize-hit ledger: one entry per (strategy, prize
+//                    fold) — draw, date, tier, line. Every entry must
+//                    regrade to its tier via scoreLine against the archive,
+//                    reconcile with the league row's tierCounts/totalPrizes,
+//                    and ascend by draw. Hit facts only: a share or prize
+//                    value in the ledger is a contract breach.
 //   cross-panel-playbook.json
 //                    the evidence behind the cross-panel family: every entry
 //                    must point at a league row that exists, and the file must
@@ -22,6 +29,7 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { CHANCE } from "./lib/league-eval.mjs";
+import { scoreLine } from "./lib/toto.mjs";
 
 const DATA_DIR = fileURLToPath(new URL("../public/data/", import.meta.url));
 
@@ -135,7 +143,6 @@ const checkStrategies = (league) => {
         );
         check(Number.isInteger(row?.twoPlusDraws) && row.twoPlusDraws >= 0 && row.twoPlusDraws <= league.meta.folds, `${where}: twoPlusDraws must be 0-${league.meta.folds}`);
         check(Number.isInteger(row?.totalHits) && row.totalHits >= 0 && row.totalHits <= league.meta.folds * 6, `${where}: totalHits must be 0-${league.meta.folds * 6}`);
-        check(Number.isFinite(row?.pnlPerDraw), `${where}: pnlPerDraw must be finite`);
         check(Math.abs(row.meanHits - row.totalHits / league.meta.folds) < 0.005, `${where}: meanHits must equal totalHits / folds`);
         check(Array.isArray(row?.currentPick) && row.currentPick.length === 6, `${where}: currentPick must hold 6 numbers`);
         check(new Set(row?.currentPick ?? []).size === 6, `${where}: currentPick has duplicates`);
@@ -194,6 +201,44 @@ const checkCrossPanelPlaybook = (playbook, league) => {
     }
 };
 
+const checkPrizeEvents = (events, league, draws) => {
+    check(events?.meta != null, "prize-events.json: missing meta");
+    check(typeof events?.meta?.generatedAt === "string", "prize-events.json: meta.generatedAt missing");
+    check(Number.isInteger(events?.meta?.nextDraw), "prize-events.json: meta.nextDraw missing");
+    check(events?.meta?.folds === league?.meta?.folds, `prize-events.json: meta.folds (${events?.meta?.folds}) must match the league (${league?.meta?.folds})`);
+    const drawByNo = new Map(draws.map((d) => [d.draw, d]));
+    const rows = league?.strategies ?? [];
+    const keys = Object.keys(events?.strategies ?? {});
+    check(keys.length === rows.length && rows.every((row) => keys.includes(row.id)), "prize-events.json: strategy keys must match the league rows exactly");
+    // The ledger is hit facts only. Any prize value sneaking in is a breach.
+    check(!/"s"\s*:/.test(JSON.stringify(events?.strategies ?? {})), "prize-events.json: ledger carries a share/payout field");
+    for (const row of rows) {
+        const list = events?.strategies?.[row.id];
+        check(Array.isArray(list), `prize-events.json: missing ledger for "${row.id}"`);
+        if (!Array.isArray(list)) continue;
+        const byTier = { g1: 0, g2: 0, g3: 0, g4: 0, g5: 0, g6: 0, g7: 0 };
+        let prev = 0;
+        list.forEach((ev, i) => {
+            const where = `prize-events.json[${row.id}][${i}]`;
+            check(Number.isInteger(ev?.d) && ev.d > prev, `${where}: draws must be integers ascending`);
+            prev = Number.isInteger(ev?.d) ? ev.d : prev;
+            const draw = drawByNo.get(ev?.d);
+            check(draw != null, `${where}: draw ${ev?.d} not in the archive`);
+            check(ev?.date === draw?.date, `${where}: date must match the archive draw`);
+            check(Array.isArray(ev?.p) && ev.p.length === 6 && new Set(ev.p).size === 6 && ev.p.every(isDraw), `${where}: pick must be 6 unique balls 1-49`);
+            check(Number.isInteger(ev?.g) && ev.g >= 1 && ev.g <= 7, `${where}: group must be 1-7`);
+            if (draw != null && Number.isInteger(ev?.g)) {
+                check(scoreLine(ev.p, draw) === ev.g, `${where}: group must regrade to ${ev.g} via scoreLine`);
+                byTier[`g${ev.g}`] += 1;
+            }
+        });
+        for (const tier of Object.keys(byTier)) {
+            check(byTier[tier] === (row.tierCounts?.[tier] ?? 0), `prize-events.json[${row.id}]: ${tier} count ${byTier[tier]} ≠ league tierCounts ${row.tierCounts?.[tier] ?? 0}`);
+        }
+        check(list.length === row.totalPrizes, `prize-events.json[${row.id}]: ${list.length} events ≠ totalPrizes ${row.totalPrizes}`);
+    }
+};
+
 const main = async () => {
     const read = async (name) => JSON.parse(await readFile(`${DATA_DIR}${name}`, "utf8"));
 
@@ -205,6 +250,9 @@ const main = async () => {
 
     const league = await read("strategies.json");
     checkStrategies(league);
+
+    const prizeEvents = await read("prize-events.json");
+    checkPrizeEvents(prizeEvents, league, draws);
 
     const playbook = await read("cross-panel-playbook.json");
     checkCrossPanelPlaybook(playbook, league);
@@ -220,6 +268,9 @@ const main = async () => {
     console.log(`✓ analysis.json   ${analysis.coverage.totalDraws} 6/49-era draws, ${Object.keys(analysis).length} sections`);
     console.log(
         `✓ strategies.json ${league.strategies.length} strategies, ${league.meta.families.length} families, chance score ${league.meta.chance.weightedPrizesPer100Draws}/100 draws`,
+    );
+    console.log(
+        `✓ prize-events.json ${Object.values(prizeEvents.strategies).reduce((a, list) => a + list.length, 0)} prize folds across ${Object.keys(prizeEvents.strategies).length} strategies`,
     );
     console.log(`✓ cross-panel-playbook.json ${playbook.strategies.length} documented strategies, no payout claims`);
 };

@@ -110,7 +110,6 @@ export interface StrategyRow {
     bestGroup: number | null;
     /** Prize draws per tier over the evaluated folds. */
     tierCounts: Record<"g1" | "g2" | "g3" | "g4" | "g5" | "g6" | "g7", number>;
-    pnlPerDraw: number;
     recent12: number;
     rank: number;
     currentPick: number[];
@@ -145,6 +144,24 @@ export interface StrategyMeta {
 export interface StrategiesFile {
     meta: StrategyMeta;
     strategies: StrategyRow[];
+}
+
+/** One prize hit in a strategy's ledger (public/data/prize-events.json). */
+export interface PrizeEvent {
+    /** The draw the line won on. */
+    d: number;
+    /** Draw date (ISO). */
+    date: string;
+    /** The prize tier graded (1 = jackpot … 7). */
+    g: number;
+    /** The exact 6-ball line that hit. */
+    p: number[];
+}
+
+/** The prize-hit ledger: per strategy id, every prize fold ascending by draw. */
+export interface PrizeEventsFile {
+    meta: { generatedAt: string; nextDraw: number; folds: number };
+    strategies: Record<string, PrizeEvent[]>;
 }
 
 /** An Insights panel a cross-panel strategy was read off. */

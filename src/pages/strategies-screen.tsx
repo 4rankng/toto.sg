@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Award01, Calendar, ChevronDown, ChevronRight, Coins01, Grid01 } from "@untitledui/icons";
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { Ball } from "@/components/balls";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
@@ -11,14 +11,16 @@ import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/prod
 import {
     type CrossPanelPlaybook,
     type Draw,
+    type PrizeEvent,
+    type PrizeEventsFile,
     type StrategiesFile,
     type StrategyRow,
     formatDate,
     formatNumber,
-    formatSigned,
     useJson,
 } from "@/lib/data";
 import { lineAcValue } from "@/lib/ticket-xray";
+import { useLineBuilder } from "@/providers/line-builder-provider";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
 
@@ -49,6 +51,8 @@ const StrategyDetail = ({
     ballForms,
     buildRules,
     evidencePanels,
+    /** The strategy's prize-hit ledger — what the tier tiles expand into. */
+    prizeEvents,
     className,
 }: {
     row: StrategyRow;
@@ -58,8 +62,15 @@ const StrategyDetail = ({
     buildRules?: string[];
     /** The Insights panels a documented strategy was read off. */
     evidencePanels?: { anchor: string; label: string }[];
+    prizeEvents?: PrizeEvent[];
     className?: string;
 }) => {
+    const [openTier, setOpenTier] = useState<string | null>(null);
+    const tierEvents = openTier ? (prizeEvents ?? []).filter((event) => `g${event.g}` === openTier) : [];
+    // The pick hands off to the shared line builder, which the home page's
+    // play slip reads.
+    const { setLine } = useLineBuilder();
+    const navigate = useNavigate();
     const sorted = [...row.currentPick].sort((a, b) => a - b);
     const sum = sorted.reduce((a, b) => a + b, 0);
     const ac = lineAcValue(sorted);
@@ -140,20 +151,8 @@ const StrategyDetail = ({
                 </div>
                 <div className="min-w-[110px] flex-1 px-3 py-2">
                     <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Score</dt>
-                    <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums" title={`Log-normalised to 1–100 from ${formatNumber(row.score ?? 0)} raw prize points (each prize hit earns its tier's weight — G7 1, G6 10, G5 100, G4 1k, G3 10k, G2 100k, G1 1M)`}>
+                    <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums" title={`Log-normalised to 1–100 against the theoretical ceiling (every fold a Group 1) from ${formatNumber(row.score ?? 0)} raw prize points — each prize hit earns its tier's weight, G7 1 … G1 1M; 100 is the perfect league, the leader sits near 54`}>
                         {row.score100 ?? 1} <span className="text-ink-muted">/ 100 · {formatNumber(row.score ?? 0)} pts</span>
-                    </dd>
-                </div>
-                <div className="min-w-[140px] flex-[1.3] px-3 py-2">
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Profit/draw</dt>
-                    <dd
-                        className={cx(
-                            "mt-0.5 font-mono text-sm font-semibold tabular-nums",
-                            (row.pnlPerDraw ?? 0) > 0 ? "text-secondary" : (row.pnlPerDraw ?? 0) < 0 ? "text-heat-hot" : "text-ink",
-                        )}
-                        title="Average prize money per S$1 line over the window"
-                    >
-                        {formatSigned(row.pnlPerDraw ?? 0, 2)} <span className="text-ink-muted">S$/draw</span>
                     </dd>
                 </div>
                 <div className="min-w-[90px] flex-[0.8] px-3 py-2">
@@ -172,6 +171,7 @@ const StrategyDetail = ({
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                         <p className="text-[10px] font-semibold tracking-wider text-ink-muted uppercase">Hits by prize tier</p>
                         <span className="font-mono text-[10px] text-ink-subtle">
+                            {TIERS.some((tier) => (row.tierCounts?.[tier] ?? 0) > 0) ? "click a tier to see when it hit · " : ""}
                             chance over {formatNumber(folds)} draws: G7 {tierChance("g7").toFixed(0)} · G5 {tierChance("g5").toFixed(1)} · G6 {tierChance("g6").toFixed(1)} · G1–G4 &lt; 0.05 each
                         </span>
                     </div>
@@ -179,28 +179,74 @@ const StrategyDetail = ({
                         {TIERS.map((tier) => {
                             const hits = row.tierCounts?.[tier] ?? 0;
                             const hit = hits > 0;
-                            return (
-                                <div
-                                    key={tier}
-                                    title={`Expected by chance: ${tierChance(tier).toFixed(2)}`}
-                                    className={cx(
-                                        "rounded border px-1 py-1 text-center",
-                                        hit ? "border-transparent border-t-[3px] border-t-accent bg-surface" : "border-transparent",
-                                    )}
-                                >
+                            const tile = (
+                                <>
                                     <p className={cx("text-[9px] font-semibold tracking-wider uppercase", hit ? "text-ink-muted" : "text-ink-subtle")}>{tier.replace("g", "G")}</p>
                                     <p className={cx("font-mono text-sm font-semibold tabular-nums", hit ? "text-primary-strong" : "text-ink-faint")}>{hits}</p>
-                                </div>
+                                </>
+                            );
+                            const tone = cx(
+                                "rounded border px-1 py-1 text-center",
+                                hit ? "border-transparent border-t-[3px] border-t-accent bg-surface" : "border-transparent",
+                                openTier === tier && "ring-1 ring-accent",
+                            );
+                            if (!hit) {
+                                return (
+                                    <div key={tier} title={`Expected by chance: ${tierChance(tier).toFixed(2)}`} className={tone}>
+                                        {tile}
+                                    </div>
+                                );
+                            }
+                            return (
+                                <button
+                                    key={tier}
+                                    type="button"
+                                    aria-pressed={openTier === tier}
+                                    onClick={() => setOpenTier((prev) => (prev === tier ? null : tier))}
+                                    title={`Expected by chance: ${tierChance(tier).toFixed(2)} — click to see the ${hits} prize hit${hits > 1 ? "s" : ""}`}
+                                    className={cx(tone, "transition-colors duration-100 hover:bg-secondary_hover cursor-pointer")}
+                                >
+                                    {tile}
+                                </button>
                             );
                         })}
                     </div>
+                    {openTier && tierEvents.length > 0 && (
+                        <ul className="mt-2 flex flex-col divide-y divide-line-soft">
+                            {tierEvents.map((event) => (
+                                <li key={event.d} className="flex flex-wrap items-center gap-x-2.5 gap-y-1 py-1.5">
+                                    <span className="rounded bg-surface px-1 py-px font-mono text-[10px] font-semibold text-primary-strong ring-1 ring-line-soft ring-inset">G{event.g}</span>
+                                    <span className="font-mono text-[11px] font-semibold text-ink tabular-nums">#{event.d}</span>
+                                    <span className="text-[11px] text-ink-muted">{formatDate(event.date)}</span>
+                                    <span className="ml-auto flex items-center gap-1">
+                                        {[...event.p].sort((a, b) => a - b).map((n) => (
+                                            <Ball key={n} n={n} size="sm" />
+                                        ))}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
 
                 {/* The current pick: shape at a glance */}
                 <div className="min-w-0 rounded-lg bg-surface-2 p-2.5 lg:col-span-5">
-                    <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                         <p className="text-[10px] font-semibold tracking-wider text-ink-muted uppercase">Current pick shape</p>
-                        <span className="font-mono text-[10px] text-ink-subtle">{sorted.join(" · ")}</span>
+                        <div className="flex items-center gap-2">
+                            <span className="font-mono text-[10px] text-ink-subtle">{sorted.join(" · ")}</span>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setLine(row.currentPick);
+                                    navigate("/");
+                                }}
+                                title="Load this strategy's current pick into the play slip"
+                                className="shrink-0 cursor-pointer rounded-md border border-primary bg-primary-soft px-2 py-0.5 text-[10px] font-semibold text-primary transition-colors duration-100 hover:bg-primary hover:text-white"
+                            >
+                                Load in Play Slip →
+                            </button>
+                        </div>
                     </div>
                     <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
                         <div className="rounded bg-surface px-1.5 py-1 text-center">
@@ -308,6 +354,8 @@ export const StrategiesScreen = () => {
     // The playbook documents the cross-panel family: the rule behind each
     // strategy, the panels it was read off, and the live row it produced.
     const { data: playbook } = useJson<CrossPanelPlaybook>("/data/cross-panel-playbook.json");
+    // The prize-hit ledger behind the tier tiles' "when did it hit" list.
+    const { data: prizeEvents } = useJson<PrizeEventsFile>("/data/prize-events.json");
     const playbookById = useMemo(() => new Map((playbook?.strategies ?? []).map((entry) => [entry.id, entry])), [playbook]);
 
     // Live per-ball form for the expanded rows: draws since each ball last
@@ -541,7 +589,7 @@ export const StrategiesScreen = () => {
                                                     )}
                                                     <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink group-hover:text-accent">{row.name}</span>
                                                     <span className="hidden shrink-0 text-[10px] text-ink-subtle sm:inline">{row.family}</span>
-                                                    <span className="shrink-0 font-mono text-[13px] font-semibold text-ink tabular-nums" title={`Score 1–100, log-scaled from ${formatNumber(row.score ?? 0)} raw prize points`}>{row.score100 ?? 1}</span>
+                                                    <span className="shrink-0 font-mono text-[13px] font-semibold text-ink tabular-nums" title={`Score 1–100, log-scaled from ${formatNumber(row.score ?? 0)} raw prize points against the theoretical ceiling (every fold a Group 1)`}>{row.score100 ?? 1}</span>
                                                     <span className="w-20 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">
                                                         {`${row.effPrizes ?? 0} prizes`}
                                                     </span>
@@ -569,11 +617,13 @@ export const StrategiesScreen = () => {
                                         )}
                                     >
                                         <StrategyDetail
+                                            key={openRow.id}
                                             row={openRow}
                                             chance={meta.chance}
                                             ballForms={ballForms}
                                             buildRules={playbookById.get(openRow.id)?.rules}
                                             evidencePanels={playbookById.get(openRow.id)?.panels}
+                                            prizeEvents={prizeEvents?.strategies?.[openRow.id]}
                                         />
                                     </div>
                                 )}

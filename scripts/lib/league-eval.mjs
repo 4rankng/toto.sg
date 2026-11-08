@@ -20,7 +20,6 @@
 //     moves it.
 import { scoreLine } from "./toto.mjs";
 
-export const STAKE_PER_DRAW = 1; // S$1 Ordinary
 export const REJECT_CAP = 10000; // per draw; a cap hit means a bug in the rule encoding
 
 /**
@@ -172,7 +171,6 @@ export function evaluateStrategy(
     let depthPoints = 0;
     let bestGroup = null;
     const tierCounts = { g1: 0, g2: 0, g3: 0, g4: 0, g5: 0, g6: 0, g7: 0 };
-    let totalWinnings = 0;
     for (let i = foldStart; i < foldEnd; i++) {
         const draw = era[i];
         const cached = foldCache?.get(draw.draw);
@@ -189,7 +187,7 @@ export function evaluateStrategy(
             // Raw match count: every matched main number counts (chance 0.7347/draw).
             matched = draw.numbers.filter((n) => pick.includes(n)).length; // main numbers only
             group = scoreLine(pick, draw);
-            foldCache?.set(draw.draw, { p: pick, m: matched, g: group, s: group > 0 ? draw.prizes?.[`g${group}`]?.share ?? null : null });
+            foldCache?.set(draw.draw, { p: pick, m: matched, g: group });
         }
         onPick?.(draw.draw, pick);
         perFoldHits.push(matched);
@@ -200,16 +198,11 @@ export function evaluateStrategy(
             totalPrizes += 1;
             // The score IS the weighted prize points: G7=1, G6=10, G5=100,
             // G4=1_000, G3=10_000, G2=100_000, G1=1_000_000 — a decade per
-            // tier, so one Group 1 outweighs any number of Group 7s.
+            // tier, so one Group 1 outweighs any number of Group 7s. Prize
+            // money never enters the league: a hit counts, whatever it paid.
             weightedPrizes += 10 ** (7 - group);
             if (bestGroup === null || group < bestGroup) bestGroup = group;
             tierCounts[`g${group}`] += 1;
-            if (cached) {
-                if (cached.s != null) totalWinnings += cached.s;
-            } else {
-                const share = draw.prizes?.[`g${group}`]?.share;
-                if (share != null) totalWinnings += share;
-            }
         }
     }
     const folds = foldEnd - foldStart;
@@ -218,7 +211,6 @@ export function evaluateStrategy(
     // se of the mean over the actual fold count.
     const zScore = sd === 0 ? 0 : round2((meanHits - expectedHits) / (sd / Math.sqrt(folds)));
     const effPrizes = totalPrizes;
-    const pnlPerDraw = round2((totalWinnings - folds * STAKE_PER_DRAW) / folds);
     const recent12 = perFoldHits.slice(-12).reduce((a, b) => a + b, 0);
     // The score is the weighted prize points alone — G7=1 … G1=1,000,000, a
     // decade per tier. Nothing else moves it.
@@ -245,7 +237,6 @@ export function evaluateStrategy(
         depthPoints,
         bestGroup,
         tierCounts,
-        pnlPerDraw,
         twoPlusDraws,
         recent12,
         rank: 0, // assigned by the league-wide re-rank
