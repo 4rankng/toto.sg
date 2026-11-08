@@ -1,4 +1,5 @@
-// toto.sg — the nine Seed Hunters (from G2_Hunters_Strategy_Guide.docx, 8 Nov 2026).
+// toto.sg — the seeded fleet: 9 celestials, 13 hunters, 6 crowns, 4 sovereigns
+// and 5 tempos (from the fleet replication guide, 9 Nov 2026).
 //
 // The guide's recipe, per fold (era index t, target draw era[t]):
 //   1. NO-RECYCLE POOL  block the previous draw's 6 mains + additional ball;
@@ -194,39 +195,43 @@ export function fleetLine(v, t, { fullBoard = false, lastDraw = null } = {}) {
 /** The original no-recycle line — kept as the nine's public name. */
 export const hunterLine = (v, t, lastDraw) => fleetLine(v, t, { lastDraw });
 
-/** The nine no-recycle hunters: id, name, seed v. */
-const HUNTERS = [
-    ["hunterEclipse", "Eclipse Hunter", 928],
-    ["hunterNova", "Nova Hunter", 10677],
-    ["hunterVega", "Vega Hunter", 6436],
-    ["hunterSirius", "Sirius Hunter", 4756],
-    ["hunterOrion", "Orion Hunter", 2612],
-    ["hunterAurora", "Aurora Hunter", 3142],
-    ["hunterComet", "Comet Hunter", 11145],
-    ["hunterLyra", "Lyra Hunter", 9682],
-    ["hunterPhoenix", "Phoenix Hunter", 1542],
+/** The nine celestial no-recycle lines: id, name, seed v. */
+const CELESTIALS = [
+    ["hunterEclipse", "Eclipse", 928],
+    ["hunterNova", "Nova", 10677],
+    ["hunterVega", "Vega", 6436],
+    ["hunterSirius", "Sirius", 4756],
+    ["hunterOrion", "Orion", 2612],
+    ["hunterAurora", "Aurora", 3142],
+    ["hunterComet", "Comet", 11145],
+    ["hunterLyra", "Lyra", 9682],
+    ["hunterPhoenix", "Phoenix", 1542],
 ];
 
 /** The thirteen full-board hunters: id, name, seed v. */
 const BOARD_HUNTERS = [
-    ["boardTrident", "Trident Hunter", 756885],
-    ["boardLonginus", "Longinus Hunter", 742996],
-    ["boardExcalibur", "Excalibur Hunter", 976976],
-    ["boardGungnir", "Gungnir Hunter", 1357203],
-    ["boardMjolnir", "Mjolnir Hunter", 824842],
-    ["boardZulfiqar", "Zulfiqar Hunter", 276091],
-    ["boardKusanagi", "Kusanagi Hunter", 549982],
-    ["boardGram", "Gram Hunter", 392238],
-    ["boardDurandal", "Durandal Hunter", 957889],
-    ["boardBalmung", "Balmung Hunter", 837872],
-    ["boardTizona", "Tizona Hunter", 1331464],
-    ["boardArondight", "Arondight Hunter", 1257656],
-    ["boardJoyeuse", "Joyeuse Hunter", 1055603],
+    ["boardTrident", "Hunter Trident", 756885],
+    ["boardLonginus", "Hunter Longinus", 742996],
+    ["boardExcalibur", "Hunter Excalibur", 976976],
+    ["boardGungnir", "Hunter Gungnir", 1357203],
+    ["boardMjolnir", "Hunter Mjolnir", 824842],
+    ["boardZulfiqar", "Hunter Zulfiqar", 276091],
+    ["boardKusanagi", "Hunter Kusanagi", 549982],
+    ["boardGram", "Hunter Gram", 392238],
+    ["boardDurandal", "Hunter Durandal", 957889],
+    ["boardBalmung", "Hunter Balmung", 837872],
+    ["boardTizona", "Hunter Tizona", 1331464],
+    ["boardArondight", "Hunter Arondight", 1257656],
+    ["boardJoyeuse", "Hunter Joyeuse", 1055603],
 ];
 
-/** The two crowned full-board lines: id, name, seed v. */
+/** The six royal jackpot carriers (full board): id, name, seed v. */
 const CROWN_KINGS = [
     ["crownRegis", "Crown Regis", 1033843],
+    ["crownImperator", "Crown Imperator", 1209615],
+    ["crownValerian", "Crown Valerian", 333155],
+    ["crownAugustus", "Crown Augustus", 937931],
+    ["crownConstantine", "Crown Constantine", 430349],
     ["crownAstra", "Crown Astra", 534156],
 ];
 
@@ -238,10 +243,20 @@ const SOVEREIGNS = [
     ["hunterBehemoth", "Hunter Behemoth", 875141],
 ];
 
-const HUNTER_FAMILY = "Seed Hunters";
+/** The five tempo prize-frequency lines (full board): id, name, seed v. */
+const TEMPOS = [
+    ["tempoFortissimo", "Tempo Fortissimo", 797215],
+    ["tempoAllegro", "Tempo Allegro", 525696],
+    ["tempoVivace", "Tempo Vivace", 1025307],
+    ["tempoPresto", "Tempo Presto", 262125],
+    ["tempoAndante", "Tempo Andante", 421781],
+];
+
+const CELESTIAL_FAMILY = "Celestials";
 const BOARD_FAMILY = "Board Hunters";
 const CROWN_FAMILY = "Crown Kings";
 const SOVEREIGN_FAMILY = "Sovereigns";
+const TEMPO_FAMILY = "Tempos";
 
 /** Plain-language line per strategy — the "lucky dial" is the seed v. */
 const DIAL_TEXT = {
@@ -268,30 +283,39 @@ const DIAL_TEXT = {
     boardArondight: "Every round its lucky dial (1257656) walks the full board and stops on six.",
     boardJoyeuse: "The full board spins past its lucky dial (1055603); six balls stay in the line.",
     crownRegis: "Its lucky dial (1033843) has landed a perfect six before — full board, fresh spin every round.",
+    crownImperator: "An emperor's dial (1209615): the full board spins and six balls answer.",
+    crownValerian: "Steady as its dial (333155) — the full board turns, six stay crowned.",
+    crownAugustus: "Its lucky dial (937931) rules the whole board and names six every round.",
+    crownConstantine: "True to one dial (430349): the full board, six balls, every draw.",
     crownAstra: "A perfect six on its record; its lucky dial (534156) keeps spinning over the full board.",
     hunterSovereign: "Reigns over the full 1–49 board — its lucky dial (390919) names the six it plays.",
     hunterImperium: "An empire of one: its lucky dial (490261) rules six balls of the full board.",
     hunterColossus: "Strides the whole board every round; its lucky dial (830513) lands on six.",
     hunterBehemoth: "The full board under one lucky dial (875141) — six balls, every round.",
+    tempoFortissimo: "Plays at full volume — its lucky dial (797215) hammers six out of the board.",
+    tempoAllegro: "Fast and bright; its lucky dial (525696) picks six from the full board.",
+    tempoVivace: "Lively every round — its lucky dial (1025307) lands six on the board.",
+    tempoPresto: "Quick off the dial (262125): full board in, six balls out.",
+    tempoAndante: "Unhurried, constant; its lucky dial (421781) walks the board for six.",
 };
 
-const FULL_BOARD = new Set([...BOARD_HUNTERS, ...CROWN_KINGS, ...SOVEREIGNS].map(([id]) => id));
+const FULL_BOARD = new Set([...BOARD_HUNTERS, ...CROWN_KINGS, ...SOVEREIGNS, ...TEMPOS].map(([id]) => id));
 
 export const HUNTER_STRATEGIES = [
-    ...HUNTERS.map(([id, name, v]) => [id, name, HUNTER_FAMILY, DIAL_TEXT[id]]),
+    ...CELESTIALS.map(([id, name, v]) => [id, name, CELESTIAL_FAMILY, DIAL_TEXT[id]]),
     ...BOARD_HUNTERS.map(([id, name, v]) => [id, name, BOARD_FAMILY, DIAL_TEXT[id]]),
     ...CROWN_KINGS.map(([id, name, v]) => [id, name, CROWN_FAMILY, DIAL_TEXT[id]]),
     ...SOVEREIGNS.map(([id, name, v]) => [id, name, SOVEREIGN_FAMILY, DIAL_TEXT[id]]),
+    ...TEMPOS.map(([id, name, v]) => [id, name, TEMPO_FAMILY, DIAL_TEXT[id]]),
 ];
 
-// Manifest: 9 no-recycle + 13 full-board hunters + 2 crowns + 4 sovereigns = 28 rows.
-if (HUNTER_STRATEGIES.length !== 28 || new Set(HUNTER_STRATEGIES.map((s) => s[0])).size !== 28) {
+// Manifest: 9 celestials + 13 hunters + 6 crowns + 4 sovereigns + 5 tempos = 37 rows.
+if (HUNTER_STRATEGIES.length !== 37 || new Set(HUNTER_STRATEGIES.map((s) => s[0])).size !== 37) {
     throw new Error(`fleet manifest drift: ${HUNTER_STRATEGIES.length} rows`);
 }
 
-
 export const HUNTER_RULES = Object.fromEntries(
-    [...HUNTERS, ...BOARD_HUNTERS, ...CROWN_KINGS, ...SOVEREIGNS].map(([id, , v]) => [
+    [...CELESTIALS, ...BOARD_HUNTERS, ...CROWN_KINGS, ...SOVEREIGNS, ...TEMPOS].map(([id, , v]) => [
         id,
         (prior) =>
             fleetLine(v, prior.length, {
