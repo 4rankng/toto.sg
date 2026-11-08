@@ -16,6 +16,14 @@ const GAP_PX = 12;
 /** The packing only applies once the gallery has its twelve columns. */
 const COLUMNS_QUERY = "(min-width: 64rem)";
 
+/**
+ * The largest shortfall the packer will hide by growing a card. Filling a
+ * 40px hole with a card's padding is invisible; filling a 200px hole turns the
+ * card into an empty well with a title at the top. Past this point a ragged
+ * column end reads as masonry, while a hollow card reads as a bug.
+ */
+const MAX_FLUSH_PX = 56;
+
 interface MasonryGridProps {
     className?: string;
     children: ReactNode;
@@ -155,9 +163,10 @@ export function MasonryGrid({ className, children }: MasonryGridProps) {
                     }
                 }
 
-                // Close the band flat: grow the last card of any short column
-                // so every column ends on the same line and nothing hollow
-                // opens before the next row.
+                // Close the band flat where the shortfall is small: growing a
+                // card a few dozen pixels reads as padding, but stretching it
+                // by hundreds leaves a hollow well under its content. Large
+                // shortfalls are left as a ragged column end instead.
                 const bandBottom = Math.max(...placed.map((b) => b.y + b.h));
                 for (let c = 0; c < 12; c += 1) {
                     let last: Box | null = null;
@@ -174,7 +183,7 @@ export function MasonryGrid({ className, children }: MasonryGridProps) {
                         }
                         deficit = Math.min(deficit, bandBottom - colBottom);
                     }
-                    if (deficit > 0 && Number.isFinite(deficit)) {
+                    if (deficit > 0 && deficit <= MAX_FLUSH_PX && Number.isFinite(deficit)) {
                         last.h += deficit;
                         last.natural += deficit;
                         last.item.style.minHeight = `${last.natural}px`;

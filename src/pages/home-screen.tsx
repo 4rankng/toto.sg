@@ -97,8 +97,8 @@ export const HomeScreen = () => {
     const [period, setPeriod] = useState("all");
     const [quickPickName, setQuickPickName] = useState<string | null>(null);
 
-    // On Netlify the function serves /api/latest; local dev has no function,
-    // and the bundled head stands in.
+    // /api/latest is served by server.mjs in the deployed container; local
+    // dev has no route, and the bundled head stands in.
     useEffect(() => {
         let cancelled = false;
         fetch("/api/latest")
@@ -191,6 +191,26 @@ export const HomeScreen = () => {
     const nextDrawNo = league?.meta.nextDraw ?? 0;
     const nextIso = nextDraw ? nextDraw.toISOString().slice(0, 10) : null;
     const winners = prizes?.g1?.winners ?? (prizes?.g1?.share ? 1 : null);
+
+    /** Shown under the board on tablets and at the foot of the main column
+     *  on desktop; rendering the same node twice keeps the reading order
+     *  sensible without duplicating the list markup by hand. */
+    const longestGapsPanel = (
+        <Panel title="Longest gaps" description="Draws since each number last appeared." isFlush>
+            <div className="grid grid-cols-2 divide-x divide-line-soft">
+                {[analysis?.overdue.slice(0, 6) ?? [], analysis?.overdue.slice(6, 12) ?? []].map((column, columnIndex) => (
+                    <ol key={columnIndex} className="px-4 py-1.5">
+                        {column.map((entry) => (
+                            <li key={entry.number} className="flex items-center justify-between gap-2 py-0.5">
+                                <Ball n={entry.number} size="xs" />
+                                <span className="font-mono text-[11px] text-ink tabular-nums">{formatNumber(entry.gap)}</span>
+                            </li>
+                        ))}
+                    </ol>
+                ))}
+            </div>
+        </Panel>
+    );
 
     return (
         <div className="flex flex-col gap-3">
@@ -379,50 +399,66 @@ export const HomeScreen = () => {
                 </div>
             )}
 
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-12">
-                <Panel
-                    className="lg:col-span-4"
-                    title="Number board"
-                    description="How often each number appeared across 7 indicator lenses. Colour shows deviation."
-                    footer={
-                        <div className="flex flex-col gap-2">
-                            <HeatLegend />
-                            <p className="text-[11px] leading-4 text-ink-subtle">
-                                Dot = a number in the latest draw. Left dot marks below expectation, pink dot above. Counts describe the past; they do
-                                not alter cage randomness.
-                            </p>
-                        </div>
-                    }
-                >
-                    <NumberBoard windows={windows} period={period} onPeriodChange={setPeriod} latestNumbers={numbers} line={line} onToggle={handleToggle} />
-                </Panel>
+            {/* The headline counts lead the section as one full-width strip:
+                inside the 8-column body the four cards were 135–196px wide
+                between 1024 and 1279px, which clipped their hints. */}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <KpiCard label="Draws" value={formatNumber(draws.length)} hint="Since 3 Jul 2008" icon={Hash01} tone="primary" />
+                <KpiCard
+                    label="6/49 era"
+                    value={formatNumber(era?.totalDraws ?? 0)}
+                    hint={era?.firstDate ? `Since ${formatDate(era.firstDate)}` : undefined}
+                    icon={Calendar}
+                    tone="secondary"
+                />
+                <KpiCard
+                    label="Most seen"
+                    value={hotBall ? hotBall.number : "—"}
+                    hint={hotBall ? `${formatNumber(hotBall.count)} times` : undefined}
+                    icon={Lightning01}
+                    tone="gold"
+                />
+                <KpiCard
+                    label="Longest gap"
+                    value={longestGap ? longestGap.number : "—"}
+                    hint={longestGap ? `${formatNumber(longestGap.gap)} draws` : undefined}
+                    icon={Clock}
+                    tone="neutral"
+                />
+            </div>
 
-                <div className="flex flex-col gap-3 lg:col-span-8">
-                    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-                        <KpiCard label="Draws" value={formatNumber(draws.length)} hint="Since 3 Jul 2008" icon={Hash01} tone="primary" />
-                        <KpiCard
-                            label="6/49 era"
-                            value={formatNumber(era?.totalDraws ?? 0)}
-                            hint={era?.firstDate ? `Since ${formatDate(era.firstDate)}` : undefined}
-                            icon={Calendar}
-                            tone="secondary"
-                        />
-                        <KpiCard
-                            label="Most seen"
-                            value={hotBall ? hotBall.number : "—"}
-                            hint={hotBall ? `${formatNumber(hotBall.count)} times` : undefined}
-                            icon={Lightning01}
-                            tone="gold"
-                        />
-                        <KpiCard
-                            label="Longest gap"
-                            value={longestGap ? longestGap.number : "—"}
-                            hint={longestGap ? `${formatNumber(longestGap.gap)} draws` : undefined}
-                            icon={Clock}
-                            tone="neutral"
-                        />
-                    </div>
+            {/*
+                The columns end at their natural heights. Stretching a card to
+                the taller column only opens a hollow well below its content,
+                so the grid is `items-start` and the columns may end unevenly;
+                on tablets the gap list moves under the board to keep those
+                ends within a few dozen pixels of each other.
+            */}
+            <div className="grid items-start gap-3 md:grid-cols-2 lg:grid-cols-12">
+                <div className="flex min-w-0 flex-col gap-3 md:col-span-1 lg:col-span-4">
+                    <Panel
+                        title="Number board"
+                        description="How often each number appeared across 7 indicator lenses. Colour shows deviation."
+                        footer={
+                            <div className="flex flex-col gap-2">
+                                <HeatLegend />
+                                <p className="text-[11px] leading-4 text-ink-subtle">
+                                    Dot = a number in the latest draw. Left dot marks below expectation, pink dot above. Counts describe the past; they do
+                                    not alter cage randomness.
+                                </p>
+                            </div>
+                        }
+                    >
+                        <NumberBoard windows={windows} period={period} onPeriodChange={setPeriod} latestNumbers={numbers} line={line} onToggle={handleToggle} />
+                    </Panel>
 
+                    {/* On tablets the board column would otherwise run short;
+                        the gap list fills that space until the 12-column layout
+                        takes over and hands it back to the main column. */}
+                    <div className="hidden md:block lg:hidden">{longestGapsPanel}</div>
+                </div>
+
+                <div className="flex min-w-0 flex-col gap-3 md:col-span-1 lg:col-span-8">
                     <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                         <div className="flex flex-col gap-3">
                             <Panel title="Play slip" description="Pick 6, 7 or 8 numbers. Tap the board to fill it.">
@@ -435,9 +471,6 @@ export const HomeScreen = () => {
                                     quickPickLabel={quickPickName}
                                 />
                             </Panel>
-
-                            {/* Live Ticket X-Ray Engine & 1,892-Draw Backtester */}
-                            <TicketXRay balls={line} result={ticketAnalysis} onApplyConsensus={handleApplyConsensus} />
                         </div>
 
                         <Panel title="Most and least seen" description="Counts across the 6/49 era." isFlush>
@@ -462,23 +495,13 @@ export const HomeScreen = () => {
                         </Panel>
                     </div>
 
-                    <Panel title="Longest gaps" description="Draws since each number last appeared." isFlush>
-                        <div className="grid grid-cols-2 divide-x divide-line-soft">
-                            {[
-                                analysis?.overdue.slice(0, 6) ?? [],
-                                analysis?.overdue.slice(6, 12) ?? [],
-                            ].map((column, columnIndex) => (
-                                <ol key={columnIndex} className="px-4 py-1.5">
-                                    {column.map((entry) => (
-                                        <li key={entry.number} className="flex items-center justify-between gap-2 py-0.5">
-                                            <Ball n={entry.number} size="xs" />
-                                            <span className="font-mono text-[11px] text-ink tabular-nums">{formatNumber(entry.gap)}</span>
-                                        </li>
-                                    ))}
-                                </ol>
-                            ))}
-                        </div>
-                    </Panel>
+                    {/* The X-Ray reads the slip, so it sits directly below the
+                        slip/most-least pair and spans the full body width — as
+                        a third narrow card it left a dead notch under the
+                        most/least list. */}
+                    <TicketXRay balls={line} result={ticketAnalysis} onApplyConsensus={handleApplyConsensus} />
+
+                    <div className="md:hidden lg:block">{longestGapsPanel}</div>
 
                     <p className="px-1 text-[11px] leading-4 text-ink-subtle">
                         Every number is equally likely in every draw. Every line has the same chance of Group 1, whatever the board or the history says.

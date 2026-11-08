@@ -1,10 +1,9 @@
 // toto.sg — self-host runtime: static SPA from ./dist plus GET /api/latest
-// (the Netlify function ported 1:1). Zero deps, Node ≥ 18. Container entrypoint.
+// (the live-draw fetch, self-contained). Zero deps, Node ≥ 18. Container entrypoint.
 //
 // Routes:
 //   /api/latest            live newest draw, parsed from the Singapore Pools
-//                          6-latest-draws fragment (same logic as
-//                          netlify/functions/latest.mjs — kept self-contained)
+//                          6-latest-draws fragment
 //   /assets/*              vite hashed bundles, immutable
 //   everything else        static file from dist/, SPA fallback to index.html
 import { createServer } from "node:http";

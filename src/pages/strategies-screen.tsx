@@ -447,7 +447,9 @@ export const StrategiesScreen = () => {
                 description={`${rows.length} of ${data.strategies.length} · picks for draw ${meta.nextDraw} · chance over ${formatNumber(meta.folds)} draws: ${formatNumber(chancePrizes)} prizes (score points: ${formatNumber(Math.round((meta.folds * meta.chance.weightedPrizesPer100Draws) / 100))})`}
                 actions={filters}
             >
-                <ol className="grid grid-cols-1 gap-px bg-line-soft xl:grid-cols-2">
+                {/* Two columns from lg: at xl the 1024–1279px range wasted
+                    roughly half of every row on empty space. */}
+                <ol className="grid grid-cols-1 gap-px bg-line-soft lg:grid-cols-2">
                     {rows.map((row) => {
                         const isOpen = expanded === row.id;
 

@@ -2,7 +2,7 @@
 
 Unofficial Singapore TOTO statistics: the latest result, the full draw archive, number stats, a ranked strategy league scored against random picks, and a 7×7 heat board with a System 6/7/8 play slip.
 
-Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysis, league scoring) runs offline; the client only renders. No backend — the one serverless component is a Netlify Function that keeps the "latest result" panel fresh between rebuilds.
+Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysis, league scoring) runs offline; the client only renders. The deployed container runs a tiny zero-dep Node server (`server.mjs`) that serves the SPA and one live endpoint, `/api/latest`, which keeps the "latest result" panel fresh between rebuilds.
 
 ## The four surfaces
 
@@ -11,7 +11,7 @@ Pure static Vite SPA + precomputed JSON. All heavy computation (parsing, analysi
 | `/`           | Monitor | Latest draw with prize table, next-draw countdown & regime briefing strip, top strategies, 6-lens `NumberBoard` (All time, Last 50, 10-Draw Surge, Skip/Due, RSI-14, Bot Votes), and System 6/7/8 play slip with live `TicketXRay` combinatorial backtester |
 | `/history`    | Explore | Searchable, paginated archive of every draw with regime filters, expanded draw anatomy (cage metrics, carry-over lag), and "Load in Play Slip →" |
 | `/insights`   | Learn   | 85 panels across 8 galleries: the numbers, correlations & lag, the lines, folklore & sequences, the cage, indicators & oscillators (RSI, MACD, Bollinger, Hurst, Entropy, CUSUM, Kaplan-Meier), Togel, Mark Six & almanac, and forensics & randomness, with viewport-lazy section mounting |
-| `/strategies` | Compare | 64-strategy league across 15 families with search, type filter, sorting (Score, Hits, 2+, Prizes, Recent 12), current pick X-Ray diagnostics, chance nulls beside every metric, "Load in Play Slip →", and the cross-panel showcase: the ten multi-panel selection rules, the Insights panels behind each, and the live row each one produces |
+| `/strategies` | Compare | 64-strategy league across 15 families with search, type filter, sorting (Score, Prizes), current pick X-Ray diagnostics, chance nulls beside every metric, "Load in Play Slip →", and the cross-panel showcase: the ten multi-panel selection rules, the Insights panels behind each, and the live row each one produces |
 
 Design language: a dark-first mission-control console — canvas `#041018`, panel surfaces `#07202C`, 1px teal hairlines `#124155`, one signal colour (teal `#2EE6C5`, `#0F9E86` in light mode) with cyan `#35D6FF` as the second data hue, gold for the jackpot, and a cold→hot ramp for the heat board. Type is Sora for display, DM Sans for body, mono for labels and figures. The console is dark by default; the header toggle pins light (`data-theme`).
 
@@ -70,14 +70,13 @@ Analysis and strategy stats use the **6/49 era only** (draws since 9 Oct 2014); 
 The play slip beside the board supports **System 6, 7 and 8** lines with live **Ticket X-Ray** analytics:
 - 7-metric indicator grid: Sum, AC value, Span, Odd/Even, Consecutive pairs, 3-Term arithmetic progressions, and Distinct tails, plus composition flags for rare line shapes.
 - Full 1,892-draw historical backtester: how many numbers the line would have matched in every archived draw, and the prize tiers those matches hit (C(N, 6) combinations).
-- Instant preset: `Consensus Pick` (combines the league's top votes).
+- Instant preset: `Bot Consensus` in the X-Ray empty state loads the league-wide vote line into the slip.
 
-## Deploy to Netlify
+## Deploy
 
-1. Push this repo and connect it in Netlify — `netlify.toml` supplies the build command (`npm run build`), publish dir (`dist`), SPA redirect, and picks up `netlify/functions/latest.mjs` automatically.
-2. Schedule a daily build (~10:45 UTC, after the Monday/Thursday results settle) so `public/data/*.json` recompute and the analysis stays current. Netlify: **Site configuration → Build & deploy → Scheduled builds**.
+Self-hosted via Docker — `make deploy` regenerates the league, verifies the data, builds, pushes the `ghcr.io/4rankng/toto.sg:main` image, restarts the `toto-web` container on the server, and smoke-tests the live endpoints. Live at **https://toto.tingting.vip**; `make check` runs the live checks on its own.
 
-The home page calls `/api/latest` (the function) on load. If the function is unavailable it silently falls back to the bundled data, so the site works as pure static hosting too.
+The home page calls `/api/latest` (served by `server.mjs` in the container) on load. If the endpoint is unavailable it silently falls back to the bundled data, so the site works as pure static hosting too.
 
 ## Scope & disclaimer
 
