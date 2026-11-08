@@ -21,7 +21,7 @@ import {
     sortAsc,
     velocityResiduals,
     weekdayOf,
-} from "./gambler-stats.mjs";
+} from "./cross-panel-stats.mjs";
 
 /** Normalized RSI (0..100) where fair-cage expected rate (6/49) maps to 50. */
 export function computeWilderRsi(draws, period = 14) {

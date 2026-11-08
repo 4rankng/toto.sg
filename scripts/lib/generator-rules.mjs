@@ -15,7 +15,7 @@ import {
     oddCount,
     sampleK,
     sortAsc,
-} from "./gambler-stats.mjs";
+} from "./cross-panel-stats.mjs";
 
 export const GENERATOR_STRATEGIES = [
     ["mod9Coverage", "Mod-9 Residue Coverage", "Sum Band", "Draws one number from each of six different mod-9 residue classes — the one structural audit the randomness panels flag — and repairs the sum into the 115–185 band."],

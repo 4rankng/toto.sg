@@ -16,9 +16,9 @@
 // all-time frequency leaders.
 //
 // Rule signature: rule(prior, target, rng, stats) where stats is
-// buildFoldStats(prior, target) from gambler-stats.mjs. Heavy derived tables
+// buildFoldStats(prior, target) from cross-panel-stats.mjs. Heavy derived tables
 // are memoised on the stats object so loops never recompute them.
-import { RANGE49, acValue, consecPairs, lineSum, oddCount, sampleK, sortAsc } from "./gambler-stats.mjs";
+import { RANGE49, acValue, consecPairs, lineSum, oddCount, sampleK, sortAsc } from "./cross-panel-stats.mjs";
 
 const randInt = (rng, lo, hi) => lo + Math.floor(rng() * (hi - lo + 1));
 const pick = (rng, list) => list[Math.floor(rng() * list.length)];

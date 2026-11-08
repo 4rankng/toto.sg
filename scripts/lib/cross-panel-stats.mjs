@@ -1,8 +1,8 @@
-// toto.sg — shared statistics primitives for the 10 gambler strategies.
+// toto.sg — shared statistics primitives for the cross-panel strategies.
 //
 // Pure functions over a draw-history prefix. No I/O, no clocks, no globals.
-// The strategy rules (scripts/lib/gambler-rules-*.mjs) import only from here
-// so that every rule reads the same definitions of "velocity", "pair affinity",
+// The strategy rules (scripts/lib/cross-panel-rules.mjs) import only from here so
+// that every rule reads the same definitions of "velocity", "pair affinity",
 // "playslip cell" and "residue class" — the audit behind
 // toto_10_gambler_strategies.docx.
 
@@ -172,4 +172,49 @@ export const buildFoldStats = (prior, target) => {
         weekday: target ? weekdayOf(target.date) : null,
         month: target ? monthOf(target.date) : null,
     };
+};
+
+// ---------------------------------------------------------------------------
+// Cross-panel primitives
+//
+// The statistics the ten cross-panel strategies need that the archive alone
+// can answer: how often a ball was drawn as the 7th (additional) ball, how
+// the jackpot has been rolling over, and how a ball's hit rate on one weekday
+// compares with its own long-run rate.
+// ---------------------------------------------------------------------------
+
+/** The 15 primes inside the 1–49 pool. */
+export const PRIMES = new Set([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47]);
+
+/** True when `n` is prime (1–49). */
+export const isPrime = (n) => PRIMES.has(n);
+
+/**
+ * Hits per ball inside the trailing `window` draws (index 0 = ball 1).
+ * The streak-ribbon strategies read this directly: 4+ hits in ten draws is a
+ * climax, 2–3 is early ignition.
+ */
+export const hitsInWindow = (draws, window) => freqCounts(draws.slice(-window));
+
+/** Times each ball was drawn as the 7th (additional) ball. Index 0 = ball 1. */
+export const additionalBallCounts = (draws) => {
+    const counts = new Array(49).fill(0);
+    for (const draw of draws) {
+        const add = draw.additional;
+        if (add != null && add >= 1 && add <= 49) counts[add - 1] += 1;
+    }
+    return counts;
+};
+
+/**
+ * Per-ball hit-rate skew on one weekday against the ball's own long-run rate.
+ * Index 0 = ball 1. Positive = the ball runs hot on that weekday.
+ */
+export const weekdaySkew = (draws, weekday) => {
+    const day = draws.filter((d) => weekdayOf(d.date) === weekday);
+    const all = freqCounts(draws);
+    const onDay = freqCounts(day);
+    const base = draws.length === 0 ? 0 : 1 / draws.length;
+    const dayBase = day.length === 0 ? 0 : 1 / day.length;
+    return onDay.map((count, i) => count * dayBase - all[i] * base);
 };

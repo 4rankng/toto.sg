@@ -29,7 +29,9 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { CHANCE, evaluateStrategy, WARMUP_DRAWS } from "./lib/league-eval.mjs";
 import { filterEra, nextDrawDateIso } from "./lib/analysis.mjs";
-import { buildFoldStats } from "./lib/gambler-stats.mjs";
+import { buildFoldStats } from "./lib/cross-panel-stats.mjs";
+import { CROSS_PANEL_RULES, CROSS_PANEL_STRATEGIES, buildCrossPanelContext } from "./lib/cross-panel-rules.mjs";
+import { CROSS_PANEL_PLAYBOOK } from "./lib/cross-panel-playbook.mjs";
 import { CURATED_RULES, CURATED_STRATEGIES } from "./lib/curated-rules.mjs";
 import { GENERATOR_RULES, GENERATOR_STRATEGIES } from "./lib/generator-rules.mjs";
 import { buildDeskContext, DESK_RULES, DESK_STRATEGIES } from "./lib/desk-rules.mjs";
@@ -100,7 +102,7 @@ const main = async () => {
     };
 
     const specOf = ([id, name, family, description], rule, prepare) => ({ id, name, family, description, rule, prepare });
-    const specs = [
+    const baseSpecs = [
         ...CURATED_STRATEGIES.map((s) => specOf(s, (prior, target, rng, stats) => CURATED_RULES[s[0]](prior, target, rng, stats), (prior, target) => buildFoldStats(prior, target))),
         ...GENERATOR_STRATEGIES.map((s) => specOf(s, (prior, _target, rng) => GENERATOR_RULES[s[0]](prior, rng))),
         ...DESK_STRATEGIES.map((s) => specOf(s, (prior, target, rng, prepared) => DESK_RULES[s[0]](prior, target, rng, prepared), deskPrepare)),
@@ -108,6 +110,37 @@ const main = async () => {
         ...INDICATOR_STRATEGIES.map((s) => specOf(s, (prior, target, rng, stats) => INDICATOR_RULES[s[0]](prior, target, rng, stats), (prior, target) => buildIndicatorFoldStats(prior, target))),
     ];
 
+    // The cross-panel family reads the league's own vote, so it runs in a
+    // second phase: once every base rule has produced its line for a fold, the
+    // consensus for that fold is known and the contrarian strategy can fade it.
+    // The context is memoised per fold, so all ten rules share one build.
+    const picksByDraw = new Map();
+    const crossPanelMemo = new Map();
+    const votesFor = (drawNo) => {
+        let votes = crossPanelMemo.get(`votes:${drawNo}`);
+        if (!votes) {
+            votes = new Uint16Array(49);
+            for (const pick of picksByDraw.get(drawNo) ?? []) for (const n of pick) votes[n - 1] += 1;
+            crossPanelMemo.set(`votes:${drawNo}`, votes);
+        }
+        return votes;
+    };
+    const nowVotes = new Uint16Array(49);
+    const crossPanelPrepare = (prior, target) => {
+        const key = `ctx:${target.draw}`;
+        let ctx = crossPanelMemo.get(key);
+        if (!ctx) {
+            const votes = target.draw === nextDrawNo ? nowVotes : votesFor(target.draw);
+            ctx = buildCrossPanelContext(prior, target, votes);
+            crossPanelMemo.set(key, ctx);
+        }
+        return ctx;
+    };
+    const crossPanelSpecs = CROSS_PANEL_STRATEGIES.map((s) =>
+        specOf(s, (prior, target, rng, ctx) => CROSS_PANEL_RULES[s[0]](prior, target, rng, ctx), crossPanelPrepare),
+    );
+
+    const specs = [...baseSpecs, ...crossPanelSpecs];
     const ids = new Set(specs.map((s) => s.id));
     if (ids.size !== specs.length) {
         for (const s of specs) {
@@ -116,7 +149,7 @@ const main = async () => {
     }
     const families = [...new Set(specs.map((s) => s.family))].sort((a, b) => a.localeCompare(b));
 
-    const rows = specs.map((spec) => {
+    const evaluate = (spec, onPick) => {
         const key = (drawNo) => `${spec.id}:${drawNo}`;
         const foldCache = {
             get: (drawNo) => {
@@ -147,8 +180,30 @@ const main = async () => {
             nextTarget,
             foldCache,
             nextPickCache,
+            onPick,
         });
-    });
+    };
+
+    // Phase 1 — the base league. Every fold's pick is recorded so the
+    // consensus vote can be assembled without re-running a single rule.
+    const rows = [];
+    for (const spec of baseSpecs) {
+        rows.push(
+            evaluate(spec, (drawNo, pick) => {
+                let list = picksByDraw.get(drawNo);
+                if (!list) {
+                    list = [];
+                    picksByDraw.set(drawNo, list);
+                }
+                list.push(pick);
+            }),
+        );
+    }
+    // The current (next-draw) consensus uses every base rule's next pick.
+    for (const row of rows) for (const n of row.currentPick) nowVotes[n - 1] += 1;
+
+    // Phase 2 — the cross-panel family, now that the vote is known.
+    for (const spec of crossPanelSpecs) rows.push(evaluate(spec));
     rows.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
     rows.forEach((row, i) => {
         row.rank = i + 1;
@@ -165,6 +220,37 @@ const main = async () => {
         strategies: rows,
     };
     await writeFile(`${DATA_DIR}strategies.json`, JSON.stringify(league, 1), "utf8");
+
+    // The playbook pairs each cross-panel strategy's document evidence with
+    // the live league row it produced.
+    const rowById = new Map(rows.map((row) => [row.id, row]));
+    const playbook = {
+        meta: {
+            generatedAt: league.meta.generatedAt,
+            nextDraw: nextDrawNo,
+            family: "Cross-Panel",
+            source: "toto_10_gambler_strategies.docx",
+        },
+        strategies: CROSS_PANEL_PLAYBOOK.map((entry) => {
+            const row = rowById.get(entry.id);
+            if (!row) throw new Error(`playbook entry without a league row: ${entry.id}`);
+            return {
+                ...entry,
+                row: {
+                    id: row.id,
+                    name: row.name,
+                    rank: row.rank,
+                    score: row.score,
+                    totalHits: row.totalHits,
+                    meanHits: row.meanHits,
+                    twoPlusDraws: row.twoPlusDraws,
+                    currentPick: row.currentPick,
+                },
+            };
+        }),
+    };
+    await writeFile(`${DATA_DIR}cross-panel-playbook.json`, JSON.stringify(playbook, 1), "utf8");
+
     await mkdir(fileURLToPath(new URL("..", import.meta.url)) + "data", { recursive: true });
     await writeFile(CACHE_PATH, `${JSON.stringify(cache, 1)}\n`, "utf8");
 
