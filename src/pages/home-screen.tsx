@@ -24,7 +24,6 @@ import {
     useJson,
     weekdayOf,
 } from "@/lib/data";
-import { ballPayoutStats } from "@/lib/insights-correlations";
 import { extendPick, quickPick, randBelow } from "@/lib/quickpick";
 import { analyzeTicket, computeBoardLenses, computeNextDrawRegime } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
@@ -133,8 +132,7 @@ export const HomeScreen = () => {
     const topStrategies = useMemo(() => (league ? [...league.strategies].sort((a, b) => a.rank - b.rank).slice(0, LEAGUE_ROWS) : []), [league]);
     const recentDraws = useMemo(() => (draws ? draws.slice(-(RECENT_DRAWS + 1), -1).reverse() : []), [draws]);
 
-    const ballPayouts = useMemo(() => (draws ? ballPayoutStats(draws) : null), [draws]);
-    const regime = useMemo(() => (draws && ballPayouts ? computeNextDrawRegime(draws, ballPayouts, draws.at(-1) ?? null) : null), [draws, ballPayouts]);
+    const regime = useMemo(() => (draws ? computeNextDrawRegime(draws, draws.at(-1) ?? null) : null), [draws]);
 
     const windows = useMemo<BoardWindow[]>(() => {
         if (!draws || !analysis) return [];
@@ -144,8 +142,8 @@ export const HomeScreen = () => {
     const activeWindow = windows.find((window) => window.id === period) ?? windows[0];
 
     const ticketAnalysis = useMemo(
-        () => (draws && ballPayouts && line.length >= 6 ? analyzeTicket(line, draws, ballPayouts, league ?? undefined) : null),
-        [line, draws, ballPayouts, league],
+        () => (draws && line.length >= 6 ? analyzeTicket(line, draws, league ?? undefined) : null),
+        [line, draws, league],
     );
 
     /** Quick pick is one of the strategies — a random one, every tap. */
@@ -160,12 +158,6 @@ export const HomeScreen = () => {
         setQuickPickName(null);
     };
 
-    const handleApplyAntiCrowd = () => {
-        const candidates = [33, 34, 35, 37, 39, 41, 42, 43, 45, 46, 47, 49];
-        const shuffled = [...candidates].sort(() => Math.random() - 0.5);
-        setLine(shuffled.slice(0, size).sort((a, b) => a - b));
-        setQuickPickName("+EV Anti-Crowd");
-    };
 
     const handleApplyConsensus = () => {
         if (!league) return;
@@ -350,7 +342,7 @@ export const HomeScreen = () => {
                 <Panel
                     className="lg:col-span-4"
                     title="Top strategies"
-                    description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on 100 draws · chance scores 45.`}
+                    description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on ${league?.meta.folds ?? 0} draws · chance scores ${league?.meta.chance.scoreBaseline ?? 45}.`}
                     actions={
                         <Link to="/strategies" className="text-xs font-semibold text-accent transition-colors duration-100 hover:text-accent-strong">
                             All →
@@ -472,13 +464,6 @@ export const HomeScreen = () => {
                                         <>
                                             <button
                                                 type="button"
-                                                onClick={handleApplyAntiCrowd}
-                                                className="min-h-9 rounded-lg border border-primary/40 bg-primary/10 px-2.5 text-xs font-semibold whitespace-nowrap text-primary transition-colors duration-100 hover:bg-primary/20"
-                                            >
-                                                +EV Anti-Crowd
-                                            </button>
-                                            <button
-                                                type="button"
                                                 onClick={handleApplyConsensus}
                                                 className="min-h-9 rounded-lg border border-secondary/40 bg-secondary/10 px-2.5 text-xs font-semibold whitespace-nowrap text-secondary transition-colors duration-100 hover:bg-secondary/20"
                                             >
@@ -494,7 +479,6 @@ export const HomeScreen = () => {
                                 balls={line}
                                 result={ticketAnalysis}
                                 onClear={handleClear}
-                                onApplyAntiCrowd={handleApplyAntiCrowd}
                                 onApplyConsensus={handleApplyConsensus}
                             />
                         </div>

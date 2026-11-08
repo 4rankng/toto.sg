@@ -7,7 +7,6 @@ import {
     drawOddCount,
     drawSum,
 } from "./data";
-import { type BallPayoutStats } from "./insights-correlations";
 import { binomial, PICKS, POOL } from "./insights-stats";
 
 /* ------------------------------------------------------------------ *
@@ -60,9 +59,7 @@ export interface TicketXRayResult {
     consecPairs: number;
     hasAp3: boolean;
     onDiagonalCount: number;
-    estimatedG3Share: number;
-    crowdDeltaPct: number;
-    crowdFlags: CrowdFlag[];
+    compositionFlags: CrowdFlag[];
     botVoteOverlap: number;
     closestStrategy: { name: string; matchCount: number; score: number } | null;
     backtest: {
@@ -83,7 +80,6 @@ export interface NextDrawRegime {
     activeSweepCount: number;
     topRsiBall: { number: number; rsi: number };
     topMarkovFollower: { number: number; fromBall: number; count: number } | null;
-    eraMeanG3: number;
 }
 
 export interface DrawAnatomy {
@@ -200,25 +196,6 @@ export function computeBoardLenses(eraDraws: Draw[], analysis: Analysis, league?
     const rsiZ = rsiValues.map((v) => (v - 50) / 20);
     const rsiDisplay = rsiValues.map((v) => `${v}`);
 
-    // 6. G3 Payout EV Delta
-    const ballG3Lists: number[][] = Array.from({ length: POOL }, () => []);
-    let eraG3Sum = 0;
-    let eraG3Count = 0;
-    for (const draw of eraDraws) {
-        const g3 = draw.prizes?.g3?.share;
-        if (g3 && g3 > 0) {
-            eraG3Sum += g3;
-            eraG3Count += 1;
-            for (const n of draw.numbers) ballG3Lists[n - 1].push(g3);
-        }
-    }
-    const eraMeanG3 = eraG3Count > 0 ? eraG3Sum / eraG3Count : 1750;
-    const g3Deltas = ballG3Lists.map((list) => {
-        const mean = list.length > 0 ? list.reduce((a, b) => a + b, 0) / list.length : eraMeanG3;
-        return Math.round(mean - eraMeanG3);
-    });
-    const g3EvZ = g3Deltas.map((d) => d / 150);
-    const g3EvDisplay = g3Deltas.map((d) => `${d >= 0 ? "+" : ""}${d}`);
 
     // 7. Bot Votes
     const votes = new Array(49).fill(0);
@@ -284,16 +261,6 @@ export function computeBoardLenses(eraDraws: Draw[], analysis: Analysis, league?
             summary: "Wilder 14-draw Relative Strength Index normalized to 50 base. <35 oversold (cyan), >65 hot momentum (pink).",
         },
         {
-            id: "g3ev",
-            label: "G3 Payout EV",
-            counts: g3Deltas.map((d) => Math.abs(d)),
-            expected: 0,
-            draws: eraCount,
-            displayValues: g3EvDisplay,
-            zScores: g3EvZ,
-            summary: `Empirical Group 3 prize delta (S$) vs era average (S$${Math.round(eraMeanG3)}). High balls pay higher!`,
-        },
-        {
             id: "botVotes",
             label: "Bot Votes",
             counts: votes,
@@ -310,11 +277,7 @@ export function computeBoardLenses(eraDraws: Draw[], analysis: Analysis, league?
  * 2. Next Draw Regime Briefing
  * ------------------------------------------------------------------ */
 
-export function computeNextDrawRegime(
-    eraDraws: Draw[],
-    ballPayouts: BallPayoutStats,
-    lastDraw: Draw | null,
-): NextDrawRegime {
+export function computeNextDrawRegime(eraDraws: Draw[], lastDraw: Draw | null): NextDrawRegime {
     // 1. Rollover depth
     let depth = 0;
     for (let i = eraDraws.length - 1; i >= 0; i -= 1) {
@@ -405,7 +368,6 @@ export function computeNextDrawRegime(
         activeSweepCount,
         topRsiBall,
         topMarkovFollower: topMarkov,
-        eraMeanG3: ballPayouts.eraMeanG3,
     };
 }
 
@@ -413,12 +375,7 @@ export function computeNextDrawRegime(
  * 3. Live Ticket X-Ray & Multi-Combination Backtester
  * ------------------------------------------------------------------ */
 
-export function analyzeTicket(
-    line: number[],
-    allDraws: Draw[],
-    ballPayouts: BallPayoutStats,
-    league?: StrategiesFile,
-): TicketXRayResult {
+export function analyzeTicket(line: number[], allDraws: Draw[], league?: StrategiesFile): TicketXRayResult {
     const sorted = sortAsc(line);
     const size = sorted.length;
     const combinations = size >= 6 ? binomial(size, 6) : 0;
@@ -449,50 +406,20 @@ export function analyzeTicket(
     const hasAp3 = lineHasThreeTermAp(sorted);
     const onDiagonalCount = sorted.filter((n) => MAIN_DIAGONALS.has(n)).length;
 
-    // Crowd Tax & Group 3 Share EV estimation
-    const ballPayoutMap = new Map(ballPayouts.rows.map((r) => [r.number, r.meanG3]));
-    let ballG3Total = 0;
-    sorted.forEach((n) => {
-        ballG3Total += ballPayoutMap.get(n) ?? ballPayouts.eraMeanG3;
-    });
-    const avgBallG3 = size > 0 ? ballG3Total / size : ballPayouts.eraMeanG3;
 
-    // Adjustments:
-    // Birthday crowd penalty: -8% per ball <= 31 beyond 3
-    const bdayPenalty = Math.max(0, birthdayCount - 3) * 0.08;
-    // Double calendar penalty (<= 12): -5% per ball
-    const doubleCalPenalty = Math.max(0, doubleCalendarCount - 1) * 0.05;
-    // Consecutive run penalty: -6.5% if consecPairs > 0
-    const runPenalty = consecPairs > 0 ? 0.065 : 0;
-    // Digit 8 superstition penalty (8, 18, 28, 38, 48): -4% per ball
-    const digit8Count = sorted.filter((n) => n % 10 === 8).length;
-    const digit8Penalty = digit8Count * 0.04;
-    // Tetraphobia premium (4, 14, 24, 34, 40-49): +4% per ball
-    const d4Count = sorted.filter((n) => n % 10 === 4 || (n >= 40 && n <= 49)).length;
-    const d4Premium = d4Count * 0.035;
-
-    const netMultiplier = Math.max(0.4, 1 - bdayPenalty - doubleCalPenalty - runPenalty - digit8Penalty + d4Premium);
-    const estimatedG3Share = Math.round(avgBallG3 * netMultiplier);
-    const crowdDeltaPct = Math.round(((estimatedG3Share - ballPayouts.eraMeanG3) / ballPayouts.eraMeanG3) * 100);
-
-    // Flags
-    const crowdFlags: CrowdFlag[] = [];
-    if (crowdDeltaPct >= 10) {
-        crowdFlags.push({ label: "+EV Anti-Crowd", tone: "primary", hint: `Est. G3 share +${crowdDeltaPct}% higher than era mean` });
-    } else if (crowdDeltaPct <= -10) {
-        crowdFlags.push({ label: "Crowded Tax", tone: "down", hint: `Est. G3 share ${crowdDeltaPct}% below era mean` });
-    }
+    // Composition flags — match-structure warnings, no payout estimation.
+    const compositionFlags: CrowdFlag[] = [];
     if (birthdayCount >= 5) {
-        crowdFlags.push({ label: "Birthday Bias", tone: "down", hint: `${birthdayCount} numbers ≤ 31 (heavy ticket sharing)` });
+        compositionFlags.push({ label: "Calendar-Heavy", tone: "down", hint: `${birthdayCount} numbers ≤ 31 — the most-crowded half of the pool` });
     }
     if (consecPairs >= 2) {
-        crowdFlags.push({ label: `${consecPairs} Runs`, tone: "muted", hint: "Consecutive pairs reduce share payout" });
+        compositionFlags.push({ label: `${consecPairs} Runs`, tone: "muted", hint: "Multiple consecutive pairs — a rare line shape" });
     }
     if (acValue >= 9) {
-        crowdFlags.push({ label: "Max Complexity", tone: "gold", hint: `AC value ${acValue} (clean gap dispersion)` });
+        compositionFlags.push({ label: "Max Complexity", tone: "gold", hint: `AC value ${acValue} (clean gap dispersion)` });
     }
     if (onDiagonalCount >= 3) {
-        crowdFlags.push({ label: "Diagonal Mark", tone: "muted", hint: `${onDiagonalCount} numbers on playslip diagonals` });
+        compositionFlags.push({ label: "Diagonal Mark", tone: "muted", hint: `${onDiagonalCount} numbers on playslip diagonals` });
     }
 
     // Bot Consensus Overlap
@@ -656,9 +583,7 @@ export function analyzeTicket(
         consecPairs,
         hasAp3,
         onDiagonalCount,
-        estimatedG3Share,
-        crowdDeltaPct,
-        crowdFlags,
+        compositionFlags,
         botVoteOverlap,
         closestStrategy,
         backtest: {

@@ -56,6 +56,11 @@ export interface Rsi14Stats {
 }
 
 export function computeRsi14Stats(draws: Draw[], period = 14): Rsi14Stats {
+    if (draws.length < 2) {
+        // The screen computes stats before the JSON archive lands; empty input
+        // must yield a well-formed zero state instead of crashing the tree.
+        return { balls: [], hottest: [], coldest: [], neutralCount: 0, oversoldThreshold: 35, overboughtThreshold: 65 };
+    }
     const nDraws = draws.length;
     // Map draws chronologically (oldest to newest)
     const sorted = [...draws].sort((a, b) => a.draw - b.draw);
@@ -219,6 +224,9 @@ export interface BollingerSumStats {
 }
 
 export function computeBollingerSumStats(draws: Draw[], window = 20): BollingerSumStats {
+    if (draws.length === 0) {
+        return { recentPoints: [], currentBandwidth: 0, isSqueezed: false, currentPercentB: 50, regime: "inside", meanBandwidth: 0 };
+    }
     const sorted = [...draws].sort((a, b) => a.draw - b.draw);
     const points: BollingerSumPoint[] = [];
     const allBandwidths: number[] = [];
@@ -453,6 +461,9 @@ export interface CusumBreakStats {
 }
 
 export function computeCusumBreakStats(draws: Draw[]): CusumBreakStats {
+    if (draws.length === 0) {
+        return { recentPoints: [], maxDeviation: 0, driftDirection: "stable", hasBreak: false };
+    }
     const sorted = [...draws].sort((a, b) => a.draw - b.draw);
     const theoreticalMeanSum = (POOL + 1) * PICKS / 2; // 150
     const theoreticalSdSum = Math.sqrt(PICKS * (POOL - PICKS) * (POOL + 1) / 12); // ≈ 27.93
@@ -1031,6 +1042,9 @@ export interface MeanReversionSlopeStats {
 }
 
 export function computeMeanReversionSlopeStats(draws: Draw[], window = 40): MeanReversionSlopeStats {
+    if (draws.length === 0) {
+        return { slope: 0, rSquared: 0, scatterPoints: [], reversionStrength: "none" };
+    }
     const sorted = [...draws].sort((a, b) => a.draw - b.draw);
     const n = sorted.length;
     const expPerWindow = window * NULL_PROB;
@@ -1141,6 +1155,9 @@ export interface AtrChannelStats {
 }
 
 export function computeAtrChannelStats(draws: Draw[]): AtrChannelStats {
+    if (draws.length === 0) {
+        return { atr14: 0, spanAtr14: 0, channelUpper: 0, channelLower: 0, currentSum: 0, isOutsideChannel: false };
+    }
     const sorted = [...draws].sort((a, b) => a.draw - b.draw);
     const n = sorted.length;
     const sumRanges: number[] = [];
@@ -1197,6 +1214,9 @@ export interface CompositeQuantStats {
 }
 
 export function computeCompositeQuantStats(draws: Draw[]): CompositeQuantStats {
+    if (draws.length === 0) {
+        return { scores: [], top6Picks: [], bottom6Picks: [] };
+    }
     const sorted = [...draws].sort((a, b) => a.draw - b.draw);
     const n = sorted.length;
     const lastDraw = sorted[n - 1];

@@ -3,7 +3,7 @@
 // Displays the 8-metric indicator grid, crowd collision tags, and combinatorial
 // multi-tier backtest results for the active play slip line (System 6/7/8).
 import { useState } from "react";
-import { formatSgd, formatSigned } from "@/lib/data";
+import { formatSgd } from "@/lib/data";
 import { type TicketXRayResult } from "@/lib/ticket-xray";
 import { cx } from "@/utils/cx";
 
@@ -12,18 +12,10 @@ interface TicketXRayProps {
     result: TicketXRayResult | null;
     className?: string;
     onClear?: () => void;
-    onApplyAntiCrowd?: () => void;
     onApplyConsensus?: () => void;
 }
 
-export function TicketXRay({
-    balls,
-    result,
-    className,
-    onClear: _onClear,
-    onApplyAntiCrowd,
-    onApplyConsensus,
-}: TicketXRayProps) {
+export function TicketXRay({ balls, result, className, onClear: _onClear, onApplyConsensus }: TicketXRayProps) {
     const [tab, setTab] = useState<"diagnostics" | "backtest">("diagnostics");
 
     if (balls.length < 6 || !result) {
@@ -34,18 +26,9 @@ export function TicketXRay({
                     <span>{balls.length} / 6 balls tapped</span>
                 </div>
                 <p className="text-xs text-text-muted leading-relaxed">
-                    Tap {6 - balls.length} more {balls.length === 5 ? "ball" : "balls"} (or up to 8 for System 7/8) to engage the 8-metric indicator scan, Group 3 crowd-tax estimate, and 1,892-draw combinatorial backtest.
+                    Tap {6 - balls.length} more {balls.length === 5 ? "ball" : "balls"} (or up to 8 for System 7/8) to engage the indicator scan and 1,892-draw combinatorial backtest.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                    {onApplyAntiCrowd && (
-                        <button
-                            type="button"
-                            onClick={onApplyAntiCrowd}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
-                        >
-                            <span>⚡ +EV Anti-Crowd</span>
-                        </button>
-                    )}
                     {onApplyConsensus && (
                         <button
                             type="button"
@@ -73,9 +56,7 @@ export function TicketXRay({
         distinctTails,
         distinctDecades,
         digitalRoot,
-        estimatedG3Share,
-        crowdDeltaPct,
-        crowdFlags,
+        compositionFlags,
         botVoteOverlap,
         closestStrategy,
         backtest,
@@ -182,16 +163,6 @@ export function TicketXRay({
                             </div>
                         </div>
 
-                        {/* 7. Est. G3 EV */}
-                        <div className="rounded-lg border border-line/60 bg-surface-2/50 p-2">
-                            <span className="text-[10px] text-text-subtle uppercase tracking-wider block">Est. G3 Share</span>
-                            <div className="flex items-baseline gap-1 mt-0.5 font-mono">
-                                <span className={cx("font-semibold text-sm", crowdDeltaPct >= 0 ? "text-primary" : "text-heat-hot")}>
-                                    {formatSgd(estimatedG3Share)}
-                                </span>
-                                <span className="text-[10px] text-text-subtle">{formatSigned(crowdDeltaPct, 0)}%</span>
-                            </div>
-                        </div>
 
                         {/* 8. Bot Votes */}
                         <div className="rounded-lg border border-line/60 bg-surface-2/50 p-2">
@@ -203,10 +174,10 @@ export function TicketXRay({
                         </div>
                     </div>
 
-                    {/* Crowd Flags & Shield Tags */}
-                    {crowdFlags.length > 0 && (
+                    {/* Composition Flags */}
+                    {compositionFlags.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 pt-1">
-                            {crowdFlags.map((flag, idx) => {
+                            {compositionFlags.map((flag, idx) => {
                                 const toneClass = flag.tone === "primary"
                                     ? "bg-primary/10 text-primary border-primary/30"
                                     : flag.tone === "secondary"
