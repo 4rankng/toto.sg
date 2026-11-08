@@ -161,18 +161,14 @@ export const HomeScreen = () => {
      *  sensible without duplicating the list markup by hand. */
     const longestGapsPanel = (
         <Panel title="Longest gaps" description="Draws since each number last appeared." isFlush>
-            <div className="grid grid-cols-2 divide-x divide-line-soft">
-                {[analysis?.overdue.slice(0, 6) ?? [], analysis?.overdue.slice(6, 12) ?? []].map((column, columnIndex) => (
-                    <ol key={columnIndex} className="px-4 py-1.5">
-                        {column.map((entry) => (
-                            <li key={entry.number} className="flex items-center justify-between gap-2 py-0.5">
-                                <Ball n={entry.number} size="xs" />
-                                <span className="font-mono text-[11px] text-ink tabular-nums">{formatNumber(entry.gap)}</span>
-                            </li>
-                        ))}
-                    </ol>
+            <ol className="flex flex-wrap items-center gap-x-2.5 gap-y-1 px-3 py-2">
+                {(analysis?.overdue.slice(0, 12) ?? []).map((entry) => (
+                    <li key={entry.number} className="inline-flex items-center gap-1">
+                        <Ball n={entry.number} size="xs" />
+                        <span className="font-mono text-[11px] text-ink-muted tabular-nums">{formatNumber(entry.gap)}</span>
+                    </li>
                 ))}
-            </div>
+            </ol>
         </Panel>
     );
 
@@ -198,33 +194,36 @@ export const HomeScreen = () => {
                 }
             />
 
-            {/* Slim next-draw clock first — the draw result itself lives in /history. */}
-            {nextDraw && (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface/70 px-4 py-2.5">
-                    <p className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
-                        Next draw{nextDrawNo ? ` · ${nextDrawNo}` : ""}
-                        {nextIso ? ` · ${formatDate(nextIso)} · ${weekdayOf(nextIso)} · 18:30 SGT` : ""}
-                    </p>
-                    {countdown.isPast ? (
-                        <p className="text-[11px] text-ink-muted">Waiting for the result.</p>
-                    ) : (
-                        <Countdown days={countdown.days} hours={countdown.hours} minutes={countdown.minutes} seconds={countdown.seconds} />
-                    )}
-                </div>
-            )}
+            {/* Slim next-draw clock beside the slip on wide screens — the
+                draw result itself lives in /history. */}
+            <div className={`grid items-stretch gap-3${nextDraw ? " lg:grid-cols-[minmax(280px,360px)_1fr]" : ""}`}>
+                {nextDraw && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface/70 px-4 py-2.5 lg:flex-col lg:items-start lg:justify-center">
+                        <p className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
+                            Next draw{nextDrawNo ? ` · ${nextDrawNo}` : ""}
+                            {nextIso ? ` · ${formatDate(nextIso)} · ${weekdayOf(nextIso)} · 18:30 SGT` : ""}
+                        </p>
+                        {countdown.isPast ? (
+                            <p className="text-[11px] text-ink-muted">Waiting for the result.</p>
+                        ) : (
+                            <Countdown days={countdown.days} hours={countdown.hours} minutes={countdown.minutes} seconds={countdown.seconds} />
+                        )}
+                    </div>
+                )}
 
-            {/* The play slip is the page's primary action. */}
-            <Panel>
-                <LineSlip
-                    line={line}
-                    size={size}
-                    colourOf={(n) => heatColour(activeWindow, n)}
-                    ringOf={(n) => heatRingColour(activeWindow, n)}
-                    onSizeChange={handleSizeChange}
-                    onQuickPick={handleQuickPick}
-                    quickPickLabel={quickPickName}
-                />
-            </Panel>
+                {/* The play slip is the page's primary action. */}
+                    <Panel>
+                        <LineSlip
+                            line={line}
+                            size={size}
+                            colourOf={(n) => heatColour(activeWindow, n)}
+                            ringOf={(n) => heatRingColour(activeWindow, n)}
+                            onSizeChange={handleSizeChange}
+                            onQuickPick={handleQuickPick}
+                            quickPickLabel={quickPickName}
+                        />
+                    </Panel>
+            </div>
 
             {/*
                 The columns end at their natural heights. Stretching a card to
@@ -269,24 +268,24 @@ export const HomeScreen = () => {
 
                 <div className="flex min-w-0 flex-col gap-3 lg:col-span-7 lg:col-start-6">
                     <Panel title="Most and least seen" description="Counts across the 6/49 era." isFlush>
-                            <div className="grid grid-cols-2 divide-x divide-line-soft">
-                                {[
-                                    { label: "Most", rows: analysis?.hot.all.slice(0, 12) ?? [] },
-                                    { label: "Least", rows: analysis?.cold.all.slice(0, 12) ?? [] },
-                                ].map((column) => (
-                                    <div key={column.label} className="px-4 py-2">
-                                        <p className="text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">{column.label}</p>
-                                        <ol className="mt-1">
-                                            {column.rows.map((entry) => (
-                                                <li key={entry.number} className="flex items-center justify-between gap-2 py-0.5">
-                                                    <Ball n={entry.number} size="xs" />
-                                                    <span className="font-mono text-[11px] text-ink tabular-nums">{formatNumber(entry.count)}</span>
-                                                </li>
-                                            ))}
-                                        </ol>
-                                    </div>
-                                ))}
-                            </div>
+                        <div className="flex flex-col divide-y divide-line-soft">
+                            {[
+                                { label: "Most", rows: analysis?.hot.all.slice(0, 12) ?? [] },
+                                { label: "Least", rows: analysis?.cold.all.slice(0, 12) ?? [] },
+                            ].map((column) => (
+                                <div key={column.label} className="flex items-center gap-2.5 px-3 py-1.5">
+                                    <p className="w-12 shrink-0 text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">{column.label}</p>
+                                    <ol className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1">
+                                        {column.rows.map((entry) => (
+                                            <li key={entry.number} className="inline-flex items-center gap-1">
+                                                <Ball n={entry.number} size="xs" />
+                                                <span className="font-mono text-[11px] text-ink-muted tabular-nums">{formatNumber(entry.count)}</span>
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </div>
+                            ))}
+                        </div>
                     </Panel>
 
                     {longestGapsPanel}
