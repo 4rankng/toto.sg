@@ -107,7 +107,7 @@ export function TicketXRay({ balls, result, className, onApplyConsensus }: Ticke
                     {/* 8-Metric Indicator Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                         {/* 1. Sum */}
-                        <div className="rounded-lg border border-line/60 bg-surface-2/50 p-2">
+                        <div className="rounded-lg border border-line/60 bg-surface-2 p-2">
                             <span className="text-[10px] text-text-subtle uppercase tracking-wider block">Sum Band</span>
                             <div className="flex items-baseline gap-1 mt-0.5 font-mono">
                                 <span className="font-semibold text-text text-sm">{Math.round(meanSum)}</span>
@@ -116,7 +116,7 @@ export function TicketXRay({ balls, result, className, onApplyConsensus }: Ticke
                         </div>
 
                         {/* 2. AC Complexity */}
-                        <div className="rounded-lg border border-line/60 bg-surface-2/50 p-2">
+                        <div className="rounded-lg border border-line/60 bg-surface-2 p-2">
                             <span className="text-[10px] text-text-subtle uppercase tracking-wider block">AC Value</span>
                             <div className="flex items-baseline gap-1 mt-0.5 font-mono">
                                 <span className={cx("font-semibold text-sm", acValue >= 7 ? "text-primary" : "text-heat-hot")}>
@@ -127,7 +127,7 @@ export function TicketXRay({ balls, result, className, onApplyConsensus }: Ticke
                         </div>
 
                         {/* 3. Span */}
-                        <div className="rounded-lg border border-line/60 bg-surface-2/50 p-2">
+                        <div className="rounded-lg border border-line/60 bg-surface-2 p-2">
                             <span className="text-[10px] text-text-subtle uppercase tracking-wider block">Line Span</span>
                             <div className="flex items-baseline gap-1 mt-0.5 font-mono">
                                 <span className="font-semibold text-text text-sm">{span}</span>
@@ -136,7 +136,7 @@ export function TicketXRay({ balls, result, className, onApplyConsensus }: Ticke
                         </div>
 
                         {/* 4. Parity & Half */}
-                        <div className="rounded-lg border border-line/60 bg-surface-2/50 p-2">
+                        <div className="rounded-lg border border-line/60 bg-surface-2 p-2">
                             <span className="text-[10px] text-text-subtle uppercase tracking-wider block">Odd / High</span>
                             <div className="flex items-baseline gap-1 mt-0.5 font-mono">
                                 <span className="font-semibold text-text text-sm">{oddCount}O {systemSize - oddCount}E</span>
@@ -145,7 +145,7 @@ export function TicketXRay({ balls, result, className, onApplyConsensus }: Ticke
                         </div>
 
                         {/* 5. Tails / Decades */}
-                        <div className="rounded-lg border border-line/60 bg-surface-2/50 p-2">
+                        <div className="rounded-lg border border-line/60 bg-surface-2 p-2">
                             <span className="text-[10px] text-text-subtle uppercase tracking-wider block">Diversity</span>
                             <div className="flex items-baseline gap-1 mt-0.5 font-mono">
                                 <span className="font-semibold text-text text-sm">{distinctTails}T</span>
@@ -154,7 +154,7 @@ export function TicketXRay({ balls, result, className, onApplyConsensus }: Ticke
                         </div>
 
                         {/* 6. Digital Root */}
-                        <div className="rounded-lg border border-line/60 bg-surface-2/50 p-2">
+                        <div className="rounded-lg border border-line/60 bg-surface-2 p-2">
                             <span className="text-[10px] text-text-subtle uppercase tracking-wider block">Digital Root</span>
                             <div className="flex items-baseline gap-1 mt-0.5 font-mono">
                                 <span className="font-semibold text-text text-sm">{digitalRoot}</span>
@@ -164,7 +164,7 @@ export function TicketXRay({ balls, result, className, onApplyConsensus }: Ticke
 
 
                         {/* 8. Bot Votes */}
-                        <div className="rounded-lg border border-line/60 bg-surface-2/50 p-2">
+                        <div className="rounded-lg border border-line/60 bg-surface-2 p-2">
                             <span className="text-[10px] text-text-subtle uppercase tracking-wider block">Bot Overlap</span>
                             <div className="flex items-baseline gap-1 mt-0.5 font-mono">
                                 <span className="font-semibold text-text text-sm">{botVoteOverlap}</span>
@@ -202,7 +202,7 @@ export function TicketXRay({ balls, result, className, onApplyConsensus }: Ticke
 
                     {/* Bot Consensus Affinity */}
                     {closestStrategy && (
-                        <div className="flex items-center justify-between text-xs text-text-subtle bg-surface-2/30 rounded-lg px-2.5 py-1.5 border border-line/50">
+                        <div className="flex items-center justify-between text-xs text-text-subtle bg-surface-2 rounded-lg px-2.5 py-1.5 border border-line/50">
                             <span>Closest Strategy:</span>
                             <span className="font-medium text-text">
                                 {closestStrategy.name} ({closestStrategy.matchCount}/6 match)
@@ -213,7 +213,7 @@ export function TicketXRay({ balls, result, className, onApplyConsensus }: Ticke
             ) : (
                 <div className="mt-3 space-y-3">
                     {/* Backtest 1,892-Draw Performance */}
-                    <div className="rounded-lg border border-line/60 bg-surface-2/40 p-3">
+                    <div className="rounded-lg border border-line/60 bg-surface-2 p-3">
                         <div className="flex items-center justify-between text-xs">
                             <span className="text-text-subtle">1,892-Draw Hit Rate</span>
                             <span className="font-semibold text-text font-mono">
@@ -223,25 +223,25 @@ export function TicketXRay({ balls, result, className, onApplyConsensus }: Ticke
 
                         {/* Tier Breakdown Badges */}
                         <div className="grid grid-cols-4 gap-1.5 mt-2.5 text-center font-mono text-[11px]">
-                            <div className="rounded bg-surface-3/80 py-1 border border-line/50">
+                            <div className="rounded bg-surface-3 py-1 border border-line/50">
                                 <span className="text-[10px] text-text-subtle block">G1–G3</span>
                                 <span className="font-semibold text-gold">
                                     {(backtest.tierCounts.g1 || 0) + (backtest.tierCounts.g2 || 0) + (backtest.tierCounts.g3 || 0)}
                                 </span>
                             </div>
-                            <div className="rounded bg-surface-3/80 py-1 border border-line/50">
+                            <div className="rounded bg-surface-3 py-1 border border-line/50">
                                 <span className="text-[10px] text-text-subtle block">G4</span>
                                 <span className="font-semibold text-text">
                                     {backtest.tierCounts.g4 || 0}
                                 </span>
                             </div>
-                            <div className="rounded bg-surface-3/80 py-1 border border-line/50">
+                            <div className="rounded bg-surface-3 py-1 border border-line/50">
                                 <span className="text-[10px] text-text-subtle block">G5</span>
                                 <span className="font-semibold text-text">
                                     {backtest.tierCounts.g5 || 0}
                                 </span>
                             </div>
-                            <div className="rounded bg-surface-3/80 py-1 border border-line/50">
+                            <div className="rounded bg-surface-3 py-1 border border-line/50">
                                 <span className="text-[10px] text-text-subtle block">G6–G7</span>
                                 <span className="font-semibold text-text">
                                     {(backtest.tierCounts.g6 || 0) + (backtest.tierCounts.g7 || 0)}

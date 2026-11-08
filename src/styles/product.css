@@ -43,18 +43,19 @@
     /* Hairlines — the only structure in the product */
     --color-line: light-dark(#d3e4ea, #124155);
     --color-line-strong: light-dark(#b9d2db, #1c566e);
-    --color-line-soft: light-dark(rgb(211 228 234 / 0.7), rgb(18 65 85 / 0.75));
+    --color-line-soft: light-dark(rgb(211 228 234 / 0.9), rgb(18 65 85 / 0.75));
 
     /* Floating layers only */
     --shadow-float:
         0 16px 40px -12px light-dark(rgb(10 16 32 / 0.24), rgb(0 0 0 / 0.62)),
         0 3px 10px -4px light-dark(rgb(10 16 32 / 0.12), rgb(0 0 0 / 0.5));
 
-    /* Text — readable in both modes */
+    /* Text — readable in both modes. Light values hold ≥4.5:1 (ink, muted,
+     * subtle) and ≥3:1 (faint) on white and on surface-2. */
     --color-ink: light-dark(#06212c, #e8f7fb);
     --color-ink-muted: light-dark(#45606c, #9cc4d2);
-    --color-ink-subtle: light-dark(#5f7d89, #6c96a8);
-    --color-ink-faint: light-dark(#8299a4, #4d7486);
+    --color-ink-subtle: light-dark(#4f6e7b, #6c96a8);
+    --color-ink-faint: light-dark(#6f8c99, #4d7486);
 
     /* Signal — electric violet */
     --color-primary: light-dark(#0f9e86, #2ee6c5);

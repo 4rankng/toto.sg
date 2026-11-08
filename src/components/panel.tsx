@@ -32,12 +32,12 @@ const EMPHASIS: Record<PanelEmphasis, { root: string; body: string; header: stri
     default: {
         root: "border border-line bg-surface panel-glow",
         body: "p-3",
-        header: "border-b border-line/80 bg-surface-2/40",
+        header: "border-b border-line/80 bg-surface-2",
     },
     hero: {
         root: "border border-primary-line bg-surface shadow-[0_0_60px_-28px_var(--color-primary)]",
         body: "p-3 md:p-3.5",
-        header: "border-b border-line/80 bg-surface-2/40",
+        header: "border-b border-line/80 bg-surface-2",
     },
     plain: { root: "bg-transparent", body: "p-0", header: "" },
 };

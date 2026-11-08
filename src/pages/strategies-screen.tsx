@@ -5,7 +5,6 @@ import { Ball } from "@/components/balls";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { Panel } from "@/components/panel";
-import { FamilyChip } from "@/components/product/family-chip";
 import { KpiCard } from "@/components/product/kpi-card";
 import { PageHeader } from "@/components/product/page-header";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
@@ -71,21 +70,26 @@ const StrategyDetail = ({
     for (let i = 1; i < sorted.length; i += 1) if (sorted[i] === sorted[i - 1] + 1) consec += 1;
     const folds = row.evaluatedDraws || 1;
     const tierChance = (tier: string) => folds * Number(chance[`tier${tier.replace("g", "G")}` as keyof typeof chance] ?? 0);
+    const prizeDelta = (row.totalPrizes ?? 0) - Math.round((folds * chance.prizesPer100Draws) / 100);
 
     return (
         <div className={cx("min-w-0 flex flex-col gap-3", className)}>
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="max-w-3xl">
                     <p className="text-[13px] leading-5 text-ink-muted">{row.description}</p>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <FamilyChip family={row.family} />
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                        {/* Muted chip: family colour would spend the page's
+                            accent budget where it carries no meaning. */}
+                        <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-xs font-medium text-ink-muted ring-1 ring-line ring-inset">
+                            {row.family}
+                        </span>
                         <span className="font-mono text-[11px] text-ink-subtle tabular-nums">{row.id}</span>
                     </div>
                 </div>
             </div>
 
             {(buildRules?.length || evidencePanels?.length) && (
-                <div className="flex flex-col gap-2 rounded-lg border border-line-soft bg-surface-2/40 p-2.5">
+                <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-2.5">
                     {buildRules?.length ? (
                         <ol className="flex flex-col gap-1">
                             {buildRules.map((rule, i) => (
@@ -114,32 +118,47 @@ const StrategyDetail = ({
             )}
 
             {/* Walk-forward performance vs chance — one horizontal stat strip */}
-            <dl className="flex flex-wrap items-stretch divide-x divide-line-soft rounded-lg border border-line-soft bg-surface-2/40">
+            <dl className="flex flex-wrap items-stretch divide-x divide-line-soft rounded-lg bg-surface-2">
                 <div className="min-w-[120px] flex-1 px-3 py-2">
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Draws tested</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.evaluatedDraws)}</dd>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Draws tested</dt>
+                    <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums">{formatNumber(row.evaluatedDraws)}</dd>
                 </div>
-                <div className="min-w-[150px] flex-[1.4] px-3 py-2">
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize draws</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                        {formatNumber(row.totalPrizes ?? 0)} <span className="text-ink-subtle">vs {Math.round((folds * chance.prizesPer100Draws) / 100)} chance</span>
+                <div className="min-w-[170px] flex-[1.5] px-3 py-2">
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Prize draws</dt>
+                    <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums">
+                        {formatNumber(row.totalPrizes ?? 0)}
+                        <span
+                            className={cx(
+                                "ml-1.5 rounded px-1 py-px text-[11px] font-semibold",
+                                prizeDelta > 0 ? "text-secondary" : prizeDelta < 0 ? "text-heat-hot" : "text-ink-muted",
+                            )}
+                            title="Prize draws minus the chance expectation over the same folds"
+                        >
+                            {prizeDelta > 0 ? `+${prizeDelta}` : prizeDelta < 0 ? `${prizeDelta}` : "±0"} vs chance
+                        </span>
                     </dd>
                 </div>
                 <div className="min-w-[110px] flex-1 px-3 py-2">
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Score</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums" title={`Log-normalised to 1–100 from ${formatNumber(row.score ?? 0)} raw prize points (each prize hit earns its tier's weight — G7 1, G6 10, G5 100, G4 1k, G3 10k, G2 100k, G1 1M)`}>
-                        {row.score100 ?? 1} <span className="text-ink-subtle">/ 100 · {formatNumber(row.score ?? 0)} pts</span>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Score</dt>
+                    <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums" title={`Log-normalised to 1–100 from ${formatNumber(row.score ?? 0)} raw prize points (each prize hit earns its tier's weight — G7 1, G6 10, G5 100, G4 1k, G3 10k, G2 100k, G1 1M)`}>
+                        {row.score100 ?? 1} <span className="text-ink-muted">/ 100 · {formatNumber(row.score ?? 0)} pts</span>
                     </dd>
                 </div>
                 <div className="min-w-[140px] flex-[1.3] px-3 py-2">
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Profit/draw</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums" title="Average prize money per S$1 line over the window">
-                        {formatSigned(row.pnlPerDraw ?? 0, 2)} <span className="text-ink-subtle">S$/draw</span>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Profit/draw</dt>
+                    <dd
+                        className={cx(
+                            "mt-0.5 font-mono text-sm font-semibold tabular-nums",
+                            (row.pnlPerDraw ?? 0) > 0 ? "text-secondary" : (row.pnlPerDraw ?? 0) < 0 ? "text-heat-hot" : "text-ink",
+                        )}
+                        title="Average prize money per S$1 line over the window"
+                    >
+                        {formatSigned(row.pnlPerDraw ?? 0, 2)} <span className="text-ink-muted">S$/draw</span>
                     </dd>
                 </div>
                 <div className="min-w-[90px] flex-[0.8] px-3 py-2">
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Best hit</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Best hit</dt>
+                    <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums">
                         {row.bestGroup != null ? `G${row.bestGroup}` : "—"}
                     </dd>
                 </div>
@@ -147,10 +166,11 @@ const StrategyDetail = ({
 
             {/* What it hit vs how the pick is built — an equal-height pair */}
             <div className="grid gap-2.5 lg:grid-cols-12">
-                {/* G1–G7 hit strip: what the strategy actually hit, per tier */}
-                <div className="min-w-0 rounded-lg border border-line-soft bg-surface-2/40 p-2.5 lg:col-span-7">
+                {/* G1–G7 hit strip: zeros recede into the inset, hits get the
+                    white lift with an accent top bar */}
+                <div className="min-w-0 rounded-lg bg-surface-2 p-2.5 lg:col-span-7">
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                        <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Hits by prize tier</p>
+                        <p className="text-[10px] font-semibold tracking-wider text-ink-muted uppercase">Hits by prize tier</p>
                         <span className="font-mono text-[10px] text-ink-subtle">
                             chance over {formatNumber(folds)} draws: G7 {tierChance("g7").toFixed(0)} · G5 {tierChance("g5").toFixed(1)} · G6 {tierChance("g6").toFixed(1)} · G1–G4 &lt; 0.05 each
                         </span>
@@ -158,17 +178,18 @@ const StrategyDetail = ({
                     <div className="grid grid-cols-7 gap-1">
                         {TIERS.map((tier) => {
                             const hits = row.tierCounts?.[tier] ?? 0;
+                            const hit = hits > 0;
                             return (
                                 <div
                                     key={tier}
                                     title={`Expected by chance: ${tierChance(tier).toFixed(2)}`}
                                     className={cx(
                                         "rounded border px-1 py-1 text-center",
-                                        hits > 0 ? "border-primary/40 bg-primary/10" : "border-line-soft bg-surface",
+                                        hit ? "border-transparent border-t-[3px] border-t-accent bg-surface" : "border-transparent",
                                     )}
                                 >
-                                    <p className="text-[9px] font-semibold tracking-wider text-ink-subtle uppercase">{tier.replace("g", "G")}</p>
-                                    <p className={cx("font-mono text-sm font-semibold tabular-nums", hits > 0 ? "text-primary" : "text-ink-faint")}>{hits}</p>
+                                    <p className={cx("text-[9px] font-semibold tracking-wider uppercase", hit ? "text-ink-muted" : "text-ink-subtle")}>{tier.replace("g", "G")}</p>
+                                    <p className={cx("font-mono text-sm font-semibold tabular-nums", hit ? "text-primary-strong" : "text-ink-faint")}>{hits}</p>
                                 </div>
                             );
                         })}
@@ -176,34 +197,34 @@ const StrategyDetail = ({
                 </div>
 
                 {/* The current pick: shape at a glance */}
-                <div className="min-w-0 rounded-lg border border-line-soft bg-surface-2/40 p-2.5 lg:col-span-5">
+                <div className="min-w-0 rounded-lg bg-surface-2 p-2.5 lg:col-span-5">
                     <div className="mb-2 flex items-center justify-between gap-2">
-                        <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Current pick shape</p>
+                        <p className="text-[10px] font-semibold tracking-wider text-ink-muted uppercase">Current pick shape</p>
                         <span className="font-mono text-[10px] text-ink-subtle">{sorted.join(" · ")}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
-                        <div className="rounded border border-line-soft bg-surface px-1.5 py-1 text-center">
-                            <p className="text-[10px] text-ink-subtle uppercase">Sum</p>
+                        <div className="rounded bg-surface px-1.5 py-1 text-center">
+                            <p className="text-[10px] text-ink-muted uppercase">Sum</p>
                             <p className="font-mono text-xs font-semibold text-ink tabular-nums">{sum}</p>
                         </div>
-                        <div className="rounded border border-line-soft bg-surface px-1.5 py-1 text-center">
-                            <p className="text-[10px] text-ink-subtle uppercase">AC</p>
-                            <p className="font-mono text-xs font-semibold text-primary tabular-nums">{ac}/10</p>
+                        <div className="rounded bg-surface px-1.5 py-1 text-center">
+                            <p className="text-[10px] text-ink-muted uppercase">AC</p>
+                            <p className="font-mono text-xs font-semibold text-primary-strong tabular-nums">{ac}/10</p>
                         </div>
-                        <div className="rounded border border-line-soft bg-surface px-1.5 py-1 text-center">
-                            <p className="text-[10px] text-ink-subtle uppercase">Span</p>
+                        <div className="rounded bg-surface px-1.5 py-1 text-center">
+                            <p className="text-[10px] text-ink-muted uppercase">Span</p>
                             <p className="font-mono text-xs font-semibold text-ink tabular-nums">{span}</p>
                         </div>
-                        <div className="rounded border border-line-soft bg-surface px-1.5 py-1 text-center">
-                            <p className="text-[10px] text-ink-subtle uppercase">Odd/Even</p>
+                        <div className="rounded bg-surface px-1.5 py-1 text-center">
+                            <p className="text-[10px] text-ink-muted uppercase">Odd/Even</p>
                             <p className="font-mono text-xs font-semibold text-ink tabular-nums">{odds}/{6 - odds}</p>
                         </div>
-                        <div className="rounded border border-line-soft bg-surface px-1.5 py-1 text-center">
-                            <p className="text-[10px] text-ink-subtle uppercase">Tails</p>
+                        <div className="rounded bg-surface px-1.5 py-1 text-center">
+                            <p className="text-[10px] text-ink-muted uppercase">Tails</p>
                             <p className="font-mono text-xs font-semibold text-ink tabular-nums">{tails}/6</p>
                         </div>
-                        <div className="rounded border border-line-soft bg-surface px-1.5 py-1 text-center">
-                            <p className="text-[10px] text-ink-subtle uppercase">Consec</p>
+                        <div className="rounded bg-surface px-1.5 py-1 text-center">
+                            <p className="text-[10px] text-ink-muted uppercase">Consec</p>
                             <p className={cx("font-mono text-xs font-semibold tabular-nums", consec > 1 ? "text-heat-hot" : "text-ink")}>{consec}</p>
                         </div>
                     </div>
@@ -211,8 +232,8 @@ const StrategyDetail = ({
             </div>
 
             {/* Ball form: one compact column per picked number */}
-            <div className="rounded-lg border border-line-soft bg-surface-2/40 p-2.5">
-                <p className="mb-2 text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">
+            <div className="rounded-lg bg-surface-2 p-2.5">
+                <p className="mb-2 text-[10px] font-semibold tracking-wider text-ink-muted uppercase">
                     Ball form — skip · last 10 · all-time
                 </p>
                 <div className="overflow-x-auto">
@@ -495,8 +516,8 @@ export const StrategiesScreen = () => {
                                         <div
                                             key={row.id}
                                             className={cx(
-                                                "min-w-0 bg-surface transition-colors duration-100",
-                                                isOpen && "bg-surface-2/50",
+                                                "min-w-0 bg-surface-2 transition-colors duration-100",
+                                                isOpen && "bg-surface shadow-[inset_3px_0_0_0_var(--color-accent)]",
                                                 pair.length === 1 && "lg:col-span-2",
                                                 index === 0 ? "order-1" : openIsFirst ? "order-3 lg:order-2" : "order-2",
                                             )}
@@ -505,7 +526,10 @@ export const StrategiesScreen = () => {
                                                 type="button"
                                                 aria-expanded={isOpen}
                                                 onClick={() => toggle(row.id)}
-                                                className="group flex w-full flex-col gap-1.5 px-4 py-2.5 text-left transition-colors duration-100 hover:bg-surface-2/60"
+                                                className={cx(
+                                                    "group flex w-full flex-col gap-1.5 px-4 py-2.5 text-left transition-colors duration-100",
+                                                    isOpen ? "cursor-default" : "hover:bg-surface-3",
+                                                )}
                                             >
                                                 {/* Line 1 — identity, score and the stat. */}
                                                 <span className="flex min-w-0 items-center gap-1.5">
@@ -540,7 +564,7 @@ export const StrategiesScreen = () => {
                                 {openRow && (
                                     <div
                                         className={cx(
-                                            "min-w-0 bg-surface-2/40 px-4 py-3 lg:col-span-2",
+                                            "min-w-0 px-4 pb-3 pt-1 lg:col-span-2",
                                             openIsFirst ? "order-2 lg:order-3" : "order-3",
                                         )}
                                     >
