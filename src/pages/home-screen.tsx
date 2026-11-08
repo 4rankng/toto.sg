@@ -219,7 +219,7 @@ export const HomeScreen = () => {
             />
 
             {/* The play slip is the page's primary action. */}
-            <Panel title="Play slip" description="Pick 6, 7 or 8 numbers. Tap the board to fill it.">
+            <Panel>
                 <LineSlip
                     line={line}
                     size={size}

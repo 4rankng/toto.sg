@@ -281,7 +281,6 @@ export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel
                                     style={
                                         {
                                             "--slip-c": `var(--color-slip-h${Math.ceil(number / 10)})`,
-                                            "--slip-p": Math.round((number / 49) * 100),
                                             "--slip-d": `${index * 90}ms`,
                                         } as CSSProperties
                                     }
@@ -294,17 +293,7 @@ export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel
                 })}
             </div>
 
-            <p className="text-[11px] leading-4 text-ink-subtle">The ring on each ball shows where its number sits between 1 and 49.</p>
-
-            <p aria-live="polite" className="text-[11px] leading-4 text-ink-subtle">
-                {line.length === 0
-                    ? "Tap the board to build a line."
-                    : line.length < size
-                      ? `${line.length} of ${size} chosen — ${size - line.length} to go.`
-                      : `${size} of ${size} chosen — re-tap a chosen number to swap it out.`}
-            </p>
-
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-2">
                 <button
                     type="button"
                     onClick={onQuickPick}
@@ -312,14 +301,13 @@ export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel
                 >
                     Quick pick
                 </button>
+                {quickPickLabel && (
+                    <p aria-live="polite" className="text-[11px] leading-4 text-ink-subtle">
+                        From <span className="text-ink-muted">{quickPickLabel}</span>
+                        {size > 6 ? ` + ${size - 6} random` : ""}
+                    </p>
+                )}
             </div>
-
-            {quickPickLabel && (
-                <p aria-live="polite" className="text-[10px] leading-3 text-ink-subtle">
-                    Quick pick from <span className="text-ink-muted">{quickPickLabel}</span>
-                    {size > 6 ? ` + ${size - 6} random` : ""}
-                </p>
-            )}
         </div>
     );
 }
