@@ -230,9 +230,18 @@ const CROWN_KINGS = [
     ["crownAstra", "Crown Astra", 534156],
 ];
 
+/** The four sovereign full-board lines: id, name, seed v. */
+const SOVEREIGNS = [
+    ["hunterSovereign", "Hunter Sovereign", 390919],
+    ["hunterImperium", "Hunter Imperium", 490261],
+    ["hunterColossus", "Hunter Colossus", 830513],
+    ["hunterBehemoth", "Hunter Behemoth", 875141],
+];
+
 const HUNTER_FAMILY = "Seed Hunters";
 const BOARD_FAMILY = "Board Hunters";
 const CROWN_FAMILY = "Crown Kings";
+const SOVEREIGN_FAMILY = "Sovereigns";
 
 /** Plain-language line per strategy — the "lucky dial" is the seed v. */
 const DIAL_TEXT = {
@@ -260,27 +269,33 @@ const DIAL_TEXT = {
     boardJoyeuse: "The full board spins past its lucky dial (1055603); six balls stay in the line.",
     crownRegis: "Its lucky dial (1033843) has landed a perfect six before — full board, fresh spin every round.",
     crownAstra: "A perfect six on its record; its lucky dial (534156) keeps spinning over the full board.",
+    hunterSovereign: "Reigns over the full 1–49 board — its lucky dial (390919) names the six it plays.",
+    hunterImperium: "An empire of one: its lucky dial (490261) rules six balls of the full board.",
+    hunterColossus: "Strides the whole board every round; its lucky dial (830513) lands on six.",
+    hunterBehemoth: "The full board under one lucky dial (875141) — six balls, every round.",
 };
 
-const isBoardOrCrown = new Set([...BOARD_HUNTERS, ...CROWN_KINGS].map(([id]) => id));
+const FULL_BOARD = new Set([...BOARD_HUNTERS, ...CROWN_KINGS, ...SOVEREIGNS].map(([id]) => id));
 
 export const HUNTER_STRATEGIES = [
     ...HUNTERS.map(([id, name, v]) => [id, name, HUNTER_FAMILY, DIAL_TEXT[id]]),
     ...BOARD_HUNTERS.map(([id, name, v]) => [id, name, BOARD_FAMILY, DIAL_TEXT[id]]),
     ...CROWN_KINGS.map(([id, name, v]) => [id, name, CROWN_FAMILY, DIAL_TEXT[id]]),
+    ...SOVEREIGNS.map(([id, name, v]) => [id, name, SOVEREIGN_FAMILY, DIAL_TEXT[id]]),
 ];
 
-// Manifest: 9 no-recycle + 13 full-board hunters + 2 crowns = 24 rows.
-if (HUNTER_STRATEGIES.length !== 24 || new Set(HUNTER_STRATEGIES.map((s) => s[0])).size !== 24) {
+// Manifest: 9 no-recycle + 13 full-board hunters + 2 crowns + 4 sovereigns = 28 rows.
+if (HUNTER_STRATEGIES.length !== 28 || new Set(HUNTER_STRATEGIES.map((s) => s[0])).size !== 28) {
     throw new Error(`fleet manifest drift: ${HUNTER_STRATEGIES.length} rows`);
 }
 
+
 export const HUNTER_RULES = Object.fromEntries(
-    [...HUNTERS, ...BOARD_HUNTERS, ...CROWN_KINGS].map(([id, , v]) => [
+    [...HUNTERS, ...BOARD_HUNTERS, ...CROWN_KINGS, ...SOVEREIGNS].map(([id, , v]) => [
         id,
         (prior) =>
             fleetLine(v, prior.length, {
-                fullBoard: isBoardOrCrown.has(id),
+                fullBoard: FULL_BOARD.has(id),
                 lastDraw: prior.length ? prior[prior.length - 1] : null,
             }),
     ]),
