@@ -11,7 +11,7 @@
 // dots and the null, without a paragraph spelling it out under every panel.
 import { useMemo, useState } from "react";
 import { ChartTooltip, useChartTooltip } from "@/components/chart-tooltip";
-import { type AdditionalStats, type CompositionCell, type DeltaStats, type GapStats, type JackpotStats, type MonthStats, type PositionRow, type RepeaterStats, type StreakRow, type SumPoint, type TimelineDraw } from "@/lib/insights-stats";
+import { type AdditionalStats, type CompositionCell, type DeltaStats, type GapStats, type MonthStats, type PositionRow, type RepeaterStats, type StreakRow, type SumPoint, type TimelineDraw } from "@/lib/insights-stats";
 import { formatNumber } from "@/lib/data";
 import { cx } from "@/utils/cx";
 
@@ -1272,137 +1272,6 @@ export function AdditionalBall({ stats, className }: AdditionalBallProps) {
                         </text>
                     );
                 })}
-            </svg>
-            {tip && <ChartTooltip tip={tip} />}
-        </div>
-    );
-}
-
-/* ------------------------------------------------------------------ *
- * Jackpot trend
- * ------------------------------------------------------------------ */
-
-interface JackpotTrendProps {
-    stats: JackpotStats;
-    /**
-     * Chart height in pixels. The default suits a half-width panel; a panel
-     * that has to close a taller neighbouring column asks for a little more.
-     */
-    height?: number;
-    className?: string;
-}
-
-/** Group 1 wins per year, with the biggest jackpot of each year marked. */
-export function JackpotTrend({ stats, height = 240, className }: JackpotTrendProps) {
-    const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
-
-    const width = Math.max(measured, 320);
-    const padLeft = 42;
-    const padRight = 14;
-    const padTop = 24;
-    const padBottom = 34;
-
-    const plotW = width - padLeft - padRight;
-    const plotH = height - padTop - padBottom;
-    const baseline = padTop + plotH;
-
-    const peakWins = Math.max(...stats.years.map((row) => row.wins), 1);
-    const yMax = Math.ceil(peakWins / 20) * 20;
-    const yOf = (value: number) => baseline - (value / yMax) * plotH;
-    const slot = plotW / stats.years.length;
-    const barW = Math.max(4, slot - 10);
-
-    const ticks = [0, yMax / 2, yMax];
-
-    // The snowball years: the three biggest jackpots, marked on the bar.
-    const snowballs = useMemo(
-        () =>
-            [...stats.years]
-                .sort((a, b) => b.max - a.max)
-                .slice(0, 3)
-                .map((row) => row.year),
-        [stats.years],
-    );
-
-    return (
-        <div
-            ref={hostRef}
-            className={cx("relative", className)}
-            role="img"
-            aria-label={`Group 1 wins per year across ${stats.years.length} years, with the biggest jackpot of each year marked. ${formatNumber(stats.totalWins)} wins in total.`}
-        >
-            <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" aria-hidden="true">
-                {ticks.map((tick) => (
-                    <g key={tick}>
-                        <line x1={padLeft} x2={width - padRight} y1={yOf(tick)} y2={yOf(tick)} stroke="var(--color-line)" strokeWidth={1} />
-                        <text x={padLeft - 8} y={yOf(tick) + 3.5} textAnchor="end" fontSize={11} fill="var(--color-ink-subtle)">
-                            {tick}
-                        </text>
-                    </g>
-                ))}
-
-                {stats.years.map((row, index) => {
-                    const x = padLeft + index * slot + (slot - barW) / 2;
-                    const barHeight = (row.wins / yMax) * plotH;
-                    const isPeak = row.year === stats.peak.year;
-                    const isSnowball = snowballs.includes(row.year);
-                    const title = row.year;
-                    const lines = [`${formatNumber(row.wins)} Group 1 wins`, `biggest jackpot S$${formatNumber(row.max)}`];
-
-                    return (
-                        <g key={row.year}>
-                            <rect
-                                x={x}
-                                y={baseline - barHeight}
-                                width={barW}
-                                height={Math.max(1, barHeight)}
-                                rx={1.5}
-                                fill={isSnowball ? "var(--color-gold)" : "var(--color-primary)"}
-                                fillOpacity={isSnowball ? 0.55 + (isPeak ? 0.45 : 0.2) : 0.6}
-                                onPointerEnter={(event) => show(event, title, lines)}
-                                onPointerMove={(event) => show(event, title, lines)}
-                                onPointerLeave={hide}
-                            />
-                            {isSnowball && (
-                                <>
-                                    <text
-                                        x={x + barW / 2}
-                                        y={baseline - barHeight - 7}
-                                        textAnchor="middle"
-                                        fontSize={9}
-                                        fill="var(--color-gold-ink)"
-                                        pointerEvents="none"
-                                    >
-                                        S${(row.max / 1_000_000).toFixed(1)}M
-                                    </text>
-                                    {/* The snowball marker: a gold cap on the bar. */}
-                                    <rect
-                                        x={x}
-                                        y={baseline - barHeight - 3}
-                                        width={barW}
-                                        height={3}
-                                        rx={1.5}
-                                        fill="var(--color-gold)"
-                                        pointerEvents="none"
-                                    />
-                                </>
-                            )}
-                            <text
-                                x={x + barW / 2}
-                                y={baseline + 15}
-                                textAnchor="middle"
-                                fontSize={10}
-                                fill={isSnowball ? "var(--color-ink-muted)" : "var(--color-ink-faint)"}
-                                fontFamily="var(--font-mono)"
-                                pointerEvents="none"
-                            >
-                                {row.year.slice(2)}
-                            </text>
-                        </g>
-                    );
-                })}
-
-                <line x1={padLeft} x2={width - padRight} y1={baseline} y2={baseline} stroke="var(--color-line-strong)" strokeWidth={1} />
             </svg>
             {tip && <ChartTooltip tip={tip} />}
         </div>

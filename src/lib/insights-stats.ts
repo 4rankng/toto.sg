@@ -609,34 +609,3 @@ export function additionalStats(draws: Draw[]): AdditionalStats {
         hottest,
     };
 }
-
-/* ------------------------------------------------------------------ *
- * Jackpot trend
- * ------------------------------------------------------------------ */
-
-export interface JackpotYear {
-    year: string;
-    /** Group 1 winning tickets that year. */
-    wins: number;
-    /** Biggest Group 1 jackpot that year. */
-    max: number;
-}
-
-export interface JackpotStats {
-    years: JackpotYear[];
-    totalWins: number;
-    /** The year with the biggest jackpot. */
-    peak: { year: string; max: number };
-}
-
-/** Group 1 wins and the biggest jackpot of each year. */
-export function jackpotStats(group1ByYear: Record<string, { wins: number; maxJackpot: number }>): JackpotStats {
-    const years = Object.entries(group1ByYear)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([year, value]) => ({ year, wins: value.wins, max: value.maxJackpot }));
-
-    const totalWins = years.reduce((sum, row) => sum + row.wins, 0);
-    const peak = years.reduce((best, row) => (row.max > best.max ? { year: row.year, max: row.max } : best), { year: "", max: 0 });
-
-    return { years, totalWins, peak };
-}

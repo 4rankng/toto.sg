@@ -25,7 +25,6 @@ import {
     useJson,
     weekdayOf,
 } from "@/lib/data";
-import { ballPayoutStats } from "@/lib/insights-correlations";
 import { computeDrawAnatomy } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
 import { useLineBuilder } from "@/providers/line-builder-provider";
@@ -246,7 +245,19 @@ export const HistoryScreen = () => {
     const newestFirst = useMemo(() => [...(draws ?? [])].sort((a, b) => b.draw - a.draw), [draws]);
 
     const drawMap = useMemo(() => new Map((draws ?? []).map((d) => [d.draw, d])), [draws]);
-    const ballPayouts = useMemo(() => (draws ? ballPayoutStats(draws) : null), [draws]);
+    const eraMeanG3 = useMemo(() => {
+        if (!draws) return 1750;
+        let sum = 0;
+        let count = 0;
+        for (const d of draws) {
+            const g3 = d.prizes?.g3?.share;
+            if (g3 && g3 > 0) {
+                sum += g3;
+                count += 1;
+            }
+        }
+        return count > 0 ? Math.round(sum / count) : 1750;
+    }, [draws]);
 
     const handleLoadInPlaySlip = (numbers: number[]) => {
         setLine(numbers);
@@ -500,7 +511,7 @@ export const HistoryScreen = () => {
                                                 <DrawDetail
                                                     draw={draw}
                                                     prevDraw={drawMap.get(draw.draw - 1) ?? null}
-                                                    eraMeanG3={ballPayouts?.eraMeanG3 ?? 1750}
+                                                    eraMeanG3={eraMeanG3}
                                                     onLoadInPlaySlip={handleLoadInPlaySlip}
                                                 />
                                             </div>
@@ -578,7 +589,7 @@ export const HistoryScreen = () => {
                                                             <DrawDetail
                                                                 draw={draw}
                                                                 prevDraw={drawMap.get(draw.draw - 1) ?? null}
-                                                                eraMeanG3={ballPayouts?.eraMeanG3 ?? 1750}
+                                                                eraMeanG3={eraMeanG3}
                                                                 onLoadInPlaySlip={handleLoadInPlaySlip}
                                                             />
                                                         </td>
