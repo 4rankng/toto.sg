@@ -766,7 +766,7 @@ export const InsightsScreen = () => {
     };
 
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex min-w-0 max-w-full flex-col gap-3">
             <PageHeader
                 kicker="Analytics & Correlation"
                 title="Insights"
@@ -808,9 +808,9 @@ export const InsightsScreen = () => {
             />
 
             {/* The interactive gallery navigation bar with search and pills. */}
-            <nav aria-label="Insights sections" className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-2.5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="scrollbar-hide flex items-center gap-1.5 overflow-x-auto">
+            <nav aria-label="Insights sections" className="flex min-w-0 max-w-full flex-col gap-2 rounded-lg border border-line bg-surface p-2.5">
+                <div className="flex min-w-0 max-w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="scrollbar-hide flex min-w-0 max-w-full items-center gap-1.5 overflow-x-auto">
                         <button
                             type="button"
                             onClick={() => setActiveSection("all")}
@@ -840,7 +840,7 @@ export const InsightsScreen = () => {
                         ))}
                     </div>
 
-                    <div className="relative min-w-44 max-w-xs">
+                    <div className="relative w-full shrink-0 sm:w-auto sm:min-w-44 sm:max-w-xs">
                         <SearchSm className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-ink-subtle" />
                         <input
                             type="text"
@@ -852,7 +852,7 @@ export const InsightsScreen = () => {
                     </div>
                 </div>
 
-                <div className="scrollbar-hide flex items-center gap-1 overflow-x-auto border-t border-line/60 pt-2">
+                <div className="scrollbar-hide flex min-w-0 max-w-full items-center gap-1 overflow-x-auto border-t border-line/60 pt-2">
                     {PANEL_INDEX.filter((p) => !searchQuery || p.label.toLowerCase().includes(searchQuery.toLowerCase())).map((panel) => (
                         <a
                             key={panel.id}

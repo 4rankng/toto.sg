@@ -75,69 +75,34 @@ export function MasonryGrid({ className, children }: MasonryGridProps) {
             void grid.offsetHeight;
 
             const step = colWidth + GAP_PX;
+            const heights = new Array(12).fill(0);
             const placements = [];
-
-            // Free-rectangle packing. A full-width (span-12) panel sweeps the
-            // board flat; every other panel claims the highest free rectangle
-            // its span and height fit in, left first. Leftover slivers are
-            // split and reused by later panels, so no area a panel could
-            // occupy is ever left bare.
-            const free: { x: number; y: number; w: number; h: number }[] = [];
-            const consume = (y: number) => {
-                // Drop or trim every free rect above/at the sweep line, and
-                // sink the rest below the sweep + one row.
-                for (let i = free.length - 1; i >= 0; i -= 1) {
-                    const f = free[i];
-                    if (f.y + f.h <= y) continue;
-                    if (f.y >= y) {
-                        f.y = y;
-                        f.h = Math.max(0, f.y + f.h - y);
-                        if (f.h <= 0 || f.w <= 0) free.splice(i, 1);
-                    } else {
-                        const bottom = f.y + f.h;
-                        f.h = y - f.y;
-                        if (f.h > 0) free.splice(i + 1, 0, { x: f.x, y, w: f.w, h: bottom - y });
-                        if (f.h <= 0) free.splice(i, 1);
-                    }
-                }
-            };
 
             for (const item of items) {
                 const r = item.getBoundingClientRect();
                 const span = Math.max(1, Math.min(12, Math.round((r.width + GAP_PX) / step)));
                 const h = Math.ceil(r.height) + GAP_PX;
 
+                let x = 0;
+                let y = 0;
                 if (span >= 12) {
-                    consume(0);
-                    placements.push({ item, x: 0, y: 0, span: 12, h });
-                    continue;
-                }
-
-                // Highest free rect wide enough, then tall enough; left first.
-                let pick = -1;
-                for (let i = 0; i < free.length; i += 1) {
-                    if (free[i].w >= span && free[i].h >= h) {
-                        if (pick === -1 || free[i].y < free[pick].y || (free[i].y === free[pick].y && free[i].x < free[pick].x)) pick = i;
+                    // Full-width panel: a row break — everyone waits for it.
+                    y = Math.max(...heights);
+                    x = 0;
+                    heights.fill(y + h);
+                } else {
+                    // Shortest window of `span` consecutive columns.
+                    let bestY = Number.POSITIVE_INFINITY;
+                    for (let c = 0; c + span <= 12; c += 1) {
+                        const yy = Math.max(...heights.slice(c, c + span));
+                        if (yy < bestY - 0.5) {
+                            bestY = yy;
+                            x = c;
+                        }
                     }
+                    y = bestY;
+                    for (let c = x; c < x + span; c += 1) heights[c] = y + h;
                 }
-                if (pick === -1) {
-                    // Nothing fits anywhere: start a fresh band at the bottom.
-                    const y = Math.max(0, ...free.map((f) => f.y + f.h));
-                    consume(y);
-                    pick = free.push({ x: 0, y, w: 12, h: Number.POSITIVE_INFINITY }) - 1;
-                }
-                const rect = free[pick];
-                const x = rect.x;
-                const y = rect.y;
-
-                // Claim the area: trim the chosen rect and split the remainders
-                // (right of the panel, below it) as new free rects.
-                free.splice(pick, 1);
-                const rightW = rect.w - span;
-                if (rightW > 0) free.push({ x: x + span, y: rect.y, w: rightW, h: rect.h });
-                const belowH = rect.h - h;
-                if (belowH > 0) free.push({ x, y: y + h, w: span, h: belowH });
-
                 placements.push({ item, x, y, span, h });
             }
 

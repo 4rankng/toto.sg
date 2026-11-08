@@ -81,13 +81,13 @@ export function SequenceBlueprintBar({
         <section
             aria-label="Sequence Blueprint Console"
             className={cx(
-                "mb-6 rounded-2xl border border-line bg-surface p-3.5 shadow-float sm:p-4",
+                "mb-6 min-w-0 max-w-full rounded-2xl border border-line bg-surface p-3.5 shadow-float sm:p-4",
                 className,
             )}
         >
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 max-w-full flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 {/* Left: Active Line Slots & Entry Size */}
-                <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2.5">
                     <div className="flex items-center gap-1.5 rounded-lg border border-line bg-surface-inset px-2 py-1 text-xs">
                         <span className="font-mono text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">
                             System

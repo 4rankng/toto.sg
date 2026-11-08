@@ -150,9 +150,9 @@ const StrategyDetail = ({
                             </dd>
                         </div>
                         <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize quality</dt>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prize points</dt>
                             <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                                {row.weightedPrizes ?? 0} <span className="text-ink-subtle">vs {Math.round((folds * (chance.weightedPrizesPer100Draws ?? 1.96)) / 100)}</span>
+                                {row.weightedPrizes ?? 0} <span className="text-ink-subtle">vs {Math.round((folds * (chance.weightedPrizesPer100Draws ?? 2.23)) / 100)}</span>
                             </dd>
                         </div>
                         <div>
@@ -162,9 +162,9 @@ const StrategyDetail = ({
                             </dd>
                         </div>
                         <div>
-                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Profit/draw · Score</dt>
+                            <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Profit/draw · Prize points</dt>
                             <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">
-                                {formatSigned(row.pnlPerDraw ?? 0, 2)} · {(row.score ?? 0).toFixed(1)} <span className="text-ink-subtle">vs {chance.scoreBaseline}</span>
+                                {formatSigned(row.pnlPerDraw ?? 0, 2)} · {row.score ?? 0} pts
                             </dd>
                         </div>
                     </dl>
@@ -425,7 +425,7 @@ export const StrategiesScreen = () => {
             <PageHeader
                 kicker="Strategies"
                 title="Strategy league"
-                description={`Every score is expanding walk-forward over ${formatNumber(meta.folds)} real draws — each draw graded only on the history before it — against pure chance: ${formatNumber(chanceHits)} numbers matched, ${formatNumber(chanceTwoPlus)} draws with 2+ matched, ${formatNumber(chancePrizes)} prize draws. Score ${meta.chance.scoreBaseline} = chance.`}
+                description={`Every score is expanding walk-forward over ${formatNumber(meta.folds)} real draws — each draw graded only on the history before it. Score = prize points: G7 1 · G6 2 · G5 4 · G4 8 · G3 16 · G2 32 · G1 64 per hit.`}
                 meta={
                     <>
                         <span>
@@ -480,7 +480,7 @@ export const StrategiesScreen = () => {
                                         )}
                                         <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink group-hover:text-accent">{row.name}</span>
                                         <span className="hidden shrink-0 text-[10px] text-ink-subtle sm:inline">{row.family}</span>
-                                        <span className="shrink-0 font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score.toFixed(1)}</span>
+                                        <span className="shrink-0 font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score ?? 0}</span>
                                         <span className="w-20 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">
                                             {sort === "recent12"
                                                 ? `${row.recent12 ?? 0} (L12)`

@@ -119,11 +119,12 @@ const checkStrategies = (league) => {
         seenDescriptions.add(row?.description);
         check(Number.isInteger(row?.rank) && row.rank >= 1 && row.rank <= league.strategies.length, `${where}: rank out of range`);
         ranks.add(row.rank);
-        check(typeof row?.score === "number" && row.score >= 0 && row.score <= 100, `${where}: score must be 0-100`);
+        check(typeof row?.score === "number" && row.score >= 0, `${where}: score must be non-negative prize points`);
         check(Number.isFinite(row?.meanHits) && Number.isFinite(row?.expectedHits) && Number.isFinite(row?.zScore), `${where}: non-finite metrics`);
         check(Number.isInteger(row?.recent12) && row.recent12 >= 0 && row.recent12 <= 72, `${where}: recent12 must be 0-72 (12 draws × 6 numbers)`);
         check(Number.isInteger(row?.totalPrizes) && Number.isInteger(row?.effPrizes), `${where}: prize counts must be integers`);
-        check(Number.isInteger(row?.weightedPrizes) && row.weightedPrizes >= row.totalPrizes && row.weightedPrizes <= row.totalPrizes * 4, `${where}: weightedPrizes must be 1–4 per prize draw`);
+        check(Number.isInteger(row?.weightedPrizes) && row.weightedPrizes >= row.totalPrizes && row.weightedPrizes <= row.totalPrizes * 64, `${where}: weightedPrizes must be 1–64 per prize draw`);
+        check(row.weightedPrizes === row.score, `${where}: score must equal weightedPrizes (the score is the prize points)`);
         check(row?.bestGroup === null || (Number.isInteger(row.bestGroup) && row.bestGroup >= 1 && row.bestGroup <= 7), `${where}: bestGroup must be null or 1-7`);
         check(Number.isInteger(row?.depthPoints) && row.depthPoints >= 0 && row.depthPoints <= league.meta.folds * 16, `${where}: depthPoints must be 0-${league.meta.folds * 16}`);
         const tiers = row?.tierCounts;

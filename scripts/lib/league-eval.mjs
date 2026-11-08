@@ -48,12 +48,21 @@ export const CHANCE = {
     hitsPer100Draws: Math.round((3600 / 49) * 10) / 10, // 73.5
     twoPlusPer100Draws: Math.round((1 - pExactly(0) - pExactly(1)) * 1000) / 10, // 15.1
     prizesPer100Draws: Math.round((1 - pExactly(0) - pExactly(1) - pExactly(2)) * 10000) / 100, // 1.86
-    // Prize quality, weighted by matched numbers − 2: a 3-match draw is worth
-    // 1 point, a 4-match 2, a 5-match (G2/G3) 3 and a jackpot (G1) 4 — so the
-    // score rewards deep tiers, not just prize frequency. The additional ball
-    // never changes the weight: G2 weighs like G3, G6 like G7.
+    // Prize points — the score itself: each prize draw earns 2^(7−group),
+    // i.e. G7=1, G6=2, G5=4, G4=8, G3=16, G2=32, G1=64. The additional ball
+    // never changes the tier: G2 weighs like G3, G6 like G7. Chance null =
+    // Σ P(tier)·2^(7−group).
     weightedPrizesPer100Draws:
-        Math.round((pExactly(3) * 1 + pExactly(4) * 2 + pExactly(5) * 3 + pExactly(6) * 4) * 10000) / 100, // 1.96
+        Math.round(
+            (pExactly(6) * 64 +
+                (pExactly(5) * 32) / 43 +
+                (pExactly(5) * 42 * 16) / 43 +
+                (pExactly(4) * 8) / 43 +
+                (pExactly(4) * 42 * 4) / 43 +
+                (pExactly(3) * 2) / 43 +
+                pExactly(3) * 42) *
+                10000,
+        ) / 100, // 2.23
     // Per-tier hit probabilities. The additional ball is uniform over the 43
     // unmatched numbers, so G2/G4/G6 (with additional) = P(k matches)/43 and
     // G3/G5/G7 = P(k matches)·42/43. Exact floats — no rounding.
@@ -74,18 +83,6 @@ export const CHANCE = {
         ) / 100, // 17.17
     scoreBaseline: 45,
 };
-/**
- * Score index, anchored at 45 = chance, built from chance-relative terms so it
- * reads the same at any fold count: hit strength (z), depth points per 100
- * draws above their null (2^(matched−2): more numbers matched scores
- * exponentially more), and recent form above its 12-draw null.
- */
-const chanceScore = (zScore, depthPoints, folds, recent12) =>
-    CHANCE.scoreBaseline +
-    7.8 * zScore +
-    2.5 * ((depthPoints / folds) * 100 - CHANCE.depthPointsPer100Draws) +
-    0.6 * (recent12 - CHANCE.expectedHitsPerLine * 12);
-
 /** mulberry32 PRNG. */
 export function mulberry32(seed) {
     let a = seed >>> 0;
@@ -200,7 +197,9 @@ export function evaluateStrategy(
         if (matched >= 2) depthPoints += 2 ** (matched - 2); // 1/2/4/8/16 for 2/3/4/5/6 matched
         if (group > 0) {
             totalPrizes += 1;
-            weightedPrizes += matched - 2; // 3-match=1 … 6-match=4: deep tiers weigh more
+            // The score IS the weighted prize points: G7=1, G6=2, G5=4,
+            // G4=8, G3=16, G2=32, G1=64 — doubling per tier.
+            weightedPrizes += 2 ** (7 - group);
             if (bestGroup === null || group < bestGroup) bestGroup = group;
             tierCounts[`g${group}`] += 1;
             if (cached) {
@@ -219,7 +218,9 @@ export function evaluateStrategy(
     const effPrizes = totalPrizes;
     const pnlPerDraw = round2((totalWinnings - folds * STAKE_PER_DRAW) / folds);
     const recent12 = perFoldHits.slice(-12).reduce((a, b) => a + b, 0);
-    const score = round1(Math.min(100, Math.max(0, chanceScore(zScore, depthPoints, folds, recent12))));
+    // The score is the weighted prize points alone — G7=1 … G1=64. Nothing
+    // else moves it.
+    const score = weightedPrizes;
     const currentPick =
         nextPickCache?.get() ??
         generateLine(spec.id, spec.rule, era, nextTarget, prepare ? prepare(era, nextTarget) : undefined);
