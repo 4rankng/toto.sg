@@ -355,8 +355,17 @@ const main = async () => {
     const draws = JSON.parse(await readFile(`${DATA_DIR}draws.json`, "utf8"));
     const league = JSON.parse(await readFile(`${DATA_DIR}strategies.json`, "utf8"));
 
-    const expectedHits = league.meta?.chance?.expectedHitsPerLine;
-    if (typeof expectedHits !== "number") throw new Error("strategies.json: meta.chance.expectedHitsPerLine missing");
+    // Chance expectation under the ≥2-match metric: E[matched numbers] minus
+    // the exactly-one-match mass, which no longer counts. Hypergeometric for
+    // a 6-of-49 line against a 6-number draw: P(k) = C(6,k)·C(43,6−k)/C(49,6).
+    const binom = (n, k) => {
+        let r = 1;
+        for (let i = 0; i < k; i++) r = (r * (n - i)) / (i + 1);
+        return Math.round(r);
+    };
+    const pExactlyOne = (6 * binom(43, 5)) / binom(49, 6);
+    const expectedHits = Math.round(((6 * 6) / 49 - pExactlyOne) * 10000) / 10000;
+    league.meta.chance.expectedHitsPerLine = expectedHits; // 0.7347 → 0.3217 under the new metric
 
     const era = filterEra(draws);
     if (era.length < FOLDS + 1) throw new Error(`era too short for ${FOLDS} folds: ${era.length}`);

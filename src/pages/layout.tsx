@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { ThemeToggle } from "@/components/product/theme-toggle";
 import { cx } from "@/utils/cx";
@@ -116,7 +116,9 @@ export const Layout = () => {
                 className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-4 outline-hidden md:px-6 md:py-5"
             >
                 <div key={pathname} className="animate-fade">
-                    <Outlet />
+                    <Suspense fallback={null}>
+                        <Outlet />
+                    </Suspense>
                 </div>
             </main>
 

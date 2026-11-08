@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { Activity, BarChart01, Calendar, ChevronDown, ChevronRight, Hash01 } from "@untitledui/icons";
+import { useNavigate } from "react-router";
+import { Activity, ArrowRight, BarChart01, Calendar, ChevronDown, ChevronRight, Hash01 } from "@untitledui/icons";
 import { BallRow } from "@/components/balls";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
@@ -18,12 +19,16 @@ import {
     drawSum,
     formatDate,
     formatNumber,
-    hasConsecutive,
+    formatSgd,
+    formatSigned,
     parseDrawQuery,
     useJson,
     weekdayOf,
 } from "@/lib/data";
+import { ballPayoutStats } from "@/lib/insights-correlations";
+import { computeDrawAnatomy } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
+import { useLineBuilder } from "@/providers/line-builder-provider";
 import { cx } from "@/utils/cx";
 
 /** Rows per page of the archive table. */
@@ -35,55 +40,183 @@ const ALL_YEARS = "all";
 /** Decade bands of a draw's detail row — the buckets `drawDecades` counts. */
 const DECADE_LABELS = ["1–10", "11–20", "21–30", "31–40", "41–49"];
 
-/** The expanded details of one draw: its maths, read out cell by cell. */
-const DrawDetail = ({ draw }: { draw: Draw }) => {
-    const sum = drawSum(draw.numbers);
-    const odd = drawOddCount(draw.numbers);
-    const low = drawLowCount(draw.numbers);
+/** Regime filter chips for isolating historical payout and pattern conditions. */
+const REGIME_OPTIONS = [
+    { id: "all", label: "All draws" },
+    { id: "rollover", label: "Rollover (Snowball)" },
+    { id: "solo-g1", label: "Solo G1" },
+    { id: "split-g1", label: "Split G1" },
+    { id: "high-g3", label: "High G3 (≥S$2.2k)" },
+    { id: "crowded-g3", label: "Crowded G3 (≤S$1.2k)" },
+    { id: "run-3", label: "3+ Consecutive" },
+] as const;
+
+type RegimeFilter = (typeof REGIME_OPTIONS)[number]["id"];
+
+const has3Run = (numbers: number[]) => {
+    const sorted = [...numbers].sort((a, b) => a - b);
+    for (let i = 2; i < sorted.length; i += 1) {
+        if (sorted[i] === sorted[i - 1] + 1 && sorted[i - 1] === sorted[i - 2] + 1) return true;
+    }
+    return false;
+};
+
+const matchesRegime = (draw: Draw, regime: RegimeFilter) => {
+    if (regime === "all") return true;
+    const g1w = draw.prizes?.g1?.winners;
+    const g3s = draw.prizes?.g3?.share;
+    switch (regime) {
+        case "rollover":
+            return g1w === 0;
+        case "solo-g1":
+            return g1w === 1;
+        case "split-g1":
+            return typeof g1w === "number" && g1w > 1;
+        case "high-g3":
+            return typeof g3s === "number" && g3s >= 2200;
+        case "crowded-g3":
+            return typeof g3s === "number" && g3s > 0 && g3s <= 1200;
+        case "run-3":
+            return has3Run(draw.numbers);
+        default:
+            return true;
+    }
+};
+
+/** The expanded details of one draw: its cage structure, lag, and crowd forensics. */
+const DrawDetail = ({
+    draw,
+    prevDraw,
+    eraMeanG3,
+    onLoadInPlaySlip,
+}: {
+    draw: Draw;
+    prevDraw: Draw | null;
+    eraMeanG3: number;
+    onLoadInPlaySlip: (numbers: number[]) => void;
+}) => {
+    const anatomy = useMemo(() => computeDrawAnatomy(draw, prevDraw, eraMeanG3), [draw, prevDraw, eraMeanG3]);
     const spread = drawDecades(draw.numbers);
 
     return (
-        <div className="grid min-w-0 gap-4 lg:grid-cols-[1.6fr_1fr]">
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Sum</dt>
-                    <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums">{sum}</dd>
+        <div className="flex flex-col gap-3">
+            <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {/* 1. Cage Structure */}
+                <div className="rounded-lg border border-line-soft bg-surface-2/40 p-3">
+                    <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Cage Structure</p>
+                    <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">Sum</dt>
+                            <dd className="font-mono text-xs font-semibold text-ink tabular-nums">{anatomy.sum}</dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">AC Value</dt>
+                            <dd className="font-mono text-xs font-semibold text-primary tabular-nums">{anatomy.acValue} / 10</dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">Span</dt>
+                            <dd className="font-mono text-xs font-semibold text-ink tabular-nums">{anatomy.span}</dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">Odd / Even</dt>
+                            <dd className="font-mono text-xs text-ink tabular-nums">{anatomy.oddCount} / {draw.numbers.length - anatomy.oddCount}</dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">Digital Root</dt>
+                            <dd className="font-mono text-xs font-semibold text-accent tabular-nums">{anatomy.digitalRoot}</dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">Distinct Tails</dt>
+                            <dd className="font-mono text-xs text-ink tabular-nums">{anatomy.distinctTails} / 6</dd>
+                        </div>
+                    </dl>
                 </div>
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Odd / even</dt>
-                    <dd className="mt-0.5 text-[13px] text-ink">
-                        {odd} / {draw.numbers.length - odd}
-                    </dd>
+
+                {/* 2. Lag & Carry-over */}
+                <div className="rounded-lg border border-line-soft bg-surface-2/40 p-3">
+                    <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Lag & Carry-over</p>
+                    <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">Repeats from Prev</dt>
+                            <dd className="font-mono text-xs font-semibold text-ink tabular-nums">{anatomy.repeatsFromPrev} balls</dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">7th-Ball Promotion</dt>
+                            <dd className={cx("font-mono text-xs font-semibold tabular-nums", anatomy.additionalPromoted ? "text-heat-hot" : "text-ink-muted")}>
+                                {anatomy.additionalPromoted ? "Yes (Bonus promoted)" : "None"}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">Neighbor Hits (±1)</dt>
+                            <dd className="font-mono text-xs text-ink tabular-nums">{anatomy.neighborHits} balls</dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">Consecutive</dt>
+                            <dd className="font-mono text-xs text-ink tabular-nums">
+                                {anatomy.consecutivePairs > 0 ? `${anatomy.consecutivePairs} pair(s)` : "None"}
+                            </dd>
+                        </div>
+                    </dl>
                 </div>
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Low / high</dt>
-                    <dd className="mt-0.5 text-[13px] text-ink">
-                        {low} / {draw.numbers.length - low}
-                    </dd>
+
+                {/* 3. Crowd & Payout Forensics */}
+                <div className="rounded-lg border border-line-soft bg-surface-2/40 p-3 sm:col-span-2 lg:col-span-1">
+                    <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Crowd & Payout Forensics</p>
+                    <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">Group 1</dt>
+                            <dd className="font-mono text-xs font-semibold text-ink">
+                                {anatomy.isRollover ? "Rollover (0 wins)" : anatomy.isSoloG1 ? "Solo Winner (1)" : anatomy.isSplitG1 ? `Split (${draw.prizes?.g1?.winners})` : "—"}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">Group 3 Prize</dt>
+                            <dd className="font-mono text-xs font-semibold text-primary tabular-nums">
+                                {anatomy.g3Share !== null ? formatSgd(anatomy.g3Share) : "—"}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">G3 vs Era Mean</dt>
+                            <dd className={cx("font-mono text-xs font-semibold tabular-nums", anatomy.g3DeltaVsEra !== null && anatomy.g3DeltaVsEra >= 0 ? "text-primary" : "text-heat-hot")}>
+                                {anatomy.g3DeltaVsEra !== null ? formatSigned(anatomy.g3DeltaVsEra, 0) : "—"}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="text-[10px] text-ink-muted">Calendar Bias (≤31)</dt>
+                            <dd className="font-mono text-xs text-ink tabular-nums">{anatomy.birthdayCount} / 6 balls</dd>
+                        </div>
+                    </dl>
                 </div>
-                <div>
-                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Consecutive</dt>
-                    <dd className="mt-0.5 text-[13px] text-ink">{hasConsecutive(draw.numbers) ? "Yes" : "No"}</dd>
-                </div>
-            </dl>
-            <div>
-                <p className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">By decade</p>
-                <div className="mt-1.5 grid grid-cols-5 gap-1">
+            </div>
+
+            {/* Bottom Bar: Decades + Load in Play Slip */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft pt-2">
+                <div className="flex items-center gap-1 overflow-x-auto">
+                    <span className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase mr-1">Decades:</span>
                     {DECADE_LABELS.map((label, index) => {
                         const count = spread[index];
                         const empty = count === 0;
-
                         return (
                             <div
                                 key={label}
-                                className={cx("rounded-md border px-1 py-1 text-center", empty ? "border-line/60" : "border-line bg-surface-3")}
+                                className={cx("rounded border px-1.5 py-0.5 text-center text-[10px]", empty ? "border-line-soft text-ink-faint" : "border-line bg-surface-3 text-ink")}
                             >
-                                <p className="text-[10px] text-ink-subtle">{label}</p>
-                                <p className={cx("font-mono text-xs tabular-nums", empty ? "text-ink-faint" : "text-ink")}>{count}</p>
+                                <span className="text-ink-subtle mr-1">{label}:</span>
+                                <span className="font-mono font-semibold tabular-nums">{count}</span>
                             </div>
                         );
                     })}
                 </div>
+
+                <Button
+                    color="secondary"
+                    size="sm"
+                    iconTrailing={ArrowRight}
+                    onPress={() => onLoadInPlaySlip(draw.numbers)}
+                    className="shrink-0"
+                >
+                    Load in Play Slip →
+                </Button>
             </div>
         </div>
     );
@@ -99,14 +232,26 @@ const ArchiveSkeleton = () => (
 export const HistoryScreen = () => {
     usePageTitle("Draw history — every TOTO draw");
 
+    const navigate = useNavigate();
+    const { setLine } = useLineBuilder();
+
     const { data: draws, isLoading, error } = useJson<Draw[]>("/data/draws.json");
     const [search, setSearch] = useState("");
     const [year, setYear] = useState<string>(ALL_YEARS);
+    const [regime, setRegime] = useState<RegimeFilter>("all");
     const [page, setPage] = useState(1);
     const [expanded, setExpanded] = useState<number | null>(null);
 
     /** Every draw, newest first. */
     const newestFirst = useMemo(() => [...(draws ?? [])].sort((a, b) => b.draw - a.draw), [draws]);
+
+    const drawMap = useMemo(() => new Map((draws ?? []).map((d) => [d.draw, d])), [draws]);
+    const ballPayouts = useMemo(() => (draws ? ballPayoutStats(draws) : null), [draws]);
+
+    const handleLoadInPlaySlip = (numbers: number[]) => {
+        setLine(numbers);
+        navigate("/");
+    };
 
     const yearOptions = useMemo(() => {
         const seen: Record<string, true> = {};
@@ -119,8 +264,14 @@ export const HistoryScreen = () => {
     const query = useMemo(() => parseDrawQuery(search), [search]);
 
     const filtered = useMemo(
-        () => newestFirst.filter((draw) => (year === ALL_YEARS || draw.date.startsWith(year)) && drawMatchesQuery(draw, query)),
-        [newestFirst, query, year],
+        () =>
+            newestFirst.filter(
+                (draw) =>
+                    (year === ALL_YEARS || draw.date.startsWith(year)) &&
+                    matchesRegime(draw, regime) &&
+                    drawMatchesQuery(draw, query),
+            ),
+        [newestFirst, query, regime, year],
     );
 
     const pageCount = Math.max(Math.ceil(filtered.length / PAGE_SIZE), 1);
@@ -133,17 +284,21 @@ export const HistoryScreen = () => {
         if (page !== safePage) setPage(safePage);
     }, [page, safePage]);
 
-    /** Human summary of the filters in force, e.g. "contains 7, 23 · 2024". */
+    /** Human summary of the filters in force, e.g. "Rollover · contains 7, 23 · 2024". */
     const filterSummary = useMemo(() => {
         const parts: string[] = [];
+        if (regime !== "all") {
+            const label = REGIME_OPTIONS.find((r) => r.id === regime)?.label;
+            if (label) parts.push(label);
+        }
         if (query.numbers.length > 0) parts.push(`contains ${query.numbers.join(", ")}`);
         if (query.draw !== null) parts.push(`draw ${query.draw}`);
         if (query.date !== null) parts.push(query.date);
         if (year !== ALL_YEARS) parts.push(year);
         return parts;
-    }, [query, year]);
+    }, [query, regime, year]);
 
-    const hasFilter = search.trim().length > 0 || year !== ALL_YEARS;
+    const hasFilter = search.trim().length > 0 || year !== ALL_YEARS || regime !== "all";
 
     const applySearch = (value: string) => {
         setSearch(value);
@@ -160,6 +315,7 @@ export const HistoryScreen = () => {
     const clearFilters = () => {
         setSearch("");
         setYear(ALL_YEARS);
+        setRegime("all");
         setPage(1);
         setExpanded(null);
     };
@@ -271,6 +427,30 @@ export const HistoryScreen = () => {
             </div>
 
             <Panel isFlush title="All draws" description={panelDescription} actions={filters} footer={filtered.length > 0 ? pagination : undefined}>
+                {/* Regime Filter Chips */}
+                <div className="scrollbar-hide flex items-center gap-1.5 overflow-x-auto border-b border-line-soft bg-surface-2/30 px-3 py-2">
+                    <span className="shrink-0 text-[10px] font-semibold tracking-wider text-ink-subtle uppercase mr-1">Regime:</span>
+                    {REGIME_OPTIONS.map((opt) => (
+                        <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                                setRegime(opt.id);
+                                setPage(1);
+                                setExpanded(null);
+                            }}
+                            className={cx(
+                                "rounded px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors",
+                                regime === opt.id
+                                    ? "bg-primary text-surface font-semibold shadow-xs"
+                                    : "bg-surface-2 text-ink-muted hover:bg-surface-3 hover:text-ink",
+                            )}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+
                 {rows.length === 0 ? (
                     <div className="flex flex-col items-center gap-3 px-4 py-14 text-center">
                         <p className="text-sm text-ink-muted">No draw matches that search.</p>
@@ -317,7 +497,12 @@ export const HistoryScreen = () => {
                                         </button>
                                         {isOpen && (
                                             <div className="border-t border-line-soft bg-surface-2/40 px-3 py-3">
-                                                <DrawDetail draw={draw} />
+                                                <DrawDetail
+                                                    draw={draw}
+                                                    prevDraw={drawMap.get(draw.draw - 1) ?? null}
+                                                    eraMeanG3={ballPayouts?.eraMeanG3 ?? 1750}
+                                                    onLoadInPlaySlip={handleLoadInPlaySlip}
+                                                />
                                             </div>
                                         )}
                                     </article>
@@ -390,7 +575,12 @@ export const HistoryScreen = () => {
                                                 {isOpen && (
                                                     <tr id={detailId} className="border-b border-line-soft bg-surface-2/40">
                                                         <td colSpan={8} className="px-3 py-3">
-                                                            <DrawDetail draw={draw} />
+                                                            <DrawDetail
+                                                                draw={draw}
+                                                                prevDraw={drawMap.get(draw.draw - 1) ?? null}
+                                                                eraMeanG3={ballPayouts?.eraMeanG3 ?? 1750}
+                                                                onLoadInPlaySlip={handleLoadInPlaySlip}
+                                                            />
                                                         </td>
                                                     </tr>
                                                 )}

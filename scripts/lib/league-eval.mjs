@@ -96,7 +96,12 @@ export function evaluateStrategy(spec, era, foldStart, expectedHits, { prepare, 
         const draw = era[i];
         const prior = era.slice(0, i);
         const pick = rule ? generateLine(spec.id, rule, prior, draw, prepare ? prepare(prior, draw) : undefined) : spec.pick;
-        const hits = draw.numbers.filter((n) => pick.includes(n)).length; // main numbers only
+        // Match metric: numbers matched count only in draws where the line
+        // matched at least two — a lone 1-number match is chance noise
+        // (P(exactly 1) ≈ 0.413) and scores zero. Prize groups are computed
+        // separately from the real winning rules and are unaffected.
+        const matched = draw.numbers.filter((n) => pick.includes(n)).length; // main numbers only
+        const hits = matched >= 2 ? matched : 0;
         perFoldHits.push(hits);
         totalHits += hits;
         const group = scoreLine(pick, draw);

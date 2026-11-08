@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Award01, Calendar, ChevronDown, ChevronRight, Coins01, Grid01 } from "@untitledui/icons";
-import { useSearchParams } from "react-router";
+import { ArrowRight, Award01, Calendar, ChevronDown, ChevronRight, Coins01, Grid01 } from "@untitledui/icons";
+import { useNavigate, useSearchParams } from "react-router";
 import { Ball } from "@/components/balls";
+import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { Panel } from "@/components/panel";
@@ -10,17 +11,40 @@ import { KpiCard } from "@/components/product/kpi-card";
 import { PageHeader } from "@/components/product/page-header";
 import { RecentHits } from "@/components/product/recent-hits";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
-import { type StrategiesFile, type StrategyRow, formatDate, formatNumber, formatSigned, useJson } from "@/lib/data";
+import { type Draw, type StrategiesFile, type StrategyRow, formatDate, formatNumber, formatSgd, formatSigned, useJson } from "@/lib/data";
+import { ballPayoutStats, type BallPayoutStats } from "@/lib/insights-correlations";
+import { lineAcValue } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
+import { useLineBuilder } from "@/providers/line-builder-provider";
 import { cx } from "@/utils/cx";
 
-type SortKey = "score" | "hits" | "prizes";
+type SortKey = "score" | "hits" | "prizes" | "recent12" | "g3Ev";
 
 const SORTS: { id: SortKey; label: string }[] = [
     { id: "score", label: "Score" },
     { id: "hits", label: "Hits" },
     { id: "prizes", label: "Prizes" },
+    { id: "recent12", label: "Recent 12" },
+    { id: "g3Ev", label: "G3 EV" },
 ];
+
+const strategyG3Ev = (row: StrategyRow, ballPayouts: BallPayoutStats | null) => {
+    if (!ballPayouts || !row.currentPick.length) return 0;
+    const sumDelta = row.currentPick.reduce((acc, n) => {
+        const ballRow = ballPayouts.rows[n - 1];
+        return acc + (ballRow?.deltaVsEra ?? 0);
+    }, 0);
+    return Math.round(sumDelta / row.currentPick.length);
+};
+
+const strategyMeanG3 = (row: StrategyRow, ballPayouts: BallPayoutStats | null) => {
+    if (!ballPayouts || !row.currentPick.length) return 1750;
+    const sumG3 = row.currentPick.reduce((acc, n) => {
+        const ballRow = ballPayouts.rows[n - 1];
+        return acc + (ballRow?.meanG3 ?? 1750);
+    }, 0);
+    return Math.round(sumG3 / row.currentPick.length);
+};
 
 const LeagueSkeleton = () => (
     <DataLoading label="Loading the strategies">
@@ -29,61 +53,140 @@ const LeagueSkeleton = () => (
     </DataLoading>
 );
 
-/** The expanded body of a strategy. */
-const StrategyDetail = ({ row, className }: { row: StrategyRow; className?: string }) => (
-    <div className={cx("min-w-0", className)}>
-        <div className="max-w-3xl">
-            <p className="text-[13px] leading-5 text-ink-muted">{row.description}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-                <FamilyChip family={row.family} />
-                <span className="font-mono text-[11px] text-ink-subtle tabular-nums">{row.id}</span>
+/** The expanded body of a strategy with Ticket X-Ray diagnostics. */
+const StrategyDetail = ({
+    row,
+    ballPayouts,
+    onLoadInPlaySlip,
+    className,
+}: {
+    row: StrategyRow;
+    ballPayouts: BallPayoutStats | null;
+    onLoadInPlaySlip: (numbers: number[]) => void;
+    className?: string;
+}) => {
+    const sorted = [...row.currentPick].sort((a, b) => a - b);
+    const sum = sorted.reduce((a, b) => a + b, 0);
+    const ac = lineAcValue(sorted);
+    const span = sorted.length > 0 ? sorted[sorted.length - 1] - sorted[0] : 0;
+    const bdays = sorted.filter((n) => n <= 31).length;
+    const estG3 = strategyMeanG3(row, ballPayouts);
+    const g3Delta = strategyG3Ev(row, ballPayouts);
+
+    return (
+        <div className={cx("min-w-0 flex flex-col gap-3", className)}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="max-w-3xl">
+                    <p className="text-[13px] leading-5 text-ink-muted">{row.description}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <FamilyChip family={row.family} />
+                        <span className="font-mono text-[11px] text-ink-subtle tabular-nums">{row.id}</span>
+                    </div>
+                </div>
+                <Button
+                    color="secondary"
+                    size="sm"
+                    iconTrailing={ArrowRight}
+                    onPress={() => onLoadInPlaySlip(row.currentPick)}
+                    className="shrink-0"
+                >
+                    Load in Play Slip →
+                </Button>
             </div>
+
+            {/* Current Pick X-Ray Diagnostic Badges */}
+            <div className="rounded-lg border border-line-soft bg-surface-2/40 p-2.5">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">
+                        Current Pick X-Ray Diagnostics
+                    </p>
+                    <span className="font-mono text-[10px] text-ink-subtle">
+                        {sorted.join(" · ")}
+                    </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                    <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
+                        <p className="text-[10px] text-ink-subtle uppercase">Sum</p>
+                        <p className="font-mono text-xs font-semibold text-ink tabular-nums">{sum}</p>
+                    </div>
+                    <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
+                        <p className="text-[10px] text-ink-subtle uppercase">AC Value</p>
+                        <p className="font-mono text-xs font-semibold text-primary tabular-nums">{ac} / 10</p>
+                    </div>
+                    <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
+                        <p className="text-[10px] text-ink-subtle uppercase">Span</p>
+                        <p className="font-mono text-xs font-semibold text-ink tabular-nums">{span}</p>
+                    </div>
+                    <div className="rounded border border-line-soft bg-surface px-2 py-1 text-center">
+                        <p className="text-[10px] text-ink-subtle uppercase">Birthday ≤31</p>
+                        <p className={cx("font-mono text-xs font-semibold tabular-nums", bdays >= 5 ? "text-heat-hot" : "text-ink")}>{bdays} / 6</p>
+                    </div>
+                    <div className="col-span-2 rounded border border-line-soft bg-surface px-2 py-1 text-center sm:col-span-1">
+                        <p className="text-[10px] text-ink-subtle uppercase">Est. G3 Share</p>
+                        <p className={cx("font-mono text-xs font-semibold tabular-nums", g3Delta >= 0 ? "text-primary" : "text-heat-hot")}>
+                            {formatSgd(estG3)} ({g3Delta >= 0 ? "+" : ""}{g3Delta})
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Backtest League Math */}
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Draws tested</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.evaluatedDraws)}</dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Numbers matched</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.totalHits}</dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matched per draw</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.meanHits.toFixed(3)}</dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Random pick average</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink-muted tabular-nums">{row.expectedHits.toFixed(3)}</dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prizes</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.totalPrizes ?? 0)}</dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matched, last 12 draws</dt>
+                    <dd className="mt-0.5">
+                        <RecentHits hits={row.recent12 ?? 0} draws={12} expectedPerLine={row.expectedHits} />
+                    </dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Profit per draw</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatSigned(row.pnlPerDraw ?? 0, 2)}</dd>
+                </div>
+                <div>
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Score</dt>
+                    <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.score.toFixed(1)}</dd>
+                </div>
+            </dl>
         </div>
-        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
-            <div>
-                <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Draws tested</dt>
-                <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.evaluatedDraws)}</dd>
-            </div>
-            <div>
-                <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Numbers matched</dt>
-                <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.totalHits}</dd>
-            </div>
-            <div>
-                <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matched per draw</dt>
-                <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.meanHits.toFixed(3)}</dd>
-            </div>
-            <div>
-                <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Random pick average</dt>
-                <dd className="mt-0.5 font-mono text-sm text-ink-muted tabular-nums">{row.expectedHits.toFixed(3)}</dd>
-            </div>
-            <div>
-                <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Prizes</dt>
-                <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.totalPrizes ?? 0)}</dd>
-            </div>
-            <div>
-                <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Matched, last 12 draws</dt>
-                <dd className="mt-0.5">
-                    <RecentHits hits={row.recent12 ?? 0} draws={12} expectedPerLine={row.expectedHits} />
-                </dd>
-            </div>
-            <div>
-                <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Profit per draw</dt>
-                <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatSigned(row.pnlPerDraw ?? 0, 2)}</dd>
-            </div>
-            <div>
-                <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Score</dt>
-                <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{row.score.toFixed(1)}</dd>
-            </div>
-        </dl>
-    </div>
-);
+    );
+};
 
 
 export const StrategiesScreen = () => {
     const [title, setTitle] = useState("Strategy league");
     usePageTitle(title);
 
+    const navigate = useNavigate();
+    const { setLine } = useLineBuilder();
+
     const { data, isLoading, error } = useJson<StrategiesFile>("/data/strategies.json");
+    const { data: draws } = useJson<Draw[]>("/data/draws.json");
+    const ballPayouts = useMemo(() => (draws ? ballPayoutStats(draws) : null), [draws]);
+
+    const handleLoadInPlaySlip = (numbers: number[]) => {
+        setLine(numbers);
+        navigate("/");
+    };
 
     const [searchParams, setSearchParams] = useSearchParams();
     const [query, setQuery] = useState("");
@@ -127,9 +230,23 @@ export const StrategiesScreen = () => {
             return row.name.toLowerCase().includes(needle) || row.id.toLowerCase().includes(needle) || row.description.toLowerCase().includes(needle);
         });
 
-        const value = (row: StrategyRow) => (sort === "prizes" ? row.effPrizes : sort === "hits" ? row.totalHits : row.score);
+        const value = (row: StrategyRow) => {
+            switch (sort) {
+                case "prizes":
+                    return row.effPrizes;
+                case "hits":
+                    return row.totalHits;
+                case "recent12":
+                    return row.recent12 ?? 0;
+                case "g3Ev":
+                    return strategyG3Ev(row, ballPayouts);
+                case "score":
+                default:
+                    return row.score;
+            }
+        };
         return [...filtered].sort((a, b) => value(b) - value(a));
-    }, [data, query, family, sort]);
+    }, [data, query, family, sort, ballPayouts]);
 
 
 
@@ -200,7 +317,7 @@ export const StrategiesScreen = () => {
             <PageHeader
                 kicker="Strategies"
                 title="Strategy league"
-                description={`${data.strategies.length} strategies, each tested on ${meta.folds} past draws. A score of 45 is random picking; higher means more numbers matched. Past results, not predictions.`}
+                description={`Score of 45 is chance. Matches count only when at least two numbers hit.`}
                 meta={
                     <>
                         <span>
@@ -232,7 +349,7 @@ export const StrategiesScreen = () => {
             <Panel
                 isFlush
                 title="All strategies"
-                description={`${rows.length} of ${data.strategies.length} · the six numbers each strategy would play for draw ${meta.nextDraw} · a prize needs 3 or more matches`}
+                description={`${rows.length} of ${data.strategies.length} · picks for draw ${meta.nextDraw}`}
                 actions={filters}
             >
                 <ol className="grid grid-cols-1 gap-px bg-line-soft xl:grid-cols-2">
@@ -258,7 +375,15 @@ export const StrategiesScreen = () => {
                                         <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink group-hover:text-accent">{row.name}</span>
                                         <span className="hidden shrink-0 text-[10px] text-ink-subtle sm:inline">{row.family}</span>
                                         <span className="shrink-0 font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score.toFixed(1)}</span>
-                                        <span className="w-16 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">{row.effPrizes} prizes</span>
+                                        <span className="w-20 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">
+                                            {sort === "recent12"
+                                                ? `${row.recent12 ?? 0} (L12)`
+                                                : sort === "g3Ev"
+                                                  ? `${strategyG3Ev(row, ballPayouts) >= 0 ? "+" : ""}${strategyG3Ev(row, ballPayouts)} G3`
+                                                  : sort === "hits"
+                                                    ? `${row.totalHits} hits`
+                                                    : `${row.effPrizes} prizes`}
+                                        </span>
                                     </span>
 
                                     {/* Line 2 — the sequence, on its own line, at full size. */}
@@ -271,7 +396,11 @@ export const StrategiesScreen = () => {
 
                                 {isOpen && (
                                     <div className="border-t border-line-soft bg-surface-2/40 px-4 py-3">
-                                        <StrategyDetail row={row} />
+                                        <StrategyDetail
+                                            row={row}
+                                            ballPayouts={ballPayouts}
+                                            onLoadInPlaySlip={handleLoadInPlaySlip}
+                                        />
                                     </div>
                                 )}
                             </li>
@@ -283,8 +412,7 @@ export const StrategiesScreen = () => {
             </Panel>
 
             <p className="px-1 text-[11px] leading-4 text-ink-subtle">
-                Every line has the same chance of Group 1: <span className="font-mono text-ink-muted tabular-nums">1 in 13,983,816</span>. The score describes
-                100 past draws. It does not predict the next draw. Play for entertainment, never to recover a loss.
+                Every line has the same Group 1 chance: <span className="font-mono text-ink-muted tabular-nums">1 in 13,983,816</span>.
             </p>
         </div>
     );

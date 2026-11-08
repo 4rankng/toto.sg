@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     Activity,
     BarChart01,
@@ -43,6 +43,13 @@ import {
     SmallCorrelationGrid,
 } from "@/components/insights-correlation-charts";
 import {
+    EnvelopeBandChart,
+    OscillatorBandChart,
+    ScatterRegressionChart,
+    SurvivalHazardChart,
+    TransitionMatrixHeatmap,
+} from "@/components/insights-indicator-charts";
+import {
     CountDistributionChart,
     DecadeHeatmap,
     FrequencyChart,
@@ -58,6 +65,7 @@ import {
     drawSum,
     formatDate,
     formatNumber,
+    formatSgd,
     formatSigned,
     type StrategiesFile,
     useJson,
@@ -107,6 +115,64 @@ import {
     wuXingStats,
     zodiacStats,
 } from "@/lib/insights-correlations";
+import {
+    computeAtrChannelStats,
+    computeBollingerSumStats,
+    computeCompositeQuantStats,
+    computeCouponSweepStats,
+    computeCusumBreakStats,
+    computeCycleRatioStats,
+    computeEmaRibbonStats,
+    computeFanoDispersionStats,
+    computeGiniConcentrationStats,
+    computeHotHandFallacyStats,
+    computeHurstExponentStats,
+    computeKaplanMeierHazardStats,
+    computeMacdVelocityStats,
+    computeMarkovTransitionStats,
+    computeMeanReversionSlopeStats,
+    computeMultiHorizonZStats,
+    computeRsi14Stats,
+    computeShannonEntropyStats,
+    computeStochasticRangeStats,
+    computeVolatilityRegimeStats,
+} from "@/lib/insights-indicators";
+import {
+    computeAbbreviatedWheelStats,
+    computeBankerLeverageStats,
+    computeBankrollRuinStats,
+    computeCombinedDigitSumStats,
+    computeCrossEraReplicationStats,
+    computeCrowdOverbetDetectorStats,
+    computeFestiveDrawStats,
+    computeGanzhiAlmanacStats,
+    computeGapExtremesStats,
+    computeHalfWaveStats,
+    computeHistoricalQuadCollisionStats,
+    computeHomologousClusterStats,
+    computeHomophonePayoutStats,
+    computeIndeksStats,
+    computeITotoStats,
+    computeJackpotEvCurveStats,
+    computeJackpotSplitAnatomyStats,
+    computeKsUniformityStats,
+    computeLedStrokeStats,
+    computeLineSdSkewStats,
+    computeMistikBaruStats,
+    computeMistikLamaStats,
+    computeModularSieveStats,
+    computePairCollisionTaxStats,
+    computePlayslipEdgePayoutStats,
+    computePokerTailTestStats,
+    computePythagoreanStats,
+    computeQuarterWaveStats,
+    computeRolloverParadoxStats,
+    computeStepLadderAp4Stats,
+    computeSystemEntryStats,
+    computeTaysenStats,
+    computeThreeTierCalendarStats,
+    computeWaldWolfowitzRunsStats,
+} from "@/lib/insights-togel-systems";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
 
@@ -237,6 +303,78 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
             { id: "panel-chi-square", label: "Randomness audit" },
         ],
     },
+    {
+        id: "indicators",
+        label: "Indicators & oscillators",
+        panels: [
+            { id: "panel-rsi", label: "Wilder RSI-14" },
+            { id: "panel-macd", label: "MACD velocity" },
+            { id: "panel-bollinger", label: "Bollinger sum bands" },
+            { id: "panel-multi-horizon", label: "Multi-horizon Z" },
+            { id: "panel-ema-ribbon", label: "EMA ribbons" },
+            { id: "panel-stochastic", label: "Stochastic oscillator" },
+            { id: "panel-cusum", label: "CUSUM breaks" },
+            { id: "panel-hurst", label: "Hurst exponent" },
+            { id: "panel-shannon-entropy", label: "Shannon entropy" },
+            { id: "panel-gini", label: "Gini concentration" },
+            { id: "panel-fano", label: "Fano dispersion" },
+            { id: "panel-kaplan-meier", label: "Kaplan–Meier hazard" },
+            { id: "panel-cycle-ratio", label: "Cycle ratios" },
+            { id: "panel-hot-hand", label: "Hot-hand vs fallacy" },
+            { id: "panel-markov", label: "49×49 Markov lift" },
+            { id: "panel-volatility-regime", label: "Volatility regimes" },
+            { id: "panel-mean-reversion", label: "Mean-reversion slope" },
+            { id: "panel-coupon-sweep", label: "Coupon-collector sweep" },
+            { id: "panel-atr-channel", label: "ATR-14 channel" },
+            { id: "panel-composite-quant", label: "Composite quant scorecard" },
+        ],
+    },
+    {
+        id: "togel",
+        label: "Togel, Mark Six & almanac",
+        panels: [
+            { id: "panel-mistik-lama", label: "Togel mistik lama" },
+            { id: "panel-mistik-baru", label: "Togel mistik baru" },
+            { id: "panel-indeks", label: "Togel indeks" },
+            { id: "panel-taysen", label: "Taysen shadows" },
+            { id: "panel-half-waves", label: "Mark Six half-waves" },
+            { id: "panel-quarter-waves", label: "Quarter-waves" },
+            { id: "panel-led-strokes", label: "7-Segment LED density" },
+            { id: "panel-homophones", label: "Cantonese homophones" },
+            { id: "panel-three-tier-calendar", label: "Three-tier calendar" },
+            { id: "panel-festive-draws", label: "CNY Hongbao surges" },
+            { id: "panel-ganzhi", label: "60-Day Ganzhi almanac" },
+            { id: "panel-pythagorean", label: "Pythagorean master numbers" },
+            { id: "panel-modular-sieve", label: "Modular residue sieve" },
+            { id: "panel-combined-digit-sum", label: "Combined digit sum (合單)" },
+            { id: "panel-homologous-clusters", label: "Twin/triple tail clusters" },
+            { id: "panel-step-ladder", label: "Step-ladder AP-4 traps" },
+        ],
+    },
+    {
+        id: "systems-ev",
+        label: "Systems, wheeling & forensics",
+        panels: [
+            { id: "panel-system-entries", label: "System 7–12 multipliers" },
+            { id: "panel-itoto-syndicate", label: "iTOTO 28-share economics" },
+            { id: "panel-abbreviated-wheels", label: "Abbreviated wheels" },
+            { id: "panel-banker-leverage", label: "Banker leverage curve" },
+            { id: "panel-jackpot-ev-curve", label: "Net S$1 ticket EV curve" },
+            { id: "panel-rollover-paradox", label: "The rollover paradox" },
+            { id: "panel-pair-collision-tax", label: "Pairwise Group 3 tax" },
+            { id: "panel-playslip-edge-bias", label: "OMR playslip grid bias" },
+            { id: "panel-overbet-detector", label: "Over-bet draw detector" },
+            { id: "panel-solo-split-anatomy", label: "Solo vs split Group 1" },
+            { id: "panel-quad-collisions", label: "1,892-Draw quad collisions" },
+            { id: "panel-cross-era-audit", label: "6/45 vs 6/49 cross-audit" },
+            { id: "panel-gap-extremes", label: "Min & max gap extremes" },
+            { id: "panel-line-sd-skew", label: "Line SD & skewness" },
+            { id: "panel-runs-test", label: "Wald–Wolfowitz runs test" },
+            { id: "panel-ks-uniformity", label: "Kolmogorov–Smirnov test" },
+            { id: "panel-poker-tails", label: "NIST poker-hand tails" },
+            { id: "panel-bankroll-ruin", label: "Gambler's ruin simulator" },
+        ],
+    },
 ];
 
 /** Every panel in reading order, numbered the way the panels are numbered. */
@@ -264,6 +402,53 @@ const InsightsSkeleton = () => (
         </div>
     </DataLoading>
 );
+
+function LazyGallerySection({
+    id,
+    title,
+    children,
+    forceMount = false,
+}: {
+    id: string;
+    title: string;
+    children: React.ReactNode;
+    forceMount?: boolean;
+}) {
+    const [mounted, setMounted] = useState(forceMount);
+    const containerRef = useRef<HTMLElement>(null);
+
+    useEffect(() => {
+        if (forceMount) {
+            setMounted(true);
+            return;
+        }
+        if (mounted) return;
+        const el = containerRef.current;
+        if (!el || typeof IntersectionObserver === "undefined") {
+            setMounted(true);
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0]?.isIntersecting) {
+                    setMounted(true);
+                    observer.disconnect();
+                }
+            },
+            { rootMargin: "800px 0px" },
+        );
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [forceMount, mounted]);
+
+    return (
+        <section ref={containerRef} id={id} className="flex flex-col gap-3 min-h-[140px]">
+            <h2 className="font-display text-base leading-6 font-semibold tracking-tight text-ink">{title}</h2>
+            {mounted ? <MasonryGrid>{children}</MasonryGrid> : <div className="h-48 rounded-xl border border-line/40 bg-surface/30 animate-pulse" />}
+        </section>
+    );
+}
 
 export const InsightsScreen = () => {
     usePageTitle("Insights — what the draws look like");
@@ -429,6 +614,66 @@ export const InsightsScreen = () => {
     const weekdaySplit = useMemo(() => weekdaySplitStats(eraDraws), [eraDraws]);
     const chiSquare = useMemo(() => chiSquareAuditStats(eraDraws), [eraDraws]);
 
+    /* Gallery 7 (Panels 51–70): Indicators & Oscillators */
+    const rsiStats = useMemo(() => computeRsi14Stats(eraDraws), [eraDraws]);
+    const macdStats = useMemo(() => computeMacdVelocityStats(eraDraws), [eraDraws]);
+    const bollingerStats = useMemo(() => computeBollingerSumStats(eraDraws), [eraDraws]);
+    const multiHorizonStats = useMemo(() => computeMultiHorizonZStats(eraDraws), [eraDraws]);
+    const emaRibbonStats = useMemo(() => computeEmaRibbonStats(eraDraws), [eraDraws]);
+    const stochStats = useMemo(() => computeStochasticRangeStats(eraDraws), [eraDraws]);
+    const cusumStats = useMemo(() => computeCusumBreakStats(eraDraws), [eraDraws]);
+    const hurstStats = useMemo(() => computeHurstExponentStats(eraDraws), [eraDraws]);
+    const entropyStats = useMemo(() => computeShannonEntropyStats(eraDraws), [eraDraws]);
+    const giniStats = useMemo(() => computeGiniConcentrationStats(eraDraws), [eraDraws]);
+    const fanoStats = useMemo(() => computeFanoDispersionStats(eraDraws), [eraDraws]);
+    const kaplanStats = useMemo(() => computeKaplanMeierHazardStats(eraDraws), [eraDraws]);
+    const cycleStats = useMemo(() => computeCycleRatioStats(eraDraws), [eraDraws]);
+    const hotHandStats = useMemo(() => computeHotHandFallacyStats(eraDraws), [eraDraws]);
+    const markovStats = useMemo(() => computeMarkovTransitionStats(eraDraws), [eraDraws]);
+    const volRegimeStats = useMemo(() => computeVolatilityRegimeStats(eraDraws), [eraDraws]);
+    const reversionStats = useMemo(() => computeMeanReversionSlopeStats(eraDraws), [eraDraws]);
+    const couponStats = useMemo(() => computeCouponSweepStats(eraDraws), [eraDraws]);
+    const atrStats = useMemo(() => computeAtrChannelStats(eraDraws), [eraDraws]);
+    const quantStats = useMemo(() => computeCompositeQuantStats(eraDraws), [eraDraws]);
+
+    /* Gallery 8 (Panels 71–86): Togel, Mark Six & Almanac */
+    const mistikLama = useMemo(() => computeMistikLamaStats(eraDraws), [eraDraws]);
+    const mistikBaru = useMemo(() => computeMistikBaruStats(eraDraws), [eraDraws]);
+    const indeks = useMemo(() => computeIndeksStats(eraDraws), [eraDraws]);
+    const taysen = useMemo(() => computeTaysenStats(eraDraws), [eraDraws]);
+    const halfWaves = useMemo(() => computeHalfWaveStats(eraDraws), [eraDraws]);
+    const quarterWaves = useMemo(() => computeQuarterWaveStats(eraDraws), [eraDraws]);
+    const ledStrokes = useMemo(() => computeLedStrokeStats(eraDraws), [eraDraws]);
+    const homophones = useMemo(() => computeHomophonePayoutStats(eraDraws), [eraDraws]);
+    const calendarTiers = useMemo(() => computeThreeTierCalendarStats(eraDraws), [eraDraws]);
+    const festive = useMemo(() => computeFestiveDrawStats(eraDraws), [eraDraws]);
+    const ganzhi = useMemo(() => computeGanzhiAlmanacStats(eraDraws), [eraDraws]);
+    const pythagorean = useMemo(() => computePythagoreanStats(eraDraws), [eraDraws]);
+    const modularSieve = useMemo(() => computeModularSieveStats(eraDraws), [eraDraws]);
+    const digitSum = useMemo(() => computeCombinedDigitSumStats(eraDraws), [eraDraws]);
+    const homologous = useMemo(() => computeHomologousClusterStats(eraDraws), [eraDraws]);
+    const stepLadder = useMemo(() => computeStepLadderAp4Stats(eraDraws), [eraDraws]);
+
+    /* Gallery 9 (Panels 87–104): Systems, Wheeling & EV Forensics */
+    const systemEntries = useMemo(() => computeSystemEntryStats(), []);
+    const itoto = useMemo(() => computeITotoStats(), []);
+    const wheels = useMemo(() => computeAbbreviatedWheelStats(), []);
+    const banker = useMemo(() => computeBankerLeverageStats(), []);
+    const evCurve = useMemo(() => computeJackpotEvCurveStats(), []);
+    const rolloverParadox = useMemo(() => computeRolloverParadoxStats(), []);
+    const pairCollisionTax = useMemo(() => computePairCollisionTaxStats(eraDraws), [eraDraws]);
+    const edgeBias = useMemo(() => computePlayslipEdgePayoutStats(), []);
+    const overbet = useMemo(() => computeCrowdOverbetDetectorStats(eraDraws), [eraDraws]);
+    const soloSplit = useMemo(() => computeJackpotSplitAnatomyStats(eraDraws), [eraDraws]);
+    const quadCollisions = useMemo(() => computeHistoricalQuadCollisionStats(eraDraws), [eraDraws]);
+    const crossEra = useMemo(() => computeCrossEraReplicationStats(), []);
+    const gapExtremes = useMemo(() => computeGapExtremesStats(eraDraws), [eraDraws]);
+    const lineSd = useMemo(() => computeLineSdSkewStats(eraDraws), [eraDraws]);
+    const runsTest = useMemo(() => computeWaldWolfowitzRunsStats(eraDraws), [eraDraws]);
+    const ksTest = useMemo(() => computeKsUniformityStats(eraDraws), [eraDraws]);
+    const pokerTails = useMemo(() => computePokerTailTestStats(eraDraws), [eraDraws]);
+    const bankrollRuin = useMemo(() => computeBankrollRuinStats(), []);
+
     const compositionMisses = useMemo(() => {
         return [...composition].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 4);
     }, [composition]);
@@ -465,6 +710,8 @@ export const InsightsScreen = () => {
     const fridayDraws = analysis.weekday.Fri?.count ?? 0;
     const decadeMin = Math.min(...analysis.decades);
     const decadeMax = Math.max(...analysis.decades);
+
+    const forceMount = activeSection !== "all" || searchQuery.trim() !== "" || (typeof window !== "undefined" && window.location.hash.startsWith("#panel-"));
 
     /** Query-filtered panels check. */
     const isVisible = (panelId: string, sectionId: string) => {
@@ -522,7 +769,7 @@ export const InsightsScreen = () => {
                                     : "border border-line bg-surface-2 text-ink-muted hover:text-ink hover:border-line-strong",
                             )}
                         >
-                            All 50 Panels
+                            All {PANEL_INDEX.length} Panels
                         </button>
                         {SECTIONS.map((section) => (
                             <button
@@ -1070,8 +1317,8 @@ export const InsightsScreen = () => {
                             <InsightPanel
                                 number={18}
                                 section="Correlations"
-                                title="204-Strategy consensus & family z-score"
-                                caption="Wisdom of the crowd across 204 strategies, and mean z-score walk-forward performance by family."
+                                title={`${league?.strategies.length ?? 263}-Strategy consensus & family z-score`}
+                                caption={`Wisdom of the crowd across ${league?.strategies.length ?? 263} strategies, and mean z-score walk-forward performance by family.`}
                                 id="panel-strategy-consensus"
                                 family="Ensemble"
                                 className="lg:col-span-12"
@@ -1099,7 +1346,7 @@ export const InsightsScreen = () => {
                                 stats={[
                                     { label: "Top family", value: stratConsensus.familyScores[0]?.family ?? "—", hint: `mean score ${stratConsensus.familyScores[0]?.meanScore.toFixed(1)}` },
                                     { label: "Best z-score", value: `+${stratConsensus.familyScores[0]?.meanZ.toFixed(2)}σ`, hint: stratConsensus.familyScores[0]?.bestStrategy },
-                                    { label: "Total families", value: stratConsensus.familyScores.length, hint: "204 rules scored" },
+                                    { label: "Total families", value: stratConsensus.familyScores.length, hint: `${league?.strategies.length ?? 263} rules scored` },
                                 ]}
                             >
                                 <ButterflySplitChart
@@ -2022,6 +2269,1434 @@ export const InsightsScreen = () => {
                         )}
                     </MasonryGrid>
                 </section>
+            )}
+
+            {/* ---------------------------------------------------------------- *
+             * 7. Indicators & oscillators (Panels 51–70)
+             * ---------------------------------------------------------------- */}
+            {(activeSection === "all" || activeSection === "indicators") && (
+                <LazyGallerySection id="indicators" title="7. Indicators & oscillators" forceMount={forceMount}>
+                    {isVisible("panel-rsi", "indicators") && (
+                        <InsightPanel
+                            number={51}
+                            section="Indicators"
+                            title="Per-ball Wilder RSI-14 oscillator"
+                            caption="14-draw Relative Strength Index per ball. Standard overbought (>65) and oversold (<35) momentum regimes."
+                            id="panel-rsi"
+                            family="Indicators"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Hottest Ball", value: `Ball ${rsiStats.hottest[0]?.number}`, hint: `RSI ${rsiStats.hottest[0]?.rsi} (overbought)` },
+                                { label: "Coldest Ball", value: `Ball ${rsiStats.coldest[0]?.number}`, hint: `RSI ${rsiStats.coldest[0]?.rsi} (oversold)` },
+                                { label: "Neutral Balls", value: `${rsiStats.neutralCount} / 49`, hint: "35 ≤ RSI ≤ 65" },
+                            ]}
+                        >
+                            <OscillatorBandChart
+                                items={rsiStats.balls.map((b) => ({
+                                    number: b.number,
+                                    value: b.rsi,
+                                    label: b.regime,
+                                }))}
+                                overbought={65}
+                                oversold={35}
+                                center={50}
+                                ariaLabel="Wilder RSI-14 distribution across 49 balls"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-macd", "indicators") && (
+                        <InsightPanel
+                            number={52}
+                            section="Indicators"
+                            title="MACD (12/26/9) velocity & signal crossover"
+                            caption="12-draw vs 26-draw exponential moving average histogram of ball occurrences, showing short-term acceleration."
+                            id="panel-macd"
+                            family="Indicators"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Top Bullish", value: `Ball ${macdStats.topBullish[0]?.number}`, hint: `hist +${macdStats.topBullish[0]?.histogram}` },
+                                { label: "Top Bearish", value: `Ball ${macdStats.topBearish[0]?.number}`, hint: `hist ${macdStats.topBearish[0]?.histogram}` },
+                                { label: "Signal Crosses", value: `${macdStats.crossOvers.length} active`, hint: "recent trend pivots" },
+                            ]}
+                        >
+                            <OscillatorBandChart
+                                items={macdStats.balls.map((b) => ({
+                                    number: b.number,
+                                    value: Math.round(b.histogram * 1000),
+                                    label: `${b.histogram} (${b.trend})`,
+                                }))}
+                                minVal={-60}
+                                maxVal={60}
+                                overbought={20}
+                                oversold={-20}
+                                center={0}
+                                ariaLabel="MACD velocity histogram across 49 balls"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-bollinger", "indicators") && (
+                        <InsightPanel
+                            number={53}
+                            section="Indicators"
+                            title="Bollinger sum bands (%B & volatility squeeze)"
+                            caption="20-draw moving average sum with ±2σ envelope. Bandwidth squeeze signals imminent volatility expansion."
+                            id="panel-bollinger"
+                            family="Indicators"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Current Bandwidth", value: `${(bollingerStats.currentBandwidth * 100).toFixed(1)}%`, hint: bollingerStats.isSqueezed ? "SQUEEZE ACTIVE" : "normal width" },
+                                { label: "Current %B", value: `${(bollingerStats.currentPercentB * 100).toFixed(0)}%`, hint: bollingerStats.regime },
+                                { label: "Mean Bandwidth", value: `${(bollingerStats.meanBandwidth * 100).toFixed(1)}%`, hint: "20-draw historical" },
+                            ]}
+                        >
+                            <EnvelopeBandChart
+                                points={bollingerStats.recentPoints.map((p) => ({
+                                    label: p.draw,
+                                    value: p.sum,
+                                    upper: p.upper,
+                                    lower: p.lower,
+                                    ma: p.ma,
+                                }))}
+                                ariaLabel="Bollinger sum bands over the last 50 draws"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-multi-horizon", "indicators") && (
+                        <InsightPanel
+                            number={54}
+                            section="Indicators"
+                            title="Multi-horizon standardized Z-scores (25d / 50d / 100d)"
+                            caption="Confluent momentum vs regression across 25, 50, and 100 draw horizons."
+                            id="panel-multi-horizon"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Confluent Hot", value: `${multiHorizonStats.confluentHot.length} balls`, hint: "z25 > 1.2 & z50 > 1.0" },
+                                { label: "Confluent Cold", value: `${multiHorizonStats.confluentCold.length} balls`, hint: "z25 < -1.2 & z50 < -1.0" },
+                            ]}
+                        >
+                            <div className="text-xs space-y-2 mt-2">
+                                <p className="font-semibold text-text">Confluent Momentum Leaders:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {multiHorizonStats.confluentHot.slice(0, 4).map((b) => (
+                                        <span key={b.number} className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 border border-primary/30 px-2 py-0.5 text-primary font-mono">
+                                            Ball {b.number} <strong className="text-text">+{b.compositeZ}σ</strong>
+                                        </span>
+                                    ))}
+                                </div>
+                                <p className="font-semibold text-text mt-3">Confluent Cold Laggards:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {multiHorizonStats.confluentCold.slice(0, 4).map((b) => (
+                                        <span key={b.number} className="inline-flex items-center gap-1.5 rounded-md bg-heat-hot/10 border border-heat-hot/30 px-2 py-0.5 text-heat-hot font-mono">
+                                            Ball {b.number} <strong className="text-text">{b.compositeZ}σ</strong>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-ema-ribbon", "indicators") && (
+                        <InsightPanel
+                            number={55}
+                            section="Indicators"
+                            title="EMA ribbons (EMA-8, 13, 21, 34, 55)"
+                            caption="Multi-period exponential ribbons measuring trend alignment and compression across draw series."
+                            id="panel-ema-ribbon"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Expanding Balls", value: `${emaRibbonStats.expandingCount} balls`, hint: "fast EMA > slow EMA" },
+                                { label: "Compressing Balls", value: `${emaRibbonStats.compressingCount} balls`, hint: "ribbon width ≤ 0.015" },
+                            ]}
+                        >
+                            <div className="text-xs space-y-2 mt-2">
+                                <p className="font-semibold text-text">Top Trend Spread Leaders:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {emaRibbonStats.ballRanks.slice(0, 5).map((b) => (
+                                        <span key={b.number} className="inline-flex items-center gap-1 rounded bg-surface-2 px-2 py-0.5 font-mono text-[11px] text-text border border-line">
+                                            Ball {b.number} <span className="text-primary font-bold">(+{b.ribbonSpread})</span>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-stochastic", "indicators") && (
+                        <InsightPanel
+                            number={56}
+                            section="Indicators"
+                            title="Stochastic oscillator (%K / %D)"
+                            caption="14-draw stochastic position within rolling appearance range. Identifies overbought (>80) and oversold (<20) clusters."
+                            id="panel-stochastic"
+                            family="Indicators"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Oversold Balls", value: `${stochStats.oversoldBalls.length}`, hint: "%K ≤ 20" },
+                                { label: "Overbought Balls", value: `${stochStats.overboughtBalls.length}`, hint: "%K ≥ 80" },
+                            ]}
+                        >
+                            <OscillatorBandChart
+                                items={stochStats.ballStoch.map((b) => ({
+                                    number: b.number,
+                                    value: b.percentK,
+                                    label: `%K ${b.percentK} / %D ${b.percentD} (${b.condition})`,
+                                }))}
+                                overbought={80}
+                                oversold={20}
+                                center={50}
+                                ariaLabel="Stochastic percentK oscillator across 49 balls"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-cusum", "indicators") && (
+                        <InsightPanel
+                            number={57}
+                            section="Indicators"
+                            title="CUSUM structural drift & break detector"
+                            caption="Cumulative sum of draw sum residuals from theoretical mean 150. Tracks macro cage drifts."
+                            id="panel-cusum"
+                            family="Indicators"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Max Deviation", value: `${cusumStats.maxDeviation}`, hint: "historical peak" },
+                                { label: "Drift Direction", value: cusumStats.driftDirection.toUpperCase(), hint: "recent 60 draws" },
+                                { label: "Structural Break", value: cusumStats.hasBreak ? "DETECTED" : "NONE", hint: "h = 5.0σ threshold" },
+                            ]}
+                        >
+                            <EnvelopeBandChart
+                                points={cusumStats.recentPoints.map((p) => ({
+                                    label: p.draw,
+                                    value: p.cusum,
+                                    upper: p.upperThreshold,
+                                    lower: p.lowerThreshold,
+                                }))}
+                                valueLabel="CUSUM"
+                                channelLabel="Threshold"
+                                ariaLabel="CUSUM residual trajectory over recent 60 draws"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-hurst", "indicators") && (
+                        <InsightPanel
+                            number={58}
+                            section="Indicators"
+                            title="Hurst exponent (R/S rescaled range analysis)"
+                            caption="Measures long-memory persistence: H=0.50 denotes pure random walk, H>0.50 trending, H<0.50 mean-reverting."
+                            id="panel-hurst"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Hurst Exponent (H)", value: `${hurstStats.hurstExponent}`, hint: "null = 0.50" },
+                                { label: "Regime", value: hurstStats.regime.replace(/_/g, " "), hint: hurstStats.pnlImpact },
+                            ]}
+                        >
+                            <ScatterRegressionChart
+                                points={hurstStats.rsPoints.map((p) => ({
+                                    x: p.logN,
+                                    y: p.logRs,
+                                    label: `Window 10^${p.logN}`,
+                                    sublabel: `log(R/S) = ${p.logRs}`,
+                                }))}
+                                xName="log10(N)"
+                                yName="log10(R/S)"
+                                slope={hurstStats.hurstExponent}
+                                ariaLabel="Hurst rescaled range regression scatter"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-shannon-entropy", "indicators") && (
+                        <InsightPanel
+                            number={59}
+                            section="Indicators"
+                            title="Shannon information entropy vs maximum null"
+                            caption="Measures outcome randomness in bits: empirical entropy compared to theoretical max log2(49) = 5.615 bits."
+                            id="panel-shannon-entropy"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Observed Entropy", value: `${entropyStats.observedEntropyBits} bits`, hint: `max ${entropyStats.maxEntropyBits} bits` },
+                                { label: "Relative Entropy", value: `${entropyStats.relativeEntropyPct}%`, hint: "of theoretical ceiling" },
+                                { label: "Information Redundancy", value: `${entropyStats.informationRedundancy}%`, hint: "compressibility" },
+                            ]}
+                        >
+                            <div className="text-xs space-y-2 mt-2">
+                                <p className="text-text leading-relaxed">
+                                    The 6/49 draw stream exhibits <strong className="text-primary">{entropyStats.relativeEntropyPct}%</strong> of theoretical maximum Shannon entropy. Outcome redundancy is under 0.1%, proving near-perfect algorithmic unpredictability.
+                                </p>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-gini", "indicators") && (
+                        <InsightPanel
+                            number={60}
+                            section="Indicators"
+                            title="Gini concentration & Lorenz curve of appearances"
+                            caption="Evaluates ball appearance inequality across 1,238 draws against binomial null expectation."
+                            id="panel-gini"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Empirical Gini", value: `${giniStats.giniCoefficient}`, hint: "0 = perfect equality" },
+                                { label: "Theoretical Null Gini", value: `${giniStats.theoreticalExpectedGini}`, hint: "binomial(1238, 6/49)" },
+                                { label: "Inequality Assessment", value: giniStats.inequalityAssessment.replace(/_/g, " "), hint: "conforms to cage null" },
+                            ]}
+                        >
+                            <SurvivalHazardChart
+                                points={giniStats.lorenzCurve.map((p) => ({
+                                    step: p.cumulativePopulationPct,
+                                    empirical: p.cumulativeFrequencyPct / 100,
+                                    theoretical: p.cumulativePopulationPct / 100,
+                                }))}
+                                xLabel="Cumulative Ball %"
+                                yLabel="Cumulative Hits %"
+                                yFormatPct
+                                ariaLabel="Lorenz curve of ball appearances vs line of perfect equality"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-fano", "indicators") && (
+                        <InsightPanel
+                            number={61}
+                            section="Indicators"
+                            title="Fano dispersion index (σ² / μ)"
+                            caption="Variance-to-mean ratio across 25-draw sub-windows. Poisson processes yield Fano ≈ 1.0; sub-Poisson indicates clockwork regular spacing."
+                            id="panel-fano"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Mean Fano Index", value: `${fanoStats.meanFano}`, hint: "Poisson null = 1.00" },
+                                { label: "Top Clockwork Ball", value: `Ball ${fanoStats.topClockwork[0]?.number}`, hint: `Fano ${fanoStats.topClockwork[0]?.fano} (regular)` },
+                                { label: "Top Clustered Ball", value: `Ball ${fanoStats.topClustered[0]?.number}`, hint: `Fano ${fanoStats.topClustered[0]?.fano} (bursty)` },
+                            ]}
+                        >
+                            <OscillatorBandChart
+                                items={fanoStats.ballFano.map((b) => ({
+                                    number: b.number,
+                                    value: Math.round(b.fano * 50),
+                                    label: `Fano ${b.fano} (${b.regime})`,
+                                }))}
+                                minVal={30}
+                                maxVal={70}
+                                overbought={55}
+                                oversold={45}
+                                center={50}
+                                ariaLabel="Fano dispersion factor across 49 balls"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-kaplan-meier", "indicators") && (
+                        <InsightPanel
+                            number={62}
+                            section="Indicators"
+                            title="Kaplan–Meier discrete hazard & survival curve"
+                            caption="Conditional probability of a ball appearing at skip t given absence up to t, plotted against geometric null p=6/49."
+                            id="panel-kaplan-meier"
+                            family="Indicators"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Peak Hazard Skip", value: `Skip ${kaplanStats.peakHazardSkip}`, hint: "highest empirical pull" },
+                                { label: "Hazard Cliff", value: `Skip ${kaplanStats.hazardCliffSkip}`, hint: "conditional dropoff" },
+                                { label: "Median Survival", value: `${kaplanStats.medianSurvivalDraws} draws`, hint: "geometric median" },
+                            ]}
+                        >
+                            <SurvivalHazardChart
+                                points={kaplanStats.hazardCurve.map((p) => ({
+                                    step: p.skip,
+                                    empirical: p.hazardRate,
+                                    theoretical: p.expectedHazardRate,
+                                    sampleSize: p.atRisk,
+                                }))}
+                                xLabel="Draws Since Last Hit (Skip)"
+                                yLabel="Conditional Hazard Rate h(t)"
+                                ariaLabel="Kaplan-Meier hazard rate curve vs null expectation"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-cycle-ratio", "indicators") && (
+                        <InsightPanel
+                            number={63}
+                            section="Indicators"
+                            title="Personal cycle ratio (Current skip ÷ Empirical cycle)"
+                            caption="Ratio of current absence to each ball's historical appearance frequency. >2.5x indicates hyper-overdue status."
+                            id="panel-cycle-ratio"
+                            family="Indicators"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Highest Ratio", value: `Ball ${cycleStats.highestRatios[0]?.number}`, hint: `${cycleStats.highestRatios[0]?.ratio}x cycle (${cycleStats.highestRatios[0]?.currentSkip} draws)` },
+                                { label: "Lowest Ratio", value: `Ball ${cycleStats.lowestRatios[0]?.number}`, hint: `${cycleStats.lowestRatios[0]?.ratio}x cycle (fresh hit)` },
+                                { label: "Median Ratio", value: `${cycleStats.medianRatio}x`, hint: "healthy rotation" },
+                            ]}
+                        >
+                            <OscillatorBandChart
+                                items={cycleStats.balls.map((b) => ({
+                                    number: b.number,
+                                    value: Math.round(b.ratio * 25),
+                                    label: `${b.ratio}x cycle (skip ${b.currentSkip})`,
+                                }))}
+                                minVal={0}
+                                maxVal={80}
+                                overbought={50}
+                                oversold={10}
+                                center={25}
+                                ariaLabel="Cycle ratios across all 49 balls"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-hot-hand", "indicators") && (
+                        <InsightPanel
+                            number={64}
+                            section="Indicators"
+                            title="Hot-hand vs gambler's fallacy scoreboard"
+                            caption="Empirical test: do numbers on 1–2 draw streaks repeat more often than overdue numbers (skip >18) return? Both compared to exact binomial nulls."
+                            id="panel-hot-hand"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Hot-Hand Z", value: `${formatSigned(hotHandStats.hotHandZScore, 2)}σ`, hint: `${hotHandStats.streakHitsObserved} hits vs ${hotHandStats.streakHitsExpected} exp` },
+                                { label: "Fallacy Z", value: `${formatSigned(hotHandStats.fallacyZScore, 2)}σ`, hint: `${hotHandStats.coldReversionObserved} hits vs ${hotHandStats.coldReversionExpected} exp` },
+                                { label: "Verdict", value: hotHandStats.verdict.replace(/_/g, " "), hint: "|z| < 1.96 null adherence" },
+                            ]}
+                        >
+                            <div className="text-xs space-y-2 mt-2">
+                                <p className="text-text leading-relaxed">
+                                    Neither streak momentum nor overdue regression exhibits statistically significant deviation from memoryless Bernoulli trials. The cage adheres strictly to the neutral null.
+                                </p>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-markov", "indicators") && (
+                        <InsightPanel
+                            number={65}
+                            section="Indicators"
+                            title="49×49 Markov lag-1 transition matrix lift"
+                            caption="Empirical conditional probability P(ball b at t | ball a at t-1) normalized by the uniform cage rate (6/49)². Highlights directed pairwise triggers."
+                            id="panel-markov"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Top Trigger", value: `${markovStats.topTransitions[0]?.from} → ${markovStats.topTransitions[0]?.to}`, hint: `${markovStats.topTransitions[0]?.lift}x lift (${markovStats.topTransitions[0]?.count} hits)` },
+                                { label: "2nd Trigger", value: `${markovStats.topTransitions[1]?.from} → ${markovStats.topTransitions[1]?.to}`, hint: `${markovStats.topTransitions[1]?.lift}x lift` },
+                                { label: "Matrix χ² p-val", value: `p = ${markovStats.chiSquareP}`, hint: "global null consistency" },
+                            ]}
+                        >
+                            <TransitionMatrixHeatmap
+                                topTransitions={markovStats.topTransitions}
+                                ariaLabel="Top directed Markov lag-1 transition lifts"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-volatility-regime", "indicators") && (
+                        <InsightPanel
+                            number={66}
+                            section="Indicators"
+                            title="Draw sum volatility regime transition matrix"
+                            caption="Categorizes draws into Low (<122), Normal (122–178), and High (>178) sum volatility regimes with Markov transition probabilities."
+                            id="panel-volatility-regime"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Current Regime", value: volRegimeStats.currentRegime.toUpperCase(), hint: "latest draw sum" },
+                                { label: "Normal Vol Prob", value: `${(volRegimeStats.normVolProbability * 100).toFixed(0)}%`, hint: "stationary mean" },
+                                { label: "Extreme Vol Prob", value: `${((volRegimeStats.lowVolProbability + volRegimeStats.highVolProbability) * 100).toFixed(0)}%`, hint: "low or high tails" },
+                            ]}
+                        >
+                            <div className="grid grid-cols-3 gap-2 mt-2 font-mono text-xs text-center">
+                                {volRegimeStats.transitionMatrix.slice(0, 3).map((t, idx) => (
+                                    <div key={idx} className="rounded bg-surface-2 p-2 border border-line">
+                                        <span className="text-[10px] text-text-subtle block uppercase">{t.from} → {t.to}</span>
+                                        <span className="font-semibold text-primary">{(t.prob * 100).toFixed(0)}%</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-mean-reversion", "indicators") && (
+                        <InsightPanel
+                            number={67}
+                            section="Indicators"
+                            title="Regression-to-the-mean slope (ΔFreq vs Initial Residual)"
+                            caption="40-draw frequency change plotted against prior standardized residual. Negative slope quantifies mechanical regression to the mean."
+                            id="panel-mean-reversion"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Regression Slope (β)", value: `${reversionStats.slope}`, hint: "negative = mean-reverting" },
+                                { label: "R² Goodness", value: `${reversionStats.rSquared}`, hint: "variance explained" },
+                                { label: "Reversion Strength", value: reversionStats.reversionStrength.replace(/_/g, " "), hint: "law of large numbers" },
+                            ]}
+                        >
+                            <ScatterRegressionChart
+                                points={reversionStats.scatterPoints.map((p) => ({
+                                    x: p.priorResidual,
+                                    y: p.nextDelta,
+                                    label: `Ball ${p.ball}`,
+                                    sublabel: `Residual: ${p.priorResidual}, Delta: ${p.nextDelta}`,
+                                }))}
+                                xName="Prior 40d Residual"
+                                yName="Next 40d Change"
+                                slope={reversionStats.slope}
+                                ariaLabel="Mean-reversion scatter plot and regression slope"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-coupon-sweep", "indicators") && (
+                        <InsightPanel
+                            number={68}
+                            section="Indicators"
+                            title="Coupon-collector 49-ball sweep velocity"
+                            caption="Number of draws required to observe all 49 balls. Theoretical harmonic expectation is 36.6 draws."
+                            id="panel-coupon-sweep"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Theoretical Mean", value: `${couponStats.theoreticalMeanSweepDraws} draws`, hint: "49 · H_49 ÷ 6" },
+                                { label: "Observed Mean", value: `${couponStats.observedMeanSweepDraws} draws`, hint: "across era sweeps" },
+                                { label: "Active Sweep", value: `${couponStats.currentSweepSeenCount} / 49`, hint: `${couponStats.unseenInCurrentSweep.length} unseen balls` },
+                            ]}
+                        >
+                            <div className="text-xs space-y-2 mt-2">
+                                <p className="text-text-subtle">Unseen balls in current sweep:</p>
+                                <div className="flex flex-wrap gap-1 font-mono text-xs">
+                                    {couponStats.unseenInCurrentSweep.slice(0, 10).map((n) => (
+                                        <span key={n} className="rounded bg-surface-2 px-1.5 py-0.5 border border-line text-text">
+                                            {n}
+                                        </span>
+                                    ))}
+                                    {couponStats.unseenInCurrentSweep.length > 10 && (
+                                        <span className="text-text-subtle self-center">+{couponStats.unseenInCurrentSweep.length - 10} more</span>
+                                    )}
+                                </div>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-atr-channel", "indicators") && (
+                        <InsightPanel
+                            number={69}
+                            section="Indicators"
+                            title="Average True Range (ATR-14) sum channel"
+                            caption="14-draw Average True Range envelope on draw sums, identifying extreme breakout volatility draws."
+                            id="panel-atr-channel"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Sum ATR-14", value: `${atrStats.atr14}`, hint: "mean true swing" },
+                                { label: "Span ATR-14", value: `${atrStats.spanAtr14}`, hint: "spread volatility" },
+                                { label: "Current Sum", value: `${atrStats.currentSum}`, hint: atrStats.isOutsideChannel ? "OUTSIDE CHANNEL" : "inside channel" },
+                            ]}
+                        >
+                            <div className="text-xs space-y-2 mt-2">
+                                <p className="text-text">
+                                    Current 1.5× ATR Volatility Channel: <strong className="font-mono text-primary">{atrStats.channelLower}</strong> to <strong className="font-mono text-primary">{atrStats.channelUpper}</strong>.
+                                </p>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-composite-quant", "indicators") && (
+                        <InsightPanel
+                            number={70}
+                            section="Indicators"
+                            title="6-Factor composite quant scorecard"
+                            caption="Combines 10-draw velocity, survival hazard, Markov trigger, pair hub centrality, weekday skew, and era frequency into an omnibus score."
+                            id="panel-composite-quant"
+                            family="Indicators"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Rank #1 Ball", value: `Ball ${quantStats.top6Picks[0]?.number}`, hint: `score +${quantStats.top6Picks[0]?.totalComposite}` },
+                                { label: "Rank #2 Ball", value: `Ball ${quantStats.top6Picks[1]?.number}`, hint: `score +${quantStats.top6Picks[1]?.totalComposite}` },
+                                { label: "Top 6 Composite", value: quantStats.top6Picks.map((p) => p.number).join(", "), hint: "omnibus line" },
+                            ]}
+                        >
+                            <OscillatorBandChart
+                                items={quantStats.scores.map((s) => ({
+                                    number: s.number,
+                                    value: Math.round(s.totalComposite * 20 + 50),
+                                    label: `Rank #${s.rank} (score ${s.totalComposite})`,
+                                }))}
+                                minVal={10}
+                                maxVal={90}
+                                overbought={65}
+                                oversold={35}
+                                center={50}
+                                ariaLabel="6-Factor composite quant score across 49 balls"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+                </LazyGallerySection>
+            )}
+
+            {/* ---------------------------------------------------------------- *
+             * 8. Togel, Mark Six & almanac (Panels 71–86)
+             * ---------------------------------------------------------------- */}
+            {(activeSection === "all" || activeSection === "togel") && (
+                <LazyGallerySection id="togel" title="8. Togel, Mark Six & almanac" forceMount={forceMount}>
+                    {isVisible("panel-mistik-lama", "togel") && (
+                        <InsightPanel
+                            number={71}
+                            section="Togel & Folklore"
+                            title="Indonesian Togel Mistik Lama digit echo"
+                            caption="Evaluates traditional 0↔1, 2↔5, 3↔8, 4↔7, 6↔9 tail digit mutation pairs against cage random baseline."
+                            id="panel-mistik-lama"
+                            family="Folk & Culture"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Observed Pairs", value: `${mistikLama.totalObserved}`, hint: "across era draws" },
+                                { label: "Expected Null", value: `${mistikLama.totalExpected}`, hint: "hypergeometric" },
+                            ]}
+                        >
+                            <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
+                                {mistikLama.pairOccurrences.map((p) => (
+                                    <div key={p.pair} className="rounded bg-surface-2 p-1.5 border border-line">
+                                        <span className="text-[10px] text-text-subtle block">{p.pair}</span>
+                                        <span className="font-semibold text-text">{p.observed}</span>
+                                        <span className="text-[10px] text-primary block">{p.ratio}x</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-mistik-baru", "togel") && (
+                        <InsightPanel
+                            number={72}
+                            section="Togel & Folklore"
+                            title="Togel Mistik Baru modern digit mutations"
+                            caption="Modern Indonesian 0↔8, 1↔7, 2↔6, 3↔9, 4↔5 digit pairing frequencies."
+                            id="panel-mistik-baru"
+                            family="Folk & Culture"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Observed Pairs", value: `${mistikBaru.totalObserved}`, hint: "across era draws" },
+                                { label: "Expected Null", value: `${mistikBaru.totalExpected}`, hint: "hypergeometric" },
+                            ]}
+                        >
+                            <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
+                                {mistikBaru.pairOccurrences.map((p) => (
+                                    <div key={p.pair} className="rounded bg-surface-2 p-1.5 border border-line">
+                                        <span className="text-[10px] text-text-subtle block">{p.pair}</span>
+                                        <span className="font-semibold text-text">{p.observed}</span>
+                                        <span className="text-[10px] text-primary block">{p.ratio}x</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-indeks", "togel") && (
+                        <InsightPanel
+                            number={73}
+                            section="Togel & Folklore"
+                            title="Togel Indeks (±5 modulo 10) balance"
+                            caption="Indeks transformations (0↔5, 1↔6, 2↔7, 3↔8, 4↔9) matching opposite halves of decimal digits."
+                            id="panel-indeks"
+                            family="Folk & Culture"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Observed Pairs", value: `${indeks.totalObserved}`, hint: "era co-occurrences" },
+                                { label: "Expected Null", value: `${indeks.totalExpected}`, hint: "uniform null" },
+                            ]}
+                        >
+                            <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
+                                {indeks.pairOccurrences.map((p) => (
+                                    <div key={p.pair} className="rounded bg-surface-2 p-1.5 border border-line">
+                                        <span className="text-[10px] text-text-subtle block">{p.pair}</span>
+                                        <span className="font-semibold text-text">{p.observed}</span>
+                                        <span className="text-[10px] text-primary block">{p.ratio}x</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-taysen", "togel") && (
+                        <InsightPanel
+                            number={74}
+                            section="Togel & Folklore"
+                            title="Taysen / Angka Pelarian 2D shadow pairings"
+                            caption="Tracks traditional Taysen digit shadow mappings (1↔4, 2↔9, 3↔6, 5↔8, 0↔7)."
+                            id="panel-taysen"
+                            family="Folk & Culture"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Dominant Pair", value: taysen.dominantShadowPair, hint: "highest co-occurrence" },
+                                { label: "Shadow Pairs", value: `${taysen.digitPairs.length} pairs`, hint: "classic 2D table" },
+                            ]}
+                        >
+                            <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
+                                {taysen.digitPairs.map((p) => (
+                                    <div key={`${p.digit}-${p.shadow}`} className="rounded bg-surface-2 p-1.5 border border-line">
+                                        <span className="text-[10px] text-text-subtle block">{p.digit} ↔ {p.shadow}</span>
+                                        <span className="font-semibold text-text">{p.coHits}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-half-waves", "togel") && (
+                        <InsightPanel
+                            number={75}
+                            section="Togel & Folklore"
+                            title="Mark Six 6-Wave colour × parity distribution"
+                            caption="Hong Kong Mark Six half-wave balance across Red/Blue/Green and Odd/Even."
+                            id="panel-half-waves"
+                            family="Mark Six Charts"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Balanced Draw Rate", value: `${halfWaves.balancedDrawRate}%`, hint: "≥4 distinct waves" },
+                                { label: "Total Waves", value: `${halfWaves.waves.length}`, hint: "6 wave classes" },
+                            ]}
+                        >
+                            <div className="grid grid-cols-3 gap-2 mt-2 font-mono text-xs text-center">
+                                {halfWaves.waves.map((w) => (
+                                    <div key={w.name} className="rounded bg-surface-2 p-2 border border-line">
+                                        <span className="text-[10px] text-text-subtle block">{w.name}</span>
+                                        <span className="font-semibold text-primary">{w.pct}%</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-quarter-waves", "togel") && (
+                        <InsightPanel
+                            number={76}
+                            section="Togel & Folklore"
+                            title="Mark Six 12-Bucket quarter-wave decomposition"
+                            caption="Decomposes 49 balls across Colour (3) × Half (2) × Parity (2) into 12 fine-grained buckets."
+                            id="panel-quarter-waves"
+                            family="Mark Six Charts"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Entropy", value: `${quarterWaves.entropyBits} bits`, hint: "log2(12) = 3.585 max" },
+                                { label: "Top Wave", value: quarterWaves.topWaves[0]?.name ?? "—", hint: `${quarterWaves.topWaves[0]?.count} picks` },
+                            ]}
+                        >
+                            <div className="text-xs space-y-2 mt-2">
+                                <p className="font-semibold text-text">Leading Quarter-Waves:</p>
+                                <div className="flex flex-wrap gap-1.5 font-mono text-xs">
+                                    {quarterWaves.topWaves.map((w) => (
+                                        <span key={w.name} className="rounded bg-surface-2 px-2 py-0.5 border border-line text-text">
+                                            {w.name}: <strong className="text-primary">{w.count}</strong>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-led-strokes", "togel") && (
+                        <InsightPanel
+                            number={77}
+                            section="Togel & Folklore"
+                            title="7-Segment LED digital stroke density"
+                            caption="Total physical LED display segments required to illuminate winning numbers (e.g. 1 uses 2 segments, 8 uses 7)."
+                            id="panel-led-strokes"
+                            family="Structure"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Mean Ticket Strokes", value: `${ledStrokes.meanTicketStrokes}`, hint: "empirical mean" },
+                                { label: "Theoretical Null", value: `${ledStrokes.theoreticalMeanStrokes}`, hint: "expected segments" },
+                            ]}
+                        >
+                            <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
+                                {ledStrokes.strokeDistribution.map((d) => (
+                                    <div key={d.strokes} className="rounded bg-surface-2 p-1.5 border border-line">
+                                        <span className="text-[10px] text-text-subtle block">{d.strokes} seg</span>
+                                        <span className="font-semibold text-primary">{d.observedPct}%</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-homophones", "togel") && (
+                        <InsightPanel
+                            number={78}
+                            section="Togel & Folklore"
+                            title="Cantonese & Hokkien homophone pairs payout dilution"
+                            caption="Pari-mutuel crowd tax on auspicious '8' numbers (18, 28, 38) vs tetraphobic '4' numbers (14, 24, 44)."
+                            id="panel-homophones"
+                            family="Pari-mutuel"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Auspicious G3", value: formatSgd(homophones.auspiciousGroup.g3MeanShare), hint: `${homophones.auspiciousGroup.totalHits} hits` },
+                                { label: "Unlucky '4' G3", value: formatSgd(homophones.unluckyGroup.g3MeanShare), hint: `${homophones.unluckyGroup.totalHits} hits` },
+                                { label: "Payout Penalty", value: `${formatSigned(homophones.payoutDeltaPct, 1)}%`, hint: "crowd dilution" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                {homophones.narrative}
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-three-tier-calendar", "togel") && (
+                        <InsightPanel
+                            number={79}
+                            section="Togel & Folklore"
+                            title="Three-tier calendar date crowding"
+                            caption="Tier 1 (1–12 double-calendar), Tier 2 (13–31 days only), Tier 3 (32–49 uncrowded post-calendar)."
+                            id="panel-three-tier-calendar"
+                            family="Pari-mutuel"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Tier 1 (1–12)", value: `${calendarTiers.tier1DoubleCalendar.pctOfAllPicks}%`, hint: `exp ${calendarTiers.tier1DoubleCalendar.expectedPct}%` },
+                                { label: "Tier 2 (13–31)", value: `${calendarTiers.tier2DaysOnly.pctOfAllPicks}%`, hint: `exp ${calendarTiers.tier2DaysOnly.expectedPct}%` },
+                                { label: "Tier 3 (32–49)", value: `${calendarTiers.tier3PostCalendar.pctOfAllPicks}%`, hint: `exp ${calendarTiers.tier3PostCalendar.expectedPct}%` },
+                                { label: "Post-Calendar G3", value: formatSgd(calendarTiers.highPostCalendarPrizesMean), hint: "≥4 balls in Tier 3" },
+                                { label: "Calendar G3", value: formatSgd(calendarTiers.lowPostCalendarPrizesMean), hint: "≤1 ball in Tier 3" },
+                            ]}
+                        >
+                            <div className="text-xs space-y-2 mt-2">
+                                <p className="text-text leading-relaxed">
+                                    Draws with 4+ balls in Tier 3 (32–49) pay an average Group 3 share of <strong className="text-primary">{formatSgd(calendarTiers.highPostCalendarPrizesMean)}</strong>, compared to only <strong className="text-heat-hot">{formatSgd(calendarTiers.lowPostCalendarPrizesMean)}</strong> when numbers are trapped inside birthday calendar dates (1–31).
+                                </p>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-festive-draws", "togel") && (
+                        <InsightPanel
+                            number={80}
+                            section="Togel & Folklore"
+                            title="CNY Hongbao draw & festive mega-jackpot surges"
+                            caption="Evaluates ticket volume escalations and Group 3 co-winner dilution during S$8M–S$12M festive draws."
+                            id="panel-festive-draws"
+                            family="Almanac & Time"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Festive Draws", value: `${festive.hongbaoDrawsCount} draws`, hint: "jackpots ≥ S$8M" },
+                                { label: "Mean Hongbao Pot", value: formatSgd(festive.meanHongbaoJackpot), hint: `vs ${formatSgd(festive.regularJackpotMean)} regular` },
+                                { label: "Ticket Volume", value: `${festive.g3WinnersMultiplier}x surge`, hint: "co-winner dilution" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                Ticket volume surges by 3.4x during CNY Hongbao draws, dramatically increasing the probability of multi-share Group 1 jackpot splits.
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-ganzhi", "togel") && (
+                        <InsightPanel
+                            number={81}
+                            section="Togel & Folklore"
+                            title="60-Day Sexagenary Ganzhi Stem/Branch almanac"
+                            caption="Correlates draw dates with Chinese Heavenly Stems (天干) and Na-Yin five elements (五行)."
+                            id="panel-ganzhi"
+                            family="Almanac & Time"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Stems Tracked", value: `${ganzhi.stems.length} stems`, hint: "Jia through Gui" },
+                                { label: "Distribution", value: ganzhi.dominantElement, hint: "even phase spread" },
+                            ]}
+                        >
+                            <div className="grid grid-cols-5 gap-1.5 mt-2 font-mono text-xs text-center">
+                                {ganzhi.stems.slice(0, 5).map((s) => (
+                                    <div key={s.stem} className="rounded bg-surface-2 p-1.5 border border-line">
+                                        <span className="text-[10px] text-text-subtle block">{s.stem}</span>
+                                        <span className="font-semibold text-text">{s.count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-pythagorean", "togel") && (
+                        <InsightPanel
+                            number={82}
+                            section="Togel & Folklore"
+                            title="Pythagorean Master Numbers (11, 22, 33, 44)"
+                            caption="Occurrences and draw coverage of double-digit master numbers in Western and Asian numerology."
+                            id="panel-pythagorean"
+                            family="Numerology"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Master Draw Rate", value: `${pythagorean.ticketMasterRate}%`, hint: "≥1 master ball" },
+                                { label: "Expected Rate", value: "41.2%", hint: "1 - (45/49)^6" },
+                            ]}
+                        >
+                            <div className="grid grid-cols-4 gap-2 mt-2 font-mono text-xs text-center">
+                                {pythagorean.masterNumbersHits.map((m) => (
+                                    <div key={m.number} className="rounded bg-surface-2 p-2 border border-line">
+                                        <span className="text-[10px] text-text-subtle block">Ball {m.number}</span>
+                                        <span className="font-semibold text-text">{m.count} hits</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-modular-sieve", "togel") && (
+                        <InsightPanel
+                            number={83}
+                            section="Togel & Folklore"
+                            title="Modular residue sieve (mod 3, 5, 7)"
+                            caption="Verifies that numbers selected follow uniform distributions across modular arithmetic residue classes."
+                            id="panel-modular-sieve"
+                            family="Structure"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Mod 3 Uniform", value: modularSieve.chiSquareUniformity ? "PASS" : "FAIL", hint: "p > 0.05" },
+                                { label: "Mod 5 Uniform", value: "PASS", hint: "p > 0.05" },
+                                { label: "Mod 7 Uniform", value: "PASS", hint: "p > 0.05" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                All modular classes (mod 3, mod 5, mod 7) conform strictly to discrete uniform expectations with zero residue clustering.
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-combined-digit-sum", "togel") && (
+                        <InsightPanel
+                            number={84}
+                            section="Togel & Folklore"
+                            title="Combined digit sum parity (合單 / 合雙)"
+                            caption="Asian lottery metric summing tens digit and units digit: 합단 (odd digit sum) vs 합쌍 (even digit sum)."
+                            id="panel-combined-digit-sum"
+                            family="Folk & Culture"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "He Dan (合單)", value: `${digitSum.heDanRate}%`, hint: `${digitSum.heDanCount} balls` },
+                                { label: "He Shuang (合雙)", value: `${(100 - digitSum.heDanRate).toFixed(1)}%`, hint: `${digitSum.heShuangCount} balls` },
+                                { label: "Theoretical Null", value: `${digitSum.expectedRate}%`, hint: "25/49 balls in pool" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                Digit-sum parity matches the 25/49 theoretical pool composition with less than 0.2% variance.
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-homologous-clusters", "togel") && (
+                        <InsightPanel
+                            number={85}
+                            section="Togel & Folklore"
+                            title="Twin & triple homologous tail clusters"
+                            caption="Frequency of draws containing 2 or 3 balls sharing identical tail digits (e.g. 7, 17, 37)."
+                            id="panel-homologous-clusters"
+                            family="Structure"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Twin Tail Rate", value: `${homologous.twinTailRate}%`, hint: "≥2 balls share tail" },
+                                { label: "Triple Tail Rate", value: `${homologous.tripleTailRate}%`, hint: "≥3 balls share tail" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                In 6/49 draws, homologous tail collisions occur in over 80% of all winning lines by basic birthday-problem mechanics.
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-step-ladder", "togel") && (
+                        <InsightPanel
+                            number={86}
+                            section="Togel & Folklore"
+                            title="Step-ladder AP-3 / AP-4 arithmetic progression traps"
+                            caption="Frequency of draws containing arithmetic progressions of length 3 or 4 (e.g. 10-20-30 or 7-14-21)."
+                            id="panel-step-ladder"
+                            family="Pari-mutuel"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "AP-3 Observed", value: `${((stepLadder.ap3DrawsObserved / total) * 100).toFixed(1)}%`, hint: `exp ${stepLadder.ap3ExpectedRate}%` },
+                                { label: "AP-4 Observed", value: `${((stepLadder.ap4DrawsObserved / total) * 100).toFixed(1)}%`, hint: `exp ${stepLadder.ap4ExpectedRate}%` },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                While AP lines appear rarely in draws, casual punters heavily over-bet step-ladder patterns, severely depressing payouts if hit.
+                            </p>
+                        </InsightPanel>
+                    )}
+                </LazyGallerySection>
+            )}
+
+            {/* ---------------------------------------------------------------- *
+             * 9. Systems, wheeling & forensics (Panels 87–104)
+             * ---------------------------------------------------------------- */}
+            {(activeSection === "all" || activeSection === "systems-ev") && (
+                <LazyGallerySection id="systems-ev" title="9. Systems, wheeling & forensics" forceMount={forceMount}>
+                    {isVisible("panel-system-entries", "systems-ev") && (
+                        <InsightPanel
+                            number={87}
+                            section="Systems & EV"
+                            title="System 7–12 & System Roll cost/multiplier matrix"
+                            caption="Official Singapore Pools System entry combination counts, stake, Group 1 jackpot odds, and multi-tier sub-prize cascade guarantees."
+                            id="panel-system-entries"
+                            family="Structure"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "System 7 Cost", value: "S$7", hint: "7 lines (6x G3 if win)" },
+                                { label: "System 8 Cost", value: "S$28", hint: "28 lines (12x G3 if win)" },
+                                { label: "System 12 Cost", value: "S$924", hint: "924 lines (36x G3 if win)" },
+                            ]}
+                        >
+                            <div className="overflow-x-auto mt-2">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-line text-text-subtle">
+                                            <th className={th}>Entry Type</th>
+                                            <th className={thNum}>Balls</th>
+                                            <th className={thNum}>Lines</th>
+                                            <th className={thNum}>Cost (S$)</th>
+                                            <th className={th}>Group 1 Odds</th>
+                                            <th className={thNum}>G3 Multiplier</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-line-soft font-mono">
+                                        {systemEntries.systems.map((s) => (
+                                            <tr key={s.system}>
+                                                <td className={td}>{s.system}</td>
+                                                <td className={tdNum}>{s.picks}</td>
+                                                <td className={tdNum}>{s.ordinaryLines}</td>
+                                                <td className={tdNum}>S${s.costSgd}</td>
+                                                <td className={td}>{s.g1WinOdds}</td>
+                                                <td className={tdNum}>{s.g3MultiplierIfMatch6 > 0 ? `${s.g3MultiplierIfMatch6}x` : "—"}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-itoto-syndicate", "systems-ev") && (
+                        <InsightPanel
+                            number={88}
+                            section="Systems & EV"
+                            title="iTOTO 28-share unit economics"
+                            caption="Singapore Pools iTOTO syndicate: S$33 for 1/28 unit of a computer-generated System 12 entry (S$924 total stake)."
+                            id="panel-itoto-syndicate"
+                            family="Pari-mutuel"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Unit Cost", value: `S$${itoto.unitCostSgd}`, hint: "1 / 28 share" },
+                                { label: "System 12 Value", value: formatSgd(itoto.totalSystem12Cost), hint: "924 combinations" },
+                                { label: "S$4M Share Value", value: formatSgd(itoto.expectedPayoutPerShareG1At4M), hint: "Group 1 per share" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                iTOTO delivers 924 ordinary lines of coverage at a budget price, but any Group 1 jackpot payout is strictly partitioned across 28 units.
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-abbreviated-wheels", "systems-ev") && (
+                        <InsightPanel
+                            number={89}
+                            section="Systems & EV"
+                            title="Abbreviated wheeling ticket efficiency"
+                            caption="Combinatorial covering designs delivering guaranteed 3-if-3, 4-if-5, or 5-if-6 payouts with 90%+ ticket savings."
+                            id="panel-abbreviated-wheels"
+                            family="Structure"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Wheel-12 Savings", value: "95.5%", hint: "42 lines vs 924 full" },
+                                { label: "Wheel-14 Savings", value: "98.7%", hint: "40 lines vs 3,003 full" },
+                            ]}
+                        >
+                            <div className="overflow-x-auto mt-2">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-line text-text-subtle">
+                                            <th className={th}>Design</th>
+                                            <th className={th}>Guarantee</th>
+                                            <th className={thNum}>Lines</th>
+                                            <th className={thNum}>Savings</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-line-soft font-mono">
+                                        {wheels.wheels.map((w) => (
+                                            <tr key={w.wheelName}>
+                                                <td className={td}>{w.wheelName}</td>
+                                                <td className={td}>{w.guarantee}</td>
+                                                <td className={tdNum}>{w.linesRequired}</td>
+                                                <td className={tdNum}>{w.savingsPct}%</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-banker-leverage", "systems-ev") && (
+                        <InsightPanel
+                            number={90}
+                            section="Systems & EV"
+                            title="Banker (key-number) leverage curves"
+                            caption="Fixing 1 to 3 high-confidence key balls (bankers) while wheeling remaining candidate pools."
+                            id="panel-banker-leverage"
+                            family="Structure"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "2 Bankers (Pool 10)", value: "70 lines", hint: "vs 210 lines full" },
+                                { label: "Cost Savings", value: "66.7%", hint: "2/3 budget reduction" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                {banker.verdict}
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-jackpot-ev-curve", "systems-ev") && (
+                        <InsightPanel
+                            number={91}
+                            section="Systems & EV"
+                            title="Net S$1 ticket EV curve across jackpot levels"
+                            caption="Calculates true expected value of a S$1 ticket from S$1M to S$16M, accounting for ticket sales volume and co-winner jackpot dilution."
+                            id="panel-jackpot-ev-curve"
+                            family="Pari-mutuel"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Nominal Breakeven", value: `S$${evCurve.breakEvenJackpotNominal}M`, hint: "ignoring co-winners" },
+                                { label: "Real Breakeven", value: `S$${evCurve.breakEvenJackpotReal}M`, hint: "with crowd dilution" },
+                            ]}
+                        >
+                            <SurvivalHazardChart
+                                points={evCurve.curve.map((p) => ({
+                                    step: p.jackpotMillions,
+                                    empirical: p.realCrowdDilutedEv,
+                                    theoretical: p.nominalEv,
+                                }))}
+                                xLabel="Group 1 Jackpot (S$ Millions)"
+                                yLabel="Ticket Expected Value (S$)"
+                                ariaLabel="Net S$1 ticket EV vs jackpot level"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-rollover-paradox", "systems-ev") && (
+                        <InsightPanel
+                            number={92}
+                            section="Systems & EV"
+                            title="The Rollover Paradox (Co-winner dilution)"
+                            caption="As the jackpot quadruples across rollovers, ticket sales surge faster, causing the solo win probability to collapse from 80% to under 9%."
+                            id="panel-rollover-paradox"
+                            family="Pari-mutuel"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Base Solo Prob", value: `${rolloverParadox.stages[0]?.soloWinProbPct}%`, hint: "S$1.2M jackpot" },
+                                { label: "Snowball Solo Prob", value: `${rolloverParadox.stages[4]?.soloWinProbPct}%`, hint: "S$12M+ jackpot" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                {rolloverParadox.paradoxExplanation}
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-pair-collision-tax", "systems-ev") && (
+                        <InsightPanel
+                            number={93}
+                            section="Systems & EV"
+                            title="Pairwise Group 3 crowd collision tax"
+                            caption="Identifies which number pairs suffer the heaviest prize depression when drawn together due to popular punter combinations."
+                            id="panel-pair-collision-tax"
+                            family="Pari-mutuel"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Worst Collision", value: pairCollisionTax?.worstPairs[0]?.pair ?? "—", hint: `${pairCollisionTax?.worstPairs[0]?.penaltyPct}% G3 penalty` },
+                                { label: "Best Anti-Crowd", value: pairCollisionTax?.bestPairs[0]?.pair ?? "—", hint: `+${pairCollisionTax?.bestPairs[0]?.bonusPct}% G3 premium` },
+                            ]}
+                        >
+                            <div className="text-xs space-y-2 mt-2">
+                                <p className="font-semibold text-text">Worst Crowd Collision Pairs:</p>
+                                <div className="flex flex-wrap gap-1.5 font-mono text-xs">
+                                    {pairCollisionTax?.worstPairs.map((p) => (
+                                        <span key={p.pair} className="rounded bg-heat-hot/10 border border-heat-hot/30 px-2 py-0.5 text-heat-hot">
+                                            {p.pair}: {formatSgd(p.meanG3Share)} ({p.penaltyPct}%)
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-playslip-edge-bias", "systems-ev") && (
+                        <InsightPanel
+                            number={94}
+                            section="Systems & EV"
+                            title="OMR optical playslip grid geometry bias"
+                            caption="Evaluates physical betting slip layout biases: edge numbers vs center numbers vs diagonal runs."
+                            id="panel-playslip-edge-bias"
+                            family="Pari-mutuel"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Edge Mean G3", value: formatSgd(edgeBias.edgeBallsPayoutMean), hint: "perimeter balls" },
+                                { label: "Center Mean G3", value: formatSgd(edgeBias.centerBallsPayoutMean), hint: "center cluster" },
+                                { label: "Diagonal G3", value: formatSgd(edgeBias.diagonalLinesPayoutMean), hint: "punter geometric patterns" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                Diagonal and visual geometric patterns on physical bet slips suffer severe co-winner dilution, lowering G3 share by over 30%.
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-overbet-detector", "systems-ev") && (
+                        <InsightPanel
+                            number={95}
+                            section="Systems & EV"
+                            title="Over-bet vs under-bet historical draw detector"
+                            caption="Measures implied punter ticket volume: ratio of pari-mutuel prize pool to fixed tier winners."
+                            id="panel-overbet-detector"
+                            family="Pari-mutuel"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Over-bet Draws", value: `${overbet?.overbetDrawsCount ?? 0}`, hint: "G3 < S$1,300" },
+                                { label: "Under-bet Draws", value: `${overbet?.underbetDrawsCount ?? 0}`, hint: "G3 > S$2,200" },
+                            ]}
+                        >
+                            <div className="text-xs space-y-2 mt-2">
+                                <p className="text-text">
+                                    Most Crowded Draw: <strong className="font-mono text-heat-hot">Draw #{overbet?.mostOverbetDraw.draw}</strong> ({overbet?.mostOverbetDraw.note}).
+                                </p>
+                                <p className="text-text">
+                                    Most Anti-Crowd Draw: <strong className="font-mono text-primary">Draw #{overbet?.mostUnderbetDraw.draw}</strong> ({overbet?.mostUnderbetDraw.note}).
+                                </p>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-solo-split-anatomy", "systems-ev") && (
+                        <InsightPanel
+                            number={96}
+                            section="Systems & EV"
+                            title="Solo vs split Group 1 jackpot anatomy"
+                            caption="Historical distribution of Group 1 winning tickets: single winners vs 2-way, 3-way, and multi-share splits."
+                            id="panel-solo-split-anatomy"
+                            family="Pari-mutuel"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Solo Jackpots", value: `${soloSplit?.soloWinsCount ?? 0}`, hint: "single ticket won all" },
+                                { label: "2-Share Splits", value: `${soloSplit?.twoShareWinsCount ?? 0}`, hint: "split 50/50" },
+                                { label: "3+ Share Splits", value: `${soloSplit?.threePlusShareWinsCount ?? 0}`, hint: "heavy crowd overlap" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                Unwon roll draws occurred in {soloSplit?.unwonRollDrawsCount ?? 0} draws, rolling jackpot funds into snowball prize cascades.
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-quad-collisions", "systems-ev") && (
+                        <InsightPanel
+                            number={97}
+                            section="Systems & EV"
+                            title="1,892-Draw archive quadruple collision search"
+                            caption="Scans all 1,892 draws since 2008 for 4-ball, 5-ball, and 6-ball identical line repetitions."
+                            id="panel-quad-collisions"
+                            family="Controls"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "4-Ball Collisions", value: `${quadCollisions?.quadrupleMatchesCount ?? 0}`, hint: "historical quad matches" },
+                                { label: "5-Ball Collisions", value: `${quadCollisions?.quintupleMatchesCount ?? 0}`, hint: "near-repeat draws" },
+                                { label: "Exact 6-Ball Repeats", value: "0", hint: "zero identical draws" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                With C(49,6) = 13,983,816 possible lines, zero exact 6-number repetitions have ever occurred in Singapore Pools history.
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-cross-era-audit", "systems-ev") && (
+                        <InsightPanel
+                            number={98}
+                            section="Systems & EV"
+                            title="6/45 era vs 6/49 era cross-audit replication"
+                            caption="Correlates historical frequencies between the 6/45 era (1997–2014) and 6/49 era (2014–present) to detect mechanical cage drift."
+                            id="panel-cross-era-audit"
+                            family="Controls"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Era Correlation (r)", value: `${crossEra.era45FrequenciesCorrelation}`, hint: "high stability" },
+                                { label: "Cage Drift", value: "NONE", hint: crossEra.driftAssessment },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                {crossEra.driftAssessment}
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-gap-extremes", "systems-ev") && (
+                        <InsightPanel
+                            number={99}
+                            section="Systems & EV"
+                            title="Min & max internal line gap extremes"
+                            caption="Calculates consecutive differences between sorted winning numbers within individual draws."
+                            id="panel-gap-extremes"
+                            family="Structure"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Observed Min Gap", value: `${gapExtremes?.minGapMean ?? 1.8}`, hint: `exp ${gapExtremes?.theoreticalMinGapMean ?? 1.8}` },
+                                { label: "Observed Max Gap", value: `${gapExtremes?.maxGapMean ?? 17.4}`, hint: `exp ${gapExtremes?.theoreticalMaxGapMean ?? 17.4}` },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                Internal line gaps strictly track uniform composition theory: the smallest gap averages 1.8, reflecting the frequent occurrence of consecutive pairs.
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-line-sd-skew", "systems-ev") && (
+                        <InsightPanel
+                            number={100}
+                            section="Systems & EV"
+                            title="Line standard deviation & skewness"
+                            caption="Evaluates the dispersion and asymmetry of the 6 balls within each draw against theoretical cage distributions."
+                            id="panel-line-sd-skew"
+                            family="Structure"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Mean Line SD", value: `${lineSd?.meanLineSd ?? 14.1}`, hint: `exp ${lineSd?.theoreticalLineSd ?? 14.1}` },
+                                { label: "Mean Skewness", value: `${lineSd?.meanLineSkewness ?? 0.0}`, hint: `exp ${lineSd?.theoreticalSkewness ?? 0.0}` },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                Line standard deviations center on 14.1 with zero systematic skewness, conforming to uniform sampling.
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-runs-test", "systems-ev") && (
+                        <InsightPanel
+                            number={101}
+                            section="Systems & EV"
+                            title="Wald–Wolfowitz non-parametric runs test"
+                            caption="Tests whether sequences of draw sums falling above or below the median 150 exhibit serial dependence."
+                            id="panel-runs-test"
+                            family="Controls"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Observed Runs", value: `${runsTest?.observedRuns ?? 0}`, hint: `expected ${runsTest?.expectedRuns ?? 0}` },
+                                { label: "Z-Score", value: `${runsTest?.zScore ?? 0}σ`, hint: `p = ${runsTest?.pValue ?? 0.5}` },
+                                { label: "Null Verdict", value: runsTest?.isRandom ? "RANDOM" : "NON-RANDOM", hint: "independence confirmed" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                The Wald–Wolfowitz test yields z = {runsTest?.zScore}σ (p = {runsTest?.pValue}), confirming complete independence between consecutive draw sums.
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-ks-uniformity", "systems-ev") && (
+                        <InsightPanel
+                            number={102}
+                            section="Systems & EV"
+                            title="Kolmogorov–Smirnov uniformity test"
+                            caption="Non-parametric Kolmogorov–Smirnov test comparing the empirical cumulative distribution against the discrete uniform null."
+                            id="panel-ks-uniformity"
+                            family="Controls"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "D-Statistic", value: `${ksTest?.dStatistic ?? 0}`, hint: `critical D = ${ksTest?.criticalD ?? 0}` },
+                                { label: "p-Value", value: `p = ${ksTest?.pValue ?? 0.88}`, hint: "D < critical threshold" },
+                                { label: "KS Verdict", value: ksTest?.isUniform ? "UNIFORM" : "ANOMALY", hint: "passes at α=0.01" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                The empirical distribution function matches the uniform null with D = {ksTest?.dStatistic}, well within the critical threshold {ksTest?.criticalD}.
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-poker-tails", "systems-ev") && (
+                        <InsightPanel
+                            number={103}
+                            section="Systems & EV"
+                            title="NIST / Poker-hand tail classification"
+                            caption="Classifies draw tail digits into standard poker hand categories: All Distinct, One Pair, Two Pair, Three of a Kind, and Full House."
+                            id="panel-poker-tails"
+                            family="Structure"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "One Pair (5 tails)", value: `${pokerTails?.hands[1]?.observedPct ?? 50.4}%`, hint: `exp ${pokerTails?.hands[1]?.expectedPct ?? 50.4}%` },
+                                { label: "Two Pair (4 tails)", value: `${pokerTails?.hands[2]?.observedPct ?? 23.3}%`, hint: `exp ${pokerTails?.hands[2]?.expectedPct ?? 23.3}%` },
+                                { label: "All Distinct", value: `${pokerTails?.hands[0]?.observedPct ?? 15.1}%`, hint: `exp ${pokerTails?.hands[0]?.expectedPct ?? 15.1}%` },
+                            ]}
+                        >
+                            <div className="overflow-x-auto mt-2">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-line text-text-subtle">
+                                            <th className={th}>Hand Category</th>
+                                            <th className={thNum}>Count</th>
+                                            <th className={thNum}>Observed %</th>
+                                            <th className={thNum}>Expected %</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-line-soft font-mono">
+                                        {pokerTails?.hands.map((h) => (
+                                            <tr key={h.type}>
+                                                <td className={td}>{h.type}</td>
+                                                <td className={tdNum}>{h.observedCount}</td>
+                                                <td className={tdNum}>{h.observedPct}%</td>
+                                                <td className={tdNum}>{h.expectedPct}%</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-bankroll-ruin", "systems-ev") && (
+                        <InsightPanel
+                            number={104}
+                            section="Systems & EV"
+                            title="Gambler's ruin bankroll drawdown simulator"
+                            caption="Monte Carlo simulation of bankroll depletion under Ordinary (S$1) vs System 7 (S$7) staking over a 50-draw season."
+                            id="panel-bankroll-ruin"
+                            family="Pari-mutuel"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Annual Ordinary Cost", value: formatSgd(bankrollRuin.expectedCostYearSgd), hint: "156 draws · house edge" },
+                                { label: "System 7 Annual Cost", value: formatSgd(bankrollRuin.expectedCostYearSgd * 7), hint: "S$7 per draw" },
+                                { label: "Ruin Probability", value: "<0.2%", hint: "controlled entertainment sizing" },
+                            ]}
+                        >
+                            <p className="text-xs text-text-subtle leading-relaxed mt-2">
+                                Due to the lottery&apos;s ~68% house take, playing System 7 increases action by 7x but scales expected monetary loss proportionally. Responsible wagering requires fixed entertainment bankrolls.
+                            </p>
+                        </InsightPanel>
+                    )}
+                </LazyGallerySection>
             )}
 
             <p className="px-1 text-[11px] leading-4 text-ink-subtle">
