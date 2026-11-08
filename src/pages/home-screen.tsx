@@ -3,7 +3,7 @@ import { Calendar, Clock, Hash01, Lightning01 } from "@untitledui/icons";
 import { Link } from "react-router";
 import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
-import { type BoardWindow, HeatLegend, heatColour, LineSlip, NumberBoard } from "@/components/product/number-board";
+import { type BoardWindow, HeatLegend, LineSlip, NumberBoard } from "@/components/product/number-board";
 import { PageHeader } from "@/components/product/page-header";
 import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
 import { KpiCard } from "@/components/product/kpi-card";
@@ -13,29 +13,20 @@ import {
     type Analysis,
     type Draw,
     type LatestResult,
-    type PrizeKey,
     type StrategiesFile,
-    drawSum,
     formatDate,
     formatNumber,
-    formatSgd,
     nextDrawDate,
     useJson,
     weekdayOf,
 } from "@/lib/data";
 import { extendPick, quickPick, randBelow } from "@/lib/quickpick";
-import { analyzeTicket, computeBoardLenses, computeNextDrawRegime } from "@/lib/ticket-xray";
+import { analyzeTicket, computeBoardLenses } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
 import { useLineBuilder } from "@/providers/line-builder-provider";
 
-/** Prize groups listed under the winning numbers. */
-const PRIZE_GROUPS: PrizeKey[] = ["g2", "g3", "g4", "g5", "g6", "g7"];
-
 /** League rows shown on the home page. */
 const LEAGUE_ROWS = 5;
-
-/** Recent draws listed beside the countdown. */
-const RECENT_DRAWS = 10;
 
 /** The countdown reads as one clock line: 02:01:20:41. */
 const Countdown = ({ days, hours, minutes, seconds }: { days: number; hours: number; minutes: number; seconds: number }) => {
@@ -119,16 +110,11 @@ export const HomeScreen = () => {
     const countdown = useCountdown(nextDraw);
 
     const topStrategies = useMemo(() => (league ? [...league.strategies].sort((a, b) => a.rank - b.rank).slice(0, LEAGUE_ROWS) : []), [league]);
-    const recentDraws = useMemo(() => (draws ? draws.slice(-(RECENT_DRAWS + 1), -1).reverse() : []), [draws]);
-
-    const regime = useMemo(() => (draws ? computeNextDrawRegime(draws, draws.at(-1) ?? null) : null), [draws]);
 
     const windows = useMemo<BoardWindow[]>(() => {
         if (!draws || !analysis) return [];
         return computeBoardLenses(draws, analysis, league ?? undefined);
     }, [draws, analysis, league]);
-
-    const activeWindow = windows.find((window) => window.id === period) ?? windows[0];
 
     const ticketAnalysis = useMemo(
         () => (draws && line.length >= 6 ? analyzeTicket(line, draws, league ?? undefined) : null),
@@ -180,17 +166,14 @@ export const HomeScreen = () => {
     }
 
     const numbers = live?.numbers ?? latest.numbers;
-    const additional = live?.additional ?? latest.additional;
     const drawNo = live?.drawNo ?? latest.draw;
     const date = live?.date ?? latest.date;
-    const prizes = live?.prizes ?? latest.prizes;
 
     const hotBall = analysis?.hot.all[0];
     const longestGap = analysis?.overdue[0];
     const era = analysis?.coverage;
     const nextDrawNo = league?.meta.nextDraw ?? 0;
     const nextIso = nextDraw ? nextDraw.toISOString().slice(0, 10) : null;
-    const winners = prizes?.g1?.winners ?? null;
 
     /** Shown under the board on tablets and at the foot of the main column
      *  on desktop; rendering the same node twice keeps the reading order
@@ -235,168 +218,28 @@ export const HomeScreen = () => {
                 }
             />
 
-            <div className="grid gap-3 lg:grid-cols-12">
-                {/* The draw: result, prize table and the next-draw clock. */}
-                <Panel emphasis="hero" className="lg:col-span-8" bodyClassName="flex flex-1 flex-col">
-                    <div className="grid gap-4 md:grid-cols-[1.4fr_1fr] md:gap-5 lg:flex-1">
-                        <div className="min-w-0 lg:flex lg:flex-col">
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                    <p className="text-[11px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">Group 1 prize</p>
-                                    <p className="mt-0.5 font-display text-2xl leading-8 font-semibold tracking-tight text-gold-ink tabular-nums md:text-3xl md:leading-9">
-                                        {prizes?.g1?.share ? formatSgd(prizes.g1.share) : "—"}
-                                    </p>
-                                </div>
-                                <div className="flex shrink-0 flex-col items-end gap-1">
-                                    {live && (
-                                        <span className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-accent uppercase ring-1 ring-accent-line ring-inset">
-                                            Live
-                                        </span>
-                                    )}
-                                    <span className="text-[11px] text-ink-subtle">
-                                        {winners == null ? (prizes?.g1?.share != null ? "No winner" : "—") : winners === 0 ? "No winner" : `${winners} winner${winners === 1 ? "" : "s"}`}
-                                    </span>
-                                </div>
-                            </div>
+            {/* The play slip is the page's primary action. */}
+            <Panel title="Play slip" description="Pick 6, 7 or 8 numbers. Tap the board to fill it.">
+                <LineSlip
+                    line={line}
+                    size={size}
+                    onSizeChange={handleSizeChange}
+                    onQuickPick={handleQuickPick}
+                    quickPickLabel={quickPickName}
+                />
+            </Panel>
 
-                            <div className="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-2">
-                                <div className="flex flex-wrap items-center gap-1" role="img" aria-label={`Winning numbers ${numbers.join(", ")}`}>
-                                    {numbers.map((n, index) => (
-                                        <span key={n} className="animate-rise" style={{ animationDelay: `${index * 40}ms` }}>
-                                            <Ball n={n} size="xl" />
-                                        </span>
-                                    ))}
-                                </div>
-                                <span aria-hidden="true" className="hidden h-9 w-px bg-line sm:block" />
-                                {additional != null && (
-                                    <span role="img" aria-label={`Additional number ${additional}`}>
-                                        <Ball n={additional} size="xl" variant="ring" />
-                                    </span>
-                                )}
-                            </div>
-
-                            <div className="mt-3 grid grid-cols-1 gap-x-5 sm:grid-cols-2 lg:mt-auto lg:grid-cols-1">
-                                {PRIZE_GROUPS.map((group) => {
-                                    const prize = prizes?.[group];
-                                    return (
-                                        <div
-                                            key={group}
-                                            className="grid grid-cols-[1.5rem_auto_1fr] items-baseline gap-x-2 border-b border-line-soft py-2 last:border-0"
-                                        >
-                                            <span className="text-[10px] font-semibold tracking-[0.06em] text-ink-subtle uppercase">
-                                                {group.replace("g", "G")}
-                                            </span>
-                                            <span className="font-mono text-[11px] text-ink tabular-nums">{prize?.share ? formatSgd(prize.share) : "—"}</span>
-                                            <span className="text-right font-mono text-[10px] text-ink-subtle tabular-nums">{prize?.winners ?? "—"} winners</span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        <div className="min-w-0 border-t border-line/70 pt-3 md:border-t-0 md:border-l md:pt-0 md:pl-5 lg:flex lg:flex-col">
-                            <p className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
-                                Next draw{nextDrawNo ? ` · ${nextDrawNo}` : ""}
-                            </p>
-                            {nextDraw && !countdown.isPast ? (
-                                <>
-                                    <div className="mt-1">
-                                        <Countdown
-                                            days={countdown.days}
-                                            hours={countdown.hours}
-                                            minutes={countdown.minutes}
-                                            seconds={countdown.seconds}
-                                        />
-                                    </div>
-                                    <p className="mt-1 text-[11px] leading-4 text-ink-subtle">
-                                        {nextIso ? `${formatDate(nextIso)} · ${weekdayOf(nextIso)}` : "—"} · 18:30 SGT
-                                    </p>
-                                </>
-                            ) : (
-                                <p className="mt-2 rounded-lg bg-surface-inset px-2.5 py-1.5 text-[11px] text-ink-muted">Waiting for the result.</p>
-                            )}
-
-                            <div className="mt-3 border-t border-line/70 pt-2 lg:mt-auto">
-                                <p className="text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">Recent draws</p>
-                                <ol className="mt-0.5">
-                                    {recentDraws.map((draw) => (
-                                        <li key={draw.draw}>
-                                            <Link
-                                                to="/history"
-                                                className="grid grid-cols-[3rem_1fr_auto] items-center gap-2 rounded py-0.5 text-[11px] transition-colors duration-100 hover:bg-surface-2/70"
-                                            >
-                                                <span className="font-mono text-ink-muted tabular-nums">{draw.draw}</span>
-                                                <span className="truncate text-ink-subtle">{formatDate(draw.date)}</span>
-                                                <span className="font-mono text-ink tabular-nums">{drawSum(draw.numbers)}</span>
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                </Panel>
-
-                {/* League */}
-                <Panel
-                    className="lg:col-span-4"
-                    title="Top strategies"
-                    description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on ${league?.meta.folds ?? 0} draws · chance scores ${Math.round(((league?.meta.folds ?? 0) * (league?.meta.chance.weightedPrizesPer100Draws ?? 0)) / 100)}.`}
-                    actions={
-                        <Link to="/strategies" className="text-xs font-semibold text-accent transition-colors duration-100 hover:text-accent-strong">
-                            All →
-                        </Link>
-                    }
-                    isFlush
-                >
-                    <ol className="divide-y divide-line-soft">
-                        {topStrategies.map((strategy) => (
-                            <li key={strategy.id} className="px-4 py-1">
-                                <div className="flex items-baseline gap-2">
-                                    <span className="w-4 shrink-0 font-mono text-[11px] text-ink-subtle tabular-nums">{strategy.rank}</span>
-                                    <span className="min-w-0 flex-1 truncate text-[13px] leading-5 font-medium text-ink">{strategy.name}</span>
-                                    <span className="shrink-0 font-mono text-xs font-semibold text-ink tabular-nums" title={`Score 1–100, log-scaled from ${formatNumber(strategy.score)} raw prize points`}>{strategy.score100 ?? 1}</span>
-                                </div>
-                                <div className="mt-1 flex items-center gap-1 pl-6" aria-hidden="true">
-                                    {strategy.currentPick.map((n) => (
-                                        <Ball key={n} n={n} size="sm" />
-                                    ))}
-                                </div>
-                            </li>
-                        ))}
-                    </ol>
-                </Panel>
-            </div>
-
-            {/* Next-Draw Regime Briefing Strip */}
-            {regime && (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface/70 px-4 py-2.5 text-xs backdrop-blur-sm">
-                    <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-                        <span className="font-semibold uppercase tracking-wider text-ink flex items-center gap-1.5">
-                            <span className="size-2 rounded-full bg-accent animate-pulse" />
-                            Regime Briefing
-                        </span>
-                        <span className="text-text-subtle">·</span>
-                        <span className="text-text font-medium">
-                            {regime.rolloverLabel}
-                        </span>
-                        <span className="text-text-subtle">·</span>
-                        <span className="text-text-muted">
-                            {regime.nextWeekday} Skew: <strong className="text-text font-mono font-semibold">{regime.weekdayLeaders.map((l) => l.number).join(", ")}</strong>
-                        </span>
-                        <span className="text-text-subtle">·</span>
-                        <span className="text-text-muted">
-                            49-Ball Sweep: <strong className="text-primary font-mono">{regime.activeSweepCount}/49</strong> seen
-                        </span>
-                        <span className="text-text-subtle">·</span>
-                        <span className="text-text-muted">
-                            RSI-14 High: <strong className="text-heat-hot font-mono">Ball {regime.topRsiBall.number} ({regime.topRsiBall.rsi})</strong>
-                        </span>
-                    </div>
-                    {regime.topMarkovFollower && (
-                        <div className="text-[11px] font-mono text-secondary">
-                            Markov Trigger: {regime.topMarkovFollower.fromBall} → {regime.topMarkovFollower.number} ({regime.topMarkovFollower.count}x)
-                        </div>
+            {/* Slim next-draw clock — the draw result itself lives in /history. */}
+            {nextDraw && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface/70 px-4 py-2.5">
+                    <p className="text-[10px] font-semibold tracking-[0.12em] text-ink-subtle uppercase">
+                        Next draw{nextDrawNo ? ` · ${nextDrawNo}` : ""}
+                        {nextIso ? ` · ${formatDate(nextIso)} · ${weekdayOf(nextIso)} · 18:30 SGT` : ""}
+                    </p>
+                    {countdown.isPast ? (
+                        <p className="text-[11px] text-ink-muted">Waiting for the result.</p>
+                    ) : (
+                        <Countdown days={countdown.days} hours={countdown.hours} minutes={countdown.minutes} seconds={countdown.seconds} />
                     )}
                 </div>
             )}
@@ -472,21 +315,7 @@ export const HomeScreen = () => {
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-3 md:col-start-2 md:row-start-2 lg:col-span-8 lg:col-start-5 lg:row-start-2">
-                    <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                        <div className="flex flex-col gap-3">
-                            <Panel title="Play slip" description="Pick 6, 7 or 8 numbers. Tap the board to fill it.">
-                                <LineSlip
-                                    line={line}
-                                    size={size}
-                                    colourOf={(n) => (activeWindow ? heatColour(activeWindow, n) : "var(--color-surface-2)")}
-                                    onSizeChange={handleSizeChange}
-                                    onQuickPick={handleQuickPick}
-                                    quickPickLabel={quickPickName}
-                                />
-                            </Panel>
-                        </div>
-
-                        <Panel title="Most and least seen" description="Counts across the 6/49 era." isFlush>
+                    <Panel title="Most and least seen" description="Counts across the 6/49 era." isFlush>
                             <div className="grid grid-cols-2 divide-x divide-line-soft">
                                 {[
                                     { label: "Most", rows: analysis?.hot.all.slice(0, 8) ?? [] },
@@ -505,8 +334,7 @@ export const HomeScreen = () => {
                                     </div>
                                 ))}
                             </div>
-                        </Panel>
-                    </div>
+                    </Panel>
 
                     {/* The X-Ray reads the slip, so it sits directly below the
                         slip/most-least pair and spans the full body width — as
@@ -521,6 +349,35 @@ export const HomeScreen = () => {
                     </p>
                 </div>
             </div>
+
+            {/* League */}
+            <Panel
+                title="Top strategies"
+                description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on ${league?.meta.folds ?? 0} draws · chance scores ${Math.round(((league?.meta.folds ?? 0) * (league?.meta.chance.weightedPrizesPer100Draws ?? 0)) / 100)}.`}
+                actions={
+                    <Link to="/strategies" className="text-xs font-semibold text-accent transition-colors duration-100 hover:text-accent-strong">
+                        All →
+                    </Link>
+                }
+                isFlush
+            >
+                <ol className="divide-y divide-line-soft">
+                    {topStrategies.map((strategy) => (
+                        <li key={strategy.id} className="px-4 py-1">
+                            <div className="flex items-baseline gap-2">
+                                <span className="w-4 shrink-0 font-mono text-[11px] text-ink-subtle tabular-nums">{strategy.rank}</span>
+                                <span className="min-w-0 flex-1 truncate text-[13px] leading-5 font-medium text-ink">{strategy.name}</span>
+                                <span className="shrink-0 font-mono text-xs font-semibold text-ink tabular-nums" title={`Score 1–100, log-scaled from ${formatNumber(strategy.score)} raw prize points`}>{strategy.score100 ?? 1}</span>
+                            </div>
+                            <div className="mt-1 flex items-center gap-1 pl-6" aria-hidden="true">
+                                {strategy.currentPick.map((n) => (
+                                    <Ball key={n} n={n} size="sm" />
+                                ))}
+                            </div>
+                        </li>
+                    ))}
+                </ol>
+            </Panel>
         </div>
     );
 };

@@ -228,8 +228,6 @@ interface LineSlipProps {
     line: number[];
     /** 6, 7 or 8 numbers — System 6, 7 or 8. */
     size: LineSize;
-    /** The board's active window, so a slot wears the same heat tint. */
-    colourOf: (n: number) => string;
     onSizeChange: (size: LineSize) => void;
     onQuickPick: () => void;
     /** The strategy a quick pick came from, shown as feedback. */
@@ -241,7 +239,7 @@ interface LineSlipProps {
  * The line builder. Slots take the heat tint of the number they hold, so the
  * slip and the board read as one surface. System 6, 7 and 8 are supported.
  */
-export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, quickPickLabel, className }: LineSlipProps) {
+export function LineSlip({ line, size, onSizeChange, onQuickPick, quickPickLabel, className }: LineSlipProps) {
     return (
         <div className={cx("flex flex-col gap-3", className)}>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -272,15 +270,16 @@ export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, quic
                     const number = line[index];
 
                     return (
-                        <div
-                            key={index}
-                            className={cx(
-                                "grid aspect-square @container place-items-center rounded-lg border leading-none font-mono font-semibold tabular-nums",
-                                number === undefined ? "border-dashed border-line-strong text-ink-faint" : "border-line-strong text-ink",
+                        <div key={index} className="grid aspect-square @container place-items-center">
+                            {number === undefined ? (
+                                <span className="grid aspect-square w-[82%] place-items-center rounded-full border border-dashed border-line-strong font-mono text-[30cqi] leading-none font-semibold text-ink-faint tabular-nums">
+                                    –
+                                </span>
+                            ) : (
+                                <span className="grid aspect-square w-[82%] place-items-center rounded-full bg-ball font-mono text-[30cqi] leading-none font-semibold text-ball-ink tabular-nums shadow-xs ring-1 ring-line/80 ring-inset">
+                                    {number}
+                                </span>
                             )}
-                            style={number === undefined ? undefined : { backgroundColor: colourOf(number) }}
-                        >
-                            <span className="text-[34cqi]">{number ?? "–"}</span>
                         </div>
                     );
                 })}
@@ -298,7 +297,7 @@ export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, quic
                 <button
                     type="button"
                     onClick={onQuickPick}
-                    className="min-h-9 rounded-lg bg-accent px-3 text-xs font-semibold whitespace-nowrap text-white transition-colors duration-100 hover:bg-accent-strong"
+                    className="min-h-9 rounded-lg bg-accent px-3 text-xs font-semibold whitespace-nowrap text-white transition-colors duration-100 hover:bg-accent-strong dark:text-canvas"
                 >
                     Quick pick
                 </button>
