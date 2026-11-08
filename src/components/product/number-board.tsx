@@ -285,7 +285,7 @@ export function LineSlip({ line, size, colourOf, ringOf, onSizeChange, onQuickPi
                 </span>
             </div>
 
-            <div className="slip-rack mx-auto grid w-full max-w-4xl" style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}>
+            <div className="slip-rack grid w-full" style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}>
                 {Array.from({ length: size }, (_, index) => {
                     const number = line[index];
 

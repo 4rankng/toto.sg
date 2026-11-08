@@ -3,6 +3,8 @@
 // Bound to LineBuilderProvider (`useLineBuilder()`): tapping a chip toggles
 // that ball in the shared line, which the home page's play slip renders.
 
+import type { CSSProperties } from "react";
+
 import { useLineBuilder } from "@/providers/line-builder-provider";
 import { cx } from "@/utils/cx";
 
@@ -30,43 +32,31 @@ export function CandidateBallChip({
             onClick={() => toggle(number)}
             title={`Toggle ball ${number} in sequence builder`}
             className={cx(
-                "group relative inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 font-mono text-xs transition-all",
-                isSelected
-                    ? "border-primary bg-accent text-white dark:text-canvas shadow-sm"
-                    : "border-line bg-surface hover:border-primary hover:bg-surface-2 text-ink",
+                "inline-flex items-center gap-1.5 rounded-lg px-1 py-0.5 font-mono text-xs transition-all hover:opacity-90",
                 className,
             )}
         >
+            <span
+                className="slip-ball size-9 shrink-0"
+                style={
+                    {
+                        "--slip-c": isSelected ? "var(--color-accent)" : "var(--color-line-strong)",
+                        "--slip-fill": isSelected
+                            ? "color-mix(in srgb, var(--color-accent) 18%, var(--color-surface))"
+                            : "var(--color-surface)",
+                    } as CSSProperties
+                }
+            >
+                <i>{number}</i>
+            </span>
             {rank !== undefined && (
-                <span
-                    className={cx(
-                        "text-[9px] font-bold uppercase",
-                        isSelected ? "text-white/80 dark:text-canvas/80" : "text-ink-subtle",
-                    )}
-                >
-                    #{rank}
-                </span>
+                <span className="text-[9px] font-bold uppercase text-ink-subtle">#{rank}</span>
             )}
-            <span className="font-bold tabular-nums">{number}</span>
             {score !== undefined && (
-                <span
-                    className={cx(
-                        "text-[10px] tabular-nums",
-                        isSelected ? "text-white/90 dark:text-canvas/90" : "text-ink-muted",
-                    )}
-                >
-                    {score}
-                </span>
+                <span className="text-[10px] tabular-nums text-ink-muted">{score}</span>
             )}
             {sublabel && (
-                <span
-                    className={cx(
-                        "text-[9px]",
-                        isSelected ? "text-white/80 dark:text-canvas/80" : "text-ink-subtle",
-                    )}
-                >
-                    {sublabel}
-                </span>
+                <span className="text-[9px] text-ink-subtle">{sublabel}</span>
             )}
         </button>
     );
