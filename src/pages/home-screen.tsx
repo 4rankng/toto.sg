@@ -277,9 +277,8 @@ export const HomeScreen = () => {
                                     <p className="w-12 shrink-0 text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">{column.label}</p>
                                     <ol className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1">
                                         {column.rows.map((entry) => (
-                                            <li key={entry.number} className="inline-flex items-center gap-1">
+                                            <li key={entry.number} className="inline-flex" title={`${entry.number}: ${formatNumber(entry.count)} appearances`}>
                                                 <Ball n={entry.number} size="xs" />
-                                                <span className="font-mono text-[11px] text-ink-muted tabular-nums">{formatNumber(entry.count)}</span>
                                             </li>
                                         ))}
                                     </ol>
