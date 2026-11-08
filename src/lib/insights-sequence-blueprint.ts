@@ -912,7 +912,7 @@ export interface BestCompanionAndCliquesStats {
     topTriplets: TripletClique[];
 }
 
-export function computeBestCompanionAndCliquesStats(draws: Draw[]): BestCompanionAndCliquesStats {
+export function computeBestCompanionAndCliquesStats(draws: Draw[], limit = 8): BestCompanionAndCliquesStats {
     const n = draws.length;
     // Map from encoded triplet key to count
     const tripletCounts = new Map<number, number>();
@@ -930,7 +930,7 @@ export function computeBestCompanionAndCliquesStats(draws: Draw[]): BestCompanio
     }
 
     const topTriplets: TripletClique[] = [];
-    const entries = [...tripletCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const entries = [...tripletCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
 
     // Expected triplet count: n * C(6,3) / C(49,3) = n * 20 / 18424
     const expTriplet = (n * 20) / 18424;

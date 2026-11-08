@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "refresh": "node scripts/refresh.mjs",
     "verify:data": "node scripts/verify-data.mjs",
-    "league": "node scripts/league-build.mjs"
+    "league": "node scripts/league-build.mjs",
+    "graph": "vite build --ssr scripts/export-graph.ts --outDir node_modules/.cache/graph-build --emptyOutDir && node node_modules/.cache/graph-build/export-graph.js"
   },
   "dependencies": {
     "@internationalized/date": "^3.12.4",

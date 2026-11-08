@@ -940,6 +940,7 @@ export interface MarkovTransitionStats {
     bottomTransitions: { from: number; to: number; lift: number; count: number }[];
     matrixSample: { from: number; to: number; lift: number }[];
     chiSquareP: number;
+    allTransitions: { from: number; to: number; count: number; lift: number }[];
 }
 
 export function computeMarkovTransitionStats(draws: Draw[]): MarkovTransitionStats {
@@ -981,6 +982,7 @@ export function computeMarkovTransitionStats(draws: Draw[]): MarkovTransitionSta
         bottomTransitions: transitions.slice(-10).reverse(),
         matrixSample: transitions.slice(0, 50),
         chiSquareP: 0.48, // typical null conformity
+        allTransitions: transitions,
     };
 }
 

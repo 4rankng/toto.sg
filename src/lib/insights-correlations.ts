@@ -290,6 +290,7 @@ export interface PairCorrelationMatrixStats {
     minZ: number;
     maxZ: number;
     meanAbsZ: number;
+    cells: PairCorrelationCell[];
 }
 
 /** 49x49 Pair correlation / standardized residual matrix. */
@@ -344,6 +345,7 @@ export function pairCorrelationMatrix(draws: Draw[]): PairCorrelationMatrixStats
         minZ,
         maxZ,
         meanAbsZ: sumAbsZ / pairs.length,
+        cells: pairs,
     };
 }
 
