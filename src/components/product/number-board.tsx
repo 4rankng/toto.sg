@@ -275,12 +275,12 @@ export function LineSlip({ line, size, colourOf, onSizeChange, onQuickPick, quic
                         <div
                             key={index}
                             className={cx(
-                                "grid aspect-square place-items-center rounded-lg border text-sm font-semibold tabular-nums",
+                                "grid aspect-square @container place-items-center rounded-lg border leading-none font-mono font-semibold tabular-nums",
                                 number === undefined ? "border-dashed border-line-strong text-ink-faint" : "border-line-strong text-ink",
                             )}
                             style={number === undefined ? undefined : { backgroundColor: colourOf(number) }}
                         >
-                            {number ?? "–"}
+                            <span className="text-[34cqi]">{number ?? "–"}</span>
                         </div>
                     );
                 })}
