@@ -87,7 +87,7 @@ interface NumberBoardProps {
 
 /** Cells are square; the number sits above its appearance count. */
 const CELL_CLASS =
-    "relative flex aspect-square min-w-0 flex-col items-center justify-center rounded-lg border border-transparent text-ink transition-[background-color,box-shadow] duration-100 ease-linear md:aspect-auto";
+    "relative flex aspect-square min-w-0 flex-col items-center justify-center rounded-lg border border-transparent text-ink transition-[background-color,box-shadow] duration-100 ease-linear";
 
 /**
  * The 7×7 board: every number from 1 to 49, tinted by how far its appearance
@@ -174,7 +174,7 @@ export function NumberBoard({ windows, period, onPeriodChange, latestNumbers, li
                 role="group"
                 aria-label="Number board — use the arrow keys to move between numbers"
                 onKeyDown={handleKeyDown}
-                className="grid grid-cols-7 gap-1 sm:gap-1.5 md:min-h-0 md:flex-1 md:grid-rows-7"
+                className="grid grid-cols-7 gap-1 sm:gap-1.5"
             >
                 {active.counts.slice(0, POOL_SIZE).map((count, index) => {
                     const number = index + 1;

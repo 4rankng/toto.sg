@@ -443,8 +443,6 @@ export const HomeScreen = () => {
 
                 <div className="flex min-h-0 min-w-0 flex-col gap-3 md:col-start-1 md:row-start-1 md:row-span-2 lg:col-span-4 lg:col-start-1 lg:row-span-1 lg:row-start-2">
                     <Panel
-                        className="md:flex-1"
-                        bodyClassName="flex min-h-0 flex-col md:flex-1"
                         title="Number board"
                         description="How often each number appeared across 7 indicator lenses. Colour shows deviation."
                         footer={
@@ -458,7 +456,6 @@ export const HomeScreen = () => {
                         }
                     >
                         <NumberBoard
-                            className="md:min-h-0 md:flex-1"
                             windows={windows}
                             period={period}
                             onPeriodChange={setPeriod}
