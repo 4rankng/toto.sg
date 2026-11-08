@@ -24,29 +24,29 @@
 export const CROSS_PANEL_PLAYBOOK = [
     {
         id: "contrarianConsensusFade",
-        docTitle: "Anti-54-Strategy Contrarian Consensus Arbitrage",
+        sourceTitle: "Anti-54-Strategy Contrarian Consensus Arbitrage",
         summary:
             "Plays the pool the league's own rules never vote for: the six most-voted balls are banned, and the line is drawn from the blind spot.",
         specLine: [17, 25, 38, 41, 42, 43],
         specNote: "Sum 206 · 54-strategy votes 16, against 76 for the consensus line",
-        logic: "Every built-in rule chases what the others like, so the same handful of balls carries every vote. This rule takes the opposite end of the vote: the least-voted balls, preferring the high decade, plus one of the cage's two best earners.",
+        logic: "Every built-in rule chases what the others like, so the same handful of balls carries every vote. This rule takes the opposite end of the vote: the least-voted balls, preferring the high decade, plus one of the cage's two top-value balls.",
         differs:
             "CONSENSUS STACK fuses the votes to chase the leaders; this rule inverts the same vote and plays the other end of it.",
         rules: [
             "Ban the six most-voted balls the league's rules hold in their line for this draw.",
             "Take four balls from the low-vote blind spot, preferring the high decade.",
-            "Add one lower blind-spot ball, then one high-payout anchor (47 or 49).",
+            "Add one lower blind-spot ball, then one top anchor (47 or 49).",
         ],
         panels: [{ doc: 18, anchor: "panel-strategy-consensus", label: "Strategy consensus" }],
     },
     {
         id: "tetraphobiaDigit4Pool",
-        docTitle: "Cultural Tetraphobia vs. Prosperity-8 Pari-Mutuel Swap",
+        sourceTitle: "Tetraphobia vs. Prosperity-8 Pool Swap",
         summary:
-            "A structural pool no built-in rule covers: the X4 endings and the 40s decade, with repdigits and the over-bought digit-8 balls excluded.",
+            "A structural pool no built-in rule covers: the X4 endings and the 40s decade, with repdigits and the digit-8 balls excluded.",
         specLine: [14, 24, 41, 43, 46, 47],
         specNote: "Sum 215 · 6 of 6 tetraphobia balls · 0 repdigits or digit-8 balls",
-        logic: "The document read the culturally under-picked '4' numbers as a distinct group: a line built entirely from them has a shape no other rule in the league produces — six numbers off one digit class, all in the upper half.",
+        logic: "The document read the '4' numbers as a distinct group: a line built entirely from them has a shape no other rule in the league produces — six numbers off one digit class, all in the upper half.",
         differs:
             "The Folk family reads numerology to predict hits and the Pattern family works on tails and runs; neither one plays a digit-4 pool.",
         rules: [
@@ -58,12 +58,12 @@ export const CROSS_PANEL_PLAYBOOK = [
     },
     {
         id: "highSumVolumeBarbell",
-        docTitle: "Anti-Quick-Pick High-Sum Volume Barbell",
+        sourceTitle: "Anti-Quick-Pick High-Sum Volume Barbell",
         summary:
             "The anti-quick-pick shape: five balls from the 32–49 range and one calendar ball, with the line's sum held above the crowded mid-sum zone.",
         specLine: [35, 38, 41, 43, 47, 49],
         specNote: "System 7: 6 – 35 – 38 – 41 – 43 – 47 – 49 · mean 6-ball sum 222 · 1 calendar ball",
-        logic: "Most tickets in the cage cluster in the 115–170 sum zone, so the shape this rule builds is deliberately unusual: one calendar ball against five from the upper half, pushing the sum above 190. The wheel's strongest 7th-ball candidate is held out of the six so it can play the bonus slot on a System 7.",
+        logic: "Most lines in the cage cluster in the 115–170 sum zone, so the shape this rule builds is deliberately unusual: one calendar ball against five from the upper half, pushing the sum above 190. The wheel's strongest 7th-ball candidate is held out of the six so it can play the bonus slot on a System 7.",
         differs:
             "The Shape family targets sum bands, parity and span separately; this rule fixes the whole profile at once — five high balls, one calendar ball, one reserved 7th ball.",
         rules: [
@@ -75,7 +75,7 @@ export const CROSS_PANEL_PLAYBOOK = [
     },
     {
         id: "droughtBorderStraddle",
-        docTitle: "Timeline Heat-strip Drought-Corridor Border Strategy",
+        sourceTitle: "Timeline Heat-strip Drought-Corridor Border Strategy",
         summary:
             "Ban every ball sitting more than 22 draws out, then straddle the ±1 border rows that bracket them and fill with high-decade anchors.",
         specLine: [2, 29, 38, 41, 43, 47],
@@ -97,7 +97,7 @@ export const CROSS_PANEL_PLAYBOOK = [
     },
     {
         id: "playslipSixRooks",
-        docTitle: "7×7 Physical Playslip 6-Rook Non-Attacking Topology",
+        sourceTitle: "7×7 Physical Playslip 6-Rook Non-Attacking Topology",
         summary:
             "Places six balls on the physical 7×7 playslip like six non-attacking rooks, with a bottom corner and two centre-cross cells.",
         specLine: [11, 20, 23, 35, 38, 43],
@@ -114,7 +114,7 @@ export const CROSS_PANEL_PLAYBOOK = [
     },
     {
         id: "hollowMiddleBarbell",
-        docTitle: "Asymmetric Hollow-Middle Barbell Span-43 Lock",
+        sourceTitle: "Asymmetric Hollow-Middle Barbell Span-43 Lock",
         summary:
             "Pins the lowest ball to the empirical first-position median, pins the highest to the top of the cage, hollows out the middle and locks the span to 43.",
         specLine: [5, 36, 39, 41, 44, 48],
@@ -134,10 +134,10 @@ export const CROSS_PANEL_PLAYBOOK = [
     },
     {
         id: "weekdayRegimeSwitch",
-        docTitle: "Monday vs. Thursday & Seasonal Thermal Regime Switcher",
+        sourceTitle: "Monday vs. Thursday & Seasonal Thermal Regime Switcher",
         summary:
             "Conditions the core on the draw's weekday: the balls running hottest on that weekday anchor the line, and the seasonal sum band steers the rest.",
-        specLine: [18, 23, 39, 41, 47],
+        specLine: [18, 23, 35, 39, 41, 47],
         specNote: "Monday line sum 203 · Thursday line 4 – 20 – 38 – 42 – 46 – 49, sum 199",
         logic: "A line of static favourites ignores the fact that draws fall on two fixed weekdays. This rule measures each ball's hit rate on the coming weekday against its own long-run rate, anchors on the three that run hottest there, and then steers the sum into the band that matches the month.",
         differs:
@@ -155,9 +155,9 @@ export const CROSS_PANEL_PLAYBOOK = [
     },
     {
         id: "additionalBallWheel",
-        docTitle: "System-7 Additional-Ball Bonus-Tier Upgrader",
+        sourceTitle: "System-7 Additional-Ball Wheel",
         summary:
-            "Holds the archive's best 7th ball out of the line and fills the six slots from the uncrowded high-decade pool.",
+            "Holds the archive's best 7th ball out of the line and fills the six slots from the high-decade pool the league rarely touches.",
         specLine: [14, 38, 41, 43, 46, 47],
         specNote: "System 7: 14 – 20 (7th-ball slot) – 38 – 41 – 43 – 46 – 47",
         logic: "The 7th ball is the archive's most distinctive per-ball record: ball 20 has been drawn as the additional ball 39 times against 25.3 expected. The rule reserves that slot on the wheel and builds the six main balls from the high-decade pool the league rarely touches.",
@@ -166,7 +166,7 @@ export const CROSS_PANEL_PLAYBOOK = [
         rules: [
             "Lock ball 20 into the wheel's 7th slot — it is the archive's most-drawn additional ball.",
             "Keep ball 20 out of the six-ball line.",
-            "Fill the six slots from the uncrowded high-decade pool, avoiding the consensus herd.",
+            "Fill the six slots from the high-decade pool the league rarely touches, avoiding the consensus herd.",
         ],
         panels: [
             { doc: 14, anchor: "panel-additional-promotion", label: "7th Ball promotion" },
@@ -175,7 +175,7 @@ export const CROSS_PANEL_PLAYBOOK = [
     },
     {
         id: "climaxFadeIgnition",
-        docTitle: "Streak-Ribbon Climax-Fade & Early-Wave Ignition",
+        sourceTitle: "Streak-Ribbon Climax-Fade & Early-Wave Ignition",
         summary:
             "Vetoes every ball that already hit four or more times in the last ten draws, then buys the 2–3 hit balls riding a rising 50-draw trend.",
         specLine: [11, 23, 33, 39, 43, 47],
@@ -195,7 +195,7 @@ export const CROSS_PANEL_PLAYBOOK = [
     },
     {
         id: "primeMirrorComposite",
-        docTitle: "Prime-to-Prime Mirror Twin + 4-Composite Lock",
+        sourceTitle: "Prime-to-Prime Mirror Twin + 4-Composite Lock",
         summary:
             "Locks one prime-to-prime mirror twin summing to 50, bans every other prime, and fills the last four slots with high-decade composites.",
         specLine: [3, 33, 38, 39, 42, 47],

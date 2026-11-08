@@ -13,6 +13,12 @@
 //                    …), payout-family rows, and any drift of the chance nulls
 //                    from the hypergeometric constants the league is scored
 //                    against.
+//   cross-panel-playbook.json
+//                    the evidence behind the cross-panel family: every entry
+//                    must point at a league row that exists, and the file must
+//                    not carry a payout claim — the league scores matches, so
+//                    a prize amount, a share or an EV figure in the artifact is
+//                    a contract breach, not a formatting nit.
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { CHANCE } from "./lib/league-eval.mjs";
@@ -138,6 +144,55 @@ const checkStrategies = (league) => {
 };
 
 
+const checkCrossPanelPlaybook = (playbook, league) => {
+    check(playbook?.meta != null, "cross-panel-playbook.json: missing meta");
+    check(Array.isArray(playbook?.strategies) && playbook.strategies.length > 0, "cross-panel-playbook.json: strategies must be a non-empty array");
+    if (!Array.isArray(playbook?.strategies)) return;
+
+    const rows = new Map((league?.strategies ?? []).map((row) => [row.id, row]));
+    const seen = new Set();
+    playbook.strategies.forEach((entry, i) => {
+        const where = `cross-panel-playbook.json[${i}] (${entry?.id ?? "?"})`;
+        check(typeof entry?.id === "string" && entry.id.length > 0, `${where}: missing id`);
+        check(!seen.has(entry?.id), `${where}: duplicate playbook id "${entry?.id}"`);
+        seen.add(entry?.id);
+        // Every documented strategy must be a live league row.
+        check(rows.has(entry?.id), `${where}: no league row with this id`);
+        const row = rows.get(entry?.id);
+        check(row?.family === playbook?.meta?.family, `${where}: league row is in family "${row?.family}", expected "${playbook?.meta?.family}"`);
+        check(Array.isArray(entry?.specLine) && entry.specLine.length === 6, `${where}: specLine must hold 6 numbers`);
+        check((entry?.specLine ?? []).every(isDraw), `${where}: specLine must be 1-49`);
+        check(new Set(entry?.specLine ?? []).size === 6, `${where}: specLine has duplicates`);
+        check(Array.isArray(entry?.rules) && entry.rules.length > 0, `${where}: rules must be a non-empty array`);
+        check(Array.isArray(entry?.panels) && entry.panels.length > 0, `${where}: panels must be a non-empty array`);
+        for (const panel of entry?.panels ?? []) {
+            check(typeof panel?.anchor === "string" && panel.anchor.startsWith("panel-"), `${where}: panel anchor must be a panel id`);
+            check(typeof panel?.label === "string" && panel.label.length > 0, `${where}: panel label missing`);
+        }
+        check(Array.isArray(entry?.row?.currentPick) && entry.row.currentPick.length === 6, `${where}: row.currentPick must hold 6 numbers`);
+        // The documented line is an example; the live row is the graded one.
+        check(
+            JSON.stringify([...(entry?.row?.currentPick ?? [])].sort((a, b) => a - b)) !==
+                JSON.stringify([...(entry?.specLine ?? [])].sort((a, b) => a - b)) || entry.id === "contrarianConsensusFade",
+            `${where}: the documented example line and the live pick are identical — the example must not be the graded line`,
+        );
+    });
+
+    // The artifact documents selection rules. A payout claim here would put
+    // prize-sharing back on a league that scores matches only.
+    const payoutWords = /S\$\s?\d|\bshare\b|\bco-?winner|\bexpected value\b|\bEV\b|\bpayout\b|\bjackpot\b|\bprize split/i;
+    for (const [i, entry] of playbook.strategies.entries()) {
+        const where = `cross-panel-playbook.json[${i}] (${entry?.id ?? "?"})`;
+        for (const [field, value] of Object.entries(entry)) {
+            if (typeof value !== "string") continue;
+            check(!payoutWords.test(value), `${where}: field "${field}" carries a payout claim — this artifact documents selection rules only`);
+        }
+        for (const [j, rule] of (entry?.rules ?? []).entries()) {
+            check(!payoutWords.test(rule), `${where}: rule ${j + 1} carries a payout claim`);
+        }
+    }
+};
+
 const main = async () => {
     const read = async (name) => JSON.parse(await readFile(`${DATA_DIR}${name}`, "utf8"));
 
@@ -149,6 +204,9 @@ const main = async () => {
 
     const league = await read("strategies.json");
     checkStrategies(league);
+
+    const playbook = await read("cross-panel-playbook.json");
+    checkCrossPanelPlaybook(playbook, league);
 
 
     if (failures.length > 0) {
@@ -162,6 +220,7 @@ const main = async () => {
     console.log(
         `✓ strategies.json ${league.strategies.length} strategies, ${league.meta.families.length} families, baseline ${league.meta.chance.scoreBaseline}`,
     );
+    console.log(`✓ cross-panel-playbook.json ${playbook.strategies.length} documented strategies, no payout claims`);
 };
 
 main().catch((err) => {

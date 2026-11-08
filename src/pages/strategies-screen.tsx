@@ -73,7 +73,7 @@ const CrossPanelShowcase = ({ playbook, onLoadInPlaySlip }: {
                     <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                             <p className="truncate font-mono text-[9px] font-semibold tracking-[0.14em] text-ink-subtle uppercase">
-                                {entry.docTitle}
+                                {entry.sourceTitle}
                             </p>
                             <p className="text-[13px] font-semibold text-ink">{entry.row.name}</p>
                         </div>

@@ -158,8 +158,8 @@ export interface CrossPanelPanelRef {
 /** One cross-panel strategy: the rule's evidence plus its live league row. */
 export interface CrossPanelStrategy {
     id: string;
-    /** The source document's own name for the strategy. */
-    docTitle: string;
+    /** The source document's own name for the strategy, in neutral terms. */
+    sourceTitle: string;
     summary: string;
     /** The document's illustrative line — an example, never the graded line. */
     specLine: number[];
