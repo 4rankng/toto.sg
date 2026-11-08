@@ -308,10 +308,10 @@ export const HomeScreen = () => {
                         />
                     </Panel>
 
-                    {/* On tablets the board column would otherwise run short;
-                        the gap list fills that space until the 12-column layout
-                        takes over and hands it back to the main column. */}
-                    <div className="hidden md:block lg:hidden">{longestGapsPanel}</div>
+                    {/* The gap list lives under the board in every layout —
+                        it fills the space the tall right-hand column would
+                        otherwise leave hollow next to the board. */}
+                    {longestGapsPanel}
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-3 md:col-start-2 md:row-start-2 lg:col-span-8 lg:col-start-5 lg:row-start-2">
@@ -341,8 +341,6 @@ export const HomeScreen = () => {
                         a third narrow card it left a dead notch under the
                         most/least list. */}
                     <TicketXRay balls={line} result={ticketAnalysis} onApplyConsensus={handleApplyConsensus} />
-
-                    <div className="md:hidden lg:block">{longestGapsPanel}</div>
 
                     <p className="px-1 text-[11px] leading-4 text-ink-subtle">
                         Every number is equally likely in every draw. Every line has the same chance of Group 1, whatever the board or the history says.
