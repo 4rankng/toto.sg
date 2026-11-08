@@ -1,6 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
-import { Activity, ArrowRight, BarChart01, Calendar, ChevronDown, ChevronRight, Hash01 } from "@untitledui/icons";
+import { Activity, BarChart01, Calendar, ChevronDown, ChevronRight, Hash01 } from "@untitledui/icons";
 import { BallRow } from "@/components/balls";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
@@ -27,7 +26,6 @@ import {
 } from "@/lib/data";
 import { computeDrawAnatomy } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
-import { useLineBuilder } from "@/providers/line-builder-provider";
 import { cx } from "@/utils/cx";
 
 /** Rows per page of the archive table. */
@@ -83,17 +81,7 @@ const matchesRegime = (draw: Draw, regime: RegimeFilter) => {
 };
 
 /** The expanded details of one draw: its cage structure, lag, and crowd forensics. */
-const DrawDetail = ({
-    draw,
-    prevDraw,
-    eraMeanG3,
-    onLoadInPlaySlip,
-}: {
-    draw: Draw;
-    prevDraw: Draw | null;
-    eraMeanG3: number;
-    onLoadInPlaySlip: (numbers: number[]) => void;
-}) => {
+const DrawDetail = ({ draw, prevDraw, eraMeanG3 }: { draw: Draw; prevDraw: Draw | null; eraMeanG3: number }) => {
     const anatomy = useMemo(() => computeDrawAnatomy(draw, prevDraw, eraMeanG3), [draw, prevDraw, eraMeanG3]);
     const spread = drawDecades(draw.numbers);
 
@@ -188,8 +176,8 @@ const DrawDetail = ({
                 </div>
             </div>
 
-            {/* Bottom Bar: Decades + Load in Play Slip */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft pt-2">
+            {/* Bottom Bar: Decades */}
+            <div className="flex flex-wrap items-center gap-3 border-t border-line-soft pt-2">
                 <div className="flex items-center gap-1 overflow-x-auto">
                     <span className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase mr-1">Decades:</span>
                     {DECADE_LABELS.map((label, index) => {
@@ -206,16 +194,6 @@ const DrawDetail = ({
                         );
                     })}
                 </div>
-
-                <Button
-                    color="secondary"
-                    size="sm"
-                    iconTrailing={ArrowRight}
-                    onPress={() => onLoadInPlaySlip(draw.numbers)}
-                    className="shrink-0"
-                >
-                    Load in Play Slip →
-                </Button>
             </div>
         </div>
     );
@@ -231,8 +209,6 @@ const ArchiveSkeleton = () => (
 export const HistoryScreen = () => {
     usePageTitle("Draw history — every TOTO draw");
 
-    const navigate = useNavigate();
-    const { setLine } = useLineBuilder();
 
     const { data: draws, isLoading, error } = useJson<Draw[]>("/data/draws.json");
     const [search, setSearch] = useState("");
@@ -259,10 +235,6 @@ export const HistoryScreen = () => {
         return count > 0 ? Math.round(sum / count) : 1750;
     }, [draws]);
 
-    const handleLoadInPlaySlip = (numbers: number[]) => {
-        setLine(numbers);
-        navigate("/");
-    };
 
     const yearOptions = useMemo(() => {
         const seen: Record<string, true> = {};
@@ -512,7 +484,6 @@ export const HistoryScreen = () => {
                                                     draw={draw}
                                                     prevDraw={drawMap.get(draw.draw - 1) ?? null}
                                                     eraMeanG3={eraMeanG3}
-                                                    onLoadInPlaySlip={handleLoadInPlaySlip}
                                                 />
                                             </div>
                                         )}
@@ -590,7 +561,6 @@ export const HistoryScreen = () => {
                                                                 draw={draw}
                                                                 prevDraw={drawMap.get(draw.draw - 1) ?? null}
                                                                 eraMeanG3={eraMeanG3}
-                                                                onLoadInPlaySlip={handleLoadInPlaySlip}
                                                             />
                                                         </td>
                                                     </tr>

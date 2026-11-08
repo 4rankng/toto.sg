@@ -5,7 +5,6 @@
 // against the 8 structural sweet-spot filters, and load it into the Play Slip in one click.
 
 import { useMemo } from "react";
-import { Link } from "react-router";
 import type { Draw, StrategiesFile } from "@/lib/data";
 import {
     evaluateCandidateLineEnvelope,
@@ -82,7 +81,7 @@ export function SequenceBlueprintBar({
         <section
             aria-label="Sequence Blueprint Console"
             className={cx(
-                "sticky top-3 z-30 mb-6 rounded-2xl border border-line bg-surface/95 backdrop-blur-md p-3.5 shadow-float sm:p-4",
+                "mb-6 rounded-2xl border border-line bg-surface p-3.5 shadow-float sm:p-4",
                 className,
             )}
         >
@@ -145,7 +144,7 @@ export function SequenceBlueprintBar({
                             onClick={clear}
                             className="font-mono text-[11px] text-ink-subtle hover:text-ink underline transition-colors"
                         >
-                            Clear ({line.length}/{size})
+                            Clear
                         </button>
                     )}
                 </div>
@@ -192,18 +191,6 @@ export function SequenceBlueprintBar({
                         </button>
                     )}
 
-                    <Link
-                        to="/"
-                        className={cx(
-                            "ml-1 inline-flex items-center gap-1.5 rounded-lg px-3 py-1 font-mono text-xs font-semibold transition-all",
-                            line.length >= 6
-                                ? "bg-accent text-canvas shadow hover:opacity-90"
-                                : "border border-line bg-surface-inset text-ink-subtle hover:text-ink",
-                        )}
-                    >
-                        <span>Play Slip</span>
-                        <span>→</span>
-                    </Link>
                 </div>
             </div>
 

@@ -2488,13 +2488,25 @@ export const InsightsScreen = () => {
                                 ]}
                             >
                                 <ObservedExpectedBarChart
-                                    items={loShu.moonPhases.map((m) => ({
-                                        label: m.phase.split(" ")[0],
-                                        observedValue: m.meanSum,
-                                        expectedValue: 150,
-                                        formattedObserved: `Sum ${m.meanSum.toFixed(1)} (${m.draws}d)`,
-                                        formattedExpected: "150.0 exp",
-                                    }))}
+                                    items={loShu.moonPhases.map((m) => {
+                                        const shortName =
+                                            m.phase === "New Moon" ? "New"
+                                            : m.phase === "Waxing Crescent" ? "Wax Cres"
+                                            : m.phase === "First Quarter" ? "1st Qtr"
+                                            : m.phase === "Waxing Gibbous" ? "Wax Gibb"
+                                            : m.phase === "Full Moon" ? "Full"
+                                            : m.phase === "Waning Gibbous" ? "Wan Gibb"
+                                            : m.phase === "Last Quarter" ? "3rd Qtr"
+                                            : m.phase === "Waning Crescent" ? "Wan Cres"
+                                            : m.phase;
+                                        return {
+                                            label: shortName,
+                                            observedValue: m.meanSum,
+                                            expectedValue: 150,
+                                            formattedObserved: `Sum ${m.meanSum.toFixed(1)} (${m.draws}d)`,
+                                            formattedExpected: "150.0 exp",
+                                        };
+                                    })}
                                     maxValue={165}
                                     orientation="vertical"
                                     className="mt-2"
