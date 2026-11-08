@@ -273,12 +273,22 @@ export const HomeScreen = () => {
                         className="flex-1"
                         bodyClassName="flex flex-1 flex-col"
                         footer={
-                            <div className="flex flex-col gap-2">
-                                <HeatLegend />
-                                <p className="text-[11px] leading-4 text-ink-subtle">
-                                    Dot = a number in the latest draw. Left dot marks below expectation, pink dot above. Counts describe the past; they do
-                                    not alter cage randomness.
-                                </p>
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <HeatLegend className="min-w-44 flex-1" />
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {quickPickName && (
+                                        <p aria-live="polite" className="text-[11px] leading-4 text-ink-subtle">
+                                            From <span className="text-ink-muted">{quickPickName}</span>
+                                        </p>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={handleQuickPick}
+                                        className="min-h-9 rounded-lg bg-accent px-3 text-xs font-semibold whitespace-nowrap text-white transition-colors duration-100 hover:bg-accent-strong dark:text-canvas"
+                                    >
+                                        Quick pick
+                                    </button>
+                                </div>
                             </div>
                         }
                     >
@@ -289,8 +299,6 @@ export const HomeScreen = () => {
                             latestNumbers={numbers}
                             line={line}
                             onToggle={handleToggle}
-                            onQuickPick={handleQuickPick}
-                            quickPickLabel={quickPickName}
                         />
                     </Panel>
                 </div>
