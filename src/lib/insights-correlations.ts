@@ -1340,7 +1340,7 @@ export function digitContainmentStats(draws: Draw[]): DigitContainmentStats {
     };
 }
 
-/** Tetraphobia (Digit 4) vs Prosperity (Digit 8/7) cage hit rates and Group 3 payout impact. */
+/** Tetraphobia (Digit 4) vs Prosperity (Digit 8/7) cage hit rates against expected combinatorial null models. */
 export function luckyDigitStats(draws: Draw[]): LuckyDigitStats {
     // 14 numbers containing digit 4: 4, 14, 24, 34, 40..49
     const d4 = new Set([4, 14, 24, 34, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]);

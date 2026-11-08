@@ -100,7 +100,7 @@ export function SequenceBlueprintBar({
                                 className={cx(
                                     "rounded px-1.5 py-0.5 font-mono text-xs font-semibold transition-colors",
                                     size === s
-                                        ? "bg-accent text-canvas"
+                                        ? "bg-accent text-white dark:text-canvas"
                                         : "text-ink-subtle hover:text-ink",
                                 )}
                             >
@@ -119,7 +119,7 @@ export function SequenceBlueprintBar({
                                     type="button"
                                     onClick={() => toggle(val)}
                                     title={`Remove ball ${val}`}
-                                    className="group relative flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent font-mono text-xs font-bold text-canvas transition-transform hover:scale-105 hover:bg-heat-hot"
+                                    className="group relative flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent font-mono text-xs font-bold text-white dark:text-canvas transition-transform hover:scale-105 hover:bg-heat-hot"
                                 >
                                     {val}
                                     <span className="absolute -top-1 -right-1 hidden h-3.5 w-3.5 items-center justify-center rounded-full bg-surface text-[8px] text-ink shadow group-hover:flex">
@@ -277,7 +277,7 @@ export function CandidateBallChip({
             className={cx(
                 "group relative inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 font-mono text-xs transition-all",
                 isSelected
-                    ? "border-primary bg-accent text-canvas shadow-sm"
+                    ? "border-primary bg-accent text-white dark:text-canvas shadow-sm"
                     : "border-line bg-surface hover:border-primary hover:bg-surface-2 text-ink",
                 className,
             )}
@@ -286,7 +286,7 @@ export function CandidateBallChip({
                 <span
                     className={cx(
                         "text-[9px] font-bold uppercase",
-                        isSelected ? "text-canvas/80" : "text-ink-subtle",
+                        isSelected ? "text-white/80 dark:text-canvas/80" : "text-ink-subtle",
                     )}
                 >
                     #{rank}
@@ -297,7 +297,7 @@ export function CandidateBallChip({
                 <span
                     className={cx(
                         "text-[10px] tabular-nums",
-                        isSelected ? "text-canvas/90" : "text-ink-muted",
+                        isSelected ? "text-white/90 dark:text-canvas/90" : "text-ink-muted",
                     )}
                 >
                     {score}
@@ -307,7 +307,7 @@ export function CandidateBallChip({
                 <span
                     className={cx(
                         "text-[9px]",
-                        isSelected ? "text-canvas/80" : "text-ink-subtle",
+                        isSelected ? "text-white/80 dark:text-canvas/80" : "text-ink-subtle",
                     )}
                 >
                     {sublabel}

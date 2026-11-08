@@ -1172,8 +1172,8 @@ export const InsightsScreen = () => {
                                     { label: "Expected 7-Ball", value: `${(sevenBallExposure.expectedTotalRate * 100).toFixed(1)}%`, hint: "14.29% chance" },
                                 ]}
                             >
-                                <div className="overflow-x-auto mt-2">
-                                    <table className="w-full text-xs">
+                                <div className="mt-2">
+                                    <table className="w-full border-collapse text-left text-xs">
                                         <thead>
                                             <tr className="border-b border-line text-ink-subtle">
                                                 <th className={th}>Ball</th>
@@ -1216,8 +1216,8 @@ export const InsightsScreen = () => {
                                     { label: "Cooling", value: velocityMatrix.coolingBalls.length, hint: "numbers slowing down" },
                                 ]}
                             >
-                                <div className="overflow-x-auto mt-2">
-                                    <table className="w-full text-xs">
+                                <div className="mt-2">
+                                    <table className="w-full border-collapse text-left text-xs">
                                         <thead>
                                             <tr className="border-b border-line text-ink-subtle">
                                                 <th className={th}>Ball</th>
@@ -1260,8 +1260,8 @@ export const InsightsScreen = () => {
                                     { label: "Underdue", value: skipQuantiles.underdueBalls.length, hint: "below personal p25" },
                                 ]}
                             >
-                                <div className="overflow-x-auto mt-2">
-                                    <table className="w-full text-xs">
+                                <div className="mt-2">
+                                    <table className="w-full border-collapse text-left text-xs">
                                         <thead>
                                             <tr className="border-b border-line text-ink-subtle">
                                                 <th className={th}>Ball</th>
@@ -1604,8 +1604,8 @@ export const InsightsScreen = () => {
                                         <CandidateBallChip key={r.number} number={r.number} sublabel={`${r.liftRatio.toFixed(2)}×`} />
                                     ))}
                                 </div>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-xs">
+                                <div>
+                                    <table className="w-full border-collapse text-left text-xs">
                                         <thead>
                                             <tr className="border-b border-line text-ink-subtle">
                                                 <th className={th}>Follower</th>
@@ -1648,8 +1648,8 @@ export const InsightsScreen = () => {
                                     { label: "Lag-2 Leader", value: `Ball ${[...harmonicMultiLag.rows].sort((a,b)=>b.lag2Score-a.lag2Score)[0]?.number}`, hint: "1-skip follower" },
                                 ]}
                             >
-                                <div className="overflow-x-auto mt-2">
-                                    <table className="w-full text-xs">
+                                <div className="mt-2">
+                                    <table className="w-full border-collapse text-left text-xs">
                                         <thead>
                                             <tr className="border-b border-line text-ink-subtle">
                                                 <th className={th}>Ball</th>
@@ -1690,8 +1690,8 @@ export const InsightsScreen = () => {
                                     { label: "Isolated", value: `Ball ${hubCentrality.isolatedBalls[0]?.number}`, hint: `${hubCentrality.isolatedBalls[0]?.degreePositiveZ} positive partners` },
                                 ]}
                             >
-                                <div className="overflow-x-auto mt-2">
-                                    <table className="w-full text-xs">
+                                <div className="mt-2">
+                                    <table className="w-full border-collapse text-left text-xs">
                                         <thead>
                                             <tr className="border-b border-line text-ink-subtle">
                                                 <th className={th}>Ball</th>
@@ -1732,8 +1732,8 @@ export const InsightsScreen = () => {
                                     { label: "Sum Pair z", value: `+${bestCompanions.topTriplets[0]?.sumPairZ.toFixed(2)}σ`, hint: "triplet synergy" },
                                 ]}
                             >
-                                <div className="overflow-x-auto mt-2">
-                                    <table className="w-full text-xs">
+                                <div className="mt-2">
+                                    <table className="w-full border-collapse text-left text-xs">
                                         <thead>
                                             <tr className="border-b border-line text-ink-subtle">
                                                 <th className={th}>Triplet Clique</th>
@@ -1776,8 +1776,8 @@ export const InsightsScreen = () => {
                                     { label: "Expected Hits", value: "12.2%", hint: "6/49 baseline" },
                                 ]}
                             >
-                                <div className="overflow-x-auto mt-2">
-                                    <table className="w-full text-xs">
+                                <div className="mt-2">
+                                    <table className="w-full border-collapse text-left text-xs">
                                         <thead>
                                             <tr className="border-b border-line text-ink-subtle">
                                                 <th className={th}>Main Ball</th>
@@ -1814,8 +1814,8 @@ export const InsightsScreen = () => {
                                     { label: "Top t+1 Echo", value: `Ball ${knnTwins.tPlusOneBallTallies[0]?.number ?? "—"}`, hint: `${knnTwins.tPlusOneBallTallies[0]?.votes ?? 0} next-draw hits` },
                                 ]}
                             >
-                                <div className="overflow-x-auto mt-2">
-                                    <table className="w-full text-xs">
+                                <div className="mt-2">
+                                    <table className="w-full border-collapse text-left text-xs">
                                         <thead>
                                             <tr className="border-b border-line text-ink-subtle">
                                                 <th className={th}>Historical Draw</th>
@@ -3346,8 +3346,8 @@ export const InsightsScreen = () => {
                                 { label: "Expected in Top 6", value: `${bayesianInclusion.expectedHitsInTop6} balls`, hint: "cumulative expectation" },
                             ]}
                         >
-                            <div className="overflow-x-auto mt-2">
-                                <table className="w-full text-xs">
+                            <div className="mt-2">
+                                <table className="w-full border-collapse text-left text-xs">
                                     <thead>
                                         <tr className="border-b border-line text-ink-subtle">
                                             <th className={th}>Rank</th>
@@ -3954,8 +3954,8 @@ export const InsightsScreen = () => {
                                 { label: "All Distinct", value: `${pokerTails?.hands[0]?.observedPct ?? 15.1}%`, hint: `exp ${pokerTails?.hands[0]?.expectedPct ?? 15.1}%` },
                             ]}
                         >
-                            <div className="overflow-x-auto mt-2">
-                                <table className="w-full text-xs">
+                            <div className="mt-2">
+                                <table className="w-full border-collapse text-left text-xs">
                                     <thead>
                                         <tr className="border-b border-line text-text-subtle">
                                             <th className={th}>Hand Category</th>
@@ -4008,8 +4008,8 @@ export const InsightsScreen = () => {
                                     <CandidateBallChip key={c.number} number={c.number} sublabel={`${c.signalsPassed}/8` } rank={c.rank} />
                                 ))}
                             </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-xs">
+                            <div>
+                                <table className="w-full border-collapse text-left text-xs">
                                     <thead>
                                         <tr className="border-b border-line text-ink-subtle">
                                             <th className={th}>Rank</th>
@@ -4152,8 +4152,8 @@ export const InsightsScreen = () => {
                                 { label: "Pool 20 2+ Match", value: `${poolCapture.rows.find((r)=>r.poolSize===20)?.empirical2Plus ?? 0}%`, hint: "empirical capture" },
                             ]}
                         >
-                            <div className="overflow-x-auto mt-2">
-                                <table className="w-full text-xs">
+                            <div className="mt-2">
+                                <table className="w-full border-collapse text-left text-xs">
                                     <thead>
                                         <tr className="border-b border-line text-ink-subtle">
                                             <th className={th}>Pool Size</th>
@@ -4194,8 +4194,8 @@ export const InsightsScreen = () => {
                                 { label: "Sys 12 (924 lines)", value: "924 tickets", hint: "C(12,6)" },
                             ]}
                         >
-                            <div className="overflow-x-auto mt-2">
-                                <table className="w-full text-xs">
+                            <div className="mt-2">
+                                <table className="w-full border-collapse text-left text-xs">
                                     <thead>
                                         <tr className="border-b border-line text-ink-subtle">
                                             <th className={th}>System</th>
@@ -4236,8 +4236,8 @@ export const InsightsScreen = () => {
                                 { label: "Savings", value: "99.4%", hint: "ticket reduction" },
                             ]}
                         >
-                            <div className="overflow-x-auto mt-2">
-                                <table className="w-full text-xs">
+                            <div className="mt-2">
+                                <table className="w-full border-collapse text-left text-xs">
                                     <thead>
                                         <tr className="border-b border-line text-ink-subtle">
                                             <th className={th}>Design</th>
@@ -4278,8 +4278,8 @@ export const InsightsScreen = () => {
                                 { label: "Base 3+ Chance", value: `${keyBallLift[0]?.chanceMatch3Plus.toFixed(2)}%`, hint: "unanchored line" },
                             ]}
                         >
-                            <div className="overflow-x-auto mt-2">
-                                <table className="w-full text-xs">
+                            <div className="mt-2">
+                                <table className="w-full border-collapse text-left text-xs">
                                     <thead>
                                         <tr className="border-b border-line text-ink-subtle">
                                             <th className={th}>Anchors</th>
@@ -4320,8 +4320,8 @@ export const InsightsScreen = () => {
                                 { label: "Families Graded", value: `${familyLeaderboard?.families.length ?? 0} families`, hint: "pure match count" },
                             ]}
                         >
-                            <div className="overflow-x-auto mt-2">
-                                <table className="w-full text-xs">
+                            <div className="mt-2">
+                                <table className="w-full border-collapse text-left text-xs">
                                     <thead>
                                         <tr className="border-b border-line text-ink-subtle">
                                             <th className={th}>Family</th>

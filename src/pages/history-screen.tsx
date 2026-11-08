@@ -37,7 +37,7 @@ const ALL_YEARS = "all";
 /** Decade bands of a draw's detail row — the buckets `drawDecades` counts. */
 const DECADE_LABELS = ["1–10", "11–20", "21–30", "31–40", "41–49"];
 
-/** Regime filter chips for isolating historical payout and pattern conditions. */
+/** Regime filter chips for isolating historical draw conditions. */
 const REGIME_OPTIONS = [
     { id: "all", label: "All draws" },
     { id: "rollover", label: "Rollover (Snowball)" },
@@ -146,9 +146,9 @@ const DrawDetail = ({ draw, prevDraw, eraMeanG3 }: { draw: Draw; prevDraw: Draw 
                     </dl>
                 </div>
 
-                {/* 3. Crowd & Payout Forensics */}
+                {/* 3. Draw Tier Records & Split */}
                 <div className="rounded-lg border border-line-soft bg-surface-2/40 p-3 sm:col-span-2 lg:col-span-1">
-                    <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Crowd & Payout Forensics</p>
+                    <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Draw Tier Records & Split</p>
                     <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
                         <div>
                             <dt className="text-[10px] text-ink-muted">Group 1</dt>
