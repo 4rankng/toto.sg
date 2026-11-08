@@ -29,6 +29,10 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { CHANCE, evaluateStrategy, WARMUP_DRAWS } from "./lib/league-eval.mjs";
 import { filterEra, nextDrawDateIso } from "./lib/analysis.mjs";
+import { buildCatalogContext, CATALOG_SIGNAL_RULES, CATALOG_SIGNAL_STRATEGIES } from "./lib/catalog-signal-rules.mjs";
+import { CATALOG_STRUCTURE_RULES, CATALOG_STRUCTURE_STRATEGIES } from "./lib/catalog-structure-rules.mjs";
+import { CATALOG_ALMANAC_RULES, CATALOG_ALMANAC_STRATEGIES } from "./lib/catalog-almanac-rules.mjs";
+import { CATALOG_ML_RULES, CATALOG_ML_STRATEGIES, META_VOTE_ID } from "./lib/catalog-ml-rules.mjs";
 import { buildFoldStats } from "./lib/cross-panel-stats.mjs";
 import { CROSS_PANEL_RULES, CROSS_PANEL_STRATEGIES, buildCrossPanelContext } from "./lib/cross-panel-rules.mjs";
 import { CROSS_PANEL_PLAYBOOK } from "./lib/cross-panel-playbook.mjs";
@@ -100,6 +104,11 @@ const main = async () => {
         }
         return mrMemo.get(target.draw);
     };
+    const catMemo = new Map();
+    const catalogPrepare = (eraPrior, target) => {
+        if (!catMemo.has(target.draw)) catMemo.set(target.draw, buildCatalogContext(eraPrior, target));
+        return catMemo.get(target.draw);
+    };
 
     const specOf = ([id, name, family, description], rule, prepare) => ({ id, name, family, description, rule, prepare });
     const baseSpecs = [
@@ -108,6 +117,11 @@ const main = async () => {
         ...DESK_STRATEGIES.map((s) => specOf(s, (prior, target, rng, prepared) => DESK_RULES[s[0]](prior, target, rng, prepared), deskPrepare)),
         ...MATCHRATE_STRATEGIES.map((s) => specOf(s, (prior, target, rng, prepared) => MATCHRATE_RULES[s[0]](prior, target, rng, prepared), mrPrepare)),
         ...INDICATOR_STRATEGIES.map((s) => specOf(s, (prior, target, rng, stats) => INDICATOR_RULES[s[0]](prior, target, rng, stats), (prior, target) => buildIndicatorFoldStats(prior, target))),
+        ...CATALOG_SIGNAL_STRATEGIES.map((s) => specOf(s, (prior, target, rng, ctx) => CATALOG_SIGNAL_RULES[s[0]](prior, target, rng, ctx), catalogPrepare)),
+        ...CATALOG_STRUCTURE_STRATEGIES.map((s) => specOf(s, (prior, target, rng, ctx) => CATALOG_STRUCTURE_RULES[s[0]](prior, target, rng, ctx), catalogPrepare)),
+        ...CATALOG_ALMANAC_STRATEGIES.map((s) => specOf(s, (prior, target, rng, ctx) => CATALOG_ALMANAC_RULES[s[0]](prior, target, rng, ctx), catalogPrepare)),
+        // metaVote is not here: it is a second-phase spec wired below.
+        ...CATALOG_ML_STRATEGIES.filter(([id]) => id !== META_VOTE_ID).map((s) => specOf(s, (prior, target, rng, ctx) => CATALOG_ML_RULES[s[0]](prior, target, rng, ctx), catalogPrepare)),
     ];
 
     // The cross-panel family reads the league's own vote, so it runs in a
@@ -136,9 +150,17 @@ const main = async () => {
         }
         return ctx;
     };
-    const crossPanelSpecs = CROSS_PANEL_STRATEGIES.map((s) =>
-        specOf(s, (prior, target, rng, ctx) => CROSS_PANEL_RULES[s[0]](prior, target, rng, ctx), crossPanelPrepare),
-    );
+    const crossPanelSpecs = [
+        ...CROSS_PANEL_STRATEGIES.map((s) =>
+            specOf(s, (prior, target, rng, ctx) => CROSS_PANEL_RULES[s[0]](prior, target, rng, ctx), crossPanelPrepare),
+        ),
+        // The catalog's metaVote joins the second phase: it votes the league's
+        // own fold lines (Step 5 of the adoption plan), so it needs the same
+        // assembled consensus the contrarian strategies read.
+        ...CATALOG_ML_STRATEGIES.filter(([id]) => id === META_VOTE_ID).map((s) =>
+            specOf(s, (prior, target, rng, ctx) => CATALOG_ML_RULES[s[0]](prior, target, rng, ctx), crossPanelPrepare),
+        ),
+    ];
 
     const specs = [...baseSpecs, ...crossPanelSpecs];
     const ids = new Set(specs.map((s) => s.id));
