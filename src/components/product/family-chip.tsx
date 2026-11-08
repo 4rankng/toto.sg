@@ -23,7 +23,7 @@ const FAMILY_TONE: Record<string, string> = {
     Pattern: "bg-fam-15/12 text-fam-15 ring-fam-15/25",
     Sequence: "bg-fam-16/12 text-fam-16 ring-fam-16/25",
     Sequences: "bg-fam-17/12 text-fam-17 ring-fam-17/25",
-    "Seed Hunters": "bg-fam-27/12 text-fam-27 ring-fam-27/25",
+    "Seed Hunters": "bg-gold-soft text-gold-ink ring-transparent",
     Zodiac: "bg-fam-28/12 text-fam-28 ring-fam-28/25",
     Skip: "bg-fam-25/12 text-fam-25 ring-fam-25/25",
     Structure: "bg-fam-19/12 text-fam-19 ring-fam-19/25",

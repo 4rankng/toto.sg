@@ -33,7 +33,7 @@ export function Ball({ n, size = "md", variant = "solid", className }: BallProps
                 "grid shrink-0 place-items-center rounded-full font-semibold tabular-nums",
                 ballSizes[size],
                 variant === "solid"
-                    ? "bg-ball text-ball-ink shadow-xs ring-1 ring-line/80 ring-inset"
+                    ? "bg-ball text-ball-ink shadow-xs ring-1 ring-ball-line ring-inset"
                     : "border-2 border-accent bg-canvas text-accent",
                 className,
             )}

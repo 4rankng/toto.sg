@@ -122,7 +122,7 @@ const StrategyDetail = ({
                                 <Link
                                     key={panel.anchor}
                                     to={`/insights#${panel.anchor}`}
-                                    className="rounded border border-line-soft px-1.5 py-0.5 font-mono text-[10px] text-ink-subtle transition-colors duration-100 hover:text-accent"
+                                    className="rounded border border-line-soft px-1.5 py-0.5 font-mono text-[10px] text-ink-subtle transition-colors duration-100 hover:text-accent-strong"
                                 >
                                     {panel.label}
                                 </Link>
@@ -605,7 +605,7 @@ export const StrategiesScreen = () => {
                                                     ) : (
                                                         <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
                                                     )}
-                                                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink group-hover:text-accent">{row.name}</span>
+                                                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink group-hover:text-accent-strong">{row.name}</span>
                                                     <FamilyChip family={row.family} className="hidden shrink-0 sm:inline-flex" />
                                                     <span className="hidden shrink-0 items-center gap-1 rounded-md bg-surface-inset px-1.5 py-0.5 sm:flex" title={`Score 1–100, log-scaled from ${formatNumber(row.score ?? 0)} raw prize points against the theoretical ceiling (every fold a Group 1)`}>
                                                         <span className="font-mono text-[9px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">score</span>

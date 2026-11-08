@@ -110,7 +110,7 @@ const DrawDetail = ({ draw, prevDraw, eraMeanG3 }: { draw: Draw; prevDraw: Draw 
                         </div>
                         <div>
                             <dt className="text-[10px] text-ink-muted">Digital Root</dt>
-                            <dd className="font-mono text-xs font-semibold text-accent tabular-nums">{anatomy.digitalRoot}</dd>
+                            <dd className="font-mono text-xs font-semibold text-accent-strong tabular-nums">{anatomy.digitalRoot}</dd>
                         </div>
                         <div>
                             <dt className="text-[10px] text-ink-muted">Distinct Tails</dt>
@@ -533,7 +533,7 @@ export const HistoryScreen = ({ embedded = false }: { embedded?: boolean } = {})
                                                                 event.stopPropagation();
                                                                 toggle(draw.draw);
                                                             }}
-                                                            className="rounded font-mono text-[13px] font-semibold text-ink tabular-nums transition-colors duration-100 hover:text-accent"
+                                                            className="rounded font-mono text-[13px] font-semibold text-ink tabular-nums transition-colors duration-100 hover:text-accent-strong"
                                                         >
                                                             {draw.draw}
                                                         </button>

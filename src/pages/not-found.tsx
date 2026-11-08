@@ -17,7 +17,7 @@ export const NotFound = () => {
                 <Button size="sm" color="secondary" href="/history">
                     Draw history
                 </Button>
-                <Link to="/strategies" className="text-xs font-semibold text-accent transition-colors duration-100 hover:text-accent-strong">
+                <Link to="/strategies" className="text-xs font-semibold text-accent-strong transition-colors duration-100 hover:text-ink">
                     Strategies →
                 </Link>
             </div>

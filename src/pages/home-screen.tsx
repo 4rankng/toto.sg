@@ -192,7 +192,7 @@ export const HomeScreen = () => {
                     </>
                 }
                 actions={
-                    <Link to="/history" className="text-xs font-semibold text-accent transition-colors duration-100 hover:text-accent-strong">
+                    <Link to="/history" className="text-xs font-semibold text-accent-strong transition-colors duration-100 hover:text-ink">
                         All {formatNumber(draws.length)} draws →
                     </Link>
                 }
@@ -214,7 +214,7 @@ export const HomeScreen = () => {
             )}
 
             {/* The play slip is the page's primary action. */}
-            <Panel className="mx-auto w-full max-w-3xl">
+            <Panel>
                 <LineSlip
                     line={line}
                     size={size}
@@ -240,10 +240,12 @@ export const HomeScreen = () => {
                 bare canvas well under the shorter column.
             */}
             <div className="grid items-start gap-3 md:grid-cols-2 md:items-stretch lg:grid-cols-12">
-                <div className="flex min-h-0 min-w-0 flex-col gap-3 lg:col-span-4">
+                <div className="flex min-h-0 min-w-0 flex-col gap-3 lg:col-span-5">
                     <Panel
                         title="Number board"
                         description="How often each number appeared across 7 indicator lenses. Colour shows deviation."
+                        className="flex-1"
+                        bodyClassName="flex flex-1 flex-col"
                         footer={
                             <div className="flex flex-col gap-2">
                                 <HeatLegend />
@@ -265,12 +267,12 @@ export const HomeScreen = () => {
                     </Panel>
                 </div>
 
-                <div className="flex min-w-0 flex-col gap-3 lg:col-span-8 lg:col-start-5">
+                <div className="flex min-w-0 flex-col gap-3 lg:col-span-7 lg:col-start-6">
                     <Panel title="Most and least seen" description="Counts across the 6/49 era." isFlush>
                             <div className="grid grid-cols-2 divide-x divide-line-soft">
                                 {[
-                                    { label: "Most", rows: analysis?.hot.all.slice(0, 8) ?? [] },
-                                    { label: "Least", rows: analysis?.cold.all.slice(0, 8) ?? [] },
+                                    { label: "Most", rows: analysis?.hot.all.slice(0, 12) ?? [] },
+                                    { label: "Least", rows: analysis?.cold.all.slice(0, 12) ?? [] },
                                 ].map((column) => (
                                     <div key={column.label} className="px-4 py-2">
                                         <p className="text-[10px] font-semibold tracking-[0.1em] text-ink-subtle uppercase">{column.label}</p>
@@ -288,37 +290,39 @@ export const HomeScreen = () => {
                     </Panel>
 
                     {longestGapsPanel}
+
+                    {/* League */}
+                    <Panel
+                        title="Top strategies"
+                        description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on ${league?.meta.folds ?? 0} draws · chance scores ${Math.round(((league?.meta.folds ?? 0) * (league?.meta.chance.weightedPrizesPer100Draws ?? 0)) / 100)}.`}
+                        actions={
+                            <Link to="/strategies" className="text-xs font-semibold text-accent-strong transition-colors duration-100 hover:text-ink">
+                                All →
+                            </Link>
+                        }
+                        className="flex-1"
+                        bodyClassName="flex flex-1 flex-col"
+                        isFlush
+                    >
+                        <ol className="flex flex-1 flex-col justify-around divide-y divide-line-soft">
+                            {topStrategies.map((strategy) => (
+                                <li key={strategy.id} className="px-4 py-1">
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="w-4 shrink-0 font-mono text-[11px] text-ink-subtle tabular-nums">{strategy.rank}</span>
+                                        <span className="min-w-0 flex-1 truncate text-[13px] leading-5 font-medium text-ink">{strategy.name}</span>
+                                        <span className="shrink-0 font-mono text-xs font-semibold text-ink tabular-nums" title={`Score 1–100, log-scaled from ${formatNumber(strategy.score)} raw prize points`}>{strategy.score100 ?? 1}</span>
+                                    </div>
+                                    <div className="mt-1 flex items-center gap-1 pl-6" aria-hidden="true">
+                                        {strategy.currentPick.map((n) => (
+                                            <Ball key={n} n={n} size="sm" />
+                                        ))}
+                                    </div>
+                                </li>
+                            ))}
+                        </ol>
+                    </Panel>
                 </div>
             </div>
-
-            {/* League */}
-            <Panel
-                title="Top strategies"
-                description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on ${league?.meta.folds ?? 0} draws · chance scores ${Math.round(((league?.meta.folds ?? 0) * (league?.meta.chance.weightedPrizesPer100Draws ?? 0)) / 100)}.`}
-                actions={
-                    <Link to="/strategies" className="text-xs font-semibold text-accent transition-colors duration-100 hover:text-accent-strong">
-                        All →
-                    </Link>
-                }
-                isFlush
-            >
-                <ol className="divide-y divide-line-soft">
-                    {topStrategies.map((strategy) => (
-                        <li key={strategy.id} className="px-4 py-1">
-                            <div className="flex items-baseline gap-2">
-                                <span className="w-4 shrink-0 font-mono text-[11px] text-ink-subtle tabular-nums">{strategy.rank}</span>
-                                <span className="min-w-0 flex-1 truncate text-[13px] leading-5 font-medium text-ink">{strategy.name}</span>
-                                <span className="shrink-0 font-mono text-xs font-semibold text-ink tabular-nums" title={`Score 1–100, log-scaled from ${formatNumber(strategy.score)} raw prize points`}>{strategy.score100 ?? 1}</span>
-                            </div>
-                            <div className="mt-1 flex items-center gap-1 pl-6" aria-hidden="true">
-                                {strategy.currentPick.map((n) => (
-                                    <Ball key={n} n={n} size="sm" />
-                                ))}
-                            </div>
-                        </li>
-                    ))}
-                </ol>
-            </Panel>
 
             {/* The full draw archive — all the history content, at the foot. */}
             <HistoryScreen embedded />

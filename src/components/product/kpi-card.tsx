@@ -15,7 +15,7 @@ interface KpiCardProps {
 const TONES: Record<KpiTone, string> = {
     primary: "bg-primary/10 text-primary ring-primary/30",
     secondary: "bg-secondary/10 text-secondary ring-secondary/30",
-    gold: "bg-gold/10 text-gold-ink ring-gold/30",
+    gold: "bg-gold-soft text-gold-ink ring-transparent",
     down: "bg-down/10 text-down ring-down/30",
     neutral: "bg-surface-2 text-ink-muted ring-line",
 };

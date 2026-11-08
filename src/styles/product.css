@@ -1,9 +1,10 @@
 /* toto.sg — product design tokens.
  *
  * The site is a light-to-dark data product: a tinted canvas, white panels,
- * hairline borders, one brand colour (violet) and a diverging data ramp that
- * runs cold blue → neutral → hot pink. Gold stays reserved for the jackpot and
- * the rank-1 podium. There is no green and no red chrome anywhere.
+ * hairline borders, one brand colour (teal) and a diverging data ramp that
+ * runs cold blue → neutral → hot pink. Gold stays reserved for the jackpot,
+ * the rank-1 podium and the badge chrome; green and red appear only as
+ * success/danger status chrome, never as data.
  *
  * Every colour is a `light-dark()` pair: the light value first, the dark value
  * second. `color-scheme` on the root element picks between them — the browser
@@ -19,7 +20,7 @@
  *
  * Token namespaces, and why the product code uses them:
  *   - `canvas` / `surface` / `line` / `ink` — the product's own surfaces.
- *   - `accent` — the brand violet. `bg-accent`, `text-accent`, `ring-accent`
+ *   - `accent` — the brand teal. `bg-accent`, `text-accent`, `ring-accent`
  *     resolve straight to `--color-accent`; `primary` in the library's
  *     vocabulary means "body text", not "brand", so product code never uses
  *     `bg-primary` / `text-primary` for colour.
@@ -29,21 +30,21 @@
 @theme {
     /* Futuristic console palette — dark first, light as the "day console".
      * Both modes keep the same geometry: near-black/near-white surfaces,
-     * 1px luminous rules, one violet signal colour and cyan as the second
+     * 1px luminous rules, one teal signal colour and cyan as the second
      * data hue. Everything below is a light-dark() pair. */
 
     /* Surfaces */
-    --color-canvas: light-dark(#eef6f8, #041018);
+    --color-canvas: light-dark(#f4f8f8, #041018);
     --color-surface: light-dark(#ffffff, #07202c);
-    --color-surface-2: light-dark(#e4f0f4, #0a2a39);
-    --color-surface-3: light-dark(#d5e6ec, #0f3547);
-    --color-surface-4: light-dark(#bfd5de, #164458);
-    --color-surface-inset: light-dark(#e9f3f6, #08232f);
+    --color-surface-2: light-dark(#eaf2f2, #0a2a39);
+    --color-surface-3: light-dark(#dce9e9, #0f3547);
+    --color-surface-4: light-dark(#c6d8d8, #164458);
+    --color-surface-inset: light-dark(#eaf2f2, #08232f);
 
     /* Hairlines — the only structure in the product */
-    --color-line: light-dark(#d3e4ea, #124155);
-    --color-line-strong: light-dark(#b9d2db, #1c566e);
-    --color-line-soft: light-dark(rgb(211 228 234 / 0.9), rgb(18 65 85 / 0.75));
+    --color-line: light-dark(#d5e3e3, #124155);
+    --color-line-strong: light-dark(#bdd0d0, #1c566e);
+    --color-line-soft: light-dark(rgb(213 227 227 / 0.9), rgb(18 65 85 / 0.75));
 
     /* Floating layers only */
     --shadow-float:
@@ -52,16 +53,16 @@
 
     /* Text — readable in both modes. Light values hold ≥4.5:1 (ink, muted,
      * subtle) and ≥3:1 (faint) on white and on surface-2. */
-    --color-ink: light-dark(#06212c, #e8f7fb);
-    --color-ink-muted: light-dark(#45606c, #9cc4d2);
+    --color-ink: light-dark(#0b1f26, #e8f7fb);
+    --color-ink-muted: light-dark(#52696f, #9cc4d2);
     --color-ink-subtle: light-dark(#4f6e7b, #6c96a8);
     --color-ink-faint: light-dark(#6f8c99, #4d7486);
 
-    /* Signal — electric violet */
-    --color-primary: light-dark(#0f9e86, #2ee6c5);
-    --color-primary-strong: light-dark(#0b7a67, #7cf5de);
-    --color-primary-soft: light-dark(#e3f7f3, #072f33);
-    --color-primary-line: light-dark(#b9e8e0, #12605c);
+    /* Signal — teal */
+    --color-primary: light-dark(#0f9d8a, #2ee6c5);
+    --color-primary-strong: light-dark(#0b7f70, #7cf5de);
+    --color-primary-soft: light-dark(#d9f2ee, #072f33);
+    --color-primary-line: light-dark(#b7e6dc, #12605c);
 
     --color-accent: var(--color-primary);
     --color-accent-strong: var(--color-primary-strong);
@@ -70,7 +71,7 @@
 
     /* Data ramp — cold blue → hot pink */
     --color-heat-cold: light-dark(#0284c7, #35d6ff);
-    --color-heat-neutral: light-dark(#e4f0f4, #0a2a39);
+    --color-heat-neutral: light-dark(#eaf2f2, #0a2a39);
     --color-heat-hot: light-dark(#db2777, #ff5c8a);
 
     /* Sequential ramp for the decade heatmap */
@@ -87,8 +88,9 @@
     --color-secondary-soft: light-dark(#e0f5fb, #062b36);
 
     /* Medals and the jackpot */
-    --color-gold: light-dark(#d4a500, #f5c518);
-    --color-gold-ink: light-dark(#7a5b00, #ffdf8f);
+    --color-gold: light-dark(#b7791f, #f5c518);
+    --color-gold-ink: light-dark(#b7791f, #ffdf8f);
+    --color-gold-soft: light-dark(#fbf1dc, rgb(230 185 77 / 0.12));
     --color-silver: light-dark(#7d87a3, #9ab8c4);
     --color-silver-ink: light-dark(#4a5470, #c3dde5);
     --color-bronze: light-dark(#a8673a, #d99a63);
@@ -98,11 +100,17 @@
     --color-up: light-dark(#0284c7, #35d6ff);
     --color-down: light-dark(#db2777, #ff5c8a);
 
-    /* Ball chips */
-    --color-ball: light-dark(#ffffff, #0f3547);
-    --color-ball-ink: light-dark(#06212c, #e8f7fb);
+    /* Success / danger chrome — forms and status text, not data */
+    --color-success: light-dark(#15803d, #4ade80);
+    --color-danger: light-dark(#c2410c, #fb923c);
 
-    /* Strategy family chips — 20 muted tones, no green, no warm chrome */
+    /* Ball chips */
+    --color-ball: light-dark(#ffffff, #0f3a4a);
+    --color-ball-ink: light-dark(#0b1f26, #e8f7fb);
+    --color-ball-line: light-dark(#c9dcdc, #1f5568);
+
+    /* Strategy family chips — muted categorical tones; Seed Hunters wears
+       the gold badge instead */
     --color-fam-01: light-dark(#4b3fa8, #b3adff);
     --color-fam-02: light-dark(#7a3e9e, #d3a6ee);
     --color-fam-03: light-dark(#5650c8, #a9a4f5);
@@ -186,7 +194,8 @@
 
 /* Product palette on top of the library's semantic tokens. */
 :root {
-    /* Brand scale → violet */
+    /* Library brand scale — dormant; the semantic tokens below re-point it
+       at the product palette */
     --color-brand-50: #f5f2ff;
     --color-brand-100: #ece7ff;
     --color-brand-200: #dbd2ff;
@@ -221,6 +230,14 @@
     --color-bg-brand-section: var(--color-surface);
     --color-bg-brand-section_subtle: var(--color-canvas);
 
+    /* Status surfaces */
+    --color-bg-error-solid: var(--color-danger);
+    --color-bg-error-solid_hover: light-dark(#9a3412, #fdba74);
+    --color-bg-error-primary: light-dark(rgb(194 65 12 / 0.07), rgb(251 146 60 / 0.10));
+    --color-bg-error-secondary: light-dark(rgb(194 65 12 / 0.13), rgb(251 146 60 / 0.18));
+    --color-bg-success-primary: light-dark(rgb(21 128 61 / 0.07), rgb(74 222 128 / 0.10));
+    --color-bg-success-secondary: light-dark(rgb(21 128 61 / 0.13), rgb(74 222 128 / 0.18));
+
     /* Text */
     --color-text-primary: var(--color-ink);
     --color-text-secondary: var(--color-ink-muted);
@@ -235,13 +252,13 @@
     --color-text-brand-tertiary: var(--color-primary);
     --color-text-brand-tertiary_alt: var(--color-primary);
     --color-text-primary_on-brand: #ffffff;
-    --color-text-secondary_on-brand: #ddd5ff;
-    --color-text-tertiary_on-brand: #ddd5ff;
-    --color-text-quaternary_on-brand: #c3b6ff;
-    --color-text-error-primary: var(--color-down);
-    --color-text-error-primary_hover: var(--color-down);
+    --color-text-secondary_on-brand: #dcf5f0;
+    --color-text-tertiary_on-brand: #dcf5f0;
+    --color-text-quaternary_on-brand: #b5e8e0;
+    --color-text-error-primary: var(--color-danger);
+    --color-text-error-primary_hover: var(--color-danger);
     --color-text-warning-primary: var(--color-gold-ink);
-    --color-text-success-primary: var(--color-up);
+    --color-text-success-primary: var(--color-success);
 
     /* Borders + rings */
     --color-border-primary: var(--color-line-strong);
@@ -250,8 +267,8 @@
     --color-border-tertiary: var(--color-surface-2);
     --color-border-brand: var(--color-primary);
     --color-border-brand_alt: var(--color-primary);
-    --color-border-error: var(--color-down);
-    --color-border-error_subtle: var(--color-heat-hot);
+    --color-border-error: var(--color-danger);
+    --color-border-error_subtle: light-dark(rgb(194 65 12 / 0.45), rgb(251 146 60 / 0.5));
 
     /* Foreground */
     --color-fg-primary: var(--color-ink);
@@ -260,14 +277,14 @@
     --color-fg-quaternary: var(--color-ink-faint);
     --color-fg-brand-primary: var(--color-primary);
     --color-fg-brand-secondary: var(--color-primary);
-    --color-fg-error-primary: var(--color-down);
-    --color-fg-error-secondary: var(--color-down);
+    --color-fg-error-primary: var(--color-danger);
+    --color-fg-error-secondary: var(--color-danger);
     --color-fg-warning-primary: var(--color-gold-ink);
     --color-fg-warning-secondary: var(--color-gold-ink);
-    --color-fg-success-primary: var(--color-up);
-    --color-fg-success-secondary: var(--color-up);
+    --color-fg-success-primary: var(--color-success);
+    --color-fg-success-secondary: var(--color-success);
 
     /* Focus ring + tooltip */
     --color-focus-ring: var(--color-primary);
-    --color-tooltip-supporting-text: light-dark(#c3c6de, #8f95b8);
+    --color-tooltip-supporting-text: light-dark(#9cc4d2, #8fa9b0);
 }

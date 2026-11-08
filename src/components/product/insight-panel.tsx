@@ -72,7 +72,7 @@ export function InsightPanel({ number, section, title, caption, family, stats, a
                 family ? (
                     <Link
                         to={`/strategies?family=${encodeURIComponent(family)}`}
-                        className="text-[11px] text-ink-subtle transition-colors duration-100 hover:text-accent"
+                        className="text-[11px] text-ink-subtle transition-colors duration-100 hover:text-accent-strong"
                     >
                         {family} strategies →
                     </Link>

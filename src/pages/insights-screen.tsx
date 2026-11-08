@@ -991,7 +991,7 @@ export const InsightsScreen = () => {
                         className={cx(
                             "cursor-pointer shrink-0 rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors duration-100",
                             activeSection === "all"
-                                ? "bg-primary-soft text-primary border border-primary-line"
+                                ? "bg-primary-soft text-primary-strong border border-primary-line"
                                 : "border border-line bg-surface-2 text-ink-muted hover:text-ink hover:border-line-strong",
                         )}
                     >
@@ -1005,7 +1005,7 @@ export const InsightsScreen = () => {
                             className={cx(
                                 "cursor-pointer shrink-0 rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors duration-100",
                                 activeSection === section.id
-                                    ? "bg-primary-soft text-primary border border-primary-line"
+                                    ? "bg-primary-soft text-primary-strong border border-primary-line"
                                     : "border border-line bg-surface-2 text-ink-muted hover:text-ink hover:border-line-strong",
                             )}
                         >
@@ -1038,7 +1038,7 @@ export const InsightsScreen = () => {
                                 <a
                                     key={panel.id}
                                     href={`#${panel.id}`}
-                                    className="shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] text-ink-subtle transition-colors duration-100 hover:text-accent"
+                                    className="shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] text-ink-subtle transition-colors duration-100 hover:text-accent-strong"
                                 >
                                     {String(panel.number).padStart(2, "0")} {panel.label}
                                 </a>
