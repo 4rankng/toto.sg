@@ -29,6 +29,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { CHANCE, evaluateStrategy, WARMUP_DRAWS } from "./lib/league-eval.mjs";
 import { filterEra, nextDrawDateIso } from "./lib/analysis.mjs";
+import { scoreLine } from "./lib/toto.mjs";
 import { buildCatalogContext, CATALOG_SIGNAL_RULES, CATALOG_SIGNAL_STRATEGIES } from "./lib/catalog-signal-rules.mjs";
 import { CATALOG_STRUCTURE_RULES, CATALOG_STRUCTURE_STRATEGIES } from "./lib/catalog-structure-rules.mjs";
 import { CATALOG_ALMANAC_RULES, CATALOG_ALMANAC_STRATEGIES } from "./lib/catalog-almanac-rules.mjs";
@@ -42,6 +43,7 @@ import { HUNTER_RULES, HUNTER_STRATEGIES } from "./lib/hunter-rules.mjs";
 import { buildDeskContext, DESK_RULES, DESK_STRATEGIES } from "./lib/desk-rules.mjs";
 import { buildMatchrateContext, freezeBandRates, MATCHRATE_RULES, MATCHRATE_STRATEGIES } from "./lib/matchrate-rules.mjs";
 import { buildIndicatorFoldStats, INDICATOR_RULES, INDICATOR_STRATEGIES } from "./lib/indicator-rules.mjs";
+import { buildSequenceDynamicsContext, SEQUENCE_DYNAMICS_RULES, SEQUENCE_DYNAMICS_STRATEGIES } from "./lib/sequence-dynamics-rules.mjs";
 
 const DATA_DIR = fileURLToPath(new URL("../public/data/", import.meta.url));
 const CACHE_PATH = fileURLToPath(new URL("../data/league-cache.json", import.meta.url));
@@ -111,6 +113,32 @@ const main = async () => {
         return catMemo.get(target.draw);
     };
 
+    // The sequence family reads the archive's own order geometry — the same
+    // statistics the two new Insights galleries show. The context is
+    // memoised per fold, so all ten rules share one build.
+    const seqMemo = new Map();
+    const seqPrepare = (eraPrior, target) => {
+        if (!seqMemo.has(target.draw)) seqMemo.set(target.draw, buildSequenceDynamicsContext(eraPrior, target));
+        return seqMemo.get(target.draw);
+    };
+
+    // Prize-hit events per strategy: every fold where the line won a prize
+    // tier. onPick fires once per fold (cached folds included), so the events
+    // assemble without re-running a single rule; the group is recomputed from
+    // the pick and the draw, exactly as the evaluator graded it. Hit facts
+    // only — which draw, which line, which tier — never prize money.
+    const drawByNo = new Map(era.map((draw) => [draw.draw, draw]));
+    const prizeEvents = new Map();
+    const collectEvent = (specId, drawNo, pick) => {
+        const draw = drawByNo.get(drawNo);
+        if (!draw) return; // the next-draw pick has no archived draw yet
+        const group = scoreLine(pick, draw);
+        if (group === 0) return;
+        let list = prizeEvents.get(specId);
+        if (!list) prizeEvents.set(specId, (list = []));
+        list.push({ d: drawNo, date: draw.date, g: group, p: pick });
+    };
+
     const specOf = ([id, name, family, description], rule, prepare) => ({ id, name, family, description, rule, prepare });
     const baseSpecs = [
         ...CURATED_STRATEGIES.map((s) => specOf(s, (prior, target, rng, stats) => CURATED_RULES[s[0]](prior, target, rng, stats), (prior, target) => buildFoldStats(prior, target))),
@@ -126,6 +154,11 @@ const main = async () => {
         ...CATALOG_ALMANAC_STRATEGIES.map((s) => specOf(s, (prior, target, rng, ctx) => CATALOG_ALMANAC_RULES[s[0]](prior, target, rng, ctx), catalogPrepare)),
         // metaVote is not here: it is a second-phase spec wired below.
         ...CATALOG_ML_STRATEGIES.filter(([id]) => id !== META_VOTE_ID).map((s) => specOf(s, (prior, target, rng, ctx) => CATALOG_ML_RULES[s[0]](prior, target, rng, ctx), catalogPrepare)),
+        // The sequence family: ten rules built on the archive's order
+        // geometry and stream dynamics.
+        ...SEQUENCE_DYNAMICS_STRATEGIES.map((s) =>
+            specOf(s, (prior, target, rng, ctx) => SEQUENCE_DYNAMICS_RULES[s[0]](prior, target, rng, ctx), seqPrepare),
+        ),
     ];
 
     // The cross-panel family reads the league's own vote, so it runs in a
@@ -173,32 +206,53 @@ const main = async () => {
             if (ids.has(s.id)) throw new Error(`duplicate strategy id: ${s.id}`);
         }
     }
+    // Two rows with the same name or the same description are the same rule
+    // written twice — verify:data fails on them, so catch it here first.
+    for (const field of ["name", "description"]) {
+        const seen = new Set();
+        for (const s of specs) {
+            if (seen.has(s[field])) throw new Error(`duplicate strategy ${field}: "${s[field]}" (${s.id})`);
+            seen.add(s[field]);
+        }
+    }
     const families = [...new Set(specs.map((s) => s.family))].sort((a, b) => a.localeCompare(b));
 
-    const evaluate = (spec, onPick) => {
-        const key = (drawNo) => `${spec.id}:${drawNo}`;
+    // The Phase-2 consensus rules read the base rules' fold lines, so their
+    // results depend on WHICH base rules exist. The base set's fingerprint
+    // scopes their cache entries: when a base rule is added or removed the
+    // hash changes and the Phase-2 folds recompute, while the base rules'
+    // own entries keep their exact keys and stay cache hits.
+    const baseSetHash = createHash("sha256")
+        .update(baseSpecs.map((s) => s.id).sort().join(","))
+        .digest("hex")
+        .slice(0, 8);
+
+    const evaluate = (spec, onPick, scope = "") => {
+        const key = (drawNo) => (scope ? `${spec.id}:${scope}:${drawNo}` : `${spec.id}:${drawNo}`);
+        const prefixKey = (drawNo) => (scope ? `${scope}:${drawNo}` : String(drawNo));
+        const nextKey = () => (scope ? `${spec.id}:${scope}` : spec.id);
         const foldCache = {
             get: (drawNo) => {
                 const entry = cache.entries[key(drawNo)];
-                if (!entry || cache.prefixes[String(drawNo)] !== prefixes.get(drawNo)) return undefined;
+                if (!entry || cache.prefixes[prefixKey(drawNo)] !== prefixes.get(drawNo)) return undefined;
                 hits += 1;
                 return entry;
             },
             set: (drawNo, entry) => {
                 misses += 1;
                 cache.entries[key(drawNo)] = entry;
-                cache.prefixes[String(drawNo)] = prefixes.get(drawNo);
+                cache.prefixes[prefixKey(drawNo)] = prefixes.get(drawNo);
             },
         };
         const nextPickCache = {
             get: () => {
-                const entry = cache.nextPicks[spec.id];
+                const entry = cache.nextPicks[nextKey()];
                 if (!entry || entry.h !== archiveHash) return undefined;
                 pickHits += 1;
                 return entry.p;
             },
             set: (pick) => {
-                cache.nextPicks[spec.id] = { h: archiveHash, p: pick };
+                cache.nextPicks[nextKey()] = { h: archiveHash, p: pick };
             },
         };
         return evaluateStrategy(spec, era, foldStart, foldEnd, expectedHits, {
@@ -216,6 +270,7 @@ const main = async () => {
     for (const spec of baseSpecs) {
         rows.push(
             evaluate(spec, (drawNo, pick) => {
+                collectEvent(spec.id, drawNo, pick);
                 let list = picksByDraw.get(drawNo);
                 if (!list) {
                     list = [];
@@ -228,8 +283,12 @@ const main = async () => {
     // The current (next-draw) consensus uses every base rule's next pick.
     for (const row of rows) for (const n of row.currentPick) nowVotes[n - 1] += 1;
 
-    // Phase 2 — the cross-panel family, now that the vote is known.
-    for (const spec of crossPanelSpecs) rows.push(evaluate(spec));
+    // Phase 2 — the cross-panel family, now that the vote is known. Their
+    // cache entries live under the base-set fingerprint, so a change to the
+    // base rules invalidates exactly these and nothing else.
+    for (const spec of crossPanelSpecs) {
+        rows.push(evaluate(spec, (drawNo, pick) => collectEvent(spec.id, drawNo, pick), baseSetHash));
+    }
     rows.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
     rows.forEach((row, i) => {
         row.rank = i + 1;
@@ -237,10 +296,14 @@ const main = async () => {
 
     // Display score: raw prize points are decade-weighted (one G3 = 10,000), so
     // a single mid-tier hit makes five-digit scores while the rest sit near 0.
-    // Normalise to 1–100 on a log scale — order-preserving, top = 100, each
-    // prize tier reads as one visible step, zero-score rows floor at 1.
-    const maxScore = Math.max(...rows.map((row) => row.score));
-    for (const row of rows) row.score100 = 1 + Math.round((99 * Math.log1p(row.score)) / Math.log1p(maxScore));
+    // Normalise on a log scale against the league's THEORETICAL CEILING — every
+    // fold a Group 1, folds × 1,000,000 points — not against the current
+    // leader. The absolute anchor keeps 100 an impossible perfect league
+    // instead of a badge the leader gets for free: today the top sits at ~54,
+    // a chance-grade row at ~30, zero-score rows floor at 1, and the number
+    // stays comparable as the fold count grows.
+    const ceiling = (foldEnd - foldStart) * 1_000_000;
+    for (const row of rows) row.score100 = Math.max(1, 1 + Math.round((99 * Math.log1p(row.score)) / Math.log1p(ceiling)));
 
     const league = {
         meta: {
@@ -253,6 +316,17 @@ const main = async () => {
         strategies: rows,
     };
     await writeFile(`${DATA_DIR}strategies.json`, JSON.stringify(league, 1), "utf8");
+
+    // The prize-hit ledger: per strategy, every fold that won a prize — the
+    // draw, its date, the tier and the exact line. Pure hit facts; the UI's
+    // tier tiles expand to show them.
+    const eventLedger = {
+        meta: { generatedAt: league.meta.generatedAt, nextDraw: nextDrawNo, folds: foldEnd - foldStart },
+        strategies: Object.fromEntries(
+            specs.map((spec) => [spec.id, (prizeEvents.get(spec.id) ?? []).sort((a, b) => a.d - b.d)]),
+        ),
+    };
+    await writeFile(`${DATA_DIR}prize-events.json`, JSON.stringify(eventLedger, 1), "utf8");
 
     // The playbook pairs each cross-panel strategy's document evidence with
     // the live league row it produced.
@@ -285,6 +359,29 @@ const main = async () => {
     await writeFile(`${DATA_DIR}cross-panel-playbook.json`, JSON.stringify(playbook, 1), "utf8");
 
     await mkdir(fileURLToPath(new URL("..", import.meta.url)) + "data", { recursive: true });
+
+    // Prune the cache down to the keys the current rule set actually uses.
+    // A base rule that was removed, or a Phase-2 entry left behind by an
+    // older base-set fingerprint, would otherwise sit in the file forever.
+    const validEntryKeys = new Set();
+    const validNextPickKeys = new Set();
+    for (const spec of baseSpecs) {
+        validNextPickKeys.add(spec.id);
+        for (let i = foldStart; i < foldEnd; i += 1) validEntryKeys.add(`${spec.id}:${era[i].draw}`);
+    }
+    for (const spec of crossPanelSpecs) {
+        validNextPickKeys.add(`${spec.id}:${baseSetHash}`);
+        for (let i = foldStart; i < foldEnd; i += 1) {
+            validEntryKeys.add(`${spec.id}:${baseSetHash}:${era[i].draw}`);
+        }
+    }
+    for (const entryKey of Object.keys(cache.entries)) {
+        if (!validEntryKeys.has(entryKey)) delete cache.entries[entryKey];
+    }
+    for (const pickKey of Object.keys(cache.nextPicks)) {
+        if (!validNextPickKeys.has(pickKey)) delete cache.nextPicks[pickKey];
+    }
+
     await writeFile(CACHE_PATH, `${JSON.stringify(cache, 1)}\n`, "utf8");
 
     console.log(

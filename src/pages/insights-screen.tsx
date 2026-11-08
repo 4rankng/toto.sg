@@ -10,7 +10,7 @@ import {
     TrendUp01,
     Users01,
 } from "@untitledui/icons";
-import { CandidateBallChip } from "@/components/product/sequence-blueprint-bar";
+import { CandidateBallChip, SequenceBlueprintWorkbench } from "@/components/product/sequence-blueprint-bar";
 import { useLineBuilder } from "@/providers/line-builder-provider";
 import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
@@ -49,6 +49,14 @@ import {
     SurvivalHazardChart,
     TransitionMatrixHeatmap,
 } from "@/components/insights-indicator-charts";
+import {
+    ConstellationMstBoardChart,
+    CurvatureProfileChart,
+    OrdinalMotifBarChart,
+    PeriodogramSpectrumChart,
+    RecurrenceMatrixPlot,
+    UnionPartitionCurveChart,
+} from "@/components/insights-sequence-charts";
 import {
     CountDistributionChart,
     DecadeHeatmap,
@@ -182,6 +190,29 @@ import {
     computeTercileZoneMatrix,
     computeUpcomingCalendarAffinityStats,
 } from "@/lib/insights-sequence-blueprint";
+import {
+    chiSquareQuantile,
+    computeCyclicTorusArcStats,
+    computeExtendedSequenceResonanceStats,
+    computeHawkesPointProcessStats,
+    computeJensenShannonTurnoverStats,
+    computeLempelZivComplexityStats,
+    computeMahalanobisOrderStats,
+    computeMultiplicativeCoprimeStats,
+    computeOrdinalPermutationEntropyStats,
+    computePlayslipConstellationStats,
+    computeRqaRecurrenceStats,
+    computeSecondDiffCurvatureStats,
+    computeSidonSumsetStats,
+    computeSpectralPeriodogramStats,
+    computeSubgraphCohesionStats,
+    computeUnionDepletionCurveStats,
+    computeWassersteinTransportStats,
+    gapProfileOf,
+    ORDINAL_MOTIF_GLYPHS,
+    ORDINAL_MOTIF_LABELS,
+    playslipCellOf,
+} from "@/lib/insights-sequence-dynamics";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
 
@@ -404,6 +435,34 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
             { id: "panel-family-match-leaderboard", label: "Family match leaderboard" },
         ],
     },
+    {
+        id: "order-geometry",
+        label: "10. Order geometry & additive structure",
+        panels: [
+            { id: "panel-mahalanobis-ellipsoid", label: "Mahalanobis ellipsoid" },
+            { id: "panel-gap-curvature", label: "Gap curvature" },
+            { id: "panel-sidon-sumset", label: "Sidon sumset" },
+            { id: "panel-constellation-mst", label: "Playslip MST constellation" },
+            { id: "panel-subgraph-cohesion", label: "Sub-graph cohesion" },
+            { id: "panel-benford-coprime", label: "Coprime density" },
+            { id: "panel-cyclic-torus", label: "Cyclic Z49 torus" },
+            { id: "panel-recursive-sequences", label: "Recursive resonance" },
+        ],
+    },
+    {
+        id: "stream-dynamics",
+        label: "11. Sequence dynamics & point processes",
+        panels: [
+            { id: "panel-wasserstein-transport", label: "Wasserstein transport" },
+            { id: "panel-lempel-ziv", label: "Lempel-Ziv complexity" },
+            { id: "panel-spectral-periodogram", label: "Spectral periodogram" },
+            { id: "panel-hawkes-intensity", label: "Hawkes intensity" },
+            { id: "panel-rqa-recurrence", label: "Recurrence quantification" },
+            { id: "panel-union-depletion", label: "Union depletion" },
+            { id: "panel-permutation-entropy", label: "Permutation entropy" },
+            { id: "panel-jensen-shannon-turnover", label: "Jensen-Shannon turnover" },
+        ],
+    },
 ];
 
 /** Every panel in reading order, numbered 1..112. */
@@ -417,6 +476,18 @@ const PANEL_NUMBERS = new Map<string, number>(PANEL_INDEX.map((p) => [p.id, p.nu
 const pNum = (id: string) => PANEL_NUMBERS.get(id) ?? 1;
 
 const pct = (value: number) => `${Math.round(value * 100)}%`;
+
+/** The LZ panel's chart points: the rolling c_norm against the [0, 1] band. */
+const lempelZivPoints = (stats: ReturnType<typeof computeLempelZivComplexityStats>) =>
+    stats.rolling.slice(-120).map((point) => ({
+        label: point.label,
+        value: point.value,
+        upper: 1,
+        lower: 0,
+    }));
+
+/** The Feder-Merhav predictability ceiling, as a share. */
+const lempelZivCeiling = (stats: ReturnType<typeof computeLempelZivComplexityStats>) => stats.predictabilityCeiling;
 
 const InsightsSkeleton = () => (
     <DataLoading label="Loading the statistics">
@@ -727,6 +798,38 @@ export const InsightsScreen = () => {
     const keyBallLift = useMemo(() => computeKeyBallMatchLift(), []);
     const familyLeaderboard = useMemo(() => (league ? computeFamilyMatchLeaderboard(league) : null), [league]);
 
+    // The candidate line, sorted. The provider stores the line in tap
+    // order, so every positional read of it must sort first — otherwise
+    // slot 2 holds whatever the viewer tapped second, not the second
+    // smallest ball.
+    const sortedLine = useMemo(() => [...line].sort((a, b) => a - b), [line]);
+
+    /** The candidate's own gap profile — the live overlay on the curvature chart. */
+    const candidateProfile = useMemo(
+        () => (sortedLine.length >= 6 ? gapProfileOf(sortedLine.slice(0, 6)) : null),
+        [sortedLine],
+    );
+
+    // --- Gallery 10: order geometry & additive structure ---------------
+    const mahalanobis = useMemo(() => computeMahalanobisOrderStats(eraDraws), [eraDraws]);
+    const curvature = useMemo(() => computeSecondDiffCurvatureStats(eraDraws), [eraDraws]);
+    const sidon = useMemo(() => computeSidonSumsetStats(eraDraws), [eraDraws]);
+    const constellation = useMemo(() => computePlayslipConstellationStats(eraDraws), [eraDraws]);
+    const subgraph = useMemo(() => computeSubgraphCohesionStats(eraDraws), [eraDraws]);
+    const coprime = useMemo(() => computeMultiplicativeCoprimeStats(eraDraws), [eraDraws]);
+    const torus = useMemo(() => computeCyclicTorusArcStats(eraDraws), [eraDraws]);
+    const resonance = useMemo(() => computeExtendedSequenceResonanceStats(eraDraws), [eraDraws]);
+
+    // --- Gallery 11: sequence dynamics & point processes ----------------
+    const wasserstein = useMemo(() => computeWassersteinTransportStats(eraDraws), [eraDraws]);
+    const lempelZiv = useMemo(() => computeLempelZivComplexityStats(eraDraws), [eraDraws]);
+    const spectral = useMemo(() => computeSpectralPeriodogramStats(eraDraws), [eraDraws]);
+    const hawkes = useMemo(() => computeHawkesPointProcessStats(eraDraws), [eraDraws]);
+    const rqa = useMemo(() => computeRqaRecurrenceStats(eraDraws), [eraDraws]);
+    const unionDepletion = useMemo(() => computeUnionDepletionCurveStats(eraDraws), [eraDraws]);
+    const permutation = useMemo(() => computeOrdinalPermutationEntropyStats(eraDraws), [eraDraws]);
+    const turnover = useMemo(() => computeJensenShannonTurnoverStats(eraDraws), [eraDraws]);
+
     const compositionMisses = useMemo(() => {
         return [...composition].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 4);
     }, [composition]);
@@ -812,6 +915,18 @@ export const InsightsScreen = () => {
                 <KpiCard label="8-Signal #1" value={confluenceBoard?.rankedBalls[0]?.number ? `Ball ${confluenceBoard.rankedBalls[0].number}` : "—"} hint={confluenceBoard?.rankedBalls[0] ? `${confluenceBoard.rankedBalls[0].signalsPassed}/8 signals` : undefined} icon={Target05} tone="primary" />
                 <KpiCard label="Bot consensus" value={stratConsensus.topVoted[0] ? `Ball ${stratConsensus.topVoted[0].number}` : "—"} hint={stratConsensus.topVoted[0] ? `${stratConsensus.topVoted[0].votes} bot votes` : undefined} icon={Users01} tone="secondary" />
             </div>
+
+            {/*
+                The live workbench. It sits above the sticky gallery nav so
+                the candidate line, the 8-filter envelope verdict and the
+                deep-scan metrics stay reachable while the reader scrolls
+                all 128 panels.
+            */}
+            <SequenceBlueprintWorkbench
+                draws={eraDraws}
+                latestDraw={eraDraws[eraDraws.length - 1]}
+                confluenceLine={confluenceBoard?.top6ConfluenceLine}
+            />
 
             {/*
                 Gallery navigation. The section pills wrap instead of scrolling
@@ -4131,10 +4246,10 @@ export const InsightsScreen = () => {
                             stats={[
                                 { label: "Slot 1 Median", value: `Ball ${slotQuantiles.slots[0]?.median ?? 7}`, hint: `IQR ${slotQuantiles.slots[0]?.p25}–${slotQuantiles.slots[0]?.p75}` },
                                 { label: "Slot 6 Median", value: `Ball ${slotQuantiles.slots[5]?.median ?? 43}`, hint: `IQR ${slotQuantiles.slots[5]?.p25}–${slotQuantiles.slots[5]?.p75}` },
-                                { label: "Selected In-Zone", value: `${line.filter((n, idx) => { const s = slotQuantiles.slots[idx]; return s ? n >= s.p25 && n <= s.p75 : false; }).length} / ${Math.min(line.length, 6)}`, hint: "current line slots" },
+                                { label: "Selected In-Zone", value: `${sortedLine.slice(0, 6).filter((n, idx) => { const s = slotQuantiles.slots[idx]; return s ? n >= s.p25 && n <= s.p75 : false; }).length} / ${Math.min(sortedLine.length, 6)}`, hint: "current line slots" },
                             ]}
                         >
-                            <SlotQuantileBandChart slots={slotQuantiles.slots} currentLine={line} className="mt-2" />
+                            <SlotQuantileBandChart slots={slotQuantiles.slots} currentLine={sortedLine} className="mt-2" />
                         </InsightPanel>
                     )}
 
@@ -4384,6 +4499,562 @@ export const InsightsScreen = () => {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+                        </InsightPanel>
+                    )}
+                </LazyGallerySection>
+            )}
+
+            {/* ---------------------------------------------------------------- *
+             * 10. Order geometry & additive structure.
+             * ---------------------------------------------------------------- */}
+            {(activeSection === "all" || activeSection === "order-geometry") && (
+                <LazyGallerySection id="order-geometry" title="10. Order geometry & additive structure" forceMount={forceMount}>
+                    {isVisible("panel-mahalanobis-ellipsoid", "order-geometry") && (
+                        <InsightPanel
+                            number={pNum("panel-mahalanobis-ellipsoid")}
+                            section="Order geometry"
+                            title="Order-statistic Mahalanobis ellipsoid"
+                            caption="Each draw's six sorted numbers measured against the exact order-statistic mean and covariance of a uniform 6-of-49 line, against the chi-square(6) null."
+                            id="panel-mahalanobis-ellipsoid"
+                            family="Structure"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Mean D²", value: mahalanobis.meanD2.toFixed(2), hint: "null 6.00" },
+                                { label: "Typical", value: formatNumber(mahalanobis.typicalCount), hint: "inside the median" },
+                                { label: "Extreme", value: formatNumber(mahalanobis.extremeCount), hint: "past the p95" },
+                            ]}
+                        >
+                            <ObservedExpectedBarChart
+                                items={[
+                                    {
+                                        label: "Mean D²",
+                                        observedValue: mahalanobis.meanD2,
+                                        expectedValue: 6,
+                                        formattedObserved: mahalanobis.meanD2.toFixed(2),
+                                        formattedExpected: "6.00",
+                                    },
+                                    {
+                                        label: "Median D²",
+                                        observedValue: mahalanobis.medianD2,
+                                        expectedValue: chiSquareQuantile(0.5, 6),
+                                        formattedObserved: mahalanobis.medianD2.toFixed(2),
+                                        formattedExpected: chiSquareQuantile(0.5, 6).toFixed(2),
+                                    },
+                                    {
+                                        label: "p95 D²",
+                                        observedValue: mahalanobis.p95D2,
+                                        expectedValue: chiSquareQuantile(0.95, 6),
+                                        formattedObserved: mahalanobis.p95D2.toFixed(2),
+                                        formattedExpected: chiSquareQuantile(0.95, 6).toFixed(2),
+                                    },
+                                ]}
+                                className="mt-2"
+                            />
+                            <div className="mt-2 flex flex-col gap-1">
+                                <span className="text-[10px] text-ink-subtle">The most typical lines — tap a ball to build your own.</span>
+                                {mahalanobis.mostTypical.slice(0, 3).map((row) => (
+                                    <div key={row.draw} className="flex items-center gap-1.5">
+                                        <span className="w-10 shrink-0 font-mono text-[10px] text-ink-subtle tabular-nums">
+                                            #{row.draw}
+                                        </span>
+                                        <span className="flex flex-wrap gap-1">
+                                            {row.line.map((ball) => (
+                                                <CandidateBallChip key={ball} number={ball} />
+                                            ))}
+                                        </span>
+                                        <span className="ml-auto shrink-0 font-mono text-[10px] text-ink-subtle tabular-nums">
+                                            D² {row.d2.toFixed(2)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-gap-curvature", "order-geometry") && (
+                        <InsightPanel
+                            number={pNum("panel-gap-curvature")}
+                            section="Order geometry"
+                            title="Gap curvature & zigzag sign-flips"
+                            caption="The five slot deltas and their second differences, against the archive interquartile bands — with the live candidate's own curvature profile."
+                            id="panel-gap-curvature"
+                            family="Sequence"
+                            className="lg:col-span-6"
+                            stats={[
+                                {
+                                    label: "Convex Fan",
+                                    value: pct(curvature.regimeShares["Convex Fan"]),
+                                    hint: `null ${pct(curvature.regimeNull["Convex Fan"])}`,
+                                },
+                                {
+                                    label: "Balanced",
+                                    value: pct(curvature.regimeShares.Balanced),
+                                    hint: `null ${pct(curvature.regimeNull.Balanced)}`,
+                                },
+                                {
+                                    label: "Zigzag ≥ 2",
+                                    value: pct(curvature.flipShares[2] + curvature.flipShares[3]),
+                                    hint: `null ${pct(curvature.flipNull[2] + curvature.flipNull[3])}`,
+                                },
+                            ]}
+                        >
+                            <CurvatureProfileChart
+                                gapMedian={curvature.bands.gapMedian}
+                                gapP25={curvature.bands.gapP25}
+                                gapP75={curvature.bands.gapP75}
+                                secondMedian={curvature.bands.secondMedian}
+                                secondP25={curvature.bands.secondP25}
+                                secondP75={curvature.bands.secondP75}
+                                candidateDeltas={candidateProfile?.deltas}
+                                candidateSecondDiffs={candidateProfile?.secondDiffs}
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-sidon-sumset", "order-geometry") && (
+                        <InsightPanel
+                            number={pNum("panel-sidon-sumset")}
+                            section="Order geometry"
+                            title="Sidon B2 additive sumset"
+                            caption="How many distinct pairwise sums a line produces — 21 is a pure Sidon set with zero four-term relations, against the exact combinatorial null over every 6-of-49 line."
+                            id="panel-sidon-sumset"
+                            family="Structure"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Mean |A+A|", value: sidon.meanSumset.toFixed(2), hint: `null ${sidon.nullMeanSumset.toFixed(2)}` },
+                                { label: "Pure Sidon", value: pct(sidon.pureSidonShare), hint: `${formatNumber(sidon.pureSidonCount)} lines` },
+                                { label: "Max |A+A|", value: "21", hint: "zero collisions" },
+                            ]}
+                        >
+                            <ObservedExpectedBarChart
+                                items={sidon.observedDistribution.map((share, index) => ({
+                                    label: `|A+A| ${index + 11}`,
+                                    observedValue: share,
+                                    expectedValue: sidon.nullDistribution[index],
+                                    formattedObserved: pct(share),
+                                    formattedExpected: pct(sidon.nullDistribution[index]),
+                                })).slice(4)}
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-constellation-mst", "order-geometry") && (
+                        <InsightPanel
+                            number={pNum("panel-constellation-mst")}
+                            section="Order geometry"
+                            title="Playslip 7×7 MST constellation"
+                            caption="The latest draw's six balls on the playslip lattice with their exact Euclidean minimum spanning tree and barycentre — the gold overlay is your candidate line."
+                            id="panel-constellation-mst"
+                            family="Pattern"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Mean MST", value: constellation.meanMst.toFixed(2), hint: `lattice ${constellation.latticeMstMean.toFixed(2)}` },
+                                { label: "Wider than lattice", value: pct(constellation.spreadShare), hint: "of all lines" },
+                                { label: "Mean gyration", value: constellation.meanGyration.toFixed(2), hint: "radius of gyration" },
+                            ]}
+                        >
+                            <ConstellationMstBoardChart
+                                points={(constellation.latest?.stats.cells ?? []).map((cell) => ({
+                                    ball: cell.ball,
+                                    row: cell.row,
+                                    col: cell.col,
+                                }))}
+                                edges={constellation.latest?.stats.mstEdges ?? []}
+                                baryRow={constellation.latest?.stats.baryRow ?? 3}
+                                baryCol={constellation.latest?.stats.baryCol ?? 3}
+                                candidatePoints={sortedLine.map((ball) => {
+                                    const cell = playslipCellOf(ball);
+                                    return { ball, row: cell.row, col: cell.col };
+                                })}
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-subgraph-cohesion", "order-geometry") && (
+                        <InsightPanel
+                            number={pNum("panel-subgraph-cohesion")}
+                            section="Order geometry"
+                            title="Induced sub-graph cohesion"
+                            caption="The mean co-occurrence Z over the fifteen internal pair edges of each draw, against the zero-lift hypergeometric baseline."
+                            id="panel-subgraph-cohesion"
+                            family="Pairs"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Mean pair Z", value: subgraph.meanPairZ.toFixed(3), hint: "15 internal edges" },
+                                { label: "Positive edges", value: subgraph.meanPositiveEdges.toFixed(1), hint: "of 15 per draw" },
+                                { label: "Components", value: subgraph.meanComponents.toFixed(2), hint: "over positive edges" },
+                            ]}
+                        >
+                            <OscillatorBandChart
+                                items={subgraph.rows.slice(-60).map((row) => ({
+                                    number: row.draw,
+                                    value: row.meanPairZ,
+                                    label: `draw ${row.draw}`,
+                                    sublabel: `${row.positiveEdges} positive edges`,
+                                }))}
+                                minVal={Math.min(-1, ...subgraph.rows.slice(-60).map((row) => row.meanPairZ))}
+                                maxVal={Math.max(1, ...subgraph.rows.slice(-60).map((row) => row.meanPairZ))}
+                                overbought={0.5}
+                                oversold={-0.5}
+                                center={0}
+                                valueSuffix=" Z"
+                                className="mt-2"
+                                ariaLabel="Mean internal co-occurrence Z over the last sixty draws"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-benford-coprime", "order-geometry") && (
+                        <InsightPanel
+                            number={pNum("panel-benford-coprime")}
+                            section="Order geometry"
+                            title="Multiplicative coprime density"
+                            caption="How many of a line's fifteen pairs share no factor, against the exact null over every 6-of-49 line, plus the scale-invariant AM–GM spread."
+                            id="panel-benford-coprime"
+                            family="Structure"
+                            className="lg:col-span-6"
+                            stats={[
+                                {
+                                    label: "Mean coprime",
+                                    value: coprime.meanCoprimePairs.toFixed(2),
+                                    hint: `null ${coprime.expectedCoprimePairs.toFixed(2)} of 15`,
+                                },
+                                {
+                                    label: "Pool coprime",
+                                    value: `${coprime.poolCoprimePairs} / 1176`,
+                                    hint: `${pct(coprime.poolCoprimeRate)} of pairs`,
+                                },
+                                {
+                                    label: "AM–GM spread",
+                                    value: coprime.meanSpread.toFixed(2),
+                                    hint: `null ${coprime.nullSpreadMean.toFixed(2)}`,
+                                },
+                            ]}
+                        >
+                            <ObservedExpectedBarChart
+                                items={coprime.observedDistribution.map((share, index) => ({
+                                    label: `${index} pairs`,
+                                    observedValue: share,
+                                    expectedValue: coprime.nullDistribution[index],
+                                    formattedObserved: pct(share),
+                                    formattedExpected: pct(coprime.nullDistribution[index]),
+                                })).slice(4)}
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-cyclic-torus", "order-geometry") && (
+                        <InsightPanel
+                            number={pNum("panel-cyclic-torus")}
+                            section="Order geometry"
+                            title="Cyclic Z₄₉ torus arcs"
+                            caption="The six cyclic gaps on the 49-ring, the largest empty sector and the smallest arc covering every ball — against the exact six-cut spacing null."
+                            id="panel-cyclic-torus"
+                            family="Structure"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Mean max gap", value: torus.meanMaxGap.toFixed(2), hint: `null ${torus.nullMeanMaxGap.toFixed(2)}` },
+                                { label: "Covering arc", value: torus.meanCoveringArc.toFixed(2), hint: "balls of arc" },
+                                { label: "Reflection |μ−25|", value: torus.meanReflection.toFixed(2), hint: "symmetry offset" },
+                            ]}
+                        >
+                            <ObservedExpectedBarChart
+                                items={torus.observedDistribution.map((share, index) => ({
+                                    label: `gap ${index + 1}`,
+                                    observedValue: share,
+                                    expectedValue: torus.nullDistribution[index],
+                                    formattedObserved: pct(share),
+                                    formattedExpected: pct(torus.nullDistribution[index]),
+                                })).slice(8, 30)}
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-recursive-sequences", "order-geometry") && (
+                        <InsightPanel
+                            number={pNum("panel-recursive-sequences")}
+                            section="Order geometry"
+                            title="Recursive integer resonance"
+                            caption="Twelve recursive and integer-theoretic sets inside 1–49, each measured against the exact hypergeometric expectation 6|S|/49."
+                            id="panel-recursive-sequences"
+                            family="Pattern"
+                            className="lg:col-span-6"
+                            stats={[
+                                {
+                                    label: "Strongest",
+                                    value: resonance.latest?.label ?? "—",
+                                    hint: resonance.latest ? `${resonance.latest.hits} of 6 balls` : undefined,
+                                },
+                                { label: "Mean z", value: resonance.meanZ.toFixed(3), hint: "across the twelve sets" },
+                                { label: "Mean hits", value: resonance.meanHits.toFixed(2), hint: `null ${resonance.meanExpected.toFixed(2)}` },
+                            ]}
+                        >
+                            <ObservedExpectedBarChart
+                                items={resonance.rows.map((row) => ({
+                                    label: row.label,
+                                    observedValue: row.meanHits,
+                                    expectedValue: row.expected,
+                                    formattedObserved: row.meanHits.toFixed(2),
+                                    formattedExpected: row.expected.toFixed(2),
+                                    tone: row.zScore > 0.5 ? "gold" : "primary",
+                                }))}
+                                orientation="horizontal"
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+                </LazyGallerySection>
+            )}
+
+            {/* ---------------------------------------------------------------- *
+             * 11. Sequence dynamics & point processes.
+             * ---------------------------------------------------------------- */}
+            {(activeSection === "all" || activeSection === "stream-dynamics") && (
+                <LazyGallerySection id="stream-dynamics" title="11. Sequence dynamics & point processes" forceMount={forceMount}>
+                    {isVisible("panel-wasserstein-transport", "stream-dynamics") && (
+                        <InsightPanel
+                            number={pNum("panel-wasserstein-transport")}
+                            section="Stream dynamics"
+                            title="Wasserstein-1 optimal transport"
+                            caption="The Earth Mover's distance between consecutive draws — how far the cage moved — against the analytical expectation for two independent draws."
+                            id="panel-wasserstein-transport"
+                            family="Sequence"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Mean W₁", value: wasserstein.medianW1.toFixed(2), hint: `null ${wasserstein.expectedW1.toFixed(2)}` },
+                                { label: "Quiet / jump", value: `${wasserstein.quietCount} / ${wasserstein.jumpCount}`, hint: "inside vs past the p95" },
+                                { label: "Reversion", value: wasserstein.reversionCorrelation.toFixed(3), hint: "lag-1 correlation" },
+                            ]}
+                        >
+                            <EnvelopeBandChart
+                                points={wasserstein.envelope.slice(-120)}
+                                valueLabel="W₁"
+                                channelLabel="15-draw envelope"
+                                className="mt-2"
+                                ariaLabel="Wasserstein-1 transport between consecutive draws over the last hundred and twenty transitions"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-lempel-ziv", "stream-dynamics") && (
+                        <InsightPanel
+                            number={pNum("panel-lempel-ziv")}
+                            section="Stream dynamics"
+                            title="Lempel-Ziv algorithmic complexity"
+                            caption="The Kaspar-Schuster normalized LZ76 complexity of the chronological sum and parity streams over rolling 100-draw windows, against the Bernoulli(½) target."
+                            id="panel-lempel-ziv"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Mean c_norm", value: lempelZiv.meanComplexity.toFixed(3), hint: "rolling 100-draw" },
+                                { label: "Shuffled null", value: lempelZiv.shuffledBaseline.toFixed(3), hint: "same stream, shuffled" },
+                                { label: "Π ceiling", value: pct(lempelZivCeiling(lempelZiv)), hint: "Feder–Merhav bound" },
+                            ]}
+                        >
+                            <EnvelopeBandChart
+                                points={lempelZivPoints(lempelZiv)}
+                                valueLabel="c_norm"
+                                channelLabel="Bernoulli(½) band"
+                                className="mt-2"
+                                ariaLabel="Normalized Lempel-Ziv complexity of the draw-sum stream over rolling windows"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-spectral-periodogram", "stream-dynamics") && (
+                        <InsightPanel
+                            number={pNum("panel-spectral-periodogram")}
+                            section="Stream dynamics"
+                            title="Spectral periodogram & Fisher's test"
+                            caption="The exact DFT spectrum of the draw sums, with Fisher's exact test for periodicity and the balls whose dominant harmonic points at the next draw."
+                            id="panel-spectral-periodogram"
+                            family="Indicators"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Dominant P*", value: `${spectral.dominantPeriod.toFixed(1)} draws`, hint: "sum series" },
+                                { label: "Fisher g", value: spectral.fisherG.toFixed(2), hint: `threshold ${spectral.gThreshold.toFixed(2)}` },
+                                { label: "Exact p", value: spectral.fisherP < 0.001 ? "<0.001" : spectral.fisherP.toFixed(4), hint: "white-noise null" },
+                                { label: "Phase leader", value: spectral.phaseAligned[0] ? `Ball ${spectral.phaseAligned[0].ball}` : "—", hint: "next draw" },
+                            ]}
+                        >
+                            <div className="mt-2 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
+                                <PeriodogramSpectrumChart
+                                    spectrum={spectral.spectrum}
+                                    gThreshold={spectral.gThreshold}
+                                    dominantPeriod={spectral.dominantPeriod}
+                                    pValue={spectral.fisherP}
+                                />
+                                <div className="flex flex-col gap-1.5">
+                                    <p className="text-[10px] font-semibold tracking-[0.14em] text-ink-subtle uppercase">
+                                        Phase-aligned balls
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                        {spectral.phaseAligned.slice(0, 8).map((row) => (
+                                            <CandidateBallChip
+                                                key={row.ball}
+                                                number={row.ball}
+                                                sublabel={row.nextPhaseAlignment.toFixed(2)}
+                                                score={`${row.dominantPeriod.toFixed(0)}d`}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-hawkes-intensity", "stream-dynamics") && (
+                        <InsightPanel
+                            number={pNum("panel-hawkes-intensity")}
+                            section="Stream dynamics"
+                            title="Discrete Hawkes arrival intensity"
+                            caption="A five-draw half-life exponential memory kernel over each ball's appearances, separating self-exciting balls from refractory ones against the memoryless base rate."
+                            id="panel-hawkes-intensity"
+                            family="Indicators"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Hottest", value: hawkes.hottest ? `Ball ${hawkes.hottest.ball}` : "—", hint: hawkes.hottest ? `λ ${hawkes.hottest.intensity.toFixed(2)}` : undefined },
+                                { label: "Base rate", value: hawkes.baseRate.toFixed(4), hint: "6 / 49" },
+                                { label: "Mean λ", value: hawkes.meanIntensity.toFixed(3), hint: "across the 49 balls" },
+                            ]}
+                        >
+                            <ScatterRegressionChart
+                                points={hawkes.rows.map((row) => ({
+                                    x: row.excitation,
+                                    y: row.intensity,
+                                    label: `Ball ${row.ball}`,
+                                    sublabel: `branching ${row.branching.toFixed(2)}`,
+                                }))}
+                                xName="kernel-weighted appearances"
+                                yName="arrival intensity λ"
+                                className="mt-2"
+                                ariaLabel="Hawkes arrival intensity against the kernel-weighted recent appearances of every ball"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-rqa-recurrence", "stream-dynamics") && (
+                        <InsightPanel
+                            number={pNum("panel-rqa-recurrence")}
+                            section="Stream dynamics"
+                            title="Recurrence quantification analysis"
+                            caption="The trailing 180-draw state-space recurrence plot — a pair recurs when the two draws share at least two balls — with the determinism and laminarity read off the run structure."
+                            id="panel-rqa-recurrence"
+                            family="Sequence"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Recurrence RR", value: pct(rqa.recurrenceRate), hint: `null ${pct(rqa.null)}` },
+                                { label: "Determinism", value: pct(rqa.determinism), hint: "on diagonal runs" },
+                                { label: "Laminarity", value: pct(rqa.laminarity), hint: "on vertical runs" },
+                            ]}
+                        >
+                            <RecurrenceMatrixPlot matrix={rqa.matrix} size={rqa.size} className="mt-2" />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-union-depletion", "stream-dynamics") && (
+                        <InsightPanel
+                            number={pNum("panel-union-depletion")}
+                            section="Stream dynamics"
+                            title="Multi-draw union depletion"
+                            caption="How the trailing L draws exhaust the cage: the union's size, how many of the next draw came out of it versus the untouched cold pool, against the hypergeometric curves."
+                            id="panel-union-depletion"
+                            family="Sequence"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Crossover L*", value: `${unionDepletion.crossoverHorizon}`, hint: `analytic ${unionDepletion.crossoverAnalytic.toFixed(1)} draws` },
+                                { label: "Live union", value: `${unionDepletion.liveUnion.length} balls`, hint: "trailing 8 draws" },
+                                { label: "Cold pool", value: `${unionDepletion.liveColdPool.length} balls`, hint: "never seen lately" },
+                            ]}
+                        >
+                            <UnionPartitionCurveChart
+                                rows={unionDepletion.rows}
+                                crossoverHorizon={unionDepletion.crossoverHorizon}
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-permutation-entropy", "stream-dynamics") && (
+                        <InsightPanel
+                            number={pNum("panel-permutation-entropy")}
+                            section="Stream dynamics"
+                            title="Bandt-Pompe permutation entropy"
+                            caption="The six ordinal motifs of the chronological draw sums — how often each ordering pattern appears — against the i.i.d. uniform share of one sixth."
+                            id="panel-permutation-entropy"
+                            family="Sequence"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "H_perm (d=4)", value: permutation.entropyD4.toFixed(3), hint: "normalized, max 1" },
+                                { label: "H_perm (d=3)", value: permutation.entropyD3.toFixed(3), hint: "normalized, max 1" },
+                                { label: "Trailing motif", value: permutation.trailingMotif, hint: "last three sums" },
+                            ]}
+                        >
+                            <OrdinalMotifBarChart
+                                shares={permutation.motifShares}
+                                nullShare={permutation.motifNull}
+                                labels={[...ORDINAL_MOTIF_LABELS]}
+                                glyphs={[...ORDINAL_MOTIF_GLYPHS]}
+                                trailingMotifIndex={permutation.trailingMotifIndex}
+                                className="mt-2"
+                            />
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-jensen-shannon-turnover", "stream-dynamics") && (
+                        <InsightPanel
+                            number={pNum("panel-jensen-shannon-turnover")}
+                            section="Stream dynamics"
+                            title="Jensen-Shannon distributional turnover"
+                            caption="How fast the 49-ball share distribution turns over — a 15-draw window against a 45-draw baseline — with the finite-window sampling floor."
+                            id="panel-jensen-shannon-turnover"
+                            family="Sequence"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Mean D_JS", value: turnover.meanDivergence.toFixed(4), hint: "bits" },
+                                { label: "Sampling floor", value: turnover.samplingFloor.toFixed(4), hint: "two random windows" },
+                                { label: "Jaccard turnover", value: pct(turnover.jaccardRate), hint: "set churn per draw" },
+                            ]}
+                        >
+                            <EnvelopeBandChart
+                                points={turnover.rows.slice(-120).map((row) => ({
+                                    label: row.label,
+                                    value: row.divergence,
+                                    upper: turnover.samplingFloor,
+                                    lower: 0,
+                                }))}
+                                valueLabel="D_JS"
+                                channelLabel="sampling floor"
+                                className="mt-2"
+                                ariaLabel="Jensen-Shannon divergence between the fast and baseline windows"
+                            />
+                            <div className="mt-2 grid grid-cols-2 gap-3">
+                                <div className="min-w-0">
+                                    <p className="font-mono text-[9px] font-semibold tracking-[0.14em] text-ink-subtle uppercase">
+                                        Share gainers
+                                    </p>
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                        {turnover.topGainers.slice(0, 5).map((mover) => (
+                                            <CandidateBallChip key={mover.ball} number={mover.ball} score={`+${(mover.shareDelta * 100).toFixed(1)}%`} />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="font-mono text-[9px] font-semibold tracking-[0.14em] text-ink-subtle uppercase">
+                                        Share losers
+                                    </p>
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                        {turnover.topLosers.slice(0, 5).map((mover) => (
+                                            <CandidateBallChip key={mover.ball} number={mover.ball} score={`${(mover.shareDelta * 100).toFixed(1)}%`} />
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         </InsightPanel>
                     )}

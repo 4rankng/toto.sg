@@ -25,6 +25,15 @@ import {
     computeMultiWindowVelocityStats,
     computePairGraphCentralityStats,
 } from "../src/lib/insights-sequence-blueprint";
+import {
+    computeHawkesPointProcessStats,
+    computeMahalanobisOrderStats,
+    computePlayslipConstellationStats,
+    computeSidonSumsetStats,
+    computeSpectralPeriodogramStats,
+    computeUnionDepletionCurveStats,
+    computeWassersteinTransportStats,
+} from "../src/lib/insights-sequence-dynamics";
 import type { Analysis, Draw } from "../src/lib/data";
 import type { StrategiesFile } from "../src/lib/data";
 
@@ -53,6 +62,29 @@ const confluence = computeMasterConfluenceBoard(era, {} as Analysis, league);
 const markov = computeMarkovTransitionStats(era);
 const pairCorr = pairCorrelationMatrix(era);
 const cliques = computeBestCompanionAndCliquesStats(era, 25);
+
+// The sequence-dynamics block: the same calculators the two new Insights
+// galleries render. Their scalars ride along as FLAT attributes so the
+// NetworkX loader keeps working without a schema change.
+const hawkes = computeHawkesPointProcessStats(era);
+const spectral = computeSpectralPeriodogramStats(era);
+const unionDepletion = computeUnionDepletionCurveStats(era);
+const mahalanobis = computeMahalanobisOrderStats(era);
+const sidon = computeSidonSumsetStats(era);
+const constellation = computePlayslipConstellationStats(era);
+const wasserstein = computeWassersteinTransportStats(era);
+
+// These rows key on `ball`, not `number` — the sequence block names the
+// ball field differently from the rest of the graph.
+const hawkesBy = new Map(hawkes.rows.map((row) => [row.ball, row]));
+const spectralBy = new Map(spectral.balls.map((row) => [row.ball, row]));
+const unionFive = new Set(unionDepletion.liveUnion5);
+
+// Per-draw sequence scalars, keyed by the draw id.
+const mahalanobisBy = new Map(mahalanobis.rows.map((row) => [row.draw, row.d2]));
+const sidonBy = new Map(sidon.rows.map((row) => [row.draw, row.stats.distinctSums]));
+const mstBy = new Map(constellation.rows.map((row) => [row.draw, row.stats.mstLength]));
+const wassersteinBy = new Map(wasserstein.rows.map((row) => [row.draw, row.w1]));
 
 // Keyed by ball number — REQUIRED: bayes rows are posterior-sorted, ema rows
 // spread-sorted, confluence rows rank-sorted.
@@ -118,6 +150,13 @@ const nodes = Array.from({ length: 49 }, (_, i) => {
         hub_centrality: h.centralityScore,
         hub_degree_pos_z: h.degreePositiveZ,
         hub_top_partner: h.topPartner.partner,
+        // The sequence-dynamics scalars — flat, so NetworkX reads them as
+        // ordinary node attributes.
+        hawkes_intensity: r2(hawkesBy.get(num)!.intensity),
+        hawkes_branching: r2(hawkesBy.get(num)!.branching),
+        spectral_period: r2(spectralBy.get(num)!.dominantPeriod),
+        spectral_fisher_g: r2(spectralBy.get(num)!.g),
+        in_union_5: unionFive.has(num) ? 1 : 0,
     };
 });
 
@@ -184,6 +223,11 @@ const drawHyperedges = era.map((d: Draw) => {
         odd: nums.filter((n) => n % 2 === 1).length,
         low: nums.filter((n) => n <= 24).length,
         ac: acValue(nums),
+        // The per-draw sequence scalars.
+        mahalanobis_d2: r2(mahalanobisBy.get(d.draw) ?? 0),
+        sidon_sumset: sidonBy.get(d.draw) ?? 0,
+        mst_length: r2(mstBy.get(d.draw) ?? 0),
+        wasserstein_prev: r2(wassersteinBy.get(d.draw) ?? 0),
     };
 });
 
@@ -260,6 +304,7 @@ writeFileSync(
             "z25", "z50", "z100", "composite_z", "rsi14", "ema_fast", "ema_slow", "ema_spread",
             "bayes_posterior", "bayes_z", "confluence_passed", "confluence_score", "bot_votes",
             "hub_centrality", "hub_degree_pos_z",
+            "hawkes_intensity", "hawkes_branching", "spectral_period", "spectral_fisher_g", "in_union_5",
         ],
         nodes.map((n) => [
             n.id, n.coords[0], n.coords[1], n.parity, n.decade_tier, n.is_prime, n.current_gap,
@@ -269,6 +314,7 @@ writeFileSync(
             n.rsi_14, n.ema.fast, n.ema.slow, n.ema.spread,
             n.bayes_posterior, n.bayes_z, n.confluence_passed, n.confluence_score, n.bot_votes,
             n.hub_centrality, n.hub_degree_pos_z,
+            n.hawkes_intensity, n.hawkes_branching, n.spectral_period, n.spectral_fisher_g, n.in_union_5,
         ]),
     ),
 );
@@ -308,10 +354,12 @@ writeFileSync(
 writeFileSync(
     resolve(dataDir, "graph-draws.csv"),
     toCsv(
-        ["draw", "date", "n1", "n2", "n3", "n4", "n5", "n6", "sum", "odd", "low", "ac"],
+        ["draw", "date", "n1", "n2", "n3", "n4", "n5", "n6", "sum", "odd", "low", "ac",
+            "mahalanobis_d2", "sidon_sumset", "mst_length", "wasserstein_prev"],
         drawHyperedges.map((d) => [
             d.id, d.date, d.nodes[0], d.nodes[1], d.nodes[2], d.nodes[3], d.nodes[4], d.nodes[5],
             d.sum, d.odd, d.low, d.ac,
+            d.mahalanobis_d2, d.sidon_sumset, d.mst_length, d.wasserstein_prev,
         ]),
     ),
 );

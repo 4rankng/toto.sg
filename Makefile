@@ -1,14 +1,25 @@
 # toto.sg — self-host deploy to https://toto.tingting.vip
 #
 #   make dev      run the Vite dev server locally (http://localhost:5173)
-#   make deploy   regenerate league -> export graph -> verify data -> build -> push image -> ship -> live check
+#   make deploy   regenerate nulls -> league -> export graph -> verify data -> build -> push image -> ship -> live check
 #   make ship     just pull + restart the container on the server (image already pushed)
 #   make caddy    ensure the toto.tingting.vip vhost exists and reload Caddy
 #   make check    live-endpoint smoke test (league contract + /api/latest)
+#   make nulls    recompute the EXACT combinatorial null tables offline and
+#                 rewrite the generated block in src/lib/insights-sequence-dynamics.ts
+#   make verify-nulls
+#                 re-derive the sequence analytics' nulls from the archive and
+#                 fail when one of them drifts
 #
 # `verify` gates the whole pipeline: a corrupted strategies.json (null scores,
 # duplicate placeholder rows) fails npm run verify:data and aborts the deploy
 # BEFORE it can reach the registry or the server.
+#
+# The null tables are computed OFFLINE on purpose: the exact null over all
+# C(49,6) = 13,983,816 lines is a multi-million-term enumeration that no
+# browser should pay for. `make nulls` runs it once and embeds the result;
+# `make deploy` runs it first so the embedded tables can never drift from the
+# code that generates them.
 #
 # Server: bot.tingting.vip — container toto-web on 172.17.0.1:8090, fronted by
 # the box Caddy (vfic-caddy-1) with auto-TLS. Image: ghcr.io/4rankng/toto.sg.
@@ -21,12 +32,18 @@ PORT   := 172.17.0.1:8090:8080
 VHOST  := toto.tingting.vip
 CADDY  := /opt/vfic/Caddyfile
 
-.PHONY: dev deploy league graph verify build login image ship caddy check
+.PHONY: dev deploy league graph verify verify-nulls nulls build login image ship caddy check
 
 dev:
 	npm run dev
 
-deploy: league graph verify build image ship check
+deploy: nulls verify-nulls league graph verify build image ship check
+
+nulls:
+	npm run nulls
+
+verify-nulls:
+	npm run verify:nulls
 
 league:
 	npm run league
