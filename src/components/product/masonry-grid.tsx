@@ -17,17 +17,190 @@ const GAP_PX = 12;
 const COLUMNS_QUERY = "(min-width: 64rem)";
 
 /**
- * The largest shortfall the packer will hide by growing a card. Filling a
- * 40px hole with a card's padding is invisible; filling a 200px hole turns the
- * card into an empty well with a title at the top. Past this point a ragged
- * column end reads as masonry, while a hollow card reads as a bug.
+ * The largest shortfall the packer will hide by growing a card.
+ *
+ * The band planner balances most bands to the pixel, but coarse card heights
+ * can leave a band with no near-equal split (e.g. a six-card band at 1024px
+ * whose best split is still >100px). Growing the last card by that shortfall
+ * is the only way to keep the columns flush there, so the cap sits above the
+ * worst coarse case instead of creating a bare canvas well.
  */
-const MAX_FLUSH_PX = 56;
+const MAX_FLUSH_PX = 140;
+
+/**
+ * The column shortfall the planner treats as already balanced. A split within
+ * this distance is closed by the small flush nudge; a planner that instead
+ * minimised card moves would happily leave a 100px shortfall for the nudge to
+ * paper over, which is exactly the hollow card this work removes.
+ */
+const SNAP_PX = 40;
 
 interface MasonryGridProps {
     className?: string;
     children: ReactNode;
 }
+
+/**
+ * Plan a two-column band: keep the cards in their reading order and find the
+ * smallest set of "move this card to the other column" flips that balances
+ * the two columns.
+ *
+ * A greedy shortest-column pass keeps the visual order but drifts by hundreds
+ * of pixels on a long band; a free exact partition is gapless but scrambles
+ * the card order. This is a subset-sum over the flip count: the DP minimises
+ * how many cards leave the greedy side while keeping the column-height
+ * difference inside the small `MAX_FLUSH_PX` nudge. Cards keep DOM order
+ * inside each column.
+ */
+/** Visual-order inversions and height difference for one column assignment. */
+const scoreAssignment = (heights: number[], left: boolean[]) => {
+    const n = heights.length;
+    const ys = new Array<number>(n);
+    const xs = new Array<number>(n);
+    let yl = 0;
+    let yr = 0;
+    for (let i = 0; i < n; i += 1) {
+        if (left[i]) {
+            ys[i] = yl;
+            xs[i] = 0;
+            yl += heights[i];
+        } else {
+            ys[i] = yr;
+            xs[i] = 1;
+            yr += heights[i];
+        }
+    }
+    const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => ys[a] - ys[b] || xs[a] - xs[b]);
+    let inversions = 0;
+    for (let a = 0; a < n; a += 1) {
+        for (let b = a + 1; b < n; b += 1) {
+            if (order[a] > order[b]) inversions += 1;
+        }
+    }
+    return { diff: Math.abs(yl - yr), inversions };
+};
+
+const planTwoColumnBand = (heights: number[]): boolean[] => {
+    const n = heights.length;
+
+    // Baseline: the reading order a greedy packer would produce (near-zero inversions).
+    const baseline = new Array<boolean>(n);
+    let leftHeight = 0;
+    let rightHeight = 0;
+    for (let i = 0; i < n; i += 1) {
+        const goLeft = leftHeight <= rightHeight;
+        baseline[i] = goLeft;
+        if (goLeft) leftHeight += heights[i];
+        else rightHeight += heights[i];
+    }
+
+    const total = heights.reduce((sum, h) => sum + h, 0);
+    const target = Math.floor(total / 2);
+    const INF = 0x3fffffff;
+
+    // dp[s] = fewest flips that put sum s in the left column.
+    let dp = new Int32Array(target + 1).fill(INF);
+    dp[0] = 0;
+    const parents: Uint8Array[] = [];
+
+    for (let i = 0; i < n; i += 1) {
+        const next = new Int32Array(target + 1).fill(INF);
+        const take = new Uint8Array(target + 1);
+        const h = heights[i];
+        for (let s = 0; s <= target; s += 1) {
+            if (dp[s] === INF) continue;
+            // Card goes right — a flip when the baseline put it left.
+            const costRight = dp[s] + (baseline[i] ? 1 : 0);
+            if (costRight < next[s]) {
+                next[s] = costRight;
+                take[s] = 0;
+            }
+            // Card goes left — a flip when the baseline put it right.
+            if (s + h <= target) {
+                const costLeft = dp[s] + (baseline[i] ? 0 : 1);
+                if (costLeft < next[s + h]) {
+                    next[s + h] = costLeft;
+                    take[s + h] = 1;
+                }
+            }
+        }
+        parents.push(take);
+        dp = next;
+    }
+
+    // Prefer the fewest flips among splits whose shortfall the flush pass can
+    // absorb; fall back to the closest split if no such split exists.
+    let bestSum = -1;
+    let bestFlips = INF;
+    let bestDiff = INF;
+    for (let s = target; s >= 0; s -= 1) {
+        if (dp[s] === INF) continue;
+        const diff = total - 2 * s;
+        if (diff > SNAP_PX) continue;
+        if (dp[s] < bestFlips || (dp[s] === bestFlips && diff < bestDiff)) {
+            bestFlips = dp[s];
+            bestSum = s;
+            bestDiff = diff;
+        }
+    }
+    if (bestSum < 0) {
+        for (let s = target; s >= 0; s -= 1) {
+            if (dp[s] !== INF) {
+                bestSum = s;
+                break;
+            }
+        }
+    }
+
+    const left = new Array<boolean>(n).fill(false);
+    let remaining = bestSum;
+    for (let i = n; i > 0; i -= 1) {
+        if (parents[i - 1][remaining] === 1) {
+            left[i - 1] = true;
+            remaining -= heights[i - 1];
+        }
+    }
+
+    // The subset-sum DP minimises moved cards, not reading-order inversions.
+    // Walk the assignment locally: single flips and pair swaps that keep the
+    // columns balanced but reduce how far the visual order drifts from the
+    // numbered reading order.
+    let best = left;
+    let bestScore = scoreAssignment(heights, left);
+    const better = (candidate: { diff: number; inversions: number }, current: { diff: number; inversions: number }) =>
+        candidate.diff <= SNAP_PX &&
+        (candidate.inversions < current.inversions || (candidate.inversions === current.inversions && candidate.diff < current.diff));
+
+    for (let pass = 0; pass < 6; pass += 1) {
+        let improved = false;
+        for (let i = 0; i < n; i += 1) {
+            const candidate = best.slice();
+            candidate[i] = !candidate[i];
+            const score = scoreAssignment(heights, candidate);
+            if (better(score, bestScore)) {
+                best = candidate;
+                bestScore = score;
+                improved = true;
+            }
+        }
+        for (let i = 0; i < n; i += 1) {
+            for (let j = i + 1; j < n; j += 1) {
+                if (best[i] === best[j]) continue;
+                const candidate = best.slice();
+                candidate[i] = !candidate[i];
+                candidate[j] = !candidate[j];
+                const score = scoreAssignment(heights, candidate);
+                if (better(score, bestScore)) {
+                    best = candidate;
+                    bestScore = score;
+                    improved = true;
+                }
+            }
+        }
+        if (!improved) break;
+    }
+    return best;
+};
 
 export function MasonryGrid({ className, children }: MasonryGridProps) {
     const ref = useRef<HTMLDivElement>(null);
@@ -116,25 +289,14 @@ export function MasonryGrid({ className, children }: MasonryGridProps) {
                 const base = cursor;
                 const placed: Box[] = [];
 
-                if (band.every((b) => b.span === 6) && band.length <= 16) {
-                    // Two equal columns: pick the split whose heights differ least.
-                    const total = band.reduce((m, b) => m + b.h, 0);
-                    let bestMask = 0;
-                    let bestDiff = Number.POSITIVE_INFINITY;
-                    const n = band.length;
-                    for (let mask = 0; mask < 1 << n; mask += 1) {
-                        let left = 0;
-                        for (let i = 0; i < n; i += 1) if (mask & (1 << i)) left += band[i].h;
-                        const diff = Math.abs(total - 2 * left);
-                        if (diff < bestDiff) {
-                            bestDiff = diff;
-                            bestMask = mask;
-                        }
-                    }
+                if (band.every((b) => b.span === 6)) {
+                    // Two equal columns: the balanced split with the fewest
+                    // cards moved out of reading order.
+                    const left = planTwoColumnBand(band.map((b) => b.h));
                     let yl = base;
                     let yr = base;
                     band.forEach((b, i) => {
-                        if (bestMask & (1 << i)) {
+                        if (left[i]) {
                             b.x = 0;
                             b.y = yl;
                             yl += b.h;

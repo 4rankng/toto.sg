@@ -116,7 +116,7 @@ const StrategyDetail = ({
             <div className="grid gap-3 lg:grid-cols-12">
                 {/* Walk-forward performance vs chance */}
                 <div className="flex min-w-0 flex-col gap-3 lg:col-span-7">
-                    <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-5">
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5 sm:grid-cols-3 xl:grid-cols-5">
                         <div>
                             <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">Draws tested</dt>
                             <dd className="mt-0.5 font-mono text-sm text-ink tabular-nums">{formatNumber(row.evaluatedDraws)}</dd>
@@ -326,6 +326,15 @@ export const StrategiesScreen = () => {
         return [...filtered].sort((a, b) => value(b) - value(a));
     }, [data, query, family, sort]);
 
+    // The league is laid out as rows of two. Grouping the rows lets an open
+    // row's detail span the whole panel under its pair — expanding a row can
+    // no longer stretch its neighbour into a blank card.
+    const rowPairs = useMemo(() => {
+        const pairs: StrategyRow[][] = [];
+        for (let i = 0; i < rows.length; i += 2) pairs.push(rows.slice(i, i + 2));
+        return pairs;
+    }, [rows]);
+
     if (isLoading) return <LeagueSkeleton />;
 
     if (error || !data) {
@@ -430,62 +439,85 @@ export const StrategiesScreen = () => {
                 description={`${rows.length} of ${data.strategies.length} · picks for draw ${meta.nextDraw} · chance over ${formatNumber(meta.folds)} draws: ${formatNumber(chancePrizes)} prizes (score points: ${formatNumber(Math.round((meta.folds * meta.chance.weightedPrizesPer100Draws) / 100))})`}
                 actions={filters}
             >
-                {/* Two columns from lg: at xl the 1024–1279px range wasted
-                    roughly half of every row on empty space. */}
-                <ol className="grid grid-cols-1 gap-px bg-line-soft lg:grid-cols-2">
-                    {rows.map((row) => {
-                        const isOpen = expanded === row.id;
+                {/* Two league rows per row on lg. The open row renders its
+                    detail as a full-width strip under the pair, so the
+                    neighbour can never be stretched into a blank card. */}
+                <div className="flex flex-col gap-px bg-line-soft">
+                    {rowPairs.map((pair) => {
+                        const openRow = pair.find((entry) => entry.id === expanded) ?? null;
+                        const openIsFirst = openRow !== null && openRow.id === pair[0].id;
 
                         return (
-                            <li key={row.id} className={cx("bg-surface transition-colors duration-100", isOpen && "bg-surface-2/50")}>
-                                <button
-                                    type="button"
-                                    aria-expanded={isOpen}
-                                    onClick={() => toggle(row.id)}
-                                    className="group flex w-full flex-col gap-1.5 px-4 py-2.5 text-left transition-colors duration-100 hover:bg-surface-2/60"
-                                >
-                                    {/* Line 1 — identity, score and the stat. */}
-                                    <span className="flex min-w-0 items-center gap-1.5">
-                                        <span className="w-6 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">{row.rank}</span>
-                                        {isOpen ? (
-                                            <ChevronDown aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
-                                        ) : (
-                                            <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
+                            <div key={pair[0].id} className="grid grid-cols-1 gap-px bg-line-soft lg:grid-cols-2">
+                                {pair.map((row, index) => {
+                                    const isOpen = expanded === row.id;
+
+                                    return (
+                                        <div
+                                            key={row.id}
+                                            className={cx(
+                                                "min-w-0 bg-surface transition-colors duration-100",
+                                                isOpen && "bg-surface-2/50",
+                                                pair.length === 1 && "lg:col-span-2",
+                                                index === 0 ? "order-1" : openIsFirst ? "order-3 lg:order-2" : "order-2",
+                                            )}
+                                        >
+                                            <button
+                                                type="button"
+                                                aria-expanded={isOpen}
+                                                onClick={() => toggle(row.id)}
+                                                className="group flex w-full flex-col gap-1.5 px-4 py-2.5 text-left transition-colors duration-100 hover:bg-surface-2/60"
+                                            >
+                                                {/* Line 1 — identity, score and the stat. */}
+                                                <span className="flex min-w-0 items-center gap-1.5">
+                                                    <span className="w-6 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">{row.rank}</span>
+                                                    {isOpen ? (
+                                                        <ChevronDown aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
+                                                    ) : (
+                                                        <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />
+                                                    )}
+                                                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink group-hover:text-accent">{row.name}</span>
+                                                    <span className="hidden shrink-0 text-[10px] text-ink-subtle sm:inline">{row.family}</span>
+                                                    <span className="shrink-0 font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score ?? 0}</span>
+                                                    <span className="w-20 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">
+                                                        {`${row.effPrizes ?? 0} prizes`}
+                                                    </span>
+                                                </span>
+
+                                                {/* Line 2 — the sequence, on its own line, at full size. */}
+                                                <span className="flex flex-wrap items-center gap-1 pl-8">
+                                                    {row.currentPick.map((n) => (
+                                                        <Ball key={n} n={n} size="lg" />
+                                                    ))}
+                                                    <span className="ml-auto shrink-0 font-mono text-[10px] text-ink-subtle tabular-nums">
+                                                        {formatNumber(row.effPrizes ?? 0)}/{formatNumber(chancePrizes)} prizes · best {row.bestGroup != null ? `G${row.bestGroup}` : "—"}
+                                                    </span>
+                                                </span>
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+
+                                {openRow && (
+                                    <div
+                                        className={cx(
+                                            "min-w-0 bg-surface-2/40 px-4 py-3 lg:col-span-2",
+                                            openIsFirst ? "order-2 lg:order-3" : "order-3",
                                         )}
-                                        <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink group-hover:text-accent">{row.name}</span>
-                                        <span className="hidden shrink-0 text-[10px] text-ink-subtle sm:inline">{row.family}</span>
-                                        <span className="shrink-0 font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score ?? 0}</span>
-                                        <span className="w-20 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">
-                                            {`${row.effPrizes ?? 0} prizes`}
-                                        </span>
-                                    </span>
-
-                                    {/* Line 2 — the sequence, on its own line, at full size. */}
-                                    <span className="flex flex-wrap items-center gap-1 pl-8">
-                                        {row.currentPick.map((n) => (
-                                            <Ball key={n} n={n} size="lg" />
-                                        ))}
-                                        <span className="ml-auto shrink-0 font-mono text-[10px] text-ink-subtle tabular-nums">
-                                            {formatNumber(row.effPrizes ?? 0)}/{formatNumber(chancePrizes)} prizes · best {row.bestGroup != null ? `G${row.bestGroup}` : "—"}
-                                        </span>
-                                    </span>
-                                </button>
-
-                                {isOpen && (
-                                    <div className="border-t border-line-soft bg-surface-2/40 px-4 py-3">
+                                    >
                                         <StrategyDetail
-                                            row={row}
+                                            row={openRow}
                                             chance={meta.chance}
                                             ballForms={ballForms}
-                                            buildRules={playbookById.get(row.id)?.rules}
-                                            evidencePanels={playbookById.get(row.id)?.panels}
+                                            buildRules={playbookById.get(openRow.id)?.rules}
+                                            evidencePanels={playbookById.get(openRow.id)?.panels}
                                         />
                                     </div>
                                 )}
-                            </li>
+                            </div>
                         );
                     })}
-                </ol>
+                </div>
 
                 {rows.length === 0 && <p className="px-4 py-8 text-center text-sm text-ink-muted">No strategy matches that filter.</p>}
             </Panel>

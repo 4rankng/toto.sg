@@ -1165,7 +1165,7 @@ export const InsightsScreen = () => {
                                 caption="Empirical probability P(hit | current skip band) testing gambler's fallacy against the 12.24% null."
                                 id="panel-bounce-back"
                                 family="Gap & Due"
-                                className="lg:col-span-12"
+                                className="lg:col-span-6"
                                 stats={[
                                     { label: "Hottest skip", value: bounceBack.hottestBand, hint: "highest return rate" },
                                     { label: "Base rate", value: "12.24%", hint: "6 / 49 null" },
@@ -1995,7 +1995,7 @@ export const InsightsScreen = () => {
                                 caption="Odd count against high count. Pink sits above the fair share, blue below it."
                                 id="panel-composition"
                                 family="Structure"
-                                className="lg:col-span-12"
+                                className="lg:col-span-6"
                                 layout="split"
                                 aside={
                                     <div className="min-w-0 max-w-sm">
@@ -2603,7 +2603,7 @@ export const InsightsScreen = () => {
                                 caption="How many numbers carried over from the previous draw."
                                 id="panel-repeaters"
                                 family="Pattern"
-                                className="lg:col-span-4"
+                                className="lg:col-span-6"
                                 stats={[
                                     { label: "Observed", value: repeaters.observedAverage.toFixed(2), hint: "repeats per draw" },
                                     { label: "Expected", value: repeaters.expectedAverage.toFixed(2) },
@@ -2622,7 +2622,7 @@ export const InsightsScreen = () => {
                                 caption="How often each number came up as the seventh ball."
                                 id="panel-additional"
                                 family="Frequency"
-                                className="lg:col-span-8"
+                                className="lg:col-span-6"
                                 stats={[
                                     { label: "Latest", value: additional.latest ?? "—", hint: additional.latestDate ? formatDate(additional.latestDate) : undefined },
                                     { label: "Most seen", value: additional.hottest?.number ?? "—", hint: additional.hottest ? `${formatNumber(additional.hottest.count)} times` : undefined },
@@ -2641,7 +2641,7 @@ export const InsightsScreen = () => {
                                 caption="Mean sum by calendar month and year, with the draws behind each cell."
                                 id="panel-month"
                                 family="Almanac & Time"
-                                className="lg:col-span-8"
+                                className="lg:col-span-6"
                                 stats={[
                                     { label: "Warmest month", value: monthExtremes?.highest.month ?? "—", hint: monthExtremes ? `mean ${monthExtremes.highest.mean.toFixed(1)}` : undefined },
                                     { label: "Coldest month", value: monthExtremes?.lowest.month ?? "—", hint: monthExtremes ? `mean ${monthExtremes.lowest.mean.toFixed(1)}` : undefined },
@@ -2660,7 +2660,7 @@ export const InsightsScreen = () => {
                                 caption="Draws per weekday, with the mean sum above each bar."
                                 id="panel-weekday"
                                 family="Almanac & Time"
-                                className="lg:col-span-4"
+                                className="lg:col-span-6"
                                 stats={[
                                     { label: "Monday", value: formatNumber(analysis.weekday.Mon?.count ?? 0), hint: "draws" },
                                     { label: "Thursday", value: formatNumber(analysis.weekday.Thu?.count ?? 0), hint: "draws" },
@@ -2679,7 +2679,7 @@ export const InsightsScreen = () => {
                                 caption="Historical draw affinity for the exact upcoming calendar date, matching day-of-month and weekday tendencies."
                                 id="panel-upcoming-calendar"
                                 family="Almanac & Time"
-                                className="lg:col-span-4"
+                                className="lg:col-span-6"
                                 stats={[
                                     { label: "Target Weekday", value: upcomingCalendar.targetWeekday, hint: "upcoming draw" },
                                     { label: "Target Half", value: upcomingCalendar.targetMonthHalf, hint: "day of month" },
@@ -2705,7 +2705,7 @@ export const InsightsScreen = () => {
                                 caption="How often a draw repeats itself."
                                 id="panel-patterns"
                                 family="Pattern"
-                                className="lg:col-span-8"
+                                className="lg:col-span-6"
                             >
                                 <div className="grid grid-cols-2 gap-2">
                                     <Gauge
@@ -2800,7 +2800,7 @@ export const InsightsScreen = () => {
                             caption="14-draw Relative Strength Index per ball. Standard overbought (>65) and oversold (<35) momentum regimes."
                             id="panel-rsi"
                             family="Indicators"
-                            className="lg:col-span-12"
+                            className="lg:col-span-6"
                             stats={[
                                 { label: "Hottest Ball", value: `Ball ${rsiStats.hottest[0]?.number}`, hint: `RSI ${rsiStats.hottest[0]?.rsi} (overbought)` },
                                 { label: "Coldest Ball", value: `Ball ${rsiStats.coldest[0]?.number}`, hint: `RSI ${rsiStats.coldest[0]?.rsi} (oversold)` },
@@ -2830,7 +2830,7 @@ export const InsightsScreen = () => {
                             caption="12-draw vs 26-draw exponential moving average histogram of ball occurrences, showing short-term acceleration."
                             id="panel-macd"
                             family="Indicators"
-                            className="lg:col-span-12"
+                            className="lg:col-span-6"
                             stats={[
                                 { label: "Top Bullish", value: `Ball ${macdStats.topBullish[0]?.number}`, hint: `hist +${macdStats.topBullish[0]?.histogram}` },
                                 { label: "Top Bearish", value: `Ball ${macdStats.topBearish[0]?.number}`, hint: `hist ${macdStats.topBearish[0]?.histogram}` },
@@ -2862,7 +2862,7 @@ export const InsightsScreen = () => {
                             caption="20-draw moving average sum with ±2σ envelope. Bandwidth squeeze signals imminent volatility expansion."
                             id="panel-bollinger"
                             family="Indicators"
-                            className="lg:col-span-12"
+                            className="lg:col-span-6"
                             stats={[
                                 { label: "Current Bandwidth", value: `${(bollingerStats.currentBandwidth * 100).toFixed(1)}%`, hint: bollingerStats.isSqueezed ? "SQUEEZE ACTIVE" : "normal width" },
                                 { label: "Current %B", value: `${(bollingerStats.currentPercentB * 100).toFixed(0)}%`, hint: bollingerStats.regime },
@@ -2953,7 +2953,7 @@ export const InsightsScreen = () => {
                             caption="14-draw stochastic position within rolling appearance range. Identifies overbought (>80) and oversold (<20) clusters."
                             id="panel-stochastic"
                             family="Indicators"
-                            className="lg:col-span-12"
+                            className="lg:col-span-6"
                             stats={[
                                 { label: "Oversold Balls", value: `${stochStats.oversoldBalls.length}`, hint: "%K ≤ 20" },
                                 { label: "Overbought Balls", value: `${stochStats.overboughtBalls.length}`, hint: "%K ≥ 80" },
@@ -2982,7 +2982,7 @@ export const InsightsScreen = () => {
                             caption="Cumulative sum of draw sum residuals from theoretical mean 150. Tracks macro cage drifts."
                             id="panel-cusum"
                             family="Indicators"
-                            className="lg:col-span-12"
+                            className="lg:col-span-6"
                             stats={[
                                 { label: "Max Deviation", value: `${cusumStats.maxDeviation}`, hint: "historical peak" },
                                 { label: "Drift Direction", value: cusumStats.driftDirection.toUpperCase(), hint: "recent 60 draws" },
@@ -3127,7 +3127,7 @@ export const InsightsScreen = () => {
                             caption="Conditional probability of a ball appearing at skip t given absence up to t, plotted against geometric null p=6/49."
                             id="panel-kaplan-meier"
                             family="Indicators"
-                            className="lg:col-span-12"
+                            className="lg:col-span-6"
                             stats={[
                                 { label: "Peak Hazard Skip", value: `Skip ${kaplanStats.peakHazardSkip}`, hint: "highest empirical pull" },
                                 { label: "Hazard Cliff", value: `Skip ${kaplanStats.hazardCliffSkip}`, hint: "conditional dropoff" },
@@ -3157,7 +3157,7 @@ export const InsightsScreen = () => {
                             caption="Ratio of current absence to each ball's historical appearance frequency. >2.5x indicates hyper-overdue status."
                             id="panel-cycle-ratio"
                             family="Indicators"
-                            className="lg:col-span-12"
+                            className="lg:col-span-6"
                             stats={[
                                 { label: "Highest Ratio", value: `Ball ${cycleStats.highestRatios[0]?.number}`, hint: `${cycleStats.highestRatios[0]?.ratio}x cycle (${cycleStats.highestRatios[0]?.currentSkip} draws)` },
                                 { label: "Lowest Ratio", value: `Ball ${cycleStats.lowestRatios[0]?.number}`, hint: `${cycleStats.lowestRatios[0]?.ratio}x cycle (fresh hit)` },
@@ -3346,7 +3346,7 @@ export const InsightsScreen = () => {
                             caption="Combines 10-draw velocity, survival hazard, Markov trigger, pair hub centrality, weekday skew, and era frequency into an omnibus score."
                             id="panel-composite-quant"
                             family="Indicators"
-                            className="lg:col-span-12"
+                            className="lg:col-span-6"
                             stats={[
                                 { label: "Rank #1 Ball", value: `Ball ${quantStats.top6Picks[0]?.number}`, hint: `score +${quantStats.top6Picks[0]?.totalComposite}` },
                                 { label: "Rank #2 Ball", value: `Ball ${quantStats.top6Picks[1]?.number}`, hint: `score +${quantStats.top6Picks[1]?.totalComposite}` },
@@ -3450,7 +3450,7 @@ export const InsightsScreen = () => {
                             caption="Standardized Pearson residuals (Observed - Expected) / √Expected across all 49 numbers from chi-square goodness-of-fit."
                             id="panel-ball-chi-residuals"
                             family="Controls"
-                            className="lg:col-span-12"
+                            className="lg:col-span-6"
                             stats={[
                                 { label: "Total χ²", value: ballChiResiduals.totalChiSquare.toFixed(1), hint: `df = ${ballChiResiduals.degreesOfFreedom}` },
                                 { label: "Top Positive", value: `Ball ${ballChiResiduals.topPositiveResiduals[0]?.number}`, hint: `+${ballChiResiduals.topPositiveResiduals[0]?.residual.toFixed(1)} draws` },
@@ -4310,7 +4310,7 @@ export const InsightsScreen = () => {
                             caption="Combinatorial lift and risk profile when fixing 1 or 2 'banker' key numbers across all wheeled combinations."
                             id="panel-key-ball-lift"
                             family="Covering"
-                            className="lg:col-span-12"
+                            className="lg:col-span-6 xl:col-span-12"
                             stats={[
                                 { label: "1 Banker Lift", value: `${keyBallLift[1]?.multiplierVsBase.toFixed(2)}×`, hint: "when banker hits" },
                                 { label: "2 Bankers Lift", value: `${keyBallLift[2]?.multiplierVsBase.toFixed(2)}×`, hint: "when both hit" },

@@ -401,11 +401,22 @@ export const HomeScreen = () => {
                 </div>
             )}
 
-            {/* The headline counts lead the section as one full-width strip:
-                inside the 8-column body the four cards were 135–196px wide
-                between 1024 and 1279px, which clipped their hints. */}
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <KpiCard label="Draws" value={formatNumber(draws.length)} hint="Since 3 Jul 2008" icon={Hash01} tone="primary" />
+            {/*
+                The columns end at their natural heights. Stretching a card to
+                the taller column only opens a hollow well below its content,
+                so the grid is `items-start` and the columns may end unevenly;
+                on tablets the gap list moves under the board to keep those
+                ends within a few dozen pixels of each other.
+            */}
+            {/*
+                The headline counts join the section grid so they can sit next
+                to the board on tablets and return to a full-width strip on
+                desktop. That keeps both columns flush at md without leaving a
+                bare canvas well under the shorter column.
+            */}
+            <div className="grid items-start gap-3 md:grid-cols-2 md:items-stretch lg:grid-cols-12">
+                <div className="grid grid-cols-2 gap-2 md:col-start-2 md:row-start-1 lg:grid-cols-4 lg:col-span-12 lg:col-start-1 lg:row-start-1">
+<KpiCard label="Draws" value={formatNumber(draws.length)} hint="Since 3 Jul 2008" icon={Hash01} tone="primary" />
                 <KpiCard
                     label="6/49 era"
                     value={formatNumber(era?.totalDraws ?? 0)}
@@ -427,18 +438,13 @@ export const HomeScreen = () => {
                     icon={Clock}
                     tone="neutral"
                 />
-            </div>
+            
+                </div>
 
-            {/*
-                The columns end at their natural heights. Stretching a card to
-                the taller column only opens a hollow well below its content,
-                so the grid is `items-start` and the columns may end unevenly;
-                on tablets the gap list moves under the board to keep those
-                ends within a few dozen pixels of each other.
-            */}
-            <div className="grid items-start gap-3 md:grid-cols-2 lg:grid-cols-12">
-                <div className="flex min-w-0 flex-col gap-3 md:col-span-1 lg:col-span-4">
+                <div className="flex min-h-0 min-w-0 flex-col gap-3 md:col-start-1 md:row-start-1 md:row-span-2 lg:col-span-4 lg:col-start-1 lg:row-span-1 lg:row-start-2">
                     <Panel
+                        className="md:flex-1"
+                        bodyClassName="flex min-h-0 flex-col md:flex-1"
                         title="Number board"
                         description="How often each number appeared across 7 indicator lenses. Colour shows deviation."
                         footer={
@@ -451,7 +457,15 @@ export const HomeScreen = () => {
                             </div>
                         }
                     >
-                        <NumberBoard windows={windows} period={period} onPeriodChange={setPeriod} latestNumbers={numbers} line={line} onToggle={handleToggle} />
+                        <NumberBoard
+                            className="md:min-h-0 md:flex-1"
+                            windows={windows}
+                            period={period}
+                            onPeriodChange={setPeriod}
+                            latestNumbers={numbers}
+                            line={line}
+                            onToggle={handleToggle}
+                        />
                     </Panel>
 
                     {/* On tablets the board column would otherwise run short;
@@ -460,7 +474,7 @@ export const HomeScreen = () => {
                     <div className="hidden md:block lg:hidden">{longestGapsPanel}</div>
                 </div>
 
-                <div className="flex min-w-0 flex-col gap-3 md:col-span-1 lg:col-span-8">
+                <div className="flex min-w-0 flex-col gap-3 md:col-start-2 md:row-start-2 lg:col-span-8 lg:col-start-5 lg:row-start-2">
                     <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                         <div className="flex flex-col gap-3">
                             <Panel title="Play slip" description="Pick 6, 7 or 8 numbers. Tap the board to fill it.">
