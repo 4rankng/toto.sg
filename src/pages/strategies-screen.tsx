@@ -13,7 +13,6 @@ import { RecentHits } from "@/components/product/recent-hits";
 import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/product/skeleton";
 import {
     type CrossPanelPlaybook,
-    type CrossPanelStrategy,
     type Draw,
     type StrategiesFile,
     type StrategyRow,
@@ -49,118 +48,24 @@ const LeagueSkeleton = () => (
     </DataLoading>
 );
 
-/**
- * The cross-panel showcase: what each of the ten cross-panel strategies
- * selects, the evidence behind it, and the live row it produced.
- *
- * Match count only. The showcase shows no payout, no prize share and no
- * expected-value figure: the source document framed its ten strategies around
- * pari-mutuel crowd pricing, and none of that carries over here. Each strategy
- * is a rule for picking six numbers, graded on numbers matched.
- */
-const CrossPanelShowcase = ({ playbook, onLoadInPlaySlip }: {
-    playbook: CrossPanelPlaybook;
-    onLoadInPlaySlip: (numbers: number[]) => void;
-}) => (
-    <Panel
-        isFlush
-        title="The ten cross-panel strategies"
-        description="Ten rules that fuse two or more Insights panels into one line — a structural property of the cage plus the way the balls are selected. Every line is rebuilt from the draws before its fold, and every row is graded on numbers matched."
-    >
-        <ol className="grid grid-cols-1 gap-px bg-line-soft xl:grid-cols-2">
-            {playbook.strategies.map((entry: CrossPanelStrategy) => (
-                <li key={entry.id} className="flex flex-col gap-2.5 bg-surface px-4 py-3">
-                    <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                            <p className="truncate font-mono text-[9px] font-semibold tracking-[0.14em] text-ink-subtle uppercase">
-                                {entry.sourceTitle}
-                            </p>
-                            <p className="text-[13px] font-semibold text-ink">{entry.row.name}</p>
-                        </div>
-                        <div className="shrink-0 text-right">
-                            <p className="font-mono text-[13px] font-semibold text-ink tabular-nums">{entry.row.score.toFixed(1)}</p>
-                            <p className="font-mono text-[10px] text-ink-subtle tabular-nums">rank {entry.row.rank}</p>
-                        </div>
-                    </div>
-
-                    <p className="text-[12px] leading-5 text-ink-muted">{entry.summary}</p>
-
-                    {/* The live line the rule produces for the next draw. */}
-                    <div className="flex flex-wrap items-center gap-1">
-                        {entry.row.currentPick.map((n) => (
-                            <Ball key={n} n={n} size="md" />
-                        ))}
-                        <span className="ml-auto font-mono text-[10px] text-ink-subtle tabular-nums">
-                            {entry.row.totalHits} hits · 2+ {entry.row.twoPlusDraws}
-                        </span>
-                    </div>
-
-                    {/* How the line is built. */}
-                    <ol className="flex flex-col gap-1 border-t border-line-soft pt-2">
-                        {entry.rules.map((rule, i) => (
-                            <li key={rule} className="flex gap-2 text-[11px] leading-4 text-ink-muted">
-                                <span className="font-mono text-ink-subtle tabular-nums">{i + 1}</span>
-                                <span>{rule}</span>
-                            </li>
-                        ))}
-                    </ol>
-
-                    <p className="text-[11px] leading-4 text-ink-muted">{entry.logic}</p>
-                    <p className="text-[11px] leading-4 text-ink-muted">
-                        <span className="font-mono text-[9px] font-semibold tracking-[0.14em] text-ink-subtle uppercase">Differs · </span>
-                        {entry.differs}
-                    </p>
-
-                    {/* The source document's own example line — an illustration,
-                        never the graded line. */}
-                    <div className="border-t border-line-soft pt-2">
-                        <p className="font-mono text-[9px] font-semibold tracking-[0.14em] text-ink-subtle uppercase">
-                            Document&apos;s example line · never graded
-                        </p>
-                        <div className="mt-1 flex flex-wrap items-center gap-1">
-                            {entry.specLine.map((n) => (
-                                <Ball key={n} n={n} size="xs" variant="ring" />
-                            ))}
-                            <span className="ml-1 font-mono text-[10px] text-ink-subtle">{entry.specNote}</span>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-1.5">
-                        {entry.panels.map((panel) => (
-                            <Link
-                                key={panel.anchor}
-                                to={`/insights#${panel.anchor}`}
-                                className="rounded border border-line-soft px-1.5 py-0.5 font-mono text-[10px] text-ink-subtle transition-colors duration-100 hover:text-accent"
-                            >
-                                {panel.label}
-                            </Link>
-                        ))}
-                        <Button
-                            size="xs"
-                            color="secondary"
-                            onPress={() => onLoadInPlaySlip(entry.row.currentPick)}
-                            className="ml-auto"
-                        >
-                            Load →
-                        </Button>
-                    </div>
-                </li>
-            ))}
-        </ol>
-    </Panel>
-);
 
 /** The expanded body of a strategy: performance vs chance + pick forensics. */
 const StrategyDetail = ({
     row,
     chance,
     ballForms,
+    buildRules,
+    evidencePanels,
     onLoadInPlaySlip,
     className,
 }: {
     row: StrategyRow;
     chance: StrategiesFile["meta"]["chance"];
     ballForms: Map<number, BallForm> | null;
+    /** Numbered construction steps for documented families (cross-panel). */
+    buildRules?: string[];
+    /** The Insights panels a documented strategy was read off. */
+    evidencePanels?: { anchor: string; label: string }[];
     onLoadInPlaySlip: (numbers: number[]) => void;
     className?: string;
 }) => {
@@ -195,6 +100,35 @@ const StrategyDetail = ({
                     Load in Play Slip →
                 </Button>
             </div>
+
+            {(buildRules?.length || evidencePanels?.length) && (
+                <div className="flex flex-col gap-2 rounded-lg border border-line-soft bg-surface-2/40 p-2.5">
+                    {buildRules?.length ? (
+                        <ol className="flex flex-col gap-1">
+                            {buildRules.map((rule, i) => (
+                                <li key={rule} className="flex gap-2 text-[11px] leading-4 text-ink-muted">
+                                    <span className="font-mono text-ink-subtle tabular-nums">{i + 1}</span>
+                                    <span>{rule}</span>
+                                </li>
+                            ))}
+                        </ol>
+                    ) : null}
+                    {evidencePanels?.length ? (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-mono text-[9px] font-semibold tracking-[0.14em] text-ink-subtle uppercase">Evidence · </span>
+                            {evidencePanels.map((panel) => (
+                                <Link
+                                    key={panel.anchor}
+                                    to={`/insights#${panel.anchor}`}
+                                    className="rounded border border-line-soft px-1.5 py-0.5 font-mono text-[10px] text-ink-subtle transition-colors duration-100 hover:text-accent"
+                                >
+                                    {panel.label}
+                                </Link>
+                            ))}
+                        </div>
+                    ) : null}
+                </div>
+            )}
 
             <div className="grid gap-3 lg:grid-cols-12">
                 {/* Walk-forward performance vs chance */}
@@ -351,6 +285,7 @@ export const StrategiesScreen = () => {
     // The playbook documents the cross-panel family: the rule behind each
     // strategy, the panels it was read off, and the live row it produced.
     const { data: playbook } = useJson<CrossPanelPlaybook>("/data/cross-panel-playbook.json");
+    const playbookById = useMemo(() => new Map((playbook?.strategies ?? []).map((entry) => [entry.id, entry])), [playbook]);
 
     // Live per-ball form for the expanded rows: draws since each ball last
     // appeared, its hits in the last 10 draws, and its all-time count.
@@ -589,7 +524,14 @@ export const StrategiesScreen = () => {
 
                                 {isOpen && (
                                     <div className="border-t border-line-soft bg-surface-2/40 px-4 py-3">
-                                        <StrategyDetail row={row} chance={meta.chance} ballForms={ballForms} onLoadInPlaySlip={handleLoadInPlaySlip} />
+                                        <StrategyDetail
+                                            row={row}
+                                            chance={meta.chance}
+                                            ballForms={ballForms}
+                                            buildRules={playbookById.get(row.id)?.rules}
+                                            evidencePanels={playbookById.get(row.id)?.panels}
+                                            onLoadInPlaySlip={handleLoadInPlaySlip}
+                                        />
                                     </div>
                                 )}
                             </li>
@@ -600,7 +542,6 @@ export const StrategiesScreen = () => {
                 {rows.length === 0 && <p className="px-4 py-8 text-center text-sm text-ink-muted">No strategy matches that filter.</p>}
             </Panel>
 
-            {playbook && <CrossPanelShowcase playbook={playbook} onLoadInPlaySlip={handleLoadInPlaySlip} />}
 
             <p className="px-1 text-[11px] leading-4 text-ink-subtle">
                 Every line has the same Group 1 chance: <span className="font-mono text-ink-muted tabular-nums">1 in 13,983,816</span>.
