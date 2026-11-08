@@ -800,8 +800,65 @@ export const CATALOG_SIGNAL_RULES = {
 // derived from the doc id by nameOf.
 // ---------------------------------------------------------------------------
 
-/** Build the tuple list from (id, family, description) triples. */
-const tuples = (rows) => rows.map(([id, family, description]) => [id, nameOf(id), family, description]);
+/** Build the tuple list from (id, family, description) triples, with curated reader-friendly names. */
+/** Curated reader-friendly names, keyed by doc id (fallback: mechanical nameOf). */
+const NAME_MAP = {
+    cold100: "Cold 100-Draw Fade",
+    cold200: "Cold 200-Draw Fade",
+    cold30: "Cold 30-Draw Fade",
+    cold500: "Cold 500-Draw Fade",
+    coldAll: "All-Time Coldest Six",
+    hot10: "Hot 10-Draw Streak",
+    hot100: "Hot 100-Draw Streak",
+    hot150: "Hot 150-Draw Streak",
+    hot20: "Hot 20-Draw Streak",
+    hot200: "Hot 200-Draw Streak",
+    hot30: "Hot 30-Draw Streak",
+    hot300: "Hot 300-Draw Streak",
+    hot40: "Hot 40-Draw Streak",
+    hot500: "Hot 500-Draw Streak",
+    hot60: "Hot 60-Draw Streak",
+    hotEWMA: "Hot EWMA (HL 30)",
+    eliteOverdue: "Elite Overdue",
+    gapOwnNear: "Own-Cycle Peak",
+    skipBandLoad: "Skip-Band Loader",
+    hotHand: "Hot Hand",
+    streakZig: "Longest Streak",
+    barbellHotCold: "Hot–Cold Barbell",
+    coldZoneRot: "Cold Zone Rotation",
+    hotCold33: "Hot–Cold 3/3 Split",
+    hotcold15: "Hot 1 · Cold 5",
+    hotcold24: "Hot 2 · Cold 4",
+    hotcold42: "Hot 4 · Cold 2",
+    bounceBack: "Skip-Band Bounce-Back",
+    gapHarm: "Harmonic Gap Rhythm",
+    gapOwn: "Own-Clock Overdue",
+    gapZ: "Personal Gap Z-Score",
+    overdue: "Longest Overdue",
+    skip12_20: "Skip 12–20 Window",
+    skip2_4: "Skip 2–4 Window",
+    skip8_12: "Skip 8–12 Window",
+    skipFFG: "FFG Peak Gap",
+    antiMom30: "30-Draw Momentum Fade",
+    mom10: "10-Draw Momentum",
+    mom120: "120-Draw Momentum",
+    mom20: "20-Draw Momentum",
+    mom30: "30-Draw Momentum",
+    mom60: "60-Draw Momentum",
+    streakChase2: "Streak Rider",
+    velocityFade: "Velocity Fade",
+    decadeSkewCol: "Tail-Column Leaders",
+    freqAll: "All-Time Frequency",
+    antiPairs1: "Partner Fade",
+    pairChase: "Pair-Z Chase",
+    pairs1: "Yesterday's Partners",
+    pairs10: "Pair Chase ×10",
+    pairs3: "Pair Chase ×3",
+    pairs5: "Pair Chase ×5",
+    tripleChase: "Triple Hunt",
+};
+
+const tuples = (rows) => rows.map(([id, family, description]) => [id, NAME_MAP[id] ?? nameOf(id), family, description]);
 
 export const CATALOG_SIGNAL_ROWS = tuples([
     // Hot & Cold — 16

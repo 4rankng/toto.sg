@@ -149,7 +149,16 @@ export const CATALOG_ML_RULES = {
 /** metaVote's catalog-style mask when invoked through catalogPrepare. */
 export const META_VOTE_ID = "metaVote";
 
-const tuples = (rows) => rows.map(([id, family, description]) => [id, nameOf(id), family, description]);
+/** Curated reader-friendly names, keyed by doc id (fallback: mechanical nameOf). */
+const NAME_MAP = {
+    geneticOpt: "Genetic Optimiser",
+    simAnneal: "Simulated Annealing",
+    ensemble: "Full Ensemble Blend",
+    hybridFSB: "Feng-Shui × FFG",
+    metaVote: "League Meta Vote",
+};
+
+const tuples = (rows) => rows.map(([id, family, description]) => [id, NAME_MAP[id] ?? nameOf(id), family, description]);
 
 export const CATALOG_ML_ROWS = tuples([
     ["geneticOpt", "Machine Learning", "Genetic algorithm — population 24 lines, 12 generations, tournament selection + crossover + mutation, fitness = ensemble score + structural bonuses; deterministic seed per fold (20261000-style)."],
