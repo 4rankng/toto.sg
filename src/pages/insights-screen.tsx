@@ -18,6 +18,7 @@ import { Ball } from "@/components/balls";
 import { Panel } from "@/components/panel";
 import { PageHeader } from "@/components/product/page-header";
 import { DataLoading, PageHeaderSkeleton, Skeleton } from "@/components/product/skeleton";
+import { StatTile } from "@/components/product/stat-tile";
 import { DonutChart, Gauge } from "@/components/product/console-charts";
 import { InsightPanel } from "@/components/product/insight-panel";
 import { KpiCard } from "@/components/product/kpi-card";
@@ -73,8 +74,10 @@ import {
     type Draw,
     drawDecades,
     drawSum,
+    type EdgeVerification,
     formatDate,
     formatNumber,
+    formatPercent,
     formatSigned,
     type StrategiesFile,
     useJson,
@@ -270,7 +273,7 @@ interface IndexPanel {
     label: string;
 }
 
-/** The nine galleries in reading order with all 128 panels. */
+/** The twelve galleries in reading order with all 133 panels. */
 const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
     {
         id: "the-numbers",
@@ -466,9 +469,20 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
             { id: "panel-jensen-shannon-turnover", label: "Jensen-Shannon turnover" },
         ],
     },
+    {
+        id: "edge-verification",
+        label: "12. Edge verification",
+        panels: [
+            { id: "panel-edge-verdict", label: "Edge verdict" },
+            { id: "panel-edge-route1", label: "Route 1 walk-forward" },
+            { id: "panel-edge-null-shuffle", label: "Null-shuffle benchmark" },
+            { id: "panel-edge-ceiling", label: "Ceiling probe & curse" },
+            { id: "panel-edge-notes", label: "Route 2 & method notes" },
+        ],
+    },
 ];
 
-/** Every panel in reading order, numbered 1..128. */
+/** Every panel in reading order, numbered 1..133. */
 const PANEL_INDEX = SECTIONS.flatMap((section) => section.panels).map((panel, index) => ({
     id: panel.id,
     label: panel.label,
@@ -527,6 +541,20 @@ const edgeVerdict = (deviation: boolean, tokens?: string): { tone: VerdictTone; 
     label: deviation ? "Edge found — favor the hottest, avoid the coldest" : "No edge — matches random draw",
     metric: tokens,
 });
+
+/** One kill-switch fact as a chip: muted when the archive reads chance-consistent, heat when not. */
+const KillSwitchChip = ({ healthy, label }: { healthy: boolean; label: string }) => (
+    <span
+        className={cx(
+            "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[10px] font-medium tracking-wide",
+            healthy ? "border-line-soft bg-surface text-ink-muted" : "border-heat-hot/50 bg-heat-hot/10 text-heat-hot",
+        )}
+    >
+        <span aria-hidden="true" className={cx("size-1.5 shrink-0 rounded-full", healthy ? "bg-quaternary" : "bg-heat-hot")} />
+        {label}
+        <span className={healthy ? "text-ink-subtle" : "text-heat-hot"}>{healthy ? "yes" : "no"}</span>
+    </span>
+);
 
 
 
@@ -623,6 +651,7 @@ export const InsightsScreen = () => {
     const { data: analysis, isLoading: analysisLoading, error: analysisError } = useJson<Analysis>("/data/analysis.json");
     const { data: draws, isLoading: drawsLoading, error: drawsError } = useJson<Draw[]>("/data/draws.json");
     const { data: league, isLoading: leagueLoading, error: leagueError } = useJson<StrategiesFile>("/data/strategies.json");
+    const { data: edgeVerification, isLoading: edgeLoading, error: edgeError } = useJson<EdgeVerification>("/data/edge-verification.json");
 
     /** The 6/49 era: every draw from the coverage date onwards. */
     const eraDraws = useMemo(() => {
@@ -904,11 +933,11 @@ export const InsightsScreen = () => {
         };
     }, [months]);
 
-    if (analysisLoading || drawsLoading || leagueLoading) return <InsightsSkeleton />;
+    if (analysisLoading || drawsLoading || leagueLoading || edgeLoading) return <InsightsSkeleton />;
 
-    if (analysisError || drawsError || leagueError || !analysis || !draws || !league || !gaps || !stratConsensus) {
+    if (analysisError || drawsError || leagueError || edgeError || !analysis || !draws || !league || !edgeVerification || !gaps || !stratConsensus) {
         return (
-            <Panel title="Statistics unavailable" description={analysisError?.message ?? drawsError?.message ?? leagueError?.message ?? "An analysis file is missing."}>
+            <Panel title="Statistics unavailable" description={analysisError?.message ?? drawsError?.message ?? leagueError?.message ?? edgeError?.message ?? "An analysis file is missing."}>
                 <p className="text-sm text-ink-muted">Run `npm run refresh`, then reload.</p>
             </Panel>
         );
@@ -925,6 +954,14 @@ export const InsightsScreen = () => {
     const fridayDraws = analysis.weekday.Fri?.count ?? 0;
     const decadeMin = Math.min(...analysis.decades);
     const decadeMax = Math.max(...analysis.decades);
+
+    /** Route 1 walk-forward: the top of the 6/49-era grid (best edge first) and the 6/45 era's leader. */
+    const edgeTopVariants = edgeVerification.route1.e49.variants.slice(0, 8);
+    const edgeE45Best = edgeVerification.route1.e45.variants[0];
+    /** Distinct Route 2 PRNG families — a handful of rows, so a membership scan beats a Set. */
+    const edgeRoute2Families = edgeVerification.route2.rows
+        .map((row) => row.family)
+        .filter((family, index, families) => families.indexOf(family) === index);
 
     const forceMount = activeSection !== "all" || searchQuery.trim() !== "" || (typeof window !== "undefined" && window.location.hash.startsWith("#panel-"));
 
@@ -5690,6 +5727,228 @@ export const InsightsScreen = () => {
                                     </div>
                                 </div>
                             </div>
+                        </InsightPanel>
+                    )}
+                </LazyGallerySection>
+            )}
+
+            {/* ---------------------------------------------------------------- *
+             * Gallery 12 — Route 4 edge verification (offline artifact).
+             * ---------------------------------------------------------------- */}
+            {(activeSection === "all" || activeSection === "edge-verification") && (
+                <LazyGallerySection id="edge-verification" title="12. Edge verification" forceMount={forceMount}>
+                    {isVisible("panel-edge-verdict", "edge-verification") && (
+                        <InsightPanel
+                            number={pNum("panel-edge-verdict")}
+                            section="Edge verification"
+                            title="Edge verdict"
+                            caption={edgeVerification.verdict.primaryMetric}
+                            id="panel-edge-verdict"
+                            family="Null models"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Search size M", value: formatNumber(edgeVerification.meta.probeM), hint: "uniform variants probed" },
+                                { label: "Null histories", value: formatNumber(edgeVerification.meta.nullHistories), hint: "synthetic uniform archives" },
+                                { label: "Bootstrap reps", value: formatNumber(edgeVerification.meta.bootstrapReplicates), hint: "per edge CI" },
+                            ]}
+                        >
+                            {(() => {
+                                const anomalous = edgeVerification.verdict.route1PrimaryEdgeSignificant || !edgeVerification.verdict.nullShuffleConsistentWithUniformity;
+                                return (
+                                    <PanelVerdict
+                                        {...edgeVerdict(anomalous, `sig:${edgeVerification.verdict.route1PrimaryEdgeSignificant ? "yes" : "no"}|null:${edgeVerification.verdict.nullShuffleConsistentWithUniformity ? "yes" : "no"}`)}
+                                    />
+                                );
+                            })()}
+                            <p className="mt-2 text-xs leading-5 text-ink-muted">{edgeVerification.verdict.headline}</p>
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                                <KillSwitchChip healthy={!edgeVerification.verdict.route1PrimaryEdgeSignificant} label="No Route 1 edge survives the FDR gate" />
+                                <KillSwitchChip healthy={edgeVerification.verdict.nullShuffleConsistentWithUniformity} label="Null-shuffle consistent with uniformity" />
+                            </div>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-edge-route1", "edge-verification") && (
+                        <InsightPanel
+                            number={pNum("panel-edge-route1")}
+                            section="Edge verification"
+                            title="Route 1 — walk-forward grid (6/49 era)"
+                            caption={`Top ${edgeTopVariants.length} of ${formatNumber(edgeVerification.route1.e49.variants.length)} variants by edge — out-of-sample mean hits per ticket minus the era chance null, with bootstrap CIs and BH-FDR q-values.`}
+                            id="panel-edge-route1"
+                            family="Null models"
+                            className="lg:col-span-12"
+                            stats={[
+                                { label: "Folds", value: formatNumber(edgeVerification.route1.e49.folds), hint: `draws ${formatNumber(edgeVerification.eraAccounting.e49.firstDraw)}–${formatNumber(edgeVerification.eraAccounting.e49.lastDraw)}` },
+                                { label: "CI excludes 0", value: formatNumber(edgeVerification.route1.e49.variants.filter((v) => !v.edgeCiCoversZero).length), hint: "of the grid" },
+                                { label: "q < 0.05", value: formatNumber(edgeVerification.route1.e49.variants.filter((v) => v.significantAtQ05).length), hint: "after FDR" },
+                                { label: "Next draw", value: `#${formatNumber(edgeVerification.route1.nextDrawNo)}`, hint: "artifact target" },
+                            ]}
+                        >
+                            <div className="mt-2 overflow-x-auto">
+                                <table className="w-full border-collapse text-left text-xs">
+                                    <thead>
+                                        <tr>
+                                            <th className={th}>Variant</th>
+                                            <th className={thNum}>Edge</th>
+                                            <th className={thNum}>95% CI</th>
+                                            <th className={thNum}>z</th>
+                                            <th className={thNum}>BH q</th>
+                                            <th className={th}>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {edgeTopVariants.map((variant) => (
+                                            <tr key={variant.id}>
+                                                <td className={td}>{variant.id}</td>
+                                                <td className={tdNum}>{formatSigned(variant.edge, 4)}</td>
+                                                <td className={tdNum}>
+                                                    [{formatSigned(variant.edgeCi95[0], 4)}, {formatSigned(variant.edgeCi95[1], 4)}]
+                                                </td>
+                                                <td className={tdNum}>{fmtZ(variant.z)}</td>
+                                                <td className={tdNum}>{variant.q.toFixed(4)}</td>
+                                                <td className={td}>
+                                                    <span
+                                                        className={cx(
+                                                            "mr-1 inline-block rounded border px-1.5 py-0.5 font-mono text-[10px] leading-3",
+                                                            variant.edgeCiCoversZero ? "border-line-soft text-ink-subtle" : "border-accent/40 text-accent",
+                                                        )}
+                                                    >
+                                                        {variant.edgeCiCoversZero ? "covers 0" : "CI excludes 0"}
+                                                    </span>
+                                                    <span
+                                                        className={cx(
+                                                            "inline-block rounded border px-1.5 py-0.5 font-mono text-[10px] leading-3",
+                                                            variant.significantAtQ05 ? "border-accent/40 bg-accent/10 text-accent" : "border-line-soft text-ink-subtle",
+                                                        )}
+                                                    >
+                                                        {variant.significantAtQ05 ? "q<0.05" : "q≥0.05"}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
+                                Era baselines — chance meanHits {edgeVerification.eraAccounting.e49.expectedHitsPerTicket.toFixed(4)} hits/ticket, chance prize rate{" "}
+                                {formatPercent(edgeVerification.eraAccounting.e49.prizeRatePerTicket)} per ticket.
+                                {edgeE45Best
+                                    ? ` 6/45-era counterpart: best edge ${formatSigned(edgeE45Best.edge, 4)} hits/ticket (${edgeE45Best.id}).`
+                                    : ""}
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-edge-null-shuffle", "edge-verification") && (
+                        <InsightPanel
+                            number={pNum("panel-edge-null-shuffle")}
+                            section="Edge verification"
+                            title="Null-shuffle benchmark"
+                            caption="The identical pipeline on synthetic uniform histories — the real archive's statistics must sit inside the null distribution to pass."
+                            id="panel-edge-null-shuffle"
+                            family="Null models"
+                            className="lg:col-span-6"
+                            stats={[
+                                { label: "Null histories", value: formatNumber(edgeVerification.route4.nullShuffle.count), hint: `${formatNumber(edgeVerification.route4.nullShuffle.generator.iid)} i.i.d. · ${formatNumber(edgeVerification.route4.nullShuffle.generator.permuted)} permuted` },
+                                { label: "Null probe M", value: formatNumber(edgeVerification.route4.nullShuffle.nullProbeM), hint: "variants per history" },
+                                { label: "Verdict", value: edgeVerification.route4.nullShuffle.consistentWithNull ? "Inside null" : "Exceeds null", hint: `threshold p<${edgeVerification.route4.nullShuffle.pValueThreshold.toFixed(2)}` },
+                            ]}
+                        >
+                            <div className="mt-2 overflow-x-auto">
+                                <table className="w-full border-collapse text-left text-xs">
+                                    <thead>
+                                        <tr>
+                                            <th className={th}>Statistic</th>
+                                            <th className={thNum}>Real</th>
+                                            <th className={thNum}>Null μ ± σ</th>
+                                            <th className={thNum}>Empirical p</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {edgeVerification.route4.nullShuffle.statistics.map((row) => {
+                                            /** One compact formatter per row: the statistics mix z-scores, scores and rates. */
+                                            const stat = (value: number) =>
+                                                Math.abs(value) >= 100 ? formatNumber(Math.round(value)) : Math.abs(value) >= 10 ? value.toFixed(1) : value.toFixed(4);
+                                            return (
+                                                <tr key={row.statistic}>
+                                                    <td className={td}>{row.statistic}</td>
+                                                    <td className={tdNum}>{stat(row.real)}</td>
+                                                    <td className={tdNum}>
+                                                        {stat(row.nullMean)} ± {stat(row.nullSd)}
+                                                    </td>
+                                                    <td className={cx(tdNum, row.exceedsNullAtP01 && "text-heat-hot")}>{row.empiricalP.toFixed(2)}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p className="mt-2 text-[11px] leading-4 text-ink-subtle">
+                                Rows flagged in red would exceed the null at p&lt;{edgeVerification.route4.nullShuffle.pValueThreshold.toFixed(2)} —{" "}
+                                {edgeVerification.route4.nullShuffle.statistics.some((row) => row.exceedsNullAtP01)
+                                    ? "some do: read the verdict panel before drawing any conclusion."
+                                    : "none do."}
+                            </p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-edge-ceiling", "edge-verification") && (
+                        <InsightPanel
+                            number={pNum("panel-edge-ceiling")}
+                            section="Edge verification"
+                            title="Ceiling probe & winner's curse"
+                            caption="Why league maxima mislead: the best of many uniform variants sits on the matched-M empirical noise null (the Gaussian μ+σ√(2 ln M) line is a light-tail reference that a prize-point null exceeds), and train scores shrink on holdout."
+                            id="panel-edge-ceiling"
+                            family="Null models"
+                            className="lg:col-span-6"
+                        >
+                            <div className="mt-2 grid gap-3 sm:grid-cols-3">
+                                <StatTile
+                                    label={`Ceiling probe (M=${formatNumber(edgeVerification.route4.ceilingProbe.variants)})`}
+                                    value={formatNumber(edgeVerification.route4.ceilingProbe.maxScore)}
+                                    hint={`Gaussian ref ${formatNumber(edgeVerification.route4.ceilingProbe.predictedMaxScore)} — matched-M empirical null is authoritative`}
+                                />
+                                <StatTile
+                                    label="Winner's curse"
+                                    value={`${(edgeVerification.route4.leagueAudit.meanTop10ScoreShrink * 100).toFixed(1)}%`}
+                                    hint={`top-10 score shrink · rank corr ${edgeVerification.route4.leagueAudit.rankCorrelationFullVsHoldout.toFixed(2)}`}
+                                />
+                                <StatTile
+                                    label="Era accounting"
+                                    value={`${formatNumber(edgeVerification.meta.archive.draws)} draws`}
+                                    hint={`${formatNumber(edgeVerification.eraAccounting.e45.draws)} × 6/45 · ${formatNumber(edgeVerification.eraAccounting.e49.draws)} × 6/49`}
+                                />
+                            </div>
+                            <p className="mt-2 text-[11px] leading-4 text-ink-subtle">Note — {edgeVerification.eraAccounting.reviewBaselineNote}</p>
+                        </InsightPanel>
+                    )}
+
+                    {isVisible("panel-edge-notes", "edge-verification") && (
+                        <InsightPanel
+                            number={pNum("panel-edge-notes")}
+                            section="Edge verification"
+                            title="Route 2 & method notes"
+                            caption="What the offline verification run covers, and the standing method rules behind every number in this gallery."
+                            id="panel-edge-notes"
+                            family="Null models"
+                            className="lg:col-span-12"
+                            stats={[
+                                {
+                                    label: "Route 2 variants",
+                                    value: formatNumber(edgeVerification.route2.rows.length),
+                                    hint: `${formatNumber(edgeRoute2Families.length)} PRNG families`,
+                                },
+                                { label: "Route 2 best", value: formatNumber(edgeVerification.route2.bestScore), hint: "coverage only" },
+                                { label: "Runtime", value: `${edgeVerification.meta.runtimeSeconds}s`, hint: `${formatNumber(edgeVerification.meta.probeWorkers)} workers` },
+                            ]}
+                        >
+                            <p className="mt-2 text-xs leading-5 text-ink-muted">{edgeVerification.route2.note}</p>
+                            <p className="mt-3 font-mono text-[9px] font-semibold tracking-[0.16em] text-ink-subtle uppercase">Method notes</p>
+                            <ul className="mt-1 list-disc space-y-1 pl-4 text-[11px] leading-4 text-ink-subtle">
+                                {edgeVerification.meta.methodNotes.slice(0, 3).map((note) => (
+                                    <li key={note}>{note}</li>
+                                ))}
+                            </ul>
                         </InsightPanel>
                     )}
                 </LazyGallerySection>

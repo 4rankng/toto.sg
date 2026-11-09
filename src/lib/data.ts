@@ -213,6 +213,194 @@ export interface CrossPanelPlaybook {
     strategies: CrossPanelStrategy[];
 }
 
+/* ------------------------------------------------------------------ *
+ * Edge verification (public/data/edge-verification.json)
+ * ------------------------------------------------------------------ */
+
+/** Era label used throughout the edge-verification artifact. */
+export type EdgeEra = "e45" | "e49";
+
+/** One walk-forward variant scored by the edge-verification pipeline. */
+export interface EdgeVerificationVariant {
+    id: string;
+    era: EdgeEra;
+    folds: number;
+    /** Out-of-sample mean main-number hits per ticket. */
+    meanHits: number;
+    /** The era's exact chance null for meanHits. */
+    chanceMeanHits: number;
+    /** meanHits − chanceMeanHits, in hits per ticket. */
+    edge: number;
+    edgeCi95: [number, number];
+    edgeCiCoversZero: boolean;
+    z: number;
+    p: number;
+    /** BH-FDR adjusted p-value across the Route 1 grid of the era. */
+    q: number;
+    significantAtQ05: boolean;
+    prizeRate: number;
+    chancePrizeRate: number;
+    prizeEdgeCi95: [number, number];
+    twoPlusRate: number;
+    chanceTwoPlusRate: number;
+    prizePoints: number;
+    bestGroup: number | null;
+    /** Prize hits per tier across the era's folds. */
+    tiers: Record<PrizeKey, number>;
+    /** Sign-stability windows: edge per quarter of the walk-forward run. */
+    quarters: { window: string; folds: number; meanHits: number; edge: number }[];
+    /** The variant's line for the next draw, when it emits one. */
+    lastLine: number[] | null;
+}
+
+/** Route 1 walk-forward results for one era. Variants are sorted by edge, best first. */
+export interface EdgeVerificationRouteEra {
+    era: EdgeEra;
+    folds: number;
+    variants: EdgeVerificationVariant[];
+}
+
+/** One strategy-league row audited under the train/holdout split. */
+export interface EdgeVerificationLeagueRow {
+    id: string;
+    name: string;
+    family: string;
+    leagueRank: number;
+    leagueScore: number;
+    folds: number;
+    score: number;
+    meanHits: number;
+    trainScore: number;
+    trainMeanHits: number;
+    holdoutScore: number;
+    holdoutMeanHits: number;
+    scoreShrink: number;
+    parityWithLeague: boolean;
+}
+
+export interface EdgeVerificationLeagueAudit {
+    strategyCount: number;
+    trainFoldCount: number;
+    holdoutFoldCount: number;
+    rankCorrelationFullVsHoldout: number;
+    meanTop10ScoreShrink: number;
+    cacheParityFailures: string[];
+    topByTrain: { id: string; name: string; family: string; trainScore: number; holdoutScore: number; scoreShrink: number }[];
+    tempoRows: { id: string; name: string; score: number; trainScore: number; holdoutScore: number; rank: number }[];
+    rows: EdgeVerificationLeagueRow[];
+}
+
+/** Search-size ceiling probe: M uniform variants against the μ + σ√(2 ln M) noise ceiling. */
+export interface EdgeVerificationCeilingProbe {
+    folds: number;
+    variants: number;
+    meanScore: number;
+    sdScore: number;
+    maxScore: number;
+    maxScoreSeed: number;
+    predictedMaxScore: number;
+    maxScoreFirst50k: number;
+    maxMeanHits: number;
+    maxMeanHitsFirst50k: number;
+    meanHits: number;
+    prizeRate: number;
+    twoPlusRate: number;
+    topScores: { seed: number; score: number; meanHits: number }[];
+}
+
+export interface EdgeVerificationNullShuffle {
+    count: number;
+    generator: { iid: number; permuted: number };
+    nullProbeM: number;
+    matchedMRealProbe: { maxScoreFirst50k: number; maxMeanHitsFirst50k: number };
+    statistics: {
+        statistic: string;
+        real: number;
+        nullMean: number;
+        nullSd: number;
+        nullMax: number;
+        empiricalP: number;
+        exceedsNullAtP01: boolean;
+        /** Below the review's p<0.05 bar but above its p<0.01 kill bar — reported, not claimed. */
+        marginalAtP05?: boolean;
+    }[];
+    pValueThreshold: number;
+    consistentWithNull: boolean;
+}
+
+export interface EdgeVerificationRoute2 {
+    era: EdgeEra;
+    rows: {
+        id: string;
+        family: string;
+        seedLabel: string;
+        folds: number;
+        score: number;
+        meanHits: number;
+        prizeRate: number;
+        twoPlusRate: number;
+        bestGroup: number | null;
+    }[];
+    bestScore: number;
+    note: string;
+}
+
+export interface EdgeVerificationVerdict {
+    primaryMetric: string;
+    route1PrimaryEdgeSignificant: boolean;
+    nullShuffleConsistentWithUniformity: boolean;
+    leagueWinnerCurse: { meanTop10ScoreShrink: number; rankCorrelationFullVsHoldout: number };
+    headline: string;
+    details: string[];
+}
+
+/** Recomputed per-era baselines from the committed archive. */
+export interface EdgeVerificationEraEntry {
+    pool: number;
+    draws: number;
+    firstDraw: number;
+    lastDraw: number;
+    folds: number;
+    expectedHitsPerBall: number;
+    expectedHitsPerTicket: number;
+    prizeRatePerTicket: number;
+    pointsPerTicket: number;
+}
+
+/**
+ * The offline edge-verification experiment (scripts/edge-verification.mjs →
+ * public/data/edge-verification.json): walk-forward Route 1, the league
+ * winner's-curse audit, the search-size ceiling probe, the null-shuffle
+ * benchmark and the headline verdict. Matched-number facts only.
+ */
+export interface EdgeVerification {
+    meta: {
+        generatedAt: string;
+        archive: { draws: number; firstDraw: number; lastDraw: number };
+        warmupDraws: number;
+        probeM: number;
+        nullProbeM: number;
+        nullHistories: number;
+        bootstrapReplicates: number;
+        probeWorkers: number;
+        runtimeSeconds: number;
+        methodNotes: string[];
+    };
+    eraAccounting: {
+        e45: EdgeVerificationEraEntry;
+        e49: EdgeVerificationEraEntry;
+        reviewBaselineNote: string;
+    };
+    route1: { e45: EdgeVerificationRouteEra; e49: EdgeVerificationRouteEra; nextDrawNo: number };
+    route4: {
+        leagueAudit: EdgeVerificationLeagueAudit;
+        ceilingProbe: EdgeVerificationCeilingProbe;
+        nullShuffle: EdgeVerificationNullShuffle;
+    };
+    route2: EdgeVerificationRoute2;
+    verdict: EdgeVerificationVerdict;
+}
+
 
 const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
 const numberFmt = new Intl.NumberFormat("en-SG");
