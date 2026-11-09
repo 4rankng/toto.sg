@@ -261,7 +261,10 @@ const main = async () => {
             Array.from({ length: foldEnd - foldStart }, (_, i) => decay(era[foldStart + i].draw)).reduce((a, b) => a + b, 0),
     );
     for (const row of rows) {
-        row.hotScore = round2((prizeEvents.get(row.id) ?? []).reduce((acc, event) => acc + decay(event.d), 0));
+        const events = prizeEvents.get(row.id) ?? [];
+        row.hotScore = round2(events.reduce((acc, event) => acc + decay(event.d), 0));
+        // The most recent fold that won anything — the Hot sort leads with it.
+        row.lastPrizeDraw = events.length ? Math.max(...events.map((event) => event.d)) : null;
     }
 
     // Below-chance cleanup: any strategy that performs worse than the honest
@@ -306,15 +309,23 @@ const main = async () => {
     };
     await writeFile(`${DATA_DIR}strategies.json`, JSON.stringify(league, 1), "utf8");
 
-    // The prize-hit ledger: per strategy, every fold that won a prize — the
-    // draw, its date, the tier and the exact line. Pure hit facts; the UI's
-    // tier tiles expand to show them.
+    // The prize-hit ledger: per graded rule, every fold that won a prize —
+    // the draw, its date, the tier and the exact line. Pure hit facts; the UI's
+    // tier tiles expand to show them. The ledger covers EVERY rule, including
+    // the rows the below-chance cleanup trimmed from the league table, so a
+    // strategy that just won is never invisible; meta.directory names them all
+    // and marks which ones sit in the trimmed table.
     const eventLedger = {
-        meta: { generatedAt: league.meta.generatedAt, nextDraw: nextDrawNo, folds: foldEnd - foldStart },
+        meta: {
+            generatedAt: league.meta.generatedAt,
+            nextDraw: nextDrawNo,
+            folds: foldEnd - foldStart,
+            directory: Object.fromEntries(
+                specs.map((spec) => [spec.id, { name: spec.name, family: spec.family, kept: keptIds.has(spec.id) }]),
+            ),
+        },
         strategies: Object.fromEntries(
-            specs
-                .filter((spec) => keptIds.has(spec.id))
-                .map((spec) => [spec.id, (prizeEvents.get(spec.id) ?? []).sort((a, b) => a.d - b.d)]),
+            specs.map((spec) => [spec.id, (prizeEvents.get(spec.id) ?? []).sort((a, b) => a.d - b.d)]),
         ),
     };
     await writeFile(`${DATA_DIR}prize-events.json`, JSON.stringify(eventLedger, 1), "utf8");

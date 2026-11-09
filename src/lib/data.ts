@@ -113,6 +113,8 @@ export interface StrategyRow {
     recent12: number;
     /** Recency-weighted prize count: each prize fold contributes 0.5^(draws since / meta.hot.halfLifeDraws) — "who is winning now". */
     hotScore: number;
+    /** The most recent fold that won a prize, or null if none ever did. The Hot sort leads with it. */
+    lastPrizeDraw: number | null;
     rank: number;
     currentPick: number[];
 }
@@ -165,9 +167,19 @@ export interface PrizeEvent {
     p: number[];
 }
 
-/** The prize-hit ledger: per strategy id, every prize fold ascending by draw. */
+/** One graded rule named in the ledger's directory — the league table only
+ * keeps the rows that beat chance; the directory names all of them. */
+export interface LedgerDirectoryEntry {
+    name: string;
+    family: string;
+    /** Whether the rule survived the below-chance trim and sits in strategies.json. */
+    kept: boolean;
+}
+
+/** The prize-hit ledger: per rule id, every prize fold ascending by draw —
+ * every graded rule, including those trimmed from the league table. */
 export interface PrizeEventsFile {
-    meta: { generatedAt: string; nextDraw: number; folds: number };
+    meta: { generatedAt: string; nextDraw: number; folds: number; directory: Record<string, LedgerDirectoryEntry> };
     strategies: Record<string, PrizeEvent[]>;
 }
 

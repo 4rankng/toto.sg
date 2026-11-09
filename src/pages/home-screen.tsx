@@ -11,6 +11,7 @@ import {
     type Analysis,
     type Draw,
     type LatestResult,
+    type PrizeEventsFile,
     type StrategiesFile,
     formatDate,
     formatNumber,
@@ -22,6 +23,7 @@ import { extendPick, quickPick, randBelow } from "@/lib/quickpick";
 import { computeBoardLenses } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
 import { useLineBuilder } from "@/providers/line-builder-provider";
+import { cx } from "@/utils/cx";
 
 /** League rows shown on the home page. */
 const LEAGUE_ROWS = 5;
@@ -101,6 +103,7 @@ export const HomeScreen = () => {
     const { data: draws, isLoading, error } = useJson<Draw[]>("/data/draws.json");
     const { data: analysis } = useJson<Analysis>("/data/analysis.json");
     const { data: league } = useJson<StrategiesFile>("/data/strategies.json");
+    const { data: prizeEvents } = useJson<PrizeEventsFile>("/data/prize-events.json");
     const [live, setLive] = useState<LatestResult | null>(null);
     const { line, size, setSize, toggle, setLine } = useLineBuilder();
     const [period, setPeriod] = useState("all");
@@ -128,6 +131,30 @@ export const HomeScreen = () => {
     const countdown = useCountdown(nextDraw);
 
     const topStrategies = useMemo(() => (league ? [...league.strategies].sort((a, b) => a.rank - b.rank).slice(0, LEAGUE_ROWS) : []), [league]);
+
+    // The strategies that won a prize on the newest draw the league has
+    // graded — the ledger covers every graded rule, including the ones the
+    // below-chance cleanup trimmed from the league table.
+    const latestWinners = useMemo(() => {
+        if (!prizeEvents || !draws) return null;
+        const gradedDrawNo = prizeEvents.meta.nextDraw - 1;
+        const graded = draws.find((d) => d.draw === gradedDrawNo);
+        if (!graded) return null;
+        const matched = new Set(graded.numbers);
+        const rows = Object.entries(prizeEvents.strategies).flatMap(([id, events]) =>
+            events
+                .filter((event) => event.d === gradedDrawNo)
+                .map((event) => ({
+                    id,
+                    name: prizeEvents.meta.directory[id]?.name ?? id,
+                    kept: prizeEvents.meta.directory[id]?.kept ?? true,
+                    tier: event.g,
+                    pick: event.p,
+                    matched: event.p.filter((n) => matched.has(n)),
+                })),
+        );
+        return { graded, rows: rows.sort((a, b) => a.tier - b.tier || a.name.localeCompare(b.name)) };
+    }, [prizeEvents, draws]);
 
     const windows = useMemo<BoardWindow[]>(() => {
         if (!draws || !analysis) return [];
@@ -322,6 +349,64 @@ export const HomeScreen = () => {
                     </Panel>
 
                     {longestGapsPanel}
+
+                    {/* The most recent graded draw's winners — every graded
+                        rule that hit, trimmed-table rows and below-chance
+                        rows alike. Tier chip on line one, the exact hitting
+                        line on line two with the matched balls ringed. */}
+                    {latestWinners && (
+                        <Panel
+                            title="Latest draw winners"
+                            description={`Prize draws in draw ${latestWinners.graded.draw} · ${formatDate(latestWinners.graded.date)} · ${latestWinners.graded.numbers.join(" ")} + ${latestWinners.graded.additional}`}
+                            className="flex-1"
+                            bodyClassName="flex flex-1 flex-col"
+                            isFlush
+                        >
+                            {latestWinners.rows.length === 0 ? (
+                                <p className="px-4 py-4 text-[13px] text-ink-muted">
+                                    No strategy won a prize in draw {latestWinners.graded.draw}.
+                                </p>
+                            ) : (
+                                <ol className="flex flex-1 flex-col divide-y divide-line-soft">
+                                    {latestWinners.rows.map((winner) => (
+                                        <li key={`${winner.id}-${winner.tier}`} className="px-4 py-1.5">
+                                            <div className="flex items-baseline gap-2">
+                                                <span
+                                                    className={cx(
+                                                        "w-6 shrink-0 font-mono text-[10px] font-semibold tabular-nums",
+                                                        winner.tier === 1 ? "text-gold" : "text-ink-subtle",
+                                                    )}
+                                                    title={`Group ${winner.tier} prize draw`}
+                                                >
+                                                    G{winner.tier}
+                                                </span>
+                                                <span className="min-w-0 flex-1 truncate text-[13px] leading-5 font-medium text-ink" title={winner.name}>{winner.name}</span>
+                                                {!winner.kept && (
+                                                    <span
+                                                        className="shrink-0 rounded border border-line-soft px-1 py-px font-mono text-[9px] tracking-[0.08em] text-ink-subtle uppercase"
+                                                        title="Below the chance baseline overall — trimmed from the league table, kept in the ledger"
+                                                    >
+                                                        below chance
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div
+                                                className="mt-1 flex items-center gap-1 pl-8"
+                                                role="img"
+                                                aria-label={`Winning line ${winner.pick.join(", ")}; matched ${winner.matched.length === 0 ? "none" : winner.matched.join(", ")}`}
+                                            >
+                                                <span aria-hidden="true" className="contents">
+                                                    {winner.pick.map((n) => (
+                                                        <Ball key={n} n={n} size="sm" className={winner.matched.includes(n) ? "ring-2 ring-accent" : "opacity-40"} />
+                                                    ))}
+                                                </span>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ol>
+                            )}
+                        </Panel>
+                    )}
 
                     {/* League */}
                     <Panel

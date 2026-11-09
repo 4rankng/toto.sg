@@ -209,17 +209,30 @@ const checkPrizeEvents = (events, league, draws) => {
     const drawByNo = new Map(draws.map((d) => [d.draw, d]));
     const rows = league?.strategies ?? [];
     const keys = Object.keys(events?.strategies ?? {});
-    check(keys.length === rows.length && rows.every((row) => keys.includes(row.id)), "prize-events.json: strategy keys must match the league rows exactly");
+    // The ledger covers EVERY graded rule — the league table is a trimmed
+    // view (the rows that beat chance), the ledger is the full hit record.
+    const directory = events?.meta?.directory ?? {};
+    check(rows.every((row) => keys.includes(row.id)), "prize-events.json: every league row must have a ledger entry");
+    check(keys.length === Object.keys(directory).length && keys.every((id) => directory[id] != null), "prize-events.json: ledger keys must match meta.directory exactly");
+    check(
+        keys.every((id) => typeof directory[id]?.name === "string" && typeof directory[id]?.family === "string" && typeof directory[id]?.kept === "boolean"),
+        "prize-events.json: directory entries need name/family/kept",
+    );
+    check(
+        keys.every((id) => directory[id]?.kept === rows.some((row) => row.id === id)),
+        "prize-events.json: directory kept flag must match league membership",
+    );
     // The ledger is hit facts only. Any prize value sneaking in is a breach.
     check(!/"s"\s*:/.test(JSON.stringify(events?.strategies ?? {})), "prize-events.json: ledger carries a share/payout field");
-    for (const row of rows) {
-        const list = events?.strategies?.[row.id];
-        check(Array.isArray(list), `prize-events.json: missing ledger for "${row.id}"`);
+    for (const id of keys) {
+        const list = events?.strategies?.[id];
+        check(Array.isArray(list), `prize-events.json: missing ledger for "${id}"`);
         if (!Array.isArray(list)) continue;
+        const row = rows.find((candidate) => candidate.id === id);
         const byTier = { g1: 0, g2: 0, g3: 0, g4: 0, g5: 0, g6: 0, g7: 0 };
         let prev = 0;
         list.forEach((ev, i) => {
-            const where = `prize-events.json[${row.id}][${i}]`;
+            const where = `prize-events.json[${id}][${i}]`;
             check(Number.isInteger(ev?.d) && ev.d > prev, `${where}: draws must be integers ascending`);
             prev = Number.isInteger(ev?.d) ? ev.d : prev;
             const draw = drawByNo.get(ev?.d);
@@ -232,10 +245,11 @@ const checkPrizeEvents = (events, league, draws) => {
                 byTier[`g${ev.g}`] += 1;
             }
         });
+        if (!row) continue; // trimmed from the league table — hit facts only
         for (const tier of Object.keys(byTier)) {
-            check(byTier[tier] === (row.tierCounts?.[tier] ?? 0), `prize-events.json[${row.id}]: ${tier} count ${byTier[tier]} ≠ league tierCounts ${row.tierCounts?.[tier] ?? 0}`);
+            check(byTier[tier] === (row.tierCounts?.[tier] ?? 0), `prize-events.json[${id}]: ${tier} count ${byTier[tier]} ≠ league tierCounts ${row.tierCounts?.[tier] ?? 0}`);
         }
-        check(list.length === row.totalPrizes, `prize-events.json[${row.id}]: ${list.length} events ≠ totalPrizes ${row.totalPrizes}`);
+        check(list.length === row.totalPrizes, `prize-events.json[${id}]: ${list.length} events ≠ totalPrizes ${row.totalPrizes}`);
     }
 };
 

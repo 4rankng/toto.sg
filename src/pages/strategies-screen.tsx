@@ -50,6 +50,8 @@ const StrategyDetail = ({
     row,
     chance,
     hot,
+    /** The league's next draw — turns lastPrizeDraw into a draws-ago figure. */
+    nextDraw,
     ballForms,
     buildRules,
     evidencePanels,
@@ -62,6 +64,7 @@ const StrategyDetail = ({
     row: StrategyRow;
     chance: StrategiesFile["meta"]["chance"];
     hot: StrategiesFile["meta"]["hot"];
+    nextDraw?: number;
     ballForms: Map<number, BallForm> | null;
     /** Numbered construction steps for documented families (cross-panel). */
     buildRules?: string[];
@@ -166,6 +169,11 @@ const StrategyDetail = ({
                         >
                             {hotDelta > 0 ? `+${hotDelta.toFixed(1)}` : hotDelta < 0 ? `${hotDelta.toFixed(1)}` : "±0"} vs chance
                         </span>
+                        {row.lastPrizeDraw != null && nextDraw != null && (
+                            <span className="block font-mono text-[11px] font-normal text-ink-subtle tabular-nums">
+                                last prize draw {row.lastPrizeDraw} · {nextDraw - row.lastPrizeDraw} draw{nextDraw - row.lastPrizeDraw === 1 ? "" : "s"} ago
+                            </span>
+                        )}
                     </dd>
                 </div>
                 <div className="min-w-[110px] flex-1 px-3 py-2">
@@ -447,7 +455,18 @@ export const StrategiesScreen = () => {
                     return row.score ?? 0;
             }
         };
-        return [...filtered].sort((a, b) => value(b) - value(a));
+        return [...filtered].sort((a, b) => {
+            if (sort === "hot") {
+                // Hot is "who is winning now": the strategy with the most
+                // recent prize leads; ties and prizeless rows fall back to
+                // the recency-weighted prize mass, then keep league order.
+                const aDraw = a.lastPrizeDraw ?? 0;
+                const bDraw = b.lastPrizeDraw ?? 0;
+                if (aDraw !== bDraw) return bDraw - aDraw;
+                return (b.hotScore ?? 0) - (a.hotScore ?? 0);
+            }
+            return value(b) - value(a);
+        });
     }, [data, query, family, sort]);
     // The league is laid out as rows of two. Grouping the rows lets an open
     // row's detail span the whole panel under its pair — expanding a row can
@@ -561,7 +580,7 @@ export const StrategiesScreen = () => {
                 title="All strategies"
                 description={`${rows.length} of ${data.strategies.length} · picks for draw ${meta.nextDraw} · ${
                     sort === "hot"
-                        ? `hot ranking: each prize halves every ${meta.hot.halfLifeDraws} draws, chance ${meta.hot.chanceHotScore.toFixed(1)}`
+                        ? `hot ranking: most recent prize first, then recency-weighted mass — each prize halves every ${meta.hot.halfLifeDraws} draws, chance ${meta.hot.chanceHotScore.toFixed(1)}`
                         : `chance over ${formatNumber(meta.folds)} draws: ${formatNumber(chancePrizes)} prizes (score points: ${formatNumber(Math.round((meta.folds * meta.chance.weightedPrizesPer100Draws) / 100))})`
                 }`}
                 actions={filters}
@@ -633,7 +652,9 @@ export const StrategiesScreen = () => {
                                                         <Ball key={n} n={n} size="lg" />
                                                     ))}
                                                     <span className="ml-auto shrink-0 font-mono text-[10px] text-ink-subtle tabular-nums">
-                                                        {formatNumber(row.effPrizes ?? 0)}/{formatNumber(chancePrizes)} prizes · best {row.bestGroup != null ? `G${row.bestGroup}` : "—"}
+                                                        {sort === "hot" && row.lastPrizeDraw != null
+                                                            ? `last prize ${row.lastPrizeDraw} · ${meta.nextDraw - row.lastPrizeDraw} draw${meta.nextDraw - row.lastPrizeDraw === 1 ? "" : "s"} ago`
+                                                            : `${formatNumber(row.effPrizes ?? 0)}/${formatNumber(chancePrizes)} prizes · best ${row.bestGroup != null ? `G${row.bestGroup}` : "—"}`}
                                                     </span>
                                                 </span>
                                             </button>
@@ -653,6 +674,7 @@ export const StrategiesScreen = () => {
                                             row={openRow}
                                             chance={meta.chance}
                                             hot={meta.hot}
+                                            nextDraw={meta.nextDraw}
                                             ballForms={ballForms}
                                             buildRules={playbookById.get(openRow.id)?.rules}
                                             evidencePanels={playbookById.get(openRow.id)?.panels}
