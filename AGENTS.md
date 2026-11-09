@@ -176,7 +176,7 @@ removing a base rule recomputes exactly them.
 | Path | What it is |
 |---|---|
 | `public/data/draws.json` | the archive — the single source of truth |
-| `public/data/analysis.json`, `strategies.json`, `cross-panel-playbook.json`, `prize-events.json`, `graph.json` | **generated** artifacts — never hand-edit |
+| `public/data/analysis.json`, `strategies.json`, `cross-panel-playbook.json`, `prize-events.json`, `graph.json` | **generated** artifacts — never hand-edit. `prize-events.json` is the prize ledger for **every** graded rule (8373 folds, including rows the below-chance trim dropped from the league table), with `meta.directory` naming each rule and flagging league membership; `verify:data` keeps directory, ledger and league consistent |
 | `public/data/graph-*.csv` | **generated** CSV exports of `graph.json` |
 | `data/league-cache.json` | the evaluation cache — **generated** |
 | `src/lib/insights-sequence-dynamics.ts` | the two deep sequence galleries' calculators + the live deep-scan evaluator |
