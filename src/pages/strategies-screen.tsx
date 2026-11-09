@@ -24,11 +24,12 @@ import { lineAcValue } from "@/lib/ticket-xray";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
 
-type SortKey = "score" | "prizes";
+type SortKey = "score" | "prizes" | "hot";
 
 const SORTS: { id: SortKey; label: string }[] = [
     { id: "score", label: "Score" },
     { id: "prizes", label: "Prizes" },
+    { id: "hot", label: "Hot" },
 ];
 
 const TIERS = ["g1", "g2", "g3", "g4", "g5", "g6", "g7"] as const;
@@ -48,6 +49,7 @@ const LeagueSkeleton = () => (
 const StrategyDetail = ({
     row,
     chance,
+    hot,
     ballForms,
     buildRules,
     evidencePanels,
@@ -59,6 +61,7 @@ const StrategyDetail = ({
 }: {
     row: StrategyRow;
     chance: StrategiesFile["meta"]["chance"];
+    hot: StrategiesFile["meta"]["hot"];
     ballForms: Map<number, BallForm> | null;
     /** Numbered construction steps for documented families (cross-panel). */
     buildRules?: string[];
@@ -82,6 +85,7 @@ const StrategyDetail = ({
     const folds = row.evaluatedDraws || 1;
     const tierChance = (tier: string) => folds * Number(chance[`tier${tier.replace("g", "G")}` as keyof typeof chance] ?? 0);
     const prizeDelta = (row.totalPrizes ?? 0) - Math.round((folds * chance.prizesPer100Draws) / 100);
+    const hotDelta = Math.round(((row.hotScore ?? 0) - hot.chanceHotScore) * 10) / 10;
 
     return (
         <div className={cx("min-w-0 flex flex-col gap-3", className)}>
@@ -146,6 +150,21 @@ const StrategyDetail = ({
                             title="Prize draws minus the chance expectation over the same folds"
                         >
                             {prizeDelta > 0 ? `+${prizeDelta}` : prizeDelta < 0 ? `${prizeDelta}` : "±0"} vs chance
+                        </span>
+                    </dd>
+                </div>
+                <div className="min-w-[150px] flex-1 px-3 py-2">
+                    <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Hot</dt>
+                    <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums" title={`Recency-weighted prize mass — a prize in the last graded draw counts 1.0 and one from ${hot.halfLifeDraws} draws ago 0.5`}>
+                        {(row.hotScore ?? 0).toFixed(1)}
+                        <span
+                            className={cx(
+                                "ml-1.5 rounded px-1 py-px text-[11px] font-semibold",
+                                hotDelta > 0 ? "text-secondary" : hotDelta < 0 ? "text-heat-hot" : "text-ink-muted",
+                            )}
+                            title="Hot score minus the chance expectation for the same decay window"
+                        >
+                            {hotDelta > 0 ? `+${hotDelta.toFixed(1)}` : hotDelta < 0 ? `${hotDelta.toFixed(1)}` : "±0"} vs chance
                         </span>
                     </dd>
                 </div>
@@ -421,6 +440,8 @@ export const StrategiesScreen = () => {
             switch (sort) {
                 case "prizes":
                     return row.effPrizes ?? 0;
+                case "hot":
+                    return row.hotScore ?? 0;
                 case "score":
                 default:
                     return row.score ?? 0;
@@ -428,7 +449,6 @@ export const StrategiesScreen = () => {
         };
         return [...filtered].sort((a, b) => value(b) - value(a));
     }, [data, query, family, sort]);
-
     // The league is laid out as rows of two. Grouping the rows lets an open
     // row's detail span the whole panel under its pair — expanding a row can
     // no longer stretch its neighbour into a blank card.
@@ -539,7 +559,11 @@ export const StrategiesScreen = () => {
             <Panel
                 isFlush
                 title="All strategies"
-                description={`${rows.length} of ${data.strategies.length} · picks for draw ${meta.nextDraw} · chance over ${formatNumber(meta.folds)} draws: ${formatNumber(chancePrizes)} prizes (score points: ${formatNumber(Math.round((meta.folds * meta.chance.weightedPrizesPer100Draws) / 100))})`}
+                description={`${rows.length} of ${data.strategies.length} · picks for draw ${meta.nextDraw} · ${
+                    sort === "hot"
+                        ? `hot ranking: each prize halves every ${meta.hot.halfLifeDraws} draws, chance ${meta.hot.chanceHotScore.toFixed(1)}`
+                        : `chance over ${formatNumber(meta.folds)} draws: ${formatNumber(chancePrizes)} prizes (score points: ${formatNumber(Math.round((meta.folds * meta.chance.weightedPrizesPer100Draws) / 100))})`
+                }`}
                 actions={filters}
             >
                 {/* Two league rows per row on lg. The open row renders its
@@ -584,10 +608,20 @@ export const StrategiesScreen = () => {
                                                     )}
                                                     <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink group-hover:text-accent-strong">{row.name}</span>
                                                     <FamilyChip family={row.family} className="hidden shrink-0 sm:inline-flex" />
-                                                    <span className="hidden shrink-0 items-center gap-1 rounded-md bg-surface-inset px-1.5 py-0.5 sm:flex" title={`Score 1–100, log-scaled from ${formatNumber(row.score ?? 0)} raw prize points against the theoretical ceiling (every fold a Group 1)`}>
-                                                        <span className="font-mono text-[9px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">score</span>
-                                                        <span className="font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score100 ?? 1}</span>
-                                                    </span>
+                                                    {sort === "hot" ? (
+                                                        <span
+                                                            className="hidden shrink-0 items-center gap-1 rounded-md bg-surface-inset px-1.5 py-0.5 sm:flex"
+                                                            title={`Recency-weighted prizes: each prize fold counts 0.5^(draws since / ${meta.hot.halfLifeDraws}) — a win last draw is worth 1.0, one from ${meta.hot.halfLifeDraws} draws ago 0.5 (chance ${meta.hot.chanceHotScore.toFixed(1)})`}
+                                                        >
+                                                            <span className="font-mono text-[9px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">hot</span>
+                                                            <span className="font-mono text-[13px] font-semibold text-ink tabular-nums">{(row.hotScore ?? 0).toFixed(1)}</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="hidden shrink-0 items-center gap-1 rounded-md bg-surface-inset px-1.5 py-0.5 sm:flex" title={`Score 1–100, log-scaled from ${formatNumber(row.score ?? 0)} raw prize points against the theoretical ceiling (every fold a Group 1)`}>
+                                                            <span className="font-mono text-[9px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">score</span>
+                                                            <span className="font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score100 ?? 1}</span>
+                                                        </span>
+                                                    )}
                                                     <span className="w-20 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">
                                                         {`${row.effPrizes ?? 0} prizes`}
                                                     </span>
@@ -618,6 +652,7 @@ export const StrategiesScreen = () => {
                                             key={openRow.id}
                                             row={openRow}
                                             chance={meta.chance}
+                                            hot={meta.hot}
                                             ballForms={ballForms}
                                             buildRules={playbookById.get(openRow.id)?.rules}
                                             evidencePanels={playbookById.get(openRow.id)?.panels}

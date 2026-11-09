@@ -27,7 +27,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { CHANCE, evaluateStrategy, WARMUP_DRAWS } from "./lib/league-eval.mjs";
+import { CHANCE, evaluateStrategy, round2, WARMUP_DRAWS } from "./lib/league-eval.mjs";
 import { filterEra, nextDrawDateIso } from "./lib/analysis.mjs";
 import { scoreLine } from "./lib/toto.mjs";
 import { memoisedPrepare } from "./lib/platform/context.mjs";
@@ -248,6 +248,22 @@ const main = async () => {
     for (const spec of crossPanelSpecs) {
         rows.push(evaluate(spec, (drawNo, pick) => collectEvent(spec.id, drawNo, pick), baseSetHash));
     }
+
+    // The hot score — "who is winning NOW": every prize fold contributes
+    // 0.5^(draws since / half-life), so a prize in the last graded draw
+    // counts 1.0 and one from 100 draws ago 0.5. rank/score stay the
+    // all-window metrics; this is the recency ranking the league table's
+    // Hot sort reads.
+    const HOT_HALF_LIFE = 100;
+    const decay = (drawNo) => 0.5 ** ((nextDrawNo - drawNo) / HOT_HALF_LIFE);
+    const chanceHotScore = round2(
+        (CHANCE.prizesPer100Draws / 100) *
+            Array.from({ length: foldEnd - foldStart }, (_, i) => decay(era[foldStart + i].draw)).reduce((a, b) => a + b, 0),
+    );
+    for (const row of rows) {
+        row.hotScore = round2((prizeEvents.get(row.id) ?? []).reduce((acc, event) => acc + decay(event.d), 0));
+    }
+
     // Below-chance cleanup: any strategy that performs worse than the honest
     // chance baseline (quickpick — seeded uniform 6-of-49) on EITHER axis —
     // raw match score or prize-fold count — is dropped from the league table
@@ -283,6 +299,7 @@ const main = async () => {
             nextDraw: nextDrawNo,
             folds: foldEnd - foldStart,
             chance: CHANCE,
+            hot: { halfLifeDraws: HOT_HALF_LIFE, chanceHotScore },
             families: [...new Set(kept.map((row) => row.family))].sort((a, b) => a.localeCompare(b)),
         },
         strategies: kept,

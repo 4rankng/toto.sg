@@ -111,6 +111,8 @@ export interface StrategyRow {
     /** Prize draws per tier over the evaluated folds. */
     tierCounts: Record<"g1" | "g2" | "g3" | "g4" | "g5" | "g6" | "g7", number>;
     recent12: number;
+    /** Recency-weighted prize count: each prize fold contributes 0.5^(draws since / meta.hot.halfLifeDraws) — "who is winning now". */
+    hotScore: number;
     rank: number;
     currentPick: number[];
 }
@@ -136,6 +138,11 @@ export interface StrategyMeta {
         tierG5: number;
         tierG6: number;
         tierG7: number;
+    };
+    /** The hot-ranking nulls: recency-weighted prize mass and its half-life. */
+    hot: {
+        halfLifeDraws: number;
+        chanceHotScore: number;
     };
     families: string[];
 }
