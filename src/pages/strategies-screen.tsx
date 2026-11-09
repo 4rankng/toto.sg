@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Award01, Calendar, ChevronDown, ChevronRight, Coins01, Grid01 } from "@untitledui/icons";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { Ball } from "@/components/balls";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
@@ -21,7 +21,6 @@ import {
     useJson,
 } from "@/lib/data";
 import { lineAcValue } from "@/lib/ticket-xray";
-import { useLineBuilder } from "@/providers/line-builder-provider";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
 
@@ -71,10 +70,7 @@ const StrategyDetail = ({
 }) => {
     const [openTier, setOpenTier] = useState<string | null>(null);
     const tierEvents = openTier ? (prizeEvents ?? []).filter((event) => `g${event.g}` === openTier) : [];
-    // The pick hands off to the shared line builder, which the home page's
-    // play slip reads.
-    const { setLine } = useLineBuilder();
-    const navigate = useNavigate();
+
     const sorted = [...row.currentPick].sort((a, b) => a - b);
     const sum = sorted.reduce((a, b) => a + b, 0);
     const ac = lineAcValue(sorted);
@@ -172,13 +168,7 @@ const StrategyDetail = ({
                 {/* G1–G7 hit strip: zeros recede into the inset, hits get the
                     white lift with an accent top bar */}
                 <div className="min-w-0 rounded-lg bg-surface-2 p-2.5 lg:col-span-7">
-                    <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                        <p className="text-[10px] font-semibold tracking-wider text-ink-muted uppercase">Hits by prize tier</p>
-                        <span className="font-mono text-[10px] text-ink-subtle">
-                            {TIERS.some((tier) => (row.tierCounts?.[tier] ?? 0) > 0) ? "click a tier to see when it hit · " : ""}
-                            chance over {formatNumber(folds)} draws: G7 {tierChance("g7").toFixed(0)} · G5 {tierChance("g5").toFixed(1)} · G6 {tierChance("g6").toFixed(1)} · G1–G4 &lt; 0.05 each
-                        </span>
-                    </div>
+                    <p className="mb-2 text-[10px] font-semibold tracking-wider text-ink-muted uppercase">Hits by prize tier</p>
                     <div className="grid grid-cols-7 gap-1">
                         {TIERS.map((tier) => {
                             const hits = row.tierCounts?.[tier] ?? 0;
@@ -248,20 +238,7 @@ const StrategyDetail = ({
                 <div className="min-w-0 rounded-lg bg-surface-2 p-2.5 lg:col-span-5">
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                         <p className="text-[10px] font-semibold tracking-wider text-ink-muted uppercase">Current pick shape</p>
-                        <div className="flex items-center gap-2">
-                            <span className="font-mono text-[10px] text-ink-subtle">{sorted.join(" · ")}</span>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setLine(row.currentPick);
-                                    navigate("/");
-                                }}
-                                title="Load this strategy's current pick into the play slip"
-                                className="shrink-0 cursor-pointer rounded-md border border-primary bg-primary-soft px-2 py-0.5 text-[10px] font-semibold text-primary transition-colors duration-100 hover:bg-primary hover:text-white"
-                            >
-                                Load in Play Slip →
-                            </button>
-                        </div>
+                        <span className="font-mono text-[10px] text-ink-subtle">{sorted.join(" · ")}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
                         <div className="rounded bg-surface px-1.5 py-1 text-center">
