@@ -486,7 +486,7 @@ type VerdictTone = "signal" | "null" | "watch";
 /** Machine-readable z token for `metric`, e.g. `z:+2.3`. */
 const metricZ = (z: number): string => `z:${z >= 0 ? "+" : "-"}${Math.abs(z).toFixed(1)}`;
 
-/** Props for a count-vs-expectation verdict (Pick / Avoid / No edge). */
+/** Props for a count-vs-expectation verdict (Pick / Avoid; the "No edge" null tone renders nothing). */
 const countVerdict = (
     tone: VerdictTone,
     thing: string,
@@ -506,7 +506,7 @@ const countVerdict = (
     metric: [extraMetric, metricZ(z)].filter(Boolean).join("|"),
 });
 
-/** Props for a direction verdict (Pick rising / Avoid falling / No edge flat). */
+/** Props for a direction verdict (Pick rising / Avoid falling; the null tone renders nothing). */
 const directionVerdict = (
     tone: VerdictTone,
     metricName: string,
@@ -521,7 +521,7 @@ const directionVerdict = (
     metric: tokens,
 });
 
-/** Props for a null-model verdict: a real deviation from the null reads as an edge. */
+/** Props for a null-model verdict: a real deviation from the null renders as an edge watch; chance-consistent renders nothing. */
 const edgeVerdict = (deviation: boolean, tokens?: string): { tone: VerdictTone; label: string; metric?: string } => ({
     tone: deviation ? "watch" : "null",
     label: deviation ? "Edge found — favor the hottest, avoid the coldest" : "No edge — matches random draw",
