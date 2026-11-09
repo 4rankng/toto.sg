@@ -1,5 +1,6 @@
-// toto.sg — the seeded fleet: 9 celestials, 13 hunters, 6 crowns, 4 sovereigns
-// and 5 tempos (from the fleet replication guide, 9 Nov 2026).
+// toto.sg — the seeded fleet: 9 celestials, 13 hunters, 10 crowns, 4
+// sovereigns and 9 tempos (fleet replication guide + no-roll wave guide,
+// both 9 Nov 2026).
 //
 // The guide's recipe, per fold (era index t, target draw era[t]):
 //   1. NO-RECYCLE POOL  block the previous draw's 6 mains + additional ball;
@@ -182,12 +183,17 @@ function choice6(rng, pop) {
  * to block); the full-board family spins over all 49. The tilt stays mod 43
  * in both — the reference code applies that shift literally, even on the
  * 49-ball pool (43 < 49, so the mod-43 shift is always in range).
+ *
+ * The no-roll wave (second guide, same day) drops the tilt entirely: the
+ * cleanest generator — PCG64 seeded at 777000000 + v·7919 + t, six balls
+ * straight off the full 1–49 board. Verified against the guide's published
+ * t=1238 lines: 8/8 exact.
  */
-export function fleetLine(v, t, { fullBoard = false, lastDraw = null } = {}) {
-    const blocked = new Set(!fullBoard && t && lastDraw ? [...lastDraw.numbers, lastDraw.additional] : []);
+export function fleetLine(v, t, { fullBoard = false, noRoll = false, lastDraw = null } = {}) {
+    const blocked = new Set(!fullBoard && !noRoll && t && lastDraw ? [...lastDraw.numbers, lastDraw.additional] : []);
     const pool = [];
     for (let n = 1; n <= 49; n++) if (!blocked.has(n)) pool.push(n); // 1-based, ascending
-    const tilt = (v * 13 + t * 29) % 43;
+    const tilt = noRoll ? 0 : (v * 13 + t * 29) % 43;
     const rolled = [];
     for (let i = 0; i < pool.length; i++) rolled.push(pool[(i - tilt + pool.length) % pool.length]);
     const rng = new Pcg64(777_000_000 + v * 7919 + t);
@@ -254,6 +260,25 @@ const TEMPOS = [
     ["tempoAndante", "Tempo Andante", 421781],
 ];
 
+// The no-roll wave champions (second 9 Nov 2026 guide): the 3.04M-variant
+// search's eight division winners — four tempo prize-frequency champions,
+// four crown perfect-six carriers — playing the tilt-free full-board arm.
+const NOROLL_TEMPOS = [
+    ["tempoMaestoso", "Tempo Maestoso", 2630248],
+    ["tempoSostenuto", "Tempo Sostenuto", 3894435],
+    ["tempoRitenuto", "Tempo Ritenuto", 1906523],
+    ["tempoGiocoso", "Tempo Giocoso", 2857215],
+];
+
+const NOROLL_CROWNS = [
+    ["crownMaximus", "Crown Maximus", 1611558],
+    ["crownHonorius", "Crown Honorius", 2912417],
+    ["crownTheodosius", "Crown Theodosius", 3589435],
+    ["crownSeptimius", "Crown Septimius", 4052556],
+];
+
+const NO_ROLL = new Set([...NOROLL_TEMPOS, ...NOROLL_CROWNS].map(([id]) => id));
+
 const CELESTIAL_FAMILY = "Celestials";
 const BOARD_FAMILY = "Board Hunters";
 const CROWN_FAMILY = "Crown Kings";
@@ -290,6 +315,10 @@ const DIAL_TEXT = {
     crownAugustus: "Its lucky dial (937931) rules the whole board and names six every round.",
     crownConstantine: "True to one dial (430349): the full board, six balls, every draw.",
     crownAstra: "A perfect six on its record; its lucky dial (534156) keeps spinning over the full board.",
+    crownMaximus: "Its lucky dial (1611558) has matched all six once — full board, fresh spin every round.",
+    crownHonorius: "A perfect six already on its dial (2912417); the full board keeps turning.",
+    crownTheodosius: "Its lucky dial (3589435) has ruled a perfect six; the board answers again each round.",
+    crownSeptimius: "True to one dial (4052556) — once it named all six, and it keeps spinning.",
     hunterSovereign: "Reigns over the full 1–49 board — its lucky dial (390919) names the six it plays.",
     hunterImperium: "An empire of one: its lucky dial (490261) rules six balls of the full board.",
     hunterColossus: "Strides the whole board every round; its lucky dial (830513) lands on six.",
@@ -299,9 +328,15 @@ const DIAL_TEXT = {
     tempoVivace: "Lively every round — its lucky dial (1025307) lands six on the board.",
     tempoPresto: "Quick off the dial (262125): full board in, six balls out.",
     tempoAndante: "Unhurried, constant; its lucky dial (421781) walks the board for six.",
+    tempoMaestoso: "The tempo division's record folder; its lucky dial (2630248) sweeps the full board for six.",
+    tempoSostenuto: "Held and steady; its lucky dial (3894435) picks six straight off the board.",
+    tempoRitenuto: "Slowing on purpose; its lucky dial (1906523) lands six on the board.",
+    tempoGiocoso: "Playful by nature; its lucky dial (2857215) bounces six out of the board.",
 };
 
-const FULL_BOARD = new Set([...BOARD_HUNTERS, ...CROWN_KINGS, ...SOVEREIGNS, ...TEMPOS].map(([id]) => id));
+const FULL_BOARD = new Set(
+    [...BOARD_HUNTERS, ...CROWN_KINGS, ...NOROLL_CROWNS, ...SOVEREIGNS, ...TEMPOS, ...NOROLL_TEMPOS].map(([id]) => id),
+);
 
 export const HUNTER_STRATEGIES = [
     ...CELESTIALS.map(([id, name, v]) => [id, name, CELESTIAL_FAMILY, DIAL_TEXT[id]]),
@@ -309,22 +344,27 @@ export const HUNTER_STRATEGIES = [
     ...CROWN_KINGS.map(([id, name, v]) => [id, name, CROWN_FAMILY, DIAL_TEXT[id]]),
     ...SOVEREIGNS.map(([id, name, v]) => [id, name, SOVEREIGN_FAMILY, DIAL_TEXT[id]]),
     ...TEMPOS.map(([id, name, v]) => [id, name, TEMPO_FAMILY, DIAL_TEXT[id]]),
+    ...NOROLL_CROWNS.map(([id, name, v]) => [id, name, CROWN_FAMILY, DIAL_TEXT[id]]),
+    ...NOROLL_TEMPOS.map(([id, name, v]) => [id, name, TEMPO_FAMILY, DIAL_TEXT[id]]),
 ];
 
-// Manifest: 9 celestials + 13 hunters + 6 crowns + 4 sovereigns + 5 tempos = 37 rows.
-if (HUNTER_STRATEGIES.length !== 37 || new Set(HUNTER_STRATEGIES.map((s) => s[0])).size !== 37) {
+// Manifest: 9 celestials + 13 hunters + 10 crowns + 4 sovereigns + 9 tempos = 45 rows.
+if (HUNTER_STRATEGIES.length !== 45 || new Set(HUNTER_STRATEGIES.map((s) => s[0])).size !== 45) {
     throw new Error(`fleet manifest drift: ${HUNTER_STRATEGIES.length} rows`);
 }
 
 export const HUNTER_RULES = Object.fromEntries(
-    [...CELESTIALS, ...BOARD_HUNTERS, ...CROWN_KINGS, ...SOVEREIGNS, ...TEMPOS].map(([id, , v]) => [
-        id,
-        (prior) =>
-            fleetLine(v, prior.length, {
-                fullBoard: FULL_BOARD.has(id),
-                lastDraw: prior.length ? prior[prior.length - 1] : null,
-            }),
-    ]),
+    [...CELESTIALS, ...BOARD_HUNTERS, ...CROWN_KINGS, ...NOROLL_CROWNS, ...SOVEREIGNS, ...TEMPOS, ...NOROLL_TEMPOS].map(
+        ([id, , v]) => [
+            id,
+            (prior) =>
+                fleetLine(v, prior.length, {
+                    fullBoard: FULL_BOARD.has(id),
+                    noRoll: NO_ROLL.has(id),
+                    lastDraw: prior.length ? prior[prior.length - 1] : null,
+                }),
+        ],
+    ),
 );
 
 export const HUNTER_FAMILY = defineFamily({ rules: HUNTER_RULES, rows: HUNTER_STRATEGIES });
