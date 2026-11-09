@@ -109,8 +109,8 @@
     --color-ball-ink: light-dark(#0b1f26, #e8f7fb);
     --color-ball-line: light-dark(#c9dcdc, #1f5568);
 
-    /* Strategy family chips — muted categorical tones; Seed Hunters wears
-       the gold badge instead */
+    /* Strategy family chips — muted categorical tones; the celestial family
+       wears the gold badge instead */
     --color-fam-01: light-dark(#4b3fa8, #b3adff);
     --color-fam-02: light-dark(#7a3e9e, #d3a6ee);
     --color-fam-03: light-dark(#5650c8, #a9a4f5);
