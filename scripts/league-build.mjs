@@ -43,6 +43,7 @@ import { HUNTER_RULES, HUNTER_STRATEGIES } from "./lib/hunter-rules.mjs";
 import { buildDeskContext, DESK_RULES, DESK_STRATEGIES } from "./lib/desk-rules.mjs";
 import { buildMatchrateContext, freezeBandRates, MATCHRATE_RULES, MATCHRATE_STRATEGIES } from "./lib/matchrate-rules.mjs";
 import { buildIndicatorFoldStats, INDICATOR_RULES, INDICATOR_STRATEGIES } from "./lib/indicator-rules.mjs";
+import { INSIGHT_FUSION_RULES, INSIGHT_FUSION_STRATEGIES } from "./lib/insight-fusion-rules.mjs";
 import { buildSequenceDynamicsContext, SEQUENCE_DYNAMICS_RULES, SEQUENCE_DYNAMICS_STRATEGIES } from "./lib/sequence-dynamics-rules.mjs";
 
 const DATA_DIR = fileURLToPath(new URL("../public/data/", import.meta.url));
@@ -160,6 +161,13 @@ const main = async () => {
         ...SEQUENCE_DYNAMICS_STRATEGIES.map((s) =>
             specOf(s, (prior, target, rng, ctx) => SEQUENCE_DYNAMICS_RULES[s[0]](prior, target, rng, ctx), seqPrepare),
         ),
+        // The fusion family: several archive signals fused into one composite
+        // per-ball score. Equipoise/Momentum are base rules sharing the
+        // sequence context; Consensus is Phase-2 (wired below, it reads the
+        // fold votes).
+        ...INSIGHT_FUSION_STRATEGIES.filter(([id]) => id !== "fusionConsensus").map((s) =>
+            specOf(s, (prior, target, rng, ctx) => INSIGHT_FUSION_RULES[s[0]](prior, target, rng, ctx), seqPrepare),
+        ),
     ];
 
     // The cross-panel family reads the league's own vote, so it runs in a
@@ -188,6 +196,19 @@ const main = async () => {
         }
         return ctx;
     };
+    // fusionConsensus reads the sequence context AND the fold's league votes.
+    const fusionMemo = new Map();
+    const fusionVotesPrepare = (eraPrior, target) => {
+        const key = `fusion:${target.draw}`;
+        let ctx = fusionMemo.get(key);
+        if (!ctx) {
+            const votes = target.draw === nextDrawNo ? nowVotes : votesFor(target.draw);
+            seqPrepare(eraPrior, target); // populate the shared memo first
+            ctx = { seq: seqMemo.get(target.draw), votes };
+            fusionMemo.set(key, ctx);
+        }
+        return ctx;
+    };
     const crossPanelSpecs = [
         ...CROSS_PANEL_STRATEGIES.map((s) =>
             specOf(s, (prior, target, rng, ctx) => CROSS_PANEL_RULES[s[0]](prior, target, rng, ctx), crossPanelPrepare),
@@ -197,6 +218,11 @@ const main = async () => {
         // assembled consensus the contrarian strategies read.
         ...CATALOG_ML_STRATEGIES.filter(([id]) => id === META_VOTE_ID).map((s) =>
             specOf(s, (prior, target, rng, ctx) => CATALOG_ML_RULES[s[0]](prior, target, rng, ctx), crossPanelPrepare),
+        ),
+        // The fusion family's consensus rule joins the second phase with the
+        // cross-panel strategies: it reads the same assembled fold vote.
+        ...INSIGHT_FUSION_STRATEGIES.filter(([id]) => id === "fusionConsensus").map((s) =>
+            specOf(s, (prior, target, rng, ctx) => INSIGHT_FUSION_RULES[s[0]](prior, target, rng, ctx), fusionVotesPrepare),
         ),
     ];
 

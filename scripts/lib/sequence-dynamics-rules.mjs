@@ -416,7 +416,7 @@ const spectralPhase = (draws, sums) => {
  * ------------------------------------------------------------------ */
 
 /** Uniform k-subset of `pool` via partial Fisher-Yates. */
-const sampleK = (rng, pool, k) => {
+export const sampleK = (rng, pool, k) => {
     const arr = [...pool];
     const out = [];
     for (let i = 0; i < k; i += 1) {

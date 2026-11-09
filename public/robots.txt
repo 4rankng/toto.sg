@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Agentic Resource Discovery — the site's ARD catalog (§5.1, ARD spec v0.91+).
+Agentmap: https://toto.tingting.vip/ai-catalog.json
+
+Sitemap: https://toto.tingting.vip/sitemap.xml

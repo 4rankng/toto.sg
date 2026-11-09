@@ -1,0 +1,15 @@
+# toto.sg
+
+> Singapore TOTO (6/49) results and analytics: every draw since 2008, per-number frequency and gap analytics, a strategy league scored walk-forward against random picks, and a line builder that carries a picked line across pages.
+
+- [Home — latest draw](https://toto.tingting.vip/): the newest result, next-draw countdown, the play slip and number board.
+- [Insights](https://toto.tingting.vip/insights): 100+ analytics panels over the archive — frequency, gaps, correlations, forecasts, sequence dynamics.
+- [Strategies](https://toto.tingting.vip/strategies): the strategy league — every line scored against the chance baseline over 1,188 walk-forward folds.
+- [History](https://toto.tingting.vip/history): the full draw archive, newest first, with per-draw detail.
+
+## Data (JSON)
+
+- [Draw archive](https://toto.tingting.vip/data/draws.json): every draw as JSON — draw number, date, six mains, additional ball, prize tiers.
+- [Strategy league](https://toto.tingting.vip/data/strategies.json): all scored strategies with current picks.
+- [Analysis](https://toto.tingting.vip/data/analysis.json): per-number frequency, gaps, pairs and summary statistics.
+- [Live draw](https://toto.tingting.vip/api/latest): the newest result, parsed from Singapore Pools, 5-minute cache.

@@ -1,0 +1,64 @@
+{
+    "entries": [
+        {
+            "identifier": "urn:air:tingting.vip:data:toto-draw-archive",
+            "displayName": "TOTO 6/49 draw archive",
+            "type": "application/json",
+            "url": "https://toto.tingting.vip/data/draws.json",
+            "description": "Every Singapore TOTO draw since 2008: draw number, date, the six winning numbers, the additional ball and prize tiers. Updated after each draw.",
+            "representativeQueries": [
+                "singapore totto winning numbers history",
+                "download all toto 6/49 past results as json",
+                "when did ball 15 last appear in singapore totto"
+            ],
+            "capabilities": ["draw-history", "6-of-49", "prize-tiers"],
+            "tags": ["singapore", "lottery", "toto", "dataset"],
+            "updatedAt": "2026-11-09"
+        },
+        {
+            "identifier": "urn:air:tingting.vip:data:toto-strategy-league",
+            "displayName": "TOTO strategy league results",
+            "type": "application/json",
+            "url": "https://toto.tingting.vip/data/strategies.json",
+            "description": "Every strategy in the league with its walk-forward score, hit counts and current pick, graded match-count-only against the chance baseline.",
+            "representativeQueries": [
+                "which totto number-picking strategy scores best against random",
+                "show scored totto strategy picks for the next draw",
+                "strategy league results for singapore 6/49"
+            ],
+            "capabilities": ["strategy-scores", "walk-forward-grading", "current-picks"],
+            "tags": ["singapore", "lottery", "toto", "strategies", "dataset"],
+            "updatedAt": "2026-11-09"
+        },
+        {
+            "identifier": "urn:air:tingting.vip:data:toto-number-analysis",
+            "displayName": "TOTO number analysis statistics",
+            "type": "application/json",
+            "url": "https://toto.tingting.vip/data/analysis.json",
+            "description": "Per-number appearance counts across the 6/49 era, overdue gaps, pair frequencies and summary composition statistics.",
+            "representativeQueries": [
+                "how often does each totto number appear",
+                "which totto numbers are most overdue",
+                "pair frequency statistics for singapore 6/49"
+            ],
+            "capabilities": ["frequency", "gaps", "pairs"],
+            "tags": ["singapore", "lottery", "toto", "statistics", "dataset"],
+            "updatedAt": "2026-11-09"
+        },
+        {
+            "identifier": "urn:air:tingting.vip:api:toto-live-draw",
+            "displayName": "TOTO live latest draw",
+            "type": "application/json",
+            "url": "https://toto.tingting.vip/api/latest",
+            "description": "The newest Singapore TOTO result as JSON, parsed live from Singapore Pools with a five-minute cache.",
+            "representativeQueries": [
+                "latest singapore totto result as json",
+                "what were the last totto winning numbers",
+                "current toto additional ball number"
+            ],
+            "capabilities": ["latest-draw", "live-result"],
+            "tags": ["singapore", "lottery", "toto", "api"],
+            "updatedAt": "2026-11-09"
+        }
+    ]
+}

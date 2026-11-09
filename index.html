@@ -18,10 +18,28 @@
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <!-- Non-blocking font CSS: the print-media trick loads the sheet at the
+             lowest priority, then swaps it to all — first paint never waits on
+             the third-party origin (Lighthouse: render-blocking requests). -->
         <link
+            rel="preload"
             href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Sora:wght@500;600;700&display=swap"
-            rel="stylesheet"
+            as="style"
         />
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Sora:wght@500;600;700&display=swap"
+            media="print"
+            onload="this.media='all'"
+        />
+        <noscript>
+            <link
+                rel="stylesheet"
+                href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Sora:wght@500;600;700&display=swap"
+            />
+        </noscript>
+        <!-- Agentic Resource Discovery: the catalog this site publishes. -->
+        <link rel="ard" href="https://toto.tingting.vip/ai-catalog.json" />
 
         <!-- Pin an explicit theme choice before the first paint; without a stored
              choice the page follows the operating system through `color-scheme`. -->

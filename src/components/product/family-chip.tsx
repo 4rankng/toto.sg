@@ -9,6 +9,7 @@ const FAMILY_TONE: Record<string, string> = {
     Ensemble: "bg-fam-04/12 text-fam-04 ring-fam-04/25",
     "Folk & Culture": "bg-fam-05/12 text-fam-05 ring-fam-05/25",
     Frequency: "bg-fam-06/12 text-fam-06 ring-fam-06/25",
+    Fusion: "bg-fam-18/12 text-fam-18 ring-fam-18/25",
     Gambler: "bg-fam-22/12 text-fam-22 ring-fam-22/25",
     "Gap & Due": "bg-fam-07/12 text-fam-07 ring-fam-07/25",
     "Hot & Cold": "bg-fam-08/12 text-fam-08 ring-fam-08/25",
