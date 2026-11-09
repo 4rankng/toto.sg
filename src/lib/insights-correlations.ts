@@ -1160,38 +1160,44 @@ export interface WuXingStats {
     elements: { name: string; balls: number; observedRate: number; expectedRate: number; color: string }[];
 }
 
-/** 2026 Bing-Wu Na-Yin Five Elements. Matches the strategies.json partition. */
+/** He Tu tail pairs → element: 1,6 Water · 2,7 Fire · 3,8 Wood · 4,9 Metal · 5,0 Earth (0 ≡ 10). */
+const HE_TU_ELEMENTS: { name: string; tails: [number, number]; color: string }[] = [
+    { name: "Fire", tails: [2, 7], color: "var(--color-heat-hot)" },
+    { name: "Metal", tails: [4, 9], color: "var(--color-gold)" },
+    { name: "Water", tails: [1, 6], color: "var(--color-heat-cold)" },
+    { name: "Wood", tails: [3, 8], color: "var(--color-primary)" },
+    { name: "Earth", tails: [5, 0], color: "var(--color-bronze)" },
+];
+
+const elementIndexOf = (n: number) => {
+    const tail = n % 10;
+    const idx = HE_TU_ELEMENTS.findIndex((e) => e.tails.includes(tail));
+    if (idx < 0) throw new Error(`ball ${n} maps to no He Tu element`);
+    return idx;
+};
+
+/**
+ * Five Elements (Wu Xing) — the He Tu tail partition of the 49-ball board:
+ * a strict partition (10 + 10 + 10 + 10 + 9 = 49), every ball in exactly one
+ * element. Twin of WUXING_SETS in scripts/lib/catalog-almanac-rules.mjs
+ * (the wx* league rules) — keep the two in lockstep.
+ */
 export function wuXingStats(draws: Draw[]): WuXingStats {
-    const metal = new Set([4, 5, 18, 19, 26, 27, 34, 35, 42, 43]); // 10
-    const wood = new Set([8, 9, 16, 17, 24, 25, 38, 39, 46, 47]); // 10
-    const water = new Set([1, 14, 15, 22, 23, 30, 31, 44, 45]); // 9 -> +20 in some charts, here 10 balls: [1, 14, 15, 22, 23, 30, 31, 37, 44, 45]
-    const fire = new Set([2, 3, 10, 11, 28, 29, 32, 33, 40, 41, 48, 49]); // 12
-    const earth = new Set([6, 7, 12, 13, 20, 21, 36]); // 7
-
-    // Adjust water to match remainder of 49
-    for (let i = 1; i <= POOL; i += 1) {
-        if (!metal.has(i) && !wood.has(i) && !fire.has(i) && !earth.has(i)) water.add(i);
-    }
-
-    const counts = { metal: 0, wood: 0, water: 0, fire: 0, earth: 0 };
+    const ballCounts = new Uint32Array(HE_TU_ELEMENTS.length);
+    const hitCounts = new Uint32Array(HE_TU_ELEMENTS.length);
+    for (let n = 1; n <= POOL; n += 1) ballCounts[elementIndexOf(n)] += 1;
     for (const draw of draws) {
-        for (const n of draw.numbers) {
-            if (metal.has(n)) counts.metal += 1;
-            else if (wood.has(n)) counts.wood += 1;
-            else if (water.has(n)) counts.water += 1;
-            else if (fire.has(n)) counts.fire += 1;
-            else if (earth.has(n)) counts.earth += 1;
-        }
+        for (const n of draw.numbers) hitCounts[elementIndexOf(n)] += 1;
     }
 
     const n = draws.length;
-    const elements = [
-        { name: "Fire", balls: fire.size, observedRate: n > 0 ? counts.fire / n : 0, expectedRate: (fire.size * 6) / 49, color: "var(--color-heat-hot)" },
-        { name: "Metal", balls: metal.size, observedRate: n > 0 ? counts.metal / n : 0, expectedRate: (metal.size * 6) / 49, color: "var(--color-gold)" },
-        { name: "Water", balls: water.size, observedRate: n > 0 ? counts.water / n : 0, expectedRate: (water.size * 6) / 49, color: "var(--color-heat-cold)" },
-        { name: "Wood", balls: wood.size, observedRate: n > 0 ? counts.wood / n : 0, expectedRate: (wood.size * 6) / 49, color: "var(--color-primary)" },
-        { name: "Earth", balls: earth.size, observedRate: n > 0 ? counts.earth / n : 0, expectedRate: (earth.size * 6) / 49, color: "var(--color-bronze)" },
-    ];
+    const elements = HE_TU_ELEMENTS.map((e, i) => ({
+        name: e.name,
+        balls: ballCounts[i],
+        observedRate: n > 0 ? hitCounts[i] / n : 0,
+        expectedRate: (ballCounts[i] * 6) / 49,
+        color: e.color,
+    }));
 
     return { elements };
 }
@@ -1201,40 +1207,38 @@ export interface ZodiacStats {
     topAnimal: string;
 }
 
-/** 12 Zodiac / Togel Shio columns: 2026 Year of Horse (Horse = {1, 13, 25, 37, 49}). */
+/**
+ * The 12 zodiac (shio) columns, anchored to the 2026 Horse year: ball 1
+ * belongs to the year animal and each +1 steps one year BACK through the
+ * cycle, so ball n falls in column ((n − 1) mod 12) + 1. Vietnamese naming:
+ * Buffalo (Sửu) for Ox, Cat (Mão) for Rabbit. Twin of ZODIAC_COLUMNS in
+ * scripts/lib/catalog-almanac-rules.mjs — keep the two in lockstep.
+ */
 export function zodiacStats(draws: Draw[]): ZodiacStats {
-    const ANIMALS = [
-        { animal: "Horse", offset: 1, balls: 5 }, // 1, 13, 25, 37, 49
-        { animal: "Goat", offset: 2, balls: 4 },
-        { animal: "Monkey", offset: 3, balls: 4 },
-        { animal: "Rooster", offset: 4, balls: 4 },
-        { animal: "Dog", offset: 5, balls: 4 },
-        { animal: "Pig", offset: 6, balls: 4 },
-        { animal: "Rat (clash year)", offset: 7, balls: 4 },
-        { animal: "Ox", offset: 8, balls: 4 },
-        { animal: "Tiger", offset: 9, balls: 4 },
-        { animal: "Rabbit", offset: 10, balls: 4 },
-        { animal: "Dragon", offset: 11, balls: 4 },
-        { animal: "Snake", offset: 0, balls: 4 }, // 12, 24, 36, 48
+    const CYCLE = [
+        "Horse", "Snake", "Dragon", "Cat", "Tiger", "Buffalo",
+        "Rat", "Pig", "Dog", "Rooster", "Monkey", "Goat",
     ];
 
     const hitCounts = new Uint32Array(12);
     for (const draw of draws) {
         for (const n of draw.numbers) {
-            const mod = n % 12;
-            const idx = ANIMALS.findIndex((a) => a.offset === mod);
-            if (idx >= 0) hitCounts[idx] += 1;
+            hitCounts[(n - 1) % 12] += 1;
         }
     }
 
     const n = draws.length;
-    const zodiacs = ANIMALS.map((a, i) => ({
-        animal: a.animal,
-        balls: a.balls,
-        count: hitCounts[i],
-        observedHits: n > 0 ? hitCounts[i] / n : 0,
-        expectedHits: (a.balls * 6) / 49,
-    }));
+    const zodiacs = CYCLE.map((animal, i) => {
+        const offset = i + 1; // Horse holds {1, 13, 25, 37, 49} — 5 balls; every other column 4
+        const balls = Math.floor((POOL - offset) / 12) + 1;
+        return {
+            animal,
+            balls,
+            count: hitCounts[i],
+            observedHits: n > 0 ? hitCounts[i] / n : 0,
+            expectedHits: (balls * 6) / 49,
+        };
+    });
 
     const sorted = [...zodiacs].sort((a, b) => b.observedHits - a.observedHits);
 

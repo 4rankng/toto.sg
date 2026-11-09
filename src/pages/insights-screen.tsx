@@ -2832,8 +2832,8 @@ export const InsightsScreen = () => {
                             <InsightPanel
                                 number={pNum("panel-wuxing")}
                                 section="Folklore"
-                                title="2026 Na-Yin Five Elements"
-                                caption="Bing-Wu Fire Horse element sets (Metal, Wood, Water, Fire, Earth) vs fair share."
+                                title="Five Elements (Wu Xing)"
+                                caption="He Tu tail partition — 1,6 Water · 2,7 Fire · 3,8 Wood · 4,9 Metal · 5,0 Earth — vs fair share."
                                 id="panel-wuxing"
                                 family="Mark Six Charts"
                                 className="lg:col-span-6"

@@ -27,6 +27,8 @@
 //   * sunSign: the sign's classical ruler r seeds {r, r+9, r+18, r+27, r+36}.
 //   * biorhythm: cycles 23/28/33 from 2014-10-09; ball b is on a cycle's peak
 //     when b mod cycle ∈ {5-8 physical, 6-10 emotional, 7-11 intellectual}.
+//   * zodiac columns / five-element sets: fixed tables at ZODIAC_COLUMNS and
+//     WUXING_SETS (2026 Horse-year shio anchor; He Tu tail pairs).
 import {
     RANGE49,
     lineSum,
@@ -199,11 +201,19 @@ const Set64 = (arr) => new Set(arr);
 const MARK_SIX_RED = [1, 2, 7, 8, 12, 13, 18, 19, 23, 24, 29, 30, 34, 35, 40, 45, 46];
 const MARK_SIX_BLUE = [3, 4, 9, 10, 14, 15, 20, 25, 26, 31, 36, 37, 41, 42, 47, 48];
 const MARK_SIX_GREEN = [5, 6, 11, 16, 17, 21, 22, 27, 28, 32, 33, 38, 39, 43, 44, 49];
+/**
+ * The 12 zodiac (shio) columns of the 49-ball board, anchored to the 2026
+ * Horse year: ball 1 belongs to the year animal and each +1 steps one year
+ * BACK through the cycle — Snake at 2, Dragon at 3, …, Goat at 12 — the
+ * standard published shio chart. Vietnamese naming: Buffalo (Sửu) for Ox,
+ * Cat (Mão) for Rabbit; the columns are identical, only the labels differ.
+ * Twin of zodiacStats in src/lib/insights-correlations.ts — keep in lockstep.
+ */
 const ZODIAC_COLUMNS = {
     Rat: [7, 19, 31, 43],
-    Ox: [6, 18, 30, 42],
+    Buffalo: [6, 18, 30, 42],
     Tiger: [5, 17, 29, 41],
-    Rabbit: [4, 16, 28, 40],
+    Cat: [4, 16, 28, 40],
     Dragon: [3, 15, 27, 39],
     Snake: [2, 14, 26, 38],
     Horse: [1, 13, 25, 37, 49],
@@ -213,6 +223,30 @@ const ZODIAC_COLUMNS = {
     Dog: [9, 21, 33, 45],
     Pig: [8, 20, 32, 44],
 };
+
+/** He Tu tail pair → element balls: 1,6 Water · 2,7 Fire · 3,8 Wood · 4,9 Metal · 5,0 Earth (0 ≡ 10). */
+const heTuTails = (a, b) => RANGE49.filter((n) => n % 10 === a || n % 10 === b);
+
+/**
+ * The five-element (Wu Xing) partition of the board — He Tu number pairs, a
+ * strict partition: 10 + 10 + 10 + 10 + 9 = 49, no overlap, no gaps.
+ * Twin of wuXingStats in src/lib/insights-correlations.ts — keep in lockstep.
+ */
+const WUXING_SETS = {
+    Fire: heTuTails(2, 7),
+    Earth: heTuTails(5, 0),
+    Metal: heTuTails(4, 9),
+    Water: heTuTails(1, 6),
+    Wood: heTuTails(3, 8),
+};
+
+for (const [name, table] of [["ZODIAC_COLUMNS", ZODIAC_COLUMNS], ["WUXING_SETS", WUXING_SETS]]) {
+    const balls = Object.values(table).flat();
+    if (balls.length !== 49 || new Set(balls).size !== 49) {
+        throw new Error(`${name} must partition the 49-ball board exactly once per ball`);
+    }
+}
+const setStr = (arr) => `{ ${arr.join(", ")} }`;
 
 // ---------------------------------------------------------------------------
 // Rules
@@ -346,11 +380,11 @@ export const CATALOG_ALMANAC_RULES = {
         const picks = pool.sort((a, b) => ens[b - 1] - ens[a - 1]).slice(0, 6);
         return picks.length === 6 ? sortAsc(picks) : completeLine(ctx, picks);
     },
-    wuxingFire: (p, t, r, ctx) => signalLine(ctx, r, inSetScore(ctx, Set64([2, 3, 10, 11, 18, 19, 32, 33, 40, 41, 48, 49]))),
-    wxEarth: (p, t, r, ctx) => signalLine(ctx, r, inSetScore(ctx, Set64([5, 10, 15, 20, 25, 30, 35, 40, 45]))),
-    wxMetal: (p, t, r, ctx) => signalLine(ctx, r, inSetScore(ctx, Set64([4, 9, 14, 19, 24, 29, 34, 39, 44, 49]))),
-    wxWater: (p, t, r, ctx) => signalLine(ctx, r, inSetScore(ctx, Set64([1, 14, 15, 22, 23, 30, 31, 44, 45]))),
-    wxWood: (p, t, r, ctx) => signalLine(ctx, r, inSetScore(ctx, Set64([3, 8, 13, 18, 23, 28, 33, 38, 43, 48]))),
+    wuxingFire: (p, t, r, ctx) => signalLine(ctx, r, inSetScore(ctx, Set64(WUXING_SETS.Fire))),
+    wxEarth: (p, t, r, ctx) => signalLine(ctx, r, inSetScore(ctx, Set64(WUXING_SETS.Earth))),
+    wxMetal: (p, t, r, ctx) => signalLine(ctx, r, inSetScore(ctx, Set64(WUXING_SETS.Metal))),
+    wxWater: (p, t, r, ctx) => signalLine(ctx, r, inSetScore(ctx, Set64(WUXING_SETS.Water))),
+    wxWood: (p, t, r, ctx) => signalLine(ctx, r, inSetScore(ctx, Set64(WUXING_SETS.Wood))),
 
     // --- Other (48) ----------------------------------------------------------
     addlTailChase: (p, t, r, ctx) => {
@@ -790,14 +824,14 @@ const NAME_MAP = {
     tailHotPair: "Hot-Tail Pair",
     twiceFive: "Twice-in-Five",
     zigzagParity: "Zigzag Parity",
+    zodBuffalo: "Buffalo Column",
+    zodCat: "Cat Column",
     zodDog: "Dog Column",
     zodDragon: "Dragon Column",
     zodGoat: "Goat Column",
     zodHorse: "Horse Column",
     zodMonkey: "Monkey Column",
-    zodOx: "Ox Column",
     zodPig: "Pig Column",
-    zodRabbit: "Rabbit Column",
     zodRat: "Rat Column",
     zodRooster: "Rooster Column",
     zodSnake: "Snake Column",
@@ -838,11 +872,11 @@ export const CATALOG_ALMANAC_ROWS = tuples([
     ["colorRed", "Mark Six Charts", "Membership of the Mark-Six RED group [1, 2, 7, 8, 12, 13, 18, 19, 23, 24, 29, 30, 34, 35, 40, 45, 46], ranked by form."],
     ["shioFollow", "Mark Six Charts", "Take the last draw's 6 balls' shio columns (n mod 12); every ball in those same columns is a candidate; ensemble-rank to 6."],
     ["tailFollow", "Mark Six Charts", "All balls carrying the last draw's unit digits, ensemble-ranked to 6."],
-    ["wuxingFire", "Mark Six Charts", "Fire element set [2, 3, 10, 11, 18, 19, 32, 33, 40, 41, 48, 49], form-ranked."],
-    ["wxEarth", "Mark Six Charts", "Earth element set (5,0 stems: {5,10,15,20,25,30,35,40,45}), form-ranked."],
-    ["wxMetal", "Mark Six Charts", "Metal element set (4,9 stems: {4,9,14,19,24,29,34,39,44,49}), form-ranked."],
-    ["wxWater", "Mark Six Charts", "Water element set [1, 14, 15, 22, 23, 30, 31, 44, 45], form-ranked."],
-    ["wxWood", "Mark Six Charts", "Wood element set (3,8 mod-10 stems: {3,8,13,18,23,28,33,38,43,48}), form-ranked."],
+    ["wuxingFire", "Mark Six Charts", `Fire element set, He Tu tails 2 & 7 ${setStr(WUXING_SETS.Fire)}, form-ranked.`],
+    ["wxEarth", "Mark Six Charts", `Earth element set, He Tu tails 5 & 0 ${setStr(WUXING_SETS.Earth)}, form-ranked.`],
+    ["wxMetal", "Mark Six Charts", `Metal element set, He Tu tails 4 & 9 ${setStr(WUXING_SETS.Metal)}, form-ranked.`],
+    ["wxWater", "Mark Six Charts", `Water element set, He Tu tails 1 & 6 ${setStr(WUXING_SETS.Water)}, form-ranked.`],
+    ["wxWood", "Mark Six Charts", `Wood element set, He Tu tails 3 & 8 ${setStr(WUXING_SETS.Wood)}, form-ranked.`],
     // Other (36)
     ["addlTailChase", "Other", "One ball sharing the last ADDITIONAL ball's last digit + ensemble fill."],
     ["affinityAnchor", "Other", "Anchor one of the top-5 positive-z pairs; fill 4 slots with balls whose pair-z with BOTH anchors lies in [−1,+1] (neutral); ensemble fill the rest."],
@@ -880,19 +914,13 @@ export const CATALOG_ALMANAC_ROWS = tuples([
     ["tailHotPair", "Other", "2 balls from the hottest tail digit of the last 20 draws + ensemble fill."],
     ["twiceFive", "Other", "Indicator of exactly 2 hits in the last 5 draws."],
     ["zigzagParity", "Other", "Strictly alternating odd/even when sorted (parities 010101 or 101010), sum 115-185."],
-    // Zodiac (12) — the twelve animal columns of the Mark-Six board.
-    ["zodDog", "Zodiac", "The Dog zodiac column of the Mark-Six board {9, 21, 33, 45} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodDragon", "Zodiac", "The Dragon zodiac column of the Mark-Six board {3, 15, 27, 39} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodGoat", "Zodiac", "The Goat zodiac column of the Mark-Six board {12, 24, 36, 48} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodHorse", "Zodiac", "The Horse zodiac column of the Mark-Six board {1, 13, 25, 37, 49} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodMonkey", "Zodiac", "The Monkey zodiac column of the Mark-Six board {11, 23, 35, 47} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodOx", "Zodiac", "The Ox zodiac column of the Mark-Six board {6, 18, 30, 42} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodPig", "Zodiac", "The Pig zodiac column of the Mark-Six board {8, 20, 32, 44} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodRabbit", "Zodiac", "The Rabbit zodiac column of the Mark-Six board {4, 16, 28, 40} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodRat", "Zodiac", "The Rat zodiac column of the Mark-Six board {7, 19, 31, 43} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodRooster", "Zodiac", "The Rooster zodiac column of the Mark-Six board {10, 22, 34, 46} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodSnake", "Zodiac", "The Snake zodiac column of the Mark-Six board {2, 14, 26, 38} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
-    ["zodTiger", "Zodiac", "The Tiger zodiac column of the Mark-Six board {5, 17, 29, 41} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6."],
+    // Zodiac (12) — the twelve animal columns of the Mark-Six board, generated
+    // from ZODIAC_COLUMNS so the doc rows can never drift from the rules.
+    ...Object.keys(ZODIAC_COLUMNS).sort().map((animal) => [
+        `zod${animal}`,
+        "Zodiac",
+        `The ${animal} zodiac column of the Mark-Six board ${setStr(ZODIAC_COLUMNS[animal])} (balls ≡ column mod 12) — members by recency, masked ensemble fill to 6.`,
+    ]),
 ]);
 
 /** The league rows this module evaluates. */

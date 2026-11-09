@@ -33,8 +33,8 @@
 //     ewma75 fibGaps haloExpand heSumParity hitMissEdge ignition2of10 pairSum51
 //     repeatOfRepeat sandwichLine shapeAllHigh34 shapeHighSum shapeLift shapeLowSum
 //     shapeWideSpan skipBounce spectralComm sumTgt120 sumTgt135 sumTgt165 sumTgt180
-//     tailHotPair twiceFive zigzagParity zodDog zodDragon zodGoat zodHorse zodMonkey
-//     zodOx zodPig zodRabbit zodRat zodRooster zodSnake zodTiger
+//     tailHotPair twiceFive zigzagParity zodBuffalo zodCat zodDog zodDragon
+//     zodGoat zodHorse zodMonkey zodPig zodRat zodRooster zodSnake zodTiger
 //   Structure (44) [T]: acLock7 acLock9 addlAvoid addlChase addlRecent codex4
 //     codexPlaySkip decade deltaSys drawParity dualRuns highLow33 keyWheel
 //     keyWheelCold ladderAnchor loShuGrid lockModal33 megaBalance mirrorPair50
