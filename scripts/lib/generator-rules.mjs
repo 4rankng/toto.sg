@@ -1,6 +1,7 @@
 // toto.sg — the deterministic generator rules (user spec, wave 1).
 //
-// Each rule is attempt(prior, rng) → sorted 6-number line, or null to reject.
+// Each rule is rule(prior, target, rng) → sorted 6-number line, or null to
+// reject (the target argument is unused — the family is shape-driven).
 // All randomness flows through the injected rng (seeded per strategy+draw by
 // the shared evaluator), so reruns are byte-identical. The two payout-tilted
 // rules from the original spec (coldHighTilt, residueColdHybrid) are not part
@@ -16,6 +17,8 @@ import {
     sampleK,
     sortAsc,
 } from "./cross-panel-stats.mjs";
+import { defineFamily } from "./platform/family.mjs";
+import { randInt } from "./platform/kit.mjs";
 
 export const GENERATOR_STRATEGIES = [
     ["mod9Coverage", "Mod-9 Residue Coverage", "Sum Band", "Draws one number from each of six different mod-9 residue classes — the one structural audit the randomness panels flag — and repairs the sum into the 115–185 band."],
@@ -42,10 +45,8 @@ const REPULSION_PAIRS = [
     [25, 28], // strong positive (crowd-chased)
 ];
 
-const randInt = (rng, lo, hi) => lo + Math.floor(rng() * (hi - lo + 1));
-
 export const GENERATOR_RULES = {
-    mod9Coverage(prior, rng) {
+    mod9Coverage(prior, _target, rng) {
         const line = sampleK(rng, [0, 1, 2, 3, 4, 5, 6, 7, 8], 6).map((r) => {
             const cls = MOD9_CLASSES[r];
             return cls[Math.floor(rng() * cls.length)]; // ball 49 ≡ 4 (mod 9)
@@ -72,7 +73,7 @@ export const GENERATOR_RULES = {
         return null;
     },
 
-    acLock8(prior, rng) {
+    acLock8(prior, _target, rng) {
         const line = sortAsc(sampleK(rng, RANGE49, 6));
         if (acValue(line) !== 8) return null;
         const sum = lineSum(line);
@@ -81,7 +82,7 @@ export const GENERATOR_RULES = {
         return line;
     },
 
-    sixTails(prior, rng) {
+    sixTails(prior, _target, rng) {
         const line = sampleK(rng, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 6).map((d) => {
             const cls = TAIL_CLASSES[d];
             return cls[Math.floor(rng() * cls.length)];
@@ -92,7 +93,7 @@ export const GENERATOR_RULES = {
         return line;
     },
 
-    medianLadder(prior, rng) {
+    medianLadder(prior, _target, rng) {
         const bands = [
             [3, 7],
             [12, 18],
@@ -108,7 +109,7 @@ export const GENERATOR_RULES = {
         return line;
     },
 
-    noRepeatClean(prior, rng) {
+    noRepeatClean(prior, _target, rng) {
         const prev = prior[prior.length - 1].numbers;
         const pool = RANGE49.filter((n) => !prev.includes(n));
         const line = sortAsc(sampleK(rng, pool, 6));
@@ -118,7 +119,7 @@ export const GENERATOR_RULES = {
         return line;
     },
 
-    repulsionExclusion(prior, rng) {
+    repulsionExclusion(prior, _target, rng) {
         const line = sortAsc(sampleK(rng, RANGE49, 6));
         for (const [x, y] of REPULSION_PAIRS) if (line.includes(x) && line.includes(y)) return null;
         if (consecPairs(line) > 1) return null;
@@ -127,7 +128,7 @@ export const GENERATOR_RULES = {
         return line;
     },
 
-    gapGradient(prior, rng) {
+    gapGradient(prior, _target, rng) {
         const smallSlot = randInt(rng, 0, 4);
         let largeSlot = randInt(rng, 0, 4);
         while (largeSlot === smallSlot) largeSlot = randInt(rng, 0, 4);
@@ -146,7 +147,7 @@ export const GENERATOR_RULES = {
         return line; // strictly increasing by construction
     },
 
-    quantileBand(prior, rng) {
+    quantileBand(prior, _target, rng) {
         const bands = [
             [4, 8],
             [12, 18],
@@ -163,3 +164,5 @@ export const GENERATOR_RULES = {
         return line;
     },
 };
+
+export const GENERATOR_FAMILY = defineFamily({ rules: GENERATOR_RULES, rows: GENERATOR_STRATEGIES });

@@ -18,17 +18,17 @@
 // Rule signature: rule(prior, target, rng, stats) where stats is
 // buildFoldStats(prior, target) from cross-panel-stats.mjs. Heavy derived tables
 // are memoised on the stats object so loops never recompute them.
-import { RANGE49, acValue, consecPairs, lineSum, oddCount, sampleK, sortAsc } from "./cross-panel-stats.mjs";
-
-const randInt = (rng, lo, hi) => lo + Math.floor(rng() * (hi - lo + 1));
-const pick = (rng, list) => list[Math.floor(rng() * list.length)];
+import { buildFoldStats, RANGE49, acValue, consecPairs, lineSum, oddCount, sampleK, sortAsc } from "./cross-panel-stats.mjs";
+import { ctxMemo } from "./platform/context.mjs";
+import { defineFamily } from "./platform/family.mjs";
+import { padLine as kitPadLine, pairZ as kitPairZ, pick, randInt } from "./platform/kit.mjs";
 const GATED_TRIES = 200;
 
 /** z-score of one pair's co-occurrence count under the Poisson null. */
 const pairZ = (stats, a, b) => {
     const key = a < b ? `${a}-${b}` : `${b}-${a}`;
     const count = stats.pairCounts.get(key) ?? 0;
-    return (count - stats.expectedPairs) / Math.sqrt(stats.expectedPairs);
+    return kitPairZ(count, stats.expectedPairs);
 };
 
 /** Balls of `line` sorted by all-time frequency, strongest first. */
@@ -43,9 +43,9 @@ const topPairs = (stats, k) => {
 };
 
 /** Top-k triplets by lift over the hypergeometric expectation, cached per fold. */
-const topTriplets = (prior, stats, k) => {
-    if (!stats.__triplets) {
-        const expected = stats.draws * (20 / 18424); // C(6,3)/C(49,3) per draw
+const topTriplets = (prior, stats, k) =>
+    ctxMemo(stats, "triplets", (s) => {
+        const expected = s.draws * (20 / 18424); // C(6,3)/C(49,3) per draw
         const counts = new Map();
         for (const draw of prior) {
             const nums = draw.numbers;
@@ -56,12 +56,10 @@ const topTriplets = (prior, stats, k) => {
                         counts.set(key, (counts.get(key) ?? 0) + 1);
                     }
         }
-        stats.__triplets = [...counts.entries()]
+        return [...counts.entries()]
             .map(([key, count]) => ({ line: key.split("-").map(Number), lift: count / expected }))
             .sort((x, y) => y.lift - x.lift || x.line[0] - y.line[0]);
-    }
-    return stats.__triplets.slice(0, k);
-};
+    }).slice(0, k);
 
 /** Most frequent consecutive runs (n, n+1) by lift, strongest first. */
 const topConsecRuns = (stats, k) => {
@@ -76,14 +74,7 @@ const topConsecRuns = (stats, k) => {
 };
 
 /** Top the set up to exactly 6 unique balls from the frequency leaders. */
-const padLine = (stats, line) => {
-    const set = new Set(line);
-    for (const n of byFreq(stats, RANGE49)) {
-        if (set.size >= 6) break;
-        set.add(n);
-    }
-    return sortAsc([...set]);
-};
+const padLine = (stats, line) => kitPadLine(stats.freq, line);
 
 /** Blended 10- and 50-draw surge ranking, strongest first. */
 const blendedSurges = (prior, stats) => {
@@ -293,3 +284,11 @@ export const CURATED_RULES = {
         return fallback ?? padLine(stats, []);
     },
 };
+
+export const CURATED_FAMILY = defineFamily({
+    rules: CURATED_RULES,
+    rows: CURATED_STRATEGIES,
+    // Deliberately unmemoised, as before: buildFoldStats is cheap and the
+    // eight rules memoise their own derived tables on the stats object.
+    prepare: (prior, target) => buildFoldStats(prior, target),
+});

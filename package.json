@@ -12,6 +12,9 @@
     "nulls": "node scripts/offline-null-tables.mjs",
     "verify:nulls": "vite build --ssr scripts/verify-sequence-nulls.ts --outDir node_modules/.cache/nulls-build --emptyOutDir && node node_modules/.cache/nulls-build/verify-sequence-nulls.js",
     "league": "node scripts/league-build.mjs",
+    "league:try": "node scripts/league-try.mjs",
+    "league:new": "node scripts/league-new.mjs",
+    "verify:platform": "node scripts/verify-platform.mjs",
     "graph": "vite build --ssr scripts/export-graph.ts --outDir node_modules/.cache/graph-build --emptyOutDir && node node_modules/.cache/graph-build/export-graph.js"
   },
   "dependencies": {

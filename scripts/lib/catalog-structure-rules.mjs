@@ -30,7 +30,9 @@ import {
     sampleK,
     sortAsc,
 } from "./cross-panel-stats.mjs";
-import { byRecency, completeLine, ctxMemo, ensFill, ensTop, maskedRanked, nameOf, signalLine, signalLineWide, triplesOf, ensembleScore, shiftBall } from "./catalog-signal-rules.mjs";
+import { byRecency, catalogPrepare, completeLine, ctxMemo, ensFill, ensTop, maskedRanked, nameOf, signalLine, signalLineWide, triplesOf, ensembleScore, shiftBall } from "./catalog-signal-rules.mjs";
+import { defineFamily } from "./platform/family.mjs";
+import { retryStages } from "./platform/kit.mjs";
 
 // ---------------------------------------------------------------------------
 // Shared machinery
@@ -40,7 +42,6 @@ const inMask = (ctx, b) => ctx.mask.has(b);
 const unmasked = (ctx, pool) => pool.filter((b) => !inMask(ctx, b));
 const isLow = (b) => b <= 24;
 const isHigh = (b) => b >= 25;
-const digitSum = (n) => String(n).split("").reduce((a, d) => a + Number(d), 0);
 const digitRoot = (n) => 1 + ((n - 1) % 9);
 const digitRootSet = (r) => RANGE49.filter((n) => digitRoot(n) === r);
 const FIB = new Set([1, 2, 3, 5, 8, 13, 21, 34]);
@@ -401,21 +402,24 @@ export const CATALOG_STRUCTURE_RULES = {
         }
         return fallback;
     },
-    megaBalance: (p, t, r, ctx) => {
+    megaBalance: (p, t, r, ctx) =>
         // ALL locks at once can be jointly infeasible on a skewed top-18 pool
         // (e.g. fewer than 5 decades represented) — fall back to the full
         // unmasked board for the second stage of attempts.
-        for (let attempt = 0; attempt < 400; attempt++) {
-            const pool = attempt < 200 ? ensTop(ctx, 18) : unmasked(ctx, RANGE49);
-            const line = sortAsc(sampleK(r, pool, 6));
-            const s = lineSum(line);
-            const tails = distinctTails(line);
-            const decades = new Set(line.map(decadeOf)).size;
-            if (oddCount(line) !== 3 || decades < 5 || tails < 5 || s < 140 || s > 175 || acValue(line) < 7) continue;
-            return line;
-        }
-        return null;
-    },
+        retryStages(
+            r,
+            [
+                { pool: ensTop(ctx, 18), tries: 200 },
+                { pool: unmasked(ctx, RANGE49), tries: 200 },
+            ],
+            (rng, pool) => {
+                const line = sortAsc(sampleK(rng, pool, 6));
+                const s = lineSum(line);
+                const tails = distinctTails(line);
+                const decades = new Set(line.map(decadeOf)).size;
+                return oddCount(line) === 3 && decades >= 5 && tails >= 5 && s >= 140 && s <= 175 && acValue(line) >= 7 ? line : null;
+            },
+        ),
     mirrorPair50: (p, t, r, ctx) => {
         const ens = ensembleScore(ctx);
         let best = null;
@@ -573,15 +577,19 @@ export const CATALOG_STRUCTURE_RULES = {
         return sortAsc([...seeds, ...rest]);
     },
     tailDigit: (p, t, r, ctx) => tailPatternLine(ctx, r, false),
-    tailSumModal: (p, t, r, ctx) => {
-        for (let attempt = 0; attempt < 400; attempt++) {
-            const pool = attempt < 200 ? ensTop(ctx, 18) : unmasked(ctx, RANGE49);
-            const line = sortAsc(sampleK(r, pool, 6));
-            const tailSum = line.reduce((a, b) => a + (b % 10), 0);
-            if (tailSum >= 15 && tailSum <= 27 && inBand(line, 115, 185)) return line;
-        }
-        return null;
-    },
+    tailSumModal: (p, t, r, ctx) =>
+        retryStages(
+            r,
+            [
+                { pool: ensTop(ctx, 18), tries: 200 },
+                { pool: unmasked(ctx, RANGE49), tries: 200 },
+            ],
+            (rng, pool) => {
+                const line = sortAsc(sampleK(rng, pool, 6));
+                const tailSum = line.reduce((a, b) => a + (b % 10), 0);
+                return tailSum >= 15 && tailSum <= 27 && inBand(line, 115, 185) ? line : null;
+            },
+        ),
     weekdayLadder: (p, t, r, ctx) => {
         const diff = RANGE49.map((b) => Math.abs(ctx.monRate[b - 1] - ctx.thuRate[b - 1]));
         const star = RANGE49.filter((b) => !inMask(ctx, b)).sort((a, b) => diff[b - 1] - diff[a - 1] || a - b)[0];
@@ -1156,14 +1164,8 @@ const NAME_MAP = {
 /** The league rows this module evaluates. */
 export const CATALOG_STRUCTURE_STRATEGIES = CATALOG_STRUCTURE_ROWS.map(([id, family, description]) => [id, NAME_MAP[id] ?? nameOf(id), family, description]);
 
-// Module 2 = 107 net-new rows; rules and rows must stay in lockstep.
-if (CATALOG_STRUCTURE_STRATEGIES.length !== 107) {
-    throw new Error(`catalog-structure manifest drift: ${CATALOG_STRUCTURE_STRATEGIES.length} ≠ 107`);
-}
-const ruleIds2 = Object.keys(CATALOG_STRUCTURE_RULES);
-if (ruleIds2.length !== CATALOG_STRUCTURE_STRATEGIES.length) {
-    throw new Error(`catalog-structure rule/strategy drift: ${ruleIds2.length} rules vs ${CATALOG_STRUCTURE_STRATEGIES.length} rows`);
-}
-for (const [id] of CATALOG_STRUCTURE_STRATEGIES) {
-    if (!CATALOG_STRUCTURE_RULES[id]) throw new Error(`catalog-structure missing rule: ${id}`);
-}
+export const CATALOG_STRUCTURE_FAMILY = defineFamily({
+    rules: CATALOG_STRUCTURE_RULES,
+    rows: CATALOG_STRUCTURE_STRATEGIES,
+    prepare: catalogPrepare,
+});

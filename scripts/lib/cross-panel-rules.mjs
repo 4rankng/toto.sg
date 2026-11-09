@@ -34,6 +34,7 @@ import {
     sortAsc,
     weekdaySkew,
 } from "./cross-panel-stats.mjs";
+import { defineFamily } from "./platform/family.mjs";
 
 const GATED_TRIES = 200;
 
@@ -487,3 +488,12 @@ function buildRookLine(rng) {
     }
     return null;
 }
+
+// Phase-2: these rules read the assembled fold vote, so the league builder
+// wires them with the vote prepare after every base family has run.
+export const CROSS_PANEL_FAMILY = defineFamily({
+    rules: CROSS_PANEL_RULES,
+    rows: CROSS_PANEL_STRATEGIES,
+    phase: 2,
+    votes: "crossPanel",
+});

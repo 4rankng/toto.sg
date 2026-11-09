@@ -30,21 +30,12 @@ import { fileURLToPath } from "node:url";
 import { CHANCE, evaluateStrategy, WARMUP_DRAWS } from "./lib/league-eval.mjs";
 import { filterEra, nextDrawDateIso } from "./lib/analysis.mjs";
 import { scoreLine } from "./lib/toto.mjs";
-import { buildCatalogContext, CATALOG_SIGNAL_RULES, CATALOG_SIGNAL_STRATEGIES } from "./lib/catalog-signal-rules.mjs";
-import { CATALOG_STRUCTURE_RULES, CATALOG_STRUCTURE_STRATEGIES } from "./lib/catalog-structure-rules.mjs";
-import { CATALOG_ALMANAC_RULES, CATALOG_ALMANAC_STRATEGIES } from "./lib/catalog-almanac-rules.mjs";
-import { CATALOG_ML_RULES, CATALOG_ML_STRATEGIES, META_VOTE_ID } from "./lib/catalog-ml-rules.mjs";
-import { buildFoldStats } from "./lib/cross-panel-stats.mjs";
-import { CROSS_PANEL_RULES, CROSS_PANEL_STRATEGIES, buildCrossPanelContext } from "./lib/cross-panel-rules.mjs";
+import { memoisedPrepare } from "./lib/platform/context.mjs";
+import { BASE_FAMILIES, PHASE2_FAMILIES } from "./lib/families.mjs";
+import { buildCrossPanelContext } from "./lib/cross-panel-rules.mjs";
 import { CROSS_PANEL_PLAYBOOK } from "./lib/cross-panel-playbook.mjs";
-import { CURATED_RULES, CURATED_STRATEGIES } from "./lib/curated-rules.mjs";
-import { GENERATOR_RULES, GENERATOR_STRATEGIES } from "./lib/generator-rules.mjs";
-import { HUNTER_RULES, HUNTER_STRATEGIES } from "./lib/hunter-rules.mjs";
-import { buildDeskContext, DESK_RULES, DESK_STRATEGIES } from "./lib/desk-rules.mjs";
-import { buildMatchrateContext, freezeBandRates, MATCHRATE_RULES, MATCHRATE_STRATEGIES } from "./lib/matchrate-rules.mjs";
-import { buildIndicatorFoldStats, INDICATOR_RULES, INDICATOR_STRATEGIES } from "./lib/indicator-rules.mjs";
-import { INSIGHT_FUSION_RULES, INSIGHT_FUSION_STRATEGIES } from "./lib/insight-fusion-rules.mjs";
-import { buildSequenceDynamicsContext, SEQUENCE_DYNAMICS_RULES, SEQUENCE_DYNAMICS_STRATEGIES } from "./lib/sequence-dynamics-rules.mjs";
+import { freezeBandRates } from "./lib/matchrate-rules.mjs";
+import { sequencePrepare } from "./lib/sequence-dynamics-rules.mjs";
 
 const DATA_DIR = fileURLToPath(new URL("../public/data/", import.meta.url));
 
@@ -93,36 +84,12 @@ const main = async () => {
     const sorted = [...draws].sort((a, b) => a.draw - b.draw);
     const boundaryDraw = era[0].draw;
     freezeBandRates(sorted);
-    const deskMemo = new Map();
-    const deskPrepare = (eraPrior, target) => {
-        if (!deskMemo.has(target.draw)) {
-            const fullPrior = sorted.filter((d) => d.draw < target.draw);
-            deskMemo.set(target.draw, buildDeskContext(eraPrior, fullPrior, target.draw, boundaryDraw));
-        }
-        return deskMemo.get(target.draw);
-    };
-    const mrMemo = new Map();
-    const mrPrepare = (eraPrior, target) => {
-        if (!mrMemo.has(target.draw)) {
-            const fullPrior = sorted.filter((d) => d.draw < target.draw);
-            mrMemo.set(target.draw, buildMatchrateContext(eraPrior, fullPrior, boundaryDraw));
-        }
-        return mrMemo.get(target.draw);
-    };
-    const catMemo = new Map();
-    const catalogPrepare = (eraPrior, target) => {
-        if (!catMemo.has(target.draw)) catMemo.set(target.draw, buildCatalogContext(eraPrior, target));
-        return catMemo.get(target.draw);
-    };
-
-    // The sequence family reads the archive's own order geometry — the same
-    // statistics the two new Insights galleries show. The context is
-    // memoised per fold, so all ten rules share one build.
-    const seqMemo = new Map();
-    const seqPrepare = (eraPrior, target) => {
-        if (!seqMemo.has(target.draw)) seqMemo.set(target.draw, buildSequenceDynamicsContext(eraPrior, target));
-        return seqMemo.get(target.draw);
-    };
+    // The fold-invariant environment handed to every family prepare via
+    // evaluateStrategy's prepareEnv: the FULL sorted archive (both ball
+    // pools — the desk and match-rate desks read it) and the 6/49 era
+    // boundary. Family prepares memoise themselves; nothing here rebuilds
+    // per fold.
+    const env = { sorted, boundaryDraw };
 
     // Prize-hit events per strategy: every fold where the line won a prize
     // tier. onPick fires once per fold (cached folds included), so the events
@@ -141,90 +108,56 @@ const main = async () => {
         list.push({ d: drawNo, date: draw.date, g: group, p: pick });
     };
 
-    const specOf = ([id, name, family, description], rule, prepare) => ({ id, name, family, description, rule, prepare });
-    const baseSpecs = [
-        ...CURATED_STRATEGIES.map((s) => specOf(s, (prior, target, rng, stats) => CURATED_RULES[s[0]](prior, target, rng, stats), (prior, target) => buildFoldStats(prior, target))),
-        ...GENERATOR_STRATEGIES.map((s) => specOf(s, (prior, _target, rng) => GENERATOR_RULES[s[0]](prior, rng))),
-        // The seed hunters ignore the injected rng: their lines must reproduce
-        // the guide's numpy-seeded corpus bit-for-bit (see hunter-rules.mjs).
-        ...HUNTER_STRATEGIES.map((s) => specOf(s, (prior) => HUNTER_RULES[s[0]](prior))),
-        ...DESK_STRATEGIES.map((s) => specOf(s, (prior, target, rng, prepared) => DESK_RULES[s[0]](prior, target, rng, prepared), deskPrepare)),
-        ...MATCHRATE_STRATEGIES.map((s) => specOf(s, (prior, target, rng, prepared) => MATCHRATE_RULES[s[0]](prior, target, rng, prepared), mrPrepare)),
-        ...INDICATOR_STRATEGIES.map((s) => specOf(s, (prior, target, rng, stats) => INDICATOR_RULES[s[0]](prior, target, rng, stats), (prior, target) => buildIndicatorFoldStats(prior, target))),
-        ...CATALOG_SIGNAL_STRATEGIES.map((s) => specOf(s, (prior, target, rng, ctx) => CATALOG_SIGNAL_RULES[s[0]](prior, target, rng, ctx), catalogPrepare)),
-        ...CATALOG_STRUCTURE_STRATEGIES.map((s) => specOf(s, (prior, target, rng, ctx) => CATALOG_STRUCTURE_RULES[s[0]](prior, target, rng, ctx), catalogPrepare)),
-        ...CATALOG_ALMANAC_STRATEGIES.map((s) => specOf(s, (prior, target, rng, ctx) => CATALOG_ALMANAC_RULES[s[0]](prior, target, rng, ctx), catalogPrepare)),
-        // metaVote is not here: it is a second-phase spec wired below.
-        ...CATALOG_ML_STRATEGIES.filter(([id]) => id !== META_VOTE_ID).map((s) => specOf(s, (prior, target, rng, ctx) => CATALOG_ML_RULES[s[0]](prior, target, rng, ctx), catalogPrepare)),
-        // The sequence family: ten rules built on the archive's order
-        // geometry and stream dynamics.
-        ...SEQUENCE_DYNAMICS_STRATEGIES.map((s) =>
-            specOf(s, (prior, target, rng, ctx) => SEQUENCE_DYNAMICS_RULES[s[0]](prior, target, rng, ctx), seqPrepare),
-        ),
-        // The fusion family: several archive signals fused into one composite
-        // per-ball score. Equipoise/Momentum are base rules sharing the
-        // sequence context; Consensus is Phase-2 (wired below, it reads the
-        // fold votes).
-        ...INSIGHT_FUSION_STRATEGIES.filter(([id]) => id !== "fusionConsensus").map((s) =>
-            specOf(s, (prior, target, rng, ctx) => INSIGHT_FUSION_RULES[s[0]](prior, target, rng, ctx), seqPrepare),
-        ),
-    ];
+    // Every spec derives from the family registry: one row tuple → one spec,
+    // with the family's own prepare (memoised inside the family module).
+    const specsOf = (family, prepare) =>
+        family.rows.map(([id, name, rowFamily, description]) => ({
+            id,
+            name,
+            family: rowFamily,
+            description,
+            rule: family.rules[id],
+            prepare,
+        }));
+    const baseSpecs = BASE_FAMILIES.flatMap((family) => specsOf(family, family.prepare));
 
-    // The cross-panel family reads the league's own vote, so it runs in a
-    // second phase: once every base rule has produced its line for a fold, the
-    // consensus for that fold is known and the contrarian strategy can fade it.
-    // The context is memoised per fold, so all ten rules share one build.
+    // The phase-2 families read the league's own vote, so they run in a
+    // second phase: once every base rule has produced its line for a fold,
+    // the consensus for that fold is known and the contrarian strategies can
+    // fade it. Vote assembly lives here because it owns the phase-2 runtime
+    // state (the recorded base picks); a family only declares which vote
+    // context kind it wants.
     const picksByDraw = new Map();
-    const crossPanelMemo = new Map();
+    const voteMemo = new Map();
     const votesFor = (drawNo) => {
-        let votes = crossPanelMemo.get(`votes:${drawNo}`);
+        let votes = voteMemo.get(drawNo);
         if (!votes) {
             votes = new Uint16Array(49);
             for (const pick of picksByDraw.get(drawNo) ?? []) for (const n of pick) votes[n - 1] += 1;
-            crossPanelMemo.set(`votes:${drawNo}`, votes);
+            voteMemo.set(drawNo, votes);
         }
         return votes;
     };
     const nowVotes = new Uint16Array(49);
-    const crossPanelPrepare = (prior, target) => {
-        const key = `ctx:${target.draw}`;
-        let ctx = crossPanelMemo.get(key);
-        if (!ctx) {
-            const votes = target.draw === nextDrawNo ? nowVotes : votesFor(target.draw);
-            ctx = buildCrossPanelContext(prior, target, votes);
-            crossPanelMemo.set(key, ctx);
-        }
-        return ctx;
+    const votePrepares = {
+        crossPanel: memoisedPrepare((prior, target) =>
+            buildCrossPanelContext(prior, target, target.draw === nextDrawNo ? nowVotes : votesFor(target.draw)),
+        ),
+        // fusionConsensus reads the sequence context AND the fold's league
+        // votes; the sequence family's shared memo supplies one build per draw.
+        fusion: memoisedPrepare((prior, target) => ({
+            seq: sequencePrepare(prior, target),
+            votes: target.draw === nextDrawNo ? nowVotes : votesFor(target.draw),
+        })),
     };
-    // fusionConsensus reads the sequence context AND the fold's league votes.
-    const fusionMemo = new Map();
-    const fusionVotesPrepare = (eraPrior, target) => {
-        const key = `fusion:${target.draw}`;
-        let ctx = fusionMemo.get(key);
-        if (!ctx) {
-            const votes = target.draw === nextDrawNo ? nowVotes : votesFor(target.draw);
-            seqPrepare(eraPrior, target); // populate the shared memo first
-            ctx = { seq: seqMemo.get(target.draw), votes };
-            fusionMemo.set(key, ctx);
-        }
-        return ctx;
-    };
-    const crossPanelSpecs = [
-        ...CROSS_PANEL_STRATEGIES.map((s) =>
-            specOf(s, (prior, target, rng, ctx) => CROSS_PANEL_RULES[s[0]](prior, target, rng, ctx), crossPanelPrepare),
+    const crossPanelSpecs = PHASE2_FAMILIES.flatMap((family) =>
+        specsOf(
+            family,
+            typeof family.votes === "function"
+                ? (prior, target, prepareEnv) => family.votes(prior, target, votesFor(target.draw), prepareEnv)
+                : votePrepares[family.votes],
         ),
-        // The catalog's metaVote joins the second phase: it votes the league's
-        // own fold lines (Step 5 of the adoption plan), so it needs the same
-        // assembled consensus the contrarian strategies read.
-        ...CATALOG_ML_STRATEGIES.filter(([id]) => id === META_VOTE_ID).map((s) =>
-            specOf(s, (prior, target, rng, ctx) => CATALOG_ML_RULES[s[0]](prior, target, rng, ctx), crossPanelPrepare),
-        ),
-        // The fusion family's consensus rule joins the second phase with the
-        // cross-panel strategies: it reads the same assembled fold vote.
-        ...INSIGHT_FUSION_STRATEGIES.filter(([id]) => id === "fusionConsensus").map((s) =>
-            specOf(s, (prior, target, rng, ctx) => INSIGHT_FUSION_RULES[s[0]](prior, target, rng, ctx), fusionVotesPrepare),
-        ),
-    ];
+    );
 
     const specs = [...baseSpecs, ...crossPanelSpecs];
     const ids = new Set(specs.map((s) => s.id));
@@ -286,6 +219,7 @@ const main = async () => {
             foldCache,
             nextPickCache,
             onPick,
+            prepareEnv: env,
         });
     };
 

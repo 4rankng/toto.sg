@@ -146,6 +146,29 @@ expected-value language. `verify-data.mjs` scans
 Keep the same discipline everywhere else — it is the project's core promise,
 not just a lint rule.
 
+### Adding a new strategy — the paved road
+
+1. `npm run league:new <family>` scaffolds `scripts/lib/<family>-rules.mjs`
+   (a `defineFamily` module with two starter rules) and appends its
+   registration to `scripts/lib/families.mjs`. For one more rule in an
+   existing family, edit that family's module instead of scaffolding.
+2. Write rules against the platform kit (`scripts/lib/platform/kit.mjs`):
+   `topByScore`, `maskRanked`, `sampleGated`, `retryStages`, `bandSample`,
+   `makeGate`, `padLine`, `ctxMemo`. Never hand-roll sampling, ranking,
+   gates or memoisation, and never duplicate `cross-panel-stats.mjs`.
+   Author guide with snippets: `scripts/lib/platform/README.md`.
+3. Trial before you build: `npm run league:try <ruleId> --folds 100` —
+   read-only scorecard plus per-fold attempt stats. Mean attempts per fold
+   must stay well under 1000; any fold approaching REJECT_CAP (10000) is a
+   bug in the rule's acceptance region, not a tuning knob.
+4. `npm run league && npm run verify:data`, then commit the regenerated
+   artifacts under `public/data/` together with the rule module.
+
+Phase-2 rules (ones that read the fold votes) declare `phase: 2` and
+`votes: "crossPanel" | "fusion"` in `defineFamily`. They run after every
+base fold and cache under the base-set fingerprint (§4), so adding or
+removing a base rule recomputes exactly them.
+
 ---
 
 ## 6. Where things live

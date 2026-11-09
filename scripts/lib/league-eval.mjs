@@ -142,7 +142,9 @@ export function generateLine(id, rule, prior, target, prepared) {
  *
  * `spec` is {id, name, family, description, rule}. `prepare` optionally returns
  * the fourth argument handed to the rule (computed once per fold, never per
- * attempt). `expectedHits` is the chance null for the mean match count.
+ * attempt); it receives `(prior, target, prepareEnv)`, where `prepareEnv` is
+ * caller-supplied fold-invariant context (the full sorted archive and the
+ * era boundary — see league-build.mjs).
  *
  * `foldCache`/{get,set} lets the builder reuse a persisted (strategy, draw)
  * evaluation — pick, matched count, prize group and share — so reruns never
@@ -161,7 +163,7 @@ export function evaluateStrategy(
     foldStart,
     foldEnd,
     expectedHits,
-    { prepare, nextTarget, foldCache, nextPickCache, onPick, onCurrentPick } = {},
+    { prepare, nextTarget, foldCache, nextPickCache, onPick, onCurrentPick, prepareEnv } = {},
 ) {
     const perFoldHits = [];
     let totalHits = 0;
@@ -183,7 +185,7 @@ export function evaluateStrategy(
             group = cached.g;
         } else {
             const prior = era.slice(0, i);
-            pick = generateLine(spec.id, spec.rule, prior, draw, prepare ? prepare(prior, draw) : undefined);
+            pick = generateLine(spec.id, spec.rule, prior, draw, prepare ? prepare(prior, draw, prepareEnv) : undefined);
             // Raw match count: every matched main number counts (chance 0.7347/draw).
             matched = draw.numbers.filter((n) => pick.includes(n)).length; // main numbers only
             group = scoreLine(pick, draw);
@@ -217,7 +219,7 @@ export function evaluateStrategy(
     const score = weightedPrizes;
     const currentPick =
         nextPickCache?.get() ??
-        generateLine(spec.id, spec.rule, era, nextTarget, prepare ? prepare(era, nextTarget) : undefined);
+        generateLine(spec.id, spec.rule, era, nextTarget, prepare ? prepare(era, nextTarget, prepareEnv) : undefined);
     nextPickCache?.set(currentPick);
     onCurrentPick?.(currentPick);
     return {

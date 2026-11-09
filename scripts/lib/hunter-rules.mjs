@@ -36,6 +36,8 @@
 // it cannot, or the lines would no longer reproduce the guide's corpus — but
 // it is fully deterministic per (seed, fold), so the REPRODUCIBLE contract
 // holds: reruns are byte-identical apart from meta.generatedAt.
+import { defineFamily } from "./platform/family.mjs";
+
 const M32 = 0xffffffff;
 const M64 = (1n << 64n) - 1n;
 const M128 = (1n << 128n) - 1n;
@@ -324,3 +326,5 @@ export const HUNTER_RULES = Object.fromEntries(
             }),
     ]),
 );
+
+export const HUNTER_FAMILY = defineFamily({ rules: HUNTER_RULES, rows: HUNTER_STRATEGIES });

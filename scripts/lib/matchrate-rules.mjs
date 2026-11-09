@@ -34,12 +34,18 @@
 // Determinism: no RNG; the logit fits with a fixed-iteration gradient
 // descent, so reruns are byte-identical apart from meta.generatedAt.
 import { fingerprint, meanVec, sdVec, eraScores, nearestTwins } from "./desk-rules.mjs";
+import { fullPrior, memoisedPrepare } from "./platform/context.mjs";
+import { defineFamily } from "./platform/family.mjs";
+import { RANGE49, pairZ as kitPairZ } from "./platform/kit.mjs";
 
-const RANGE = Array.from({ length: 49 }, (_, i) => i + 1);
-
-/** Deterministic top-k from a per-ball score (score desc, ball asc). */
+/**
+ * Deterministic ranked top-k from a per-ball score (score desc, ball asc).
+ * Kept local on purpose: kit.topByScore returns its balls ASCENDING, but
+ * consensusScores consumes the RANK ORDER positionally (vote 1.0 … 0.125),
+ * so the two are not interchangeable here.
+ */
 const topFromScore = (score, k) =>
-    RANGE.map((b) => [b, score[b - 1]])
+    RANGE49.map((b) => [b, score[b - 1]])
         .sort((a, b) => b[1] - a[1] || a[0] - b[0])
         .slice(0, k)
         .map(([b]) => b);
@@ -109,7 +115,7 @@ export function buildMatchrateContext(eraPrior, full, boundaryDraw) {
     const n = full.length;
     const pairZ = (a, b) => {
         const exp = (n * (counts[a - 1] / n) * (counts[b - 1] / n)) || 1;
-        return ((pairObs.get(a * 100 + b) ?? 0) - exp) / Math.sqrt(exp);
+        return kitPairZ(pairObs.get(a * 100 + b) ?? 0, exp);
     };
 
     // --- current gaps over the era prior ---
@@ -233,7 +239,7 @@ function logitScores(eraPrior) {
     const bucket = Math.floor(eraPrior.length / 20);
     if (!logitCache.has(bucket)) logitCache.set(bucket, fitLogit(eraPrior, eraPrior.length));
     const { w, mean, sd } = logitCache.get(bucket);
-    return RANGE.map((b) => {
+    return RANGE49.map((b) => {
         let seen = 0;
         for (let k = eraPrior.length - 1; k >= 0 && k >= eraPrior.length - 60; k--)
             if (eraPrior[k].numbers.includes(b)) seen++;
@@ -301,7 +307,7 @@ export const MATCH_SCORES = {
         const rates = frozenRates ?? FROZEN_BAND_RATES.rates;
         if (!rates) throw new Error("gapBandReturn: band rates not frozen");
         // Band rate first, then current gap (shorter gap wins), then ball asc.
-        return RANGE.map((b) => {
+        return RANGE49.map((b) => {
             const band = bandIndex(ctx.gaps[b - 1]);
             return rates[band] * 100000 - Math.min(ctx.gaps[b - 1], 99); // gap as deterministic tie-break
         });
@@ -315,11 +321,11 @@ export const MATCH_SCORES = {
         const z = ctx.pairZ;
         const count = (b) => ctx.counts[b - 1];
         // Seed with the most frequent ball, greedily maximise internal affinity.
-        let line = [RANGE.reduce((best, b) => (count(b) > count(best) ? b : best), 1)];
+        let line = [RANGE49.reduce((best, b) => (count(b) > count(best) ? b : best), 1)];
         while (line.length < 6) {
             let best = null;
             let bestScore = -Infinity;
-            for (const b of RANGE) {
+            for (const b of RANGE49) {
                 if (line.includes(b)) continue;
                 const s = line.reduce((acc, x) => acc + z(Math.min(b, x), Math.max(b, x)), 0);
                 if (s > bestScore + 1e-12) {
@@ -339,7 +345,7 @@ export const MATCH_SCORES = {
         for (let pass = 0; pass < 10; pass++) {
             let improved = false;
             for (const c of [...line]) {
-                for (const x of RANGE) {
+                for (const x of RANGE49) {
                     if (line.includes(x)) continue;
                     const swapped = line.map((v) => (v === c ? x : v));
                     if (internal(swapped) > internal(line) + 1e-12) {
@@ -364,7 +370,7 @@ export const MATCH_SCORES = {
         while (line.length < 6) {
             let best = null;
             let bestKey = null;
-            for (const b of RANGE) {
+            for (const b of RANGE49) {
                 if (line.includes(b)) continue;
                 const withB = [...line, b];
                 let newlyCovered = 0;
@@ -479,3 +485,13 @@ export const MATCHRATE_STRATEGIES = [
     ["coverGreedy", "COVER-GREEDY Recent Coverage", "Ensemble", "Six balls that greedily push the most of the last 150 draws up to three or more shared numbers — maximum set coverage of the recent draws."],
     ["consensusStack", "CONSENSUS STACK Rank Fusion", "Ensemble", "Runs all nine estimators, lets each vote 1.0 down to 0.125 for its top eight, and plays the six balls the whole desk agrees on most."],
 ];
+
+// The match-rate desk reads the FULL archive (both ball pools), so its
+// prepare needs the whole sorted archive and the era boundary from prepareEnv.
+export const MATCHRATE_FAMILY = defineFamily({
+    rules: MATCHRATE_RULES,
+    rows: MATCHRATE_STRATEGIES,
+    prepare: memoisedPrepare((prior, target, env) =>
+        buildMatchrateContext(prior, fullPrior(env.sorted, target.draw), env.boundaryDraw),
+    ),
+});

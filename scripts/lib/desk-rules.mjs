@@ -25,6 +25,10 @@
 // Determinism: no RNG anywhere — every rule is a pure function of the prior
 // archive, so reruns are byte-identical apart from meta.generatedAt.
 
+import { defineFamily } from "./platform/family.mjs";
+import { fullPrior, memoisedPrepare } from "./platform/context.mjs";
+import { RANGE49, topByScore } from "./platform/kit.mjs";
+
 /** Seven structural dimensions of a draw, per the desk document. */
 export function fingerprint(draw) {
     const n = draw.numbers;
@@ -85,16 +89,6 @@ export function eraScores(prior, boundaryDraw) {
     }
     return score;
 }
-
-
-const topByScore = (score, count) =>
-    RANGE.map((b) => [b, score[b - 1]])
-        .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-        .slice(0, count)
-        .map(([b]) => b)
-        .sort((a, b) => a - b);
-
-const RANGE = Array.from({ length: 49 }, (_, i) => i + 1);
 
 // ---------------------------------------------------------------------------
 // Per-fold shared context (built once per fold draw, memoised by the caller).
@@ -188,7 +182,7 @@ export const DESK_RULES = {
         return portfolioLine(ctx, (l) => l.filter((x) => x % 2 === 1).length === 3, []);
     },
     portfolioHighSix(prior, target, rng, ctx) {
-        return portfolioLine(ctx, () => true, RANGE.filter((x) => x >= 34));
+        return portfolioLine(ctx, () => true, RANGE49.filter((x) => x >= 34));
     },
     portfolioWideSpan(prior, target, rng, ctx) {
         return portfolioLine(ctx, (l) => l[5] - l[0] >= 40, []);
@@ -214,7 +208,7 @@ function portfolioLine(ctx, satisfies, forcedPool) {
     // frequency. Widening only kicks in when no candidate satisfies the
     // shape target — the frequency objective makes the extra candidates
     // unable to win otherwise.
-    const byFreq = RANGE.slice().sort((a, b) => ctx.counts[b - 1] - ctx.counts[a - 1] || a - b);
+    const byFreq = RANGE49.slice().sort((a, b) => ctx.counts[b - 1] - ctx.counts[a - 1] || a - b);
     const pools = forcedPool.length > 0 ? [forcedPool] : [byFreq.slice(0, 14), byFreq.slice(0, 24), byFreq];
     for (const pool of pools) {
         let best = null;
@@ -260,3 +254,13 @@ export const DESK_STRATEGIES = [
     ["portfolioWideSpan", "Portfolio Wide-Span Shape", "Structure", "Portfolio line 5: the highest combined all-time frequency among lines spanning ≥40 — coverage for spread-out draws."],
     ["portfolioEvenSum", "Portfolio Even-Sum Shape", "Structure", "Portfolio line 6: the highest combined all-time frequency among even-sum lines — the marginally modal sum parity."],
 ];
+
+// The desk reads the FULL archive (both ball pools), so its prepare needs the
+// whole sorted archive and the era boundary from the caller's prepareEnv.
+export const DESK_FAMILY = defineFamily({
+    rules: DESK_RULES,
+    rows: DESK_STRATEGIES,
+    prepare: memoisedPrepare((prior, target, env) =>
+        buildDeskContext(prior, fullPrior(env.sorted, target.draw), target.draw, env.boundaryDraw),
+    ),
+});

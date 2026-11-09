@@ -116,6 +116,9 @@ import {
     TAIL_CLASSES,
     weekdayOf,
 } from "./cross-panel-stats.mjs";
+import { ctxMemo, memoisedPrepare } from "./platform/context.mjs";
+import { defineFamily } from "./platform/family.mjs";
+import { maskRanked, retryStages } from "./platform/kit.mjs";
 
 // ---------------------------------------------------------------------------
 // Shared fold context — built once per fold, memoised by the league builder.
@@ -422,21 +425,20 @@ const zVec = (v) => {
  * five z-normalised vectors — due (skip ÷ own mean gap), all-time frequency,
  * 30-draw momentum, lag-1 Markov lift, pair affinity M @ last draw.
  */
-export const ensembleScore = (ctx) => {
-    if (ctx.__ens) return ctx.__ens;
-    const due = Float64Array.from({ length: 49 }, (_, i) => ctx.skips[i] / Math.max(1, ctx.gapMean[i]));
-    const mom = Float64Array.from({ length: 49 }, (_, i) => {
-        const len = Math.min(30, ctx.n);
-        const prevLen = Math.max(1, ctx.prev[30].draws);
-        return ctx.w[30][i] / Math.max(1, len) - ctx.prev[30].counts[i] / prevLen;
+export const ensembleScore = (ctx) =>
+    ctxMemo(ctx, "__ens", (c) => {
+        const due = Float64Array.from({ length: 49 }, (_, i) => c.skips[i] / Math.max(1, c.gapMean[i]));
+        const mom = Float64Array.from({ length: 49 }, (_, i) => {
+            const len = Math.min(30, c.n);
+            const prevLen = Math.max(1, c.prev[30].draws);
+            return c.w[30][i] / Math.max(1, len) - c.prev[30].counts[i] / prevLen;
+        });
+        const lift = Float64Array.from(c.cond1, (x) => x / EXP_RATE);
+        const parts = [due, Float64Array.from(c.freq), mom, lift, c.mLast].map(zVec);
+        const ens = new Float64Array(49);
+        for (const p of parts) for (let i = 0; i < 49; i++) ens[i] += p[i] / parts.length;
+        return ens;
     });
-    const lift = Float64Array.from(ctx.cond1, (x) => x / EXP_RATE);
-    const parts = [due, Float64Array.from(ctx.freq), mom, lift, ctx.mLast].map(zVec);
-    const ens = new Float64Array(49);
-    for (const p of parts) for (let i = 0; i < 49; i++) ens[i] += p[i] / parts.length;
-    ctx.__ens = ens;
-    return ens;
-};
 
 /**
  * Balls ranked by `scores` desc, mask-filtered, top `size`. Ties break by
@@ -444,10 +446,7 @@ export const ensembleScore = (ctx) => {
  * zero-tied indicator vectors otherwise collapse onto the lowest numbers,
  * whose sampled lines can never reach the default sum band.
  */
-export const maskedRanked = (ctx, scores, size = 18) =>
-    RANGE49.filter((b) => !ctx.mask.has(b))
-        .sort((a, b) => scores[b - 1] - scores[a - 1] || ctx.freq[b - 1] - ctx.freq[a - 1] || a - b)
-        .slice(0, size);
+export const maskedRanked = (ctx, scores, size = 18) => maskRanked(ctx.mask, scores, size, ctx.freq);
 
 /** The SIGNAL convention: top-18 masked pool → sampleK → default band gates. */
 export const signalLine = (ctx, rng, scores, lo = 115, hi = 185) => {
@@ -464,16 +463,19 @@ export const signalLine = (ctx, rng, scores, lo = 115, hi = 185) => {
  * (decade/segment deficits): a contiguous-sector pool may be unable to reach
  * the sum band at all, so the second stage samples the whole masked board.
  */
-export const signalLineWide = (ctx, rng, scores, lo = 115, hi = 185) => {
-    for (let attempt = 0; attempt < 300; attempt++) {
-        const pool = attempt < 150 ? maskedRanked(ctx, scores) : RANGE49.filter((b) => !ctx.mask.has(b));
-        if (pool.length < 6) return null;
-        const line = sortAsc(sampleK(rng, pool, 6));
-        const sum = lineSum(line);
-        if (sum >= lo && sum <= hi) return line;
-    }
-    return null;
-};
+export const signalLineWide = (ctx, rng, scores, lo = 115, hi = 185) =>
+    retryStages(
+        rng,
+        [
+            { pool: maskedRanked(ctx, scores), tries: 150 },
+            { pool: RANGE49.filter((b) => !ctx.mask.has(b)), tries: 150 },
+        ],
+        (r, pool) => {
+            const line = sortAsc(sampleK(r, pool, 6));
+            const sum = lineSum(line);
+            return sum >= lo && sum <= hi ? line : null;
+        },
+    );
 
 /**
  * Per-fold memoisation for deterministic rule invariants (enumerations,
@@ -481,11 +483,7 @@ export const signalLineWide = (ctx, rng, scores, lo = 115, hi = 185) => {
  * retry, so fold-invariant work must be computed once, not per attempt.
  * `key` namespaces the slot on the fold context; `fn` receives the context.
  */
-export const ctxMemo = (ctx, key, fn) => {
-    const slot = `__m_${key}`;
-    if (ctx[slot] === undefined) ctx[slot] = fn(ctx);
-    return ctx[slot];
-};
+export { ctxMemo };
 
 /** Triple co-occurrence counts over the whole prior, memoised per fold. */
 export const triplesOf = (ctx, prior) =>
@@ -536,6 +534,37 @@ export const shiftBall = (n, k) => ((n - 1 + k) % 49) + 1;
 export const byRecency = (ctx, members) =>
     [...members].sort((a, b) => ctx.skips[a - 1] - ctx.skips[b - 1] || a - b);
 
+/**
+ * The skip-band loader construction, shared with catalog-almanac's
+ * skipBounce (byte-identical twin): 1×skip-0 repeat (deliberate mask
+ * bypass) + 3×skip(1-7) + ≤1×skip(24+), filled from the ensemble top-30.
+ * Deterministic — no rng.
+ */
+export const skipBandLine = (ctx) => {
+    const score = (b) => ensembleScore(ctx)[b - 1] + (ctx.w[50][b - 1] - (50 * 6) / 49);
+    const line = new Set();
+    const repeat = RANGE49.filter((b) => ctx.skips[b - 1] === 0).sort((a, b) => score(b) - score(a))[0];
+    if (repeat != null) line.add(repeat);
+    let taken = 0;
+    for (const b of RANGE49.filter((x) => !ctx.mask.has(x) && ctx.skips[x - 1] >= 1 && ctx.skips[x - 1] <= 7).sort(
+        (a, b) => score(b) - score(a),
+    )) {
+        if (taken >= 3 || line.size >= 6) break;
+        line.add(b);
+        taken += 1;
+    }
+    for (const b of RANGE49.filter((x) => !ctx.mask.has(x) && ctx.skips[x - 1] >= 24).sort((a, b) => score(b) - score(a))) {
+        if (line.size >= 6) break;
+        line.add(b);
+        break;
+    }
+    for (const b of maskedRanked(ctx, ensembleScore(ctx), 30)) {
+        if (line.size >= 6) break;
+        line.add(b);
+    }
+    return sortAsc([...line]);
+};
+
 /** Humanised display name from a camelCase doc id (AC/FFG/EWMA/OLS/ML uppercased). */
 export const nameOf = (id) => {
     const ACRONYMS = new Set(["ac", "ffg", "ewma", "ols", "ml"]);
@@ -584,30 +613,7 @@ export const CATALOG_SIGNAL_RULES = {
     // sitting exactly at the own-cycle point.
     gapOwnNear: windowRule((c) => Float64Array.from({ length: 49 }, (_, i) => -Math.abs(c.skips[i] - c.gapMean[i]))),
     // 1×skip-0 repeat (deliberate mask bypass) + 3×skip 1-7 + ≤1×skip 24+, rest free.
-    skipBandLoad(prior, target, rng, ctx) {
-        const score = (b) => ensembleScore(ctx)[b - 1] + (ctx.w[50][b - 1] - (50 * 6) / 49);
-        const line = new Set();
-        const repeat = RANGE49.filter((b) => ctx.skips[b - 1] === 0).sort((a, b) => score(b) - score(a))[0];
-        if (repeat != null) line.add(repeat);
-        let taken = 0;
-        for (const b of RANGE49.filter((x) => !ctx.mask.has(x) && ctx.skips[x - 1] >= 1 && ctx.skips[x - 1] <= 7).sort(
-            (a, b) => score(b) - score(a),
-        )) {
-            if (taken >= 3 || line.size >= 6) break;
-            line.add(b);
-            taken += 1;
-        }
-        for (const b of RANGE49.filter((x) => !ctx.mask.has(x) && ctx.skips[x - 1] >= 24).sort((a, b) => score(b) - score(a))) {
-            if (line.size >= 6) break;
-            line.add(b);
-            break;
-        }
-        for (const b of maskedRanked(ctx, ensembleScore(ctx), 30)) {
-            if (line.size >= 6) break;
-            line.add(b);
-        }
-        return sortAsc([...line]);
-    },
+    skipBandLoad: (p, t, r, ctx) => skipBandLine(ctx),
 
     // -----------------------------------------------------------------------
     // Streaks — 2
@@ -927,14 +933,12 @@ export const CATALOG_SIGNAL_ROWS = tuples([
 /** The league rows this module evaluates. */
 export const CATALOG_SIGNAL_STRATEGIES = CATALOG_SIGNAL_ROWS;
 
-// Manifest count authority: module 1 = 53 net-new rows.
-if (CATALOG_SIGNAL_STRATEGIES.length !== 53) {
-    throw new Error(`catalog-signal manifest drift: ${CATALOG_SIGNAL_STRATEGIES.length} ≠ 53`);
-}
-const ruleIds = Object.keys(CATALOG_SIGNAL_RULES);
-if (ruleIds.length !== CATALOG_SIGNAL_STRATEGIES.length) {
-    throw new Error(`catalog-signal rule/strategy drift: ${ruleIds.length} rules vs ${CATALOG_SIGNAL_STRATEGIES.length} rows`);
-}
-for (const [id] of CATALOG_SIGNAL_STRATEGIES) {
-    if (!CATALOG_SIGNAL_RULES[id]) throw new Error(`catalog-signal missing rule: ${id}`);
-}
+// The one memoised catalog fold context shared by all four catalog families
+// (signal, structure, almanac, ml-ex-base) — one build per target draw.
+export const catalogPrepare = memoisedPrepare(buildCatalogContext);
+
+export const CATALOG_SIGNAL_FAMILY = defineFamily({
+    rules: CATALOG_SIGNAL_RULES,
+    rows: CATALOG_SIGNAL_STRATEGIES,
+    prepare: catalogPrepare,
+});

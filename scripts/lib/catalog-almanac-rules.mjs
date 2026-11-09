@@ -37,7 +37,9 @@ import {
     tailOf,
     TAIL_CLASSES,
 } from "./cross-panel-stats.mjs";
-import { byRecency, completeLine, ctxMemo, ensFill, ensTop, nameOf, signalLine, signalLineWide, ensembleScore } from "./catalog-signal-rules.mjs";
+import { byRecency, catalogPrepare, completeLine, ctxMemo, ensFill, ensTop, nameOf, signalLine, signalLineWide, skipBandLine, ensembleScore } from "./catalog-signal-rules.mjs";
+import { defineFamily } from "./platform/family.mjs";
+import { digitSum, retryStages } from "./platform/kit.mjs";
 
 // ---------------------------------------------------------------------------
 // Calendar helpers — era epoch 2014-10-09
@@ -194,7 +196,6 @@ const signRuler = (dateIso) => {
     return 3; // Pisces — Jupiter
 };
 
-const digitSum = (n) => String(n).split("").reduce((a, d) => a + Number(d), 0);
 const inSetScore = (ctx, set) =>
     Float64Array.from({ length: 49 }, (_, i) => (set.has(i + 1) ? 1000 - ctx.skips[i] : -ctx.skips[i]));
 const Set64 = (arr) => new Set(arr);
@@ -526,28 +527,7 @@ export const CATALOG_ALMANAC_RULES = {
     shapeLift: (p, t, r, ctx) => signalLine(ctx, r, ctxMemo(ctx, "shapeLift", (c) => shapeLiftScores(p, c))),
     shapeLowSum: (p, t, r, ctx) => shapeExtreme(ctx, "low"),
     shapeWideSpan: (p, t, r, ctx) => shapeExtreme(ctx, "wide"),
-    skipBounce: (p, t, r, ctx) => {
-        const score = (b) => ensembleScore(ctx)[b - 1] + (ctx.w[50][b - 1] - (50 * 6) / 49);
-        const line = new Set();
-        const repeat = RANGE49.filter((b) => ctx.skips[b - 1] === 0).sort((a, b) => score(b) - score(a))[0];
-        if (repeat != null) line.add(repeat);
-        let taken = 0;
-        for (const b of RANGE49.filter((x) => !ctx.mask.has(x) && ctx.skips[x - 1] >= 1 && ctx.skips[x - 1] <= 7).sort((a, b) => score(b) - score(a))) {
-            if (taken >= 3 || line.size >= 6) break;
-            line.add(b);
-            taken += 1;
-        }
-        for (const b of RANGE49.filter((x) => !ctx.mask.has(x) && ctx.skips[x - 1] >= 24).sort((a, b) => score(b) - score(a))) {
-            if (line.size >= 6) break;
-            line.add(b);
-            break;
-        }
-        for (const b of maskedRankedSafe(ctx, 30)) {
-            if (line.size >= 6) break;
-            line.add(b);
-        }
-        return sortAsc([...line]);
-    },
+    skipBounce: (p, t, r, ctx) => skipBandLine(ctx),
     spectralComm: (p, t, r, ctx) => {
         const v = ctxMemo(ctx, "spectral", (c) => {
             const M = c.M;
@@ -578,19 +558,23 @@ export const CATALOG_ALMANAC_RULES = {
         return sortAsc([...seeds, ...rest]);
     },
     twiceFive: (p, t, r, ctx) => signalLine(ctx, r, Float64Array.from({ length: 49 }, (_, i) => (ctx.w[5][i] === 2 ? 1000 : 0))),
-    zigzagParity: (p, t, r, ctx) => {
+    zigzagParity: (p, t, r, ctx) =>
         // strict sorted-parity alternation is rare from a skewed ensemble
         // pool — fall back to the whole masked board after 200 attempts.
-        for (let attempt = 0; attempt < 1000; attempt++) {
-            const pool = attempt < 200 ? ensTop(ctx, 18) : RANGE49.filter((b) => !ctx.mask.has(b));
-            const line = sortAsc(sampleK(r, pool, 6));
-            let alt = true;
-            for (let i = 1; i < 6; i++) if (line[i] % 2 === line[i - 1] % 2) alt = false;
-            const s = lineSum(line);
-            if (alt && s >= 115 && s <= 185) return line;
-        }
-        return null;
-    },
+        retryStages(
+            r,
+            [
+                { pool: ensTop(ctx, 18), tries: 200 },
+                { pool: RANGE49.filter((b) => !ctx.mask.has(b)), tries: 800 },
+            ],
+            (rng, pool) => {
+                const line = sortAsc(sampleK(rng, pool, 6));
+                let alt = true;
+                for (let i = 1; i < 6; i++) if (line[i] % 2 === line[i - 1] % 2) alt = false;
+                const s = lineSum(line);
+                return alt && s >= 115 && s <= 185 ? line : null;
+            },
+        ),
     ...zodiacColumnRules(),
 };
 
@@ -598,10 +582,6 @@ function unmasked(ctx, pool) {
     return pool.filter((b) => !ctx.mask.has(b));
 }
 
-function maskedRankedSafe(ctx, size) {
-    const ens = ensembleScore(ctx);
-    return RANGE49.filter((b) => !ctx.mask.has(b)).sort((a, b) => ens[b - 1] - ens[a - 1] || ctx.freq[b - 1] - ctx.freq[a - 1]).slice(0, size);
-}
 
 function zodiacColumnRules() {
     const rules = {};
@@ -926,14 +906,8 @@ export const CATALOG_ALMANAC_ROWS = tuples([
 /** The league rows this module evaluates. */
 export const CATALOG_ALMANAC_STRATEGIES = CATALOG_ALMANAC_ROWS;
 
-// Module 3 = 81 net-new rows; rules and rows must stay in lockstep.
-if (CATALOG_ALMANAC_STRATEGIES.length !== 81) {
-    throw new Error(`catalog-almanac manifest drift: ${CATALOG_ALMANAC_STRATEGIES.length} ≠ 81`);
-}
-const ruleIds3 = Object.keys(CATALOG_ALMANAC_RULES);
-if (ruleIds3.length !== CATALOG_ALMANAC_STRATEGIES.length) {
-    throw new Error(`catalog-almanac rule/strategy drift: ${ruleIds3.length} rules vs ${CATALOG_ALMANAC_STRATEGIES.length} rows`);
-}
-for (const [id] of CATALOG_ALMANAC_STRATEGIES) {
-    if (!CATALOG_ALMANAC_RULES[id]) throw new Error(`catalog-almanac missing rule: ${id}`);
-}
+export const CATALOG_ALMANAC_FAMILY = defineFamily({
+    rules: CATALOG_ALMANAC_RULES,
+    rows: CATALOG_ALMANAC_STRATEGIES,
+    prepare: catalogPrepare,
+});

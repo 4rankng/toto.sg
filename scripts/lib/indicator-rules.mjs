@@ -22,6 +22,7 @@ import {
     velocityResiduals,
     weekdayOf,
 } from "./cross-panel-stats.mjs";
+import { defineFamily } from "./platform/family.mjs";
 
 /** Normalized RSI (0..100) where fair-cage expected rate (6/49) maps to 50. */
 export function computeWilderRsi(draws, period = 14) {
@@ -447,3 +448,11 @@ export const INDICATOR_STRATEGIES = [
     ["orderStatQuantileLock", "Hypergeometric Order-Statistic Quantile Lock", "Structure", "Pins each sorted position x_(1)..x_(6) into its theoretical hypergeometric interquartile range with sum 140–165."],
     ["multiFactorQuant6", "Multi-Factor 6-Quant Composite Scorecard", "Ensemble", "Linear combination of RSI-14, 10-draw velocity residual, 50-draw velocity, and long-term frequency."],
 ];
+
+export const INDICATOR_FAMILY = defineFamily({
+    rules: INDICATOR_RULES,
+    rows: INDICATOR_STRATEGIES,
+    // Deliberately unmemoised, as before: buildIndicatorFoldStats is cheap
+    // relative to a fold and nothing is shared across rules.
+    prepare: (prior, target) => buildIndicatorFoldStats(prior, target),
+});

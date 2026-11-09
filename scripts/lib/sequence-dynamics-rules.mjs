@@ -15,7 +15,9 @@
 // The maths is re-derived here in plain JavaScript so scripts/ stays
 // independent of the browser bundle in src/ — the same numbers, two
 // implementations, so a drift in one shows up in the other.
-import { RANGE49, acValue, lineSum, sortAsc } from "./cross-panel-stats.mjs";
+import { RANGE49, acValue, lineSum, sampleK, sortAsc } from "./cross-panel-stats.mjs";
+import { memoisedPrepare } from "./platform/context.mjs";
+import { defineFamily } from "./platform/family.mjs";
 
 const POOL = 49;
 const PICKS = 6;
@@ -415,17 +417,12 @@ const spectralPhase = (draws, sums) => {
  * Sampling helpers
  * ------------------------------------------------------------------ */
 
-/** Uniform k-subset of `pool` via partial Fisher-Yates. */
-export const sampleK = (rng, pool, k) => {
-    const arr = [...pool];
-    const out = [];
-    for (let i = 0; i < k; i += 1) {
-        const j = i + Math.floor(rng() * (arr.length - i));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-        out.push(arr[i]);
-    }
-    return out;
-};
+/**
+ * Uniform k-subset of `pool` via partial Fisher-Yates — the shared kernel's
+ * sampler, re-exported so this module's own clients keep one import path.
+ * (Consumes rng identically to the previous local copy — probe-verified.)
+ */
+export { sampleK };
 
 /** The `count` balls with the highest value, ascending. */
 const topBalls = (values, count) =>
@@ -643,3 +640,13 @@ export const SEQUENCE_DYNAMICS_STRATEGIES = [
         "Locks the multi-draw crossover split: three balls carried from the trailing five-draw union and three fresh balls from the cold pool.",
     ],
 ];
+
+// The one memoised sequence fold context — shared by the ten sequence rules
+// AND the fusion family's base rules, so all of them see one build per draw.
+export const sequencePrepare = memoisedPrepare(buildSequenceDynamicsContext);
+
+export const SEQUENCE_DYNAMICS_FAMILY = defineFamily({
+    rules: SEQUENCE_DYNAMICS_RULES,
+    rows: SEQUENCE_DYNAMICS_STRATEGIES,
+    prepare: sequencePrepare,
+});

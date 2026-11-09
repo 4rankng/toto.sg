@@ -14,7 +14,8 @@
 //     crossPanelPrepare in scripts/league-build.mjs, not with the catalog
 //     prepare. Ties resolve to the lower ball; the no-recycle mask applies.
 import { RANGE49, lineSum, sortAsc, sampleK } from "./cross-panel-stats.mjs";
-import { ensFill, ensTop, ensembleScore, nameOf, signalLine } from "./catalog-signal-rules.mjs";
+import { catalogPrepare, ensFill, ensTop, ensembleScore, nameOf, signalLine } from "./catalog-signal-rules.mjs";
+import { defineFamily } from "./platform/family.mjs";
 
 const FFG_STAR = Math.log(2) / (6 / 49);
 const FENG_SHUI_SET = [6, 8, 9, 16, 18, 19, 26, 28, 29, 36, 38, 39, 46, 48, 49];
@@ -168,17 +169,23 @@ export const CATALOG_ML_ROWS = tuples([
     ["metaVote", "Ensemble", "Every wave-1..4 strategy contributes its own fold line; count ball frequencies across all those lines; play the 6 most-voted (masked)."],
 ]);
 
-/** The league rows this module evaluates. */
-export const CATALOG_ML_STRATEGIES = CATALOG_ML_ROWS;
+/**
+ * metaVote is a SECOND-PHASE row: it reads the league's own fold-line vote
+ * from the cross-panel context (ctx.votes), so it is declared as its own
+ * phase-2 family and wired with the vote prepare in league-build.mjs, not
+ * with the catalog prepare.
+ */
+export const META_VOTE_STRATEGIES = CATALOG_ML_ROWS.filter(([id]) => id === META_VOTE_ID);
 
-// Module 4 = 5 net-new rows; rules and rows must stay in lockstep.
-if (CATALOG_ML_STRATEGIES.length !== 5) {
-    throw new Error(`catalog-ml manifest drift: ${CATALOG_ML_STRATEGIES.length} ≠ 5`);
-}
-const ruleIds4 = Object.keys(CATALOG_ML_RULES);
-if (ruleIds4.length !== CATALOG_ML_STRATEGIES.length) {
-    throw new Error(`catalog-ml rule/strategy drift: ${ruleIds4.length} rules vs ${CATALOG_ML_STRATEGIES.length} rows`);
-}
-for (const [id] of CATALOG_ML_STRATEGIES) {
-    if (!CATALOG_ML_RULES[id]) throw new Error(`catalog-ml missing rule: ${id}`);
-}
+export const CATALOG_ML_FAMILY = defineFamily({
+    rules: Object.fromEntries(Object.entries(CATALOG_ML_RULES).filter(([id]) => id !== META_VOTE_ID)),
+    rows: CATALOG_ML_ROWS.filter(([id]) => id !== META_VOTE_ID),
+    prepare: catalogPrepare,
+});
+
+export const META_VOTE_FAMILY = defineFamily({
+    rules: { metaVote: CATALOG_ML_RULES[META_VOTE_ID] },
+    rows: META_VOTE_STRATEGIES,
+    phase: 2,
+    votes: "crossPanel",
+});

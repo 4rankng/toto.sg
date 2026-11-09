@@ -49,7 +49,9 @@
 // chi-square(6) order-statistic null. Combined acceptance is of order 0.5
 // per attempt, far under the league's 10000-attempt rejection cap.
 import { RANGE49, acValue, lineSum, sortAsc } from "./cross-panel-stats.mjs";
-import { mahalanobisD2, sampleK } from "./sequence-dynamics-rules.mjs";
+import { mahalanobisD2, sampleK, sequencePrepare } from "./sequence-dynamics-rules.mjs";
+import { defineFamily } from "./platform/family.mjs";
+import { topByScore } from "./platform/kit.mjs";
 
 const POOL = 49;
 
@@ -101,13 +103,6 @@ export const fusionScores = (ctx, votes) => {
  * Pool sampling under the shared shape gates
  * ------------------------------------------------------------------ */
 
-/** The `count` balls with the highest composite, ascending. */
-const topPool = (composite, count) =>
-    RANGE49.slice()
-        .sort((a, b) => composite[b - 1] - composite[a - 1] || a - b)
-        .slice(0, count)
-        .sort((a, b) => a - b);
-
 /** The three gates every fusion line must clear. */
 const clearsGates = (line) => {
     const sum = lineSum(line);
@@ -118,7 +113,7 @@ const clearsGates = (line) => {
 
 /** Sample six balls from the composite's top `count` pool, gated on shape. */
 const fusionPick = (rng, composite, count) => {
-    const line = sortAsc(sampleK(rng, topPool(composite, count), 6));
+    const line = sortAsc(sampleK(rng, topByScore(composite, count), 6));
     return clearsGates(line) ? line : null;
 };
 
@@ -205,3 +200,19 @@ export const INSIGHT_FUSION_STRATEGIES = [
         "The league's own fold votes blended with Hawkes branch and lag-1 inflow; the combined ranking drives a shape-gated six-ball sample.",
     ],
 ];
+
+// Equipoise/Momentum are base rules sharing the sequence family's memoised
+// context; Consensus is phase-2 — it reads the fold's league votes and is
+// wired with the fusion vote prepare in league-build.mjs.
+export const INSIGHT_FUSION_FAMILY = defineFamily({
+    rules: { fusionEquipoise: INSIGHT_FUSION_RULES.fusionEquipoise, fusionMomentum: INSIGHT_FUSION_RULES.fusionMomentum },
+    rows: INSIGHT_FUSION_STRATEGIES.filter(([id]) => id !== "fusionConsensus"),
+    prepare: sequencePrepare,
+});
+
+export const FUSION_CONSENSUS_FAMILY = defineFamily({
+    rules: { fusionConsensus: INSIGHT_FUSION_RULES.fusionConsensus },
+    rows: INSIGHT_FUSION_STRATEGIES.filter(([id]) => id === "fusionConsensus"),
+    phase: 2,
+    votes: "fusion",
+});
