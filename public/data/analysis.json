@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-09T13:50:33.935Z",
+  "generatedAt": "2026-11-09T14:51:28.506Z",
   "coverage": {
     "firstDraw": 2995,
     "lastDraw": 4233,
@@ -852,7 +852,7 @@
       "maxJackpot": 12827485
     },
     "2026": {
-      "wins": 75,
+      "wins": 77,
       "maxJackpot": 12813283
     }
   }
