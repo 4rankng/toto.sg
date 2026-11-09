@@ -1,0 +1,3925 @@
+{
+ "meta": {
+  "generatedAt": "2026-11-09T04:11:23.159Z",
+  "archive": {
+   "draws": 1892,
+   "firstDraw": 2341,
+   "lastDraw": 4232
+  },
+  "warmupDraws": 50,
+  "probeM": 300000,
+  "nullProbeM": 50000,
+  "nullHistories": 100,
+  "bootstrapReplicates": 2000,
+  "probeWorkers": 8,
+  "runtimeSeconds": 408,
+  "methodNotes": [
+   "Walk-forward only: weights at draw t come from same-era draws strictly before t — no full-history rates anywhere.",
+   "Raw per-ball frequency is never a weight: the Bayesian grid always shrinks toward the uniform 6/pool baseline.",
+   "Eras are scored separately: a 6/45 fold never borrows a 6/49 prior and vice versa.",
+   "Primary metric is out-of-sample mean main-number hits per ticket against the era's exact hypergeometric null; max historical score is treated as a search-size artifact (μ + σ√(2 ln M)).",
+   "Null-shuffle benchmark: the identical pipeline reruns on synthetic uniform histories (era sizes preserved); matched-M probe statistics compare real vs null at the same variant count.",
+   "Multiple testing: BH-FDR across the Route 1 grid per era; the headline claim additionally needs a bootstrap CI that excludes 0 and sign-stable quarter windows.",
+   "Route 2 (RNG families) is coverage expansion, not evidence — its winner's curse scales with M."
+  ]
+ },
+ "eraAccounting": {
+  "e45": {
+   "pool": 45,
+   "draws": 654,
+   "firstDraw": 2341,
+   "lastDraw": 2994,
+   "folds": 604,
+   "expectedHitsPerBall": 87.2,
+   "expectedHitsPerTicket": 0.8,
+   "prizeRatePerTicket": 0.0238,
+   "pointsPerTicket": 0.7138
+  },
+  "e49": {
+   "pool": 49,
+   "draws": 1238,
+   "firstDraw": 2995,
+   "lastDraw": 4232,
+   "folds": 1188,
+   "expectedHitsPerBall": 151.59,
+   "expectedHitsPerTicket": 0.7347,
+   "prizeRatePerTicket": 0.0186,
+   "pointsPerTicket": 0.4608
+  },
+  "reviewBaselineNote": "The review brief assumed a 2,700-draw archive (≈330.6 expected hits per ball, σ≈17). The committed archive is 1,892 draws: 654 six-of-45 (2341–2994, to 2014-10-06) and 1,238 six-of-49 (2995–4232). Expected hits per ball are 87.2 (6/45) and 151.6 (6/49); all baselines here are recomputed from the real archive."
+ },
+ "route1": {
+  "e45": {
+   "era": "e45",
+   "folds": 604,
+   "variants": [
+    {
+     "id": "bpTop-rolling250",
+     "era": "e45",
+     "folds": 604,
+     "meanHits": 0.8907,
+     "chanceMeanHits": 0.8,
+     "edge": 0.0907,
+     "edgeCi95": [
+      0.0195,
+      0.1553
+     ],
+     "edgeCiCoversZero": false,
+     "z": 2.64,
+     "p": 0.0083,
+     "prizeRate": 0.0397,
+     "chancePrizeRate": 0.0238,
+     "prizeEdgeCi95": [
+      0.001,
+      0.0325
+     ],
+     "twoPlusRate": 0.2136,
+     "chanceTwoPlusRate": 0.1753,
+     "prizePoints": 231,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 2,
+      "g6": 1,
+      "g7": 21
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 151,
+       "meanHits": 0.9139,
+       "edge": 0.1139
+      },
+      {
+       "window": "q2",
+       "folds": 151,
+       "meanHits": 0.9272,
+       "edge": 0.1272
+      },
+      {
+       "window": "q3",
+       "folds": 151,
+       "meanHits": 0.8477,
+       "edge": 0.0477
+      },
+      {
+       "window": "q4",
+       "folds": 151,
+       "meanHits": 0.8742,
+       "edge": 0.0742
+      }
+     ],
+     "lastLine": [
+      8,
+      11,
+      19,
+      22,
+      27,
+      31
+     ],
+     "q": 0.1079,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpTop-expanding",
+     "era": "e45",
+     "folds": 604,
+     "meanHits": 0.8675,
+     "chanceMeanHits": 0.8,
+     "edge": 0.0675,
+     "edgeCi95": [
+      -0.002,
+      0.1354
+     ],
+     "edgeCiCoversZero": true,
+     "z": 1.91,
+     "p": 0.0558,
+     "prizeRate": 0.0513,
+     "chancePrizeRate": 0.0238,
+     "prizeEdgeCi95": [
+      0.0109,
+      0.0457
+     ],
+     "twoPlusRate": 0.1987,
+     "chanceTwoPlusRate": 0.1753,
+     "prizePoints": 1246,
+     "bestGroup": 4,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 1,
+      "g5": 2,
+      "g6": 2,
+      "g7": 26
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 151,
+       "meanHits": 0.9139,
+       "edge": 0.1139
+      },
+      {
+       "window": "q2",
+       "folds": 151,
+       "meanHits": 0.9272,
+       "edge": 0.1272
+      },
+      {
+       "window": "q3",
+       "folds": 151,
+       "meanHits": 0.7748,
+       "edge": -0.0252
+      },
+      {
+       "window": "q4",
+       "folds": 151,
+       "meanHits": 0.8543,
+       "edge": 0.0543
+      }
+     ],
+     "lastLine": [
+      17,
+      22,
+      23,
+      27,
+      31,
+      36
+     ],
+     "q": 0.3627,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-rolling250-w300",
+     "era": "e45",
+     "folds": 604,
+     "meanHits": 0.8493,
+     "chanceMeanHits": 0.8,
+     "edge": 0.0493,
+     "edgeCi95": [
+      -0.0136,
+      0.1156
+     ],
+     "edgeCiCoversZero": true,
+     "z": 1.55,
+     "p": 0.122,
+     "prizeRate": 0.0232,
+     "chancePrizeRate": 0.0238,
+     "prizeEdgeCi95": [
+      -0.0122,
+      0.0109
+     ],
+     "twoPlusRate": 0.1954,
+     "chanceTwoPlusRate": 0.1753,
+     "prizePoints": 32,
+     "bestGroup": 6,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 0,
+      "g6": 2,
+      "g7": 12
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 151,
+       "meanHits": 0.947,
+       "edge": 0.147
+      },
+      {
+       "window": "q2",
+       "folds": 151,
+       "meanHits": 0.8874,
+       "edge": 0.0874
+      },
+      {
+       "window": "q3",
+       "folds": 151,
+       "meanHits": 0.6689,
+       "edge": -0.1311
+      },
+      {
+       "window": "q4",
+       "folds": 151,
+       "meanHits": 0.894,
+       "edge": 0.094
+      }
+     ],
+     "lastLine": [
+      14,
+      23,
+      27,
+      32,
+      38,
+      40
+     ],
+     "q": 0.4193,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-expanding-w60",
+     "era": "e45",
+     "folds": 604,
+     "meanHits": 0.8477,
+     "chanceMeanHits": 0.8,
+     "edge": 0.0477,
+     "edgeCi95": [
+      -0.0202,
+      0.1089
+     ],
+     "edgeCiCoversZero": true,
+     "z": 1.52,
+     "p": 0.129,
+     "prizeRate": 0.0182,
+     "chancePrizeRate": 0.0238,
+     "prizeEdgeCi95": [
+      -0.0156,
+      0.006
+     ],
+     "twoPlusRate": 0.1954,
+     "chanceTwoPlusRate": 0.1753,
+     "prizePoints": 38,
+     "bestGroup": 6,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 0,
+      "g6": 3,
+      "g7": 8
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 151,
+       "meanHits": 0.8742,
+       "edge": 0.0742
+      },
+      {
+       "window": "q2",
+       "folds": 151,
+       "meanHits": 0.8808,
+       "edge": 0.0808
+      },
+      {
+       "window": "q3",
+       "folds": 151,
+       "meanHits": 0.8808,
+       "edge": 0.0808
+      },
+      {
+       "window": "q4",
+       "folds": 151,
+       "meanHits": 0.755,
+       "edge": -0.045
+      }
+     ],
+     "lastLine": [
+      15,
+      18,
+      29,
+      30,
+      32,
+      34
+     ],
+     "q": 0.4193,
+     "significantAtQ05": false
+    },
+    {
+     "id": "uniformQuickpick",
+     "era": "e45",
+     "folds": 604,
+     "meanHits": 0.8195,
+     "chanceMeanHits": 0.8,
+     "edge": 0.0195,
+     "edgeCi95": [
+      -0.0384,
+      0.0825
+     ],
+     "edgeCiCoversZero": true,
+     "z": 0.63,
+     "p": 0.5271,
+     "prizeRate": 0.0182,
+     "chancePrizeRate": 0.0238,
+     "prizeEdgeCi95": [
+      -0.0156,
+      0.0043
+     ],
+     "twoPlusRate": 0.1772,
+     "chanceTwoPlusRate": 0.1753,
+     "prizePoints": 20,
+     "bestGroup": 6,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 0,
+      "g6": 1,
+      "g7": 10
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 151,
+       "meanHits": 0.8013,
+       "edge": 0.0013
+      },
+      {
+       "window": "q2",
+       "folds": 151,
+       "meanHits": 0.8146,
+       "edge": 0.0146
+      },
+      {
+       "window": "q3",
+       "folds": 151,
+       "meanHits": 0.8609,
+       "edge": 0.0609
+      },
+      {
+       "window": "q4",
+       "folds": 151,
+       "meanHits": 0.8013,
+       "edge": 0.0013
+      }
+     ],
+     "lastLine": [
+      31,
+      32,
+      34,
+      41,
+      44,
+      45
+     ],
+     "q": 0.9675,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-expanding-w1500",
+     "era": "e45",
+     "folds": 604,
+     "meanHits": 0.8129,
+     "chanceMeanHits": 0.8,
+     "edge": 0.0129,
+     "edgeCi95": [
+      -0.0517,
+      0.0758
+     ],
+     "edgeCiCoversZero": true,
+     "z": 0.41,
+     "p": 0.6795,
+     "prizeRate": 0.0232,
+     "chancePrizeRate": 0.0238,
+     "prizeEdgeCi95": [
+      -0.0122,
+      0.0126
+     ],
+     "twoPlusRate": 0.1722,
+     "chanceTwoPlusRate": 0.1753,
+     "prizePoints": 23,
+     "bestGroup": 6,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 0,
+      "g6": 1,
+      "g7": 13
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 151,
+       "meanHits": 0.7881,
+       "edge": -0.0119
+      },
+      {
+       "window": "q2",
+       "folds": 151,
+       "meanHits": 0.8477,
+       "edge": 0.0477
+      },
+      {
+       "window": "q3",
+       "folds": 151,
+       "meanHits": 0.8146,
+       "edge": 0.0146
+      },
+      {
+       "window": "q4",
+       "folds": 151,
+       "meanHits": 0.8013,
+       "edge": 0.0013
+      }
+     ],
+     "lastLine": [
+      1,
+      11,
+      16,
+      21,
+      24,
+      39
+     ],
+     "q": 0.9675,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-expanding-w300",
+     "era": "e45",
+     "folds": 604,
+     "meanHits": 0.8096,
+     "chanceMeanHits": 0.8,
+     "edge": 0.0096,
+     "edgeCi95": [
+      -0.0517,
+      0.0709
+     ],
+     "edgeCiCoversZero": true,
+     "z": 0.3,
+     "p": 0.766,
+     "prizeRate": 0.0331,
+     "chancePrizeRate": 0.0238,
+     "prizeEdgeCi95": [
+      -0.004,
+      0.0242
+     ],
+     "twoPlusRate": 0.1705,
+     "chanceTwoPlusRate": 0.1753,
+     "prizePoints": 20,
+     "bestGroup": 7,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 0,
+      "g6": 0,
+      "g7": 20
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 151,
+       "meanHits": 0.702,
+       "edge": -0.098
+      },
+      {
+       "window": "q2",
+       "folds": 151,
+       "meanHits": 0.7285,
+       "edge": -0.0715
+      },
+      {
+       "window": "q3",
+       "folds": 151,
+       "meanHits": 0.9272,
+       "edge": 0.1272
+      },
+      {
+       "window": "q4",
+       "folds": 151,
+       "meanHits": 0.8808,
+       "edge": 0.0808
+      }
+     ],
+     "lastLine": [
+      4,
+      7,
+      19,
+      20,
+      36,
+      40
+     ],
+     "q": 0.9675,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-rolling250-w1500",
+     "era": "e45",
+     "folds": 604,
+     "meanHits": 0.803,
+     "chanceMeanHits": 0.8,
+     "edge": 0.003,
+     "edgeCi95": [
+      -0.0583,
+      0.0626
+     ],
+     "edgeCiCoversZero": true,
+     "z": 0.09,
+     "p": 0.9251,
+     "prizeRate": 0.0199,
+     "chancePrizeRate": 0.0238,
+     "prizeEdgeCi95": [
+      -0.0139,
+      0.0076
+     ],
+     "twoPlusRate": 0.1788,
+     "chanceTwoPlusRate": 0.1753,
+     "prizePoints": 129,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 1,
+      "g6": 2,
+      "g7": 9
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 151,
+       "meanHits": 0.947,
+       "edge": 0.147
+      },
+      {
+       "window": "q2",
+       "folds": 151,
+       "meanHits": 0.7417,
+       "edge": -0.0583
+      },
+      {
+       "window": "q3",
+       "folds": 151,
+       "meanHits": 0.8212,
+       "edge": 0.0212
+      },
+      {
+       "window": "q4",
+       "folds": 151,
+       "meanHits": 0.702,
+       "edge": -0.098
+      }
+     ],
+     "lastLine": [
+      3,
+      8,
+      10,
+      13,
+      32,
+      45
+     ],
+     "q": 0.9675,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-expanding-w12",
+     "era": "e45",
+     "folds": 604,
+     "meanHits": 0.8013,
+     "chanceMeanHits": 0.8,
+     "edge": 0.0013,
+     "edgeCi95": [
+      -0.0616,
+      0.0659
+     ],
+     "edgeCiCoversZero": true,
+     "z": 0.04,
+     "p": 0.9675,
+     "prizeRate": 0.0215,
+     "chancePrizeRate": 0.0238,
+     "prizeEdgeCi95": [
+      -0.0122,
+      0.0093
+     ],
+     "twoPlusRate": 0.1854,
+     "chanceTwoPlusRate": 0.1753,
+     "prizePoints": 211,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 2,
+      "g6": 0,
+      "g7": 11
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 151,
+       "meanHits": 0.7417,
+       "edge": -0.0583
+      },
+      {
+       "window": "q2",
+       "folds": 151,
+       "meanHits": 0.7682,
+       "edge": -0.0318
+      },
+      {
+       "window": "q3",
+       "folds": 151,
+       "meanHits": 0.8874,
+       "edge": 0.0874
+      },
+      {
+       "window": "q4",
+       "folds": 151,
+       "meanHits": 0.8079,
+       "edge": 0.0079
+      }
+     ],
+     "lastLine": [
+      1,
+      7,
+      8,
+      19,
+      28,
+      44
+     ],
+     "q": 0.9675,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-rolling250-w12",
+     "era": "e45",
+     "folds": 604,
+     "meanHits": 0.7964,
+     "chanceMeanHits": 0.8,
+     "edge": -0.0036,
+     "edgeCi95": [
+      -0.0666,
+      0.0593
+     ],
+     "edgeCiCoversZero": true,
+     "z": -0.12,
+     "p": 0.908,
+     "prizeRate": 0.0281,
+     "chancePrizeRate": 0.0238,
+     "prizeEdgeCi95": [
+      -0.0089,
+      0.0192
+     ],
+     "twoPlusRate": 0.1523,
+     "chanceTwoPlusRate": 0.1753,
+     "prizePoints": 215,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 2,
+      "g6": 0,
+      "g7": 15
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 151,
+       "meanHits": 0.8278,
+       "edge": 0.0278
+      },
+      {
+       "window": "q2",
+       "folds": 151,
+       "meanHits": 0.8013,
+       "edge": 0.0013
+      },
+      {
+       "window": "q3",
+       "folds": 151,
+       "meanHits": 0.7351,
+       "edge": -0.0649
+      },
+      {
+       "window": "q4",
+       "folds": 151,
+       "meanHits": 0.8212,
+       "edge": 0.0212
+      }
+     ],
+     "lastLine": [
+      6,
+      7,
+      13,
+      16,
+      26,
+      31
+     ],
+     "q": 0.9675,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-expanding-w2",
+     "era": "e45",
+     "folds": 604,
+     "meanHits": 0.7864,
+     "chanceMeanHits": 0.8,
+     "edge": -0.0136,
+     "edgeCi95": [
+      -0.0798,
+      0.0493
+     ],
+     "edgeCiCoversZero": true,
+     "z": -0.42,
+     "p": 0.6733,
+     "prizeRate": 0.0298,
+     "chancePrizeRate": 0.0238,
+     "prizeEdgeCi95": [
+      -0.0073,
+      0.0209
+     ],
+     "twoPlusRate": 0.1639,
+     "chanceTwoPlusRate": 0.1753,
+     "prizePoints": 135,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 1,
+      "g6": 2,
+      "g7": 15
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 151,
+       "meanHits": 0.894,
+       "edge": 0.094
+      },
+      {
+       "window": "q2",
+       "folds": 151,
+       "meanHits": 0.7417,
+       "edge": -0.0583
+      },
+      {
+       "window": "q3",
+       "folds": 151,
+       "meanHits": 0.7417,
+       "edge": -0.0583
+      },
+      {
+       "window": "q4",
+       "folds": 151,
+       "meanHits": 0.7682,
+       "edge": -0.0318
+      }
+     ],
+     "lastLine": [
+      8,
+      9,
+      10,
+      17,
+      29,
+      36
+     ],
+     "q": 0.9675,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-rolling250-w2",
+     "era": "e45",
+     "folds": 604,
+     "meanHits": 0.7815,
+     "chanceMeanHits": 0.8,
+     "edge": -0.0185,
+     "edgeCi95": [
+      -0.0798,
+      0.0411
+     ],
+     "edgeCiCoversZero": true,
+     "z": -0.61,
+     "p": 0.5447,
+     "prizeRate": 0.0182,
+     "chancePrizeRate": 0.0238,
+     "prizeEdgeCi95": [
+      -0.0156,
+      0.006
+     ],
+     "twoPlusRate": 0.1606,
+     "chanceTwoPlusRate": 0.1753,
+     "prizePoints": 11,
+     "bestGroup": 7,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 0,
+      "g6": 0,
+      "g7": 11
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 151,
+       "meanHits": 0.7682,
+       "edge": -0.0318
+      },
+      {
+       "window": "q2",
+       "folds": 151,
+       "meanHits": 0.7947,
+       "edge": -0.0053
+      },
+      {
+       "window": "q3",
+       "folds": 151,
+       "meanHits": 0.8079,
+       "edge": 0.0079
+      },
+      {
+       "window": "q4",
+       "folds": 151,
+       "meanHits": 0.755,
+       "edge": -0.045
+      }
+     ],
+     "lastLine": [
+      10,
+      18,
+      20,
+      22,
+      31,
+      34
+     ],
+     "q": 0.9675,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-rolling250-w60",
+     "era": "e45",
+     "folds": 604,
+     "meanHits": 0.7616,
+     "chanceMeanHits": 0.8,
+     "edge": -0.0384,
+     "edgeCi95": [
+      -0.0997,
+      0.0228
+     ],
+     "edgeCiCoversZero": true,
+     "z": -1.23,
+     "p": 0.2196,
+     "prizeRate": 0.0215,
+     "chancePrizeRate": 0.0238,
+     "prizeEdgeCi95": [
+      -0.0139,
+      0.0093
+     ],
+     "twoPlusRate": 0.1556,
+     "chanceTwoPlusRate": 0.1753,
+     "prizePoints": 112,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 1,
+      "g6": 0,
+      "g7": 12
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 151,
+       "meanHits": 0.7616,
+       "edge": -0.0384
+      },
+      {
+       "window": "q2",
+       "folds": 151,
+       "meanHits": 0.6887,
+       "edge": -0.1113
+      },
+      {
+       "window": "q3",
+       "folds": 151,
+       "meanHits": 0.8609,
+       "edge": 0.0609
+      },
+      {
+       "window": "q4",
+       "folds": 151,
+       "meanHits": 0.7351,
+       "edge": -0.0649
+      }
+     ],
+     "lastLine": [
+      6,
+      16,
+      22,
+      23,
+      26,
+      34
+     ],
+     "q": 0.571,
+     "significantAtQ05": false
+    }
+   ]
+  },
+  "e49": {
+   "era": "e49",
+   "folds": 1188,
+   "variants": [
+    {
+     "id": "bpSample-expanding-w2",
+     "era": "e49",
+     "folds": 1188,
+     "meanHits": 0.7854,
+     "chanceMeanHits": 0.7347,
+     "edge": 0.0507,
+     "edgeCi95": [
+      0.0077,
+      0.0961
+     ],
+     "edgeCiCoversZero": false,
+     "z": 2.25,
+     "p": 0.0245,
+     "prizeRate": 0.0278,
+     "chancePrizeRate": 0.0186,
+     "prizeEdgeCi95": [
+      -0.0001,
+      0.0192
+     ],
+     "twoPlusRate": 0.1574,
+     "chanceTwoPlusRate": 0.151,
+     "prizePoints": 141,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 1,
+      "g6": 1,
+      "g7": 31
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 297,
+       "meanHits": 0.8451,
+       "edge": 0.1104
+      },
+      {
+       "window": "q2",
+       "folds": 297,
+       "meanHits": 0.8013,
+       "edge": 0.0667
+      },
+      {
+       "window": "q3",
+       "folds": 297,
+       "meanHits": 0.6566,
+       "edge": -0.0781
+      },
+      {
+       "window": "q4",
+       "folds": 297,
+       "meanHits": 0.8384,
+       "edge": 0.1037
+      }
+     ],
+     "lastLine": [
+      8,
+      9,
+      10,
+      17,
+      29,
+      36
+     ],
+     "q": 0.2054,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-expanding-w300",
+     "era": "e49",
+     "folds": 1188,
+     "meanHits": 0.7635,
+     "chanceMeanHits": 0.7347,
+     "edge": 0.0288,
+     "edgeCi95": [
+      -0.0167,
+      0.0717
+     ],
+     "edgeCiCoversZero": true,
+     "z": 1.28,
+     "p": 0.1996,
+     "prizeRate": 0.0168,
+     "chancePrizeRate": 0.0186,
+     "prizeEdgeCi95": [
+      -0.0085,
+      0.0058
+     ],
+     "twoPlusRate": 0.1667,
+     "chanceTwoPlusRate": 0.151,
+     "prizePoints": 317,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 3,
+      "g6": 0,
+      "g7": 17
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 297,
+       "meanHits": 0.771,
+       "edge": 0.0363
+      },
+      {
+       "window": "q2",
+       "folds": 297,
+       "meanHits": 0.7609,
+       "edge": 0.0262
+      },
+      {
+       "window": "q3",
+       "folds": 297,
+       "meanHits": 0.7576,
+       "edge": 0.0229
+      },
+      {
+       "window": "q4",
+       "folds": 297,
+       "meanHits": 0.7643,
+       "edge": 0.0296
+      }
+     ],
+     "lastLine": [
+      7,
+      19,
+      20,
+      36,
+      40,
+      46
+     ],
+     "q": 0.519,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-rolling250-w1500",
+     "era": "e49",
+     "folds": 1188,
+     "meanHits": 0.7525,
+     "chanceMeanHits": 0.7347,
+     "edge": 0.0178,
+     "edgeCi95": [
+      -0.0259,
+      0.0582
+     ],
+     "edgeCiCoversZero": true,
+     "z": 0.82,
+     "p": 0.4097,
+     "prizeRate": 0.0143,
+     "chancePrizeRate": 0.0186,
+     "prizeEdgeCi95": [
+      -0.0111,
+      0.0024
+     ],
+     "twoPlusRate": 0.1557,
+     "chanceTwoPlusRate": 0.151,
+     "prizePoints": 17,
+     "bestGroup": 7,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 0,
+      "g6": 0,
+      "g7": 17
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 297,
+       "meanHits": 0.7104,
+       "edge": -0.0243
+      },
+      {
+       "window": "q2",
+       "folds": 297,
+       "meanHits": 0.8047,
+       "edge": 0.07
+      },
+      {
+       "window": "q3",
+       "folds": 297,
+       "meanHits": 0.7475,
+       "edge": 0.0128
+      },
+      {
+       "window": "q4",
+       "folds": 297,
+       "meanHits": 0.7475,
+       "edge": 0.0128
+      }
+     ],
+     "lastLine": [
+      3,
+      8,
+      10,
+      13,
+      32,
+      45
+     ],
+     "q": 0.6996,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-expanding-w12",
+     "era": "e49",
+     "folds": 1188,
+     "meanHits": 0.7517,
+     "chanceMeanHits": 0.7347,
+     "edge": 0.017,
+     "edgeCi95": [
+      -0.0276,
+      0.0591
+     ],
+     "edgeCiCoversZero": true,
+     "z": 0.75,
+     "p": 0.4553,
+     "prizeRate": 0.021,
+     "chancePrizeRate": 0.0186,
+     "prizeEdgeCi95": [
+      -0.006,
+      0.0108
+     ],
+     "twoPlusRate": 0.1616,
+     "chanceTwoPlusRate": 0.151,
+     "prizePoints": 421,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 4,
+      "g6": 0,
+      "g7": 21
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 297,
+       "meanHits": 0.8283,
+       "edge": 0.0936
+      },
+      {
+       "window": "q2",
+       "folds": 297,
+       "meanHits": 0.6869,
+       "edge": -0.0478
+      },
+      {
+       "window": "q3",
+       "folds": 297,
+       "meanHits": 0.734,
+       "edge": -0.0007
+      },
+      {
+       "window": "q4",
+       "folds": 297,
+       "meanHits": 0.7576,
+       "edge": 0.0229
+      }
+     ],
+     "lastLine": [
+      1,
+      7,
+      8,
+      19,
+      28,
+      44
+     ],
+     "q": 0.6996,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-rolling250-w12",
+     "era": "e49",
+     "folds": 1188,
+     "meanHits": 0.7475,
+     "chanceMeanHits": 0.7347,
+     "edge": 0.0128,
+     "edgeCi95": [
+      -0.0293,
+      0.0566
+     ],
+     "edgeCiCoversZero": true,
+     "z": 0.59,
+     "p": 0.556,
+     "prizeRate": 0.0143,
+     "chancePrizeRate": 0.0186,
+     "prizeEdgeCi95": [
+      -0.0102,
+      0.0024
+     ],
+     "twoPlusRate": 0.154,
+     "chanceTwoPlusRate": 0.151,
+     "prizePoints": 116,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 1,
+      "g6": 0,
+      "g7": 16
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 297,
+       "meanHits": 0.7273,
+       "edge": -0.0074
+      },
+      {
+       "window": "q2",
+       "folds": 297,
+       "meanHits": 0.8552,
+       "edge": 0.1205
+      },
+      {
+       "window": "q3",
+       "folds": 297,
+       "meanHits": 0.7475,
+       "edge": 0.0128
+      },
+      {
+       "window": "q4",
+       "folds": 297,
+       "meanHits": 0.6599,
+       "edge": -0.0748
+      }
+     ],
+     "lastLine": [
+      6,
+      7,
+      13,
+      16,
+      26,
+      39
+     ],
+     "q": 0.6996,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-expanding-w1500",
+     "era": "e49",
+     "folds": 1188,
+     "meanHits": 0.7416,
+     "chanceMeanHits": 0.7347,
+     "edge": 0.0069,
+     "edgeCi95": [
+      -0.036,
+      0.0507
+     ],
+     "edgeCiCoversZero": true,
+     "z": 0.31,
+     "p": 0.7595,
+     "prizeRate": 0.0194,
+     "chancePrizeRate": 0.0186,
+     "prizeEdgeCi95": [
+      -0.0069,
+      0.0091
+     ],
+     "twoPlusRate": 0.1658,
+     "chanceTwoPlusRate": 0.151,
+     "prizePoints": 23,
+     "bestGroup": 7,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 0,
+      "g6": 0,
+      "g7": 23
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 297,
+       "meanHits": 0.7946,
+       "edge": 0.0599
+      },
+      {
+       "window": "q2",
+       "folds": 297,
+       "meanHits": 0.7407,
+       "edge": 0.006
+      },
+      {
+       "window": "q3",
+       "folds": 297,
+       "meanHits": 0.771,
+       "edge": 0.0363
+      },
+      {
+       "window": "q4",
+       "folds": 297,
+       "meanHits": 0.6599,
+       "edge": -0.0748
+      }
+     ],
+     "lastLine": [
+      1,
+      16,
+      21,
+      39,
+      46,
+      47
+     ],
+     "q": 0.8082,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-rolling250-w60",
+     "era": "e49",
+     "folds": 1188,
+     "meanHits": 0.7399,
+     "chanceMeanHits": 0.7347,
+     "edge": 0.0052,
+     "edgeCi95": [
+      -0.036,
+      0.0481
+     ],
+     "edgeCiCoversZero": true,
+     "z": 0.24,
+     "p": 0.8082,
+     "prizeRate": 0.0143,
+     "chancePrizeRate": 0.0186,
+     "prizeEdgeCi95": [
+      -0.0111,
+      0.0024
+     ],
+     "twoPlusRate": 0.1481,
+     "chanceTwoPlusRate": 0.151,
+     "prizePoints": 44,
+     "bestGroup": 6,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 0,
+      "g6": 3,
+      "g7": 14
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 297,
+       "meanHits": 0.7946,
+       "edge": 0.0599
+      },
+      {
+       "window": "q2",
+       "folds": 297,
+       "meanHits": 0.7542,
+       "edge": 0.0195
+      },
+      {
+       "window": "q3",
+       "folds": 297,
+       "meanHits": 0.7172,
+       "edge": -0.0175
+      },
+      {
+       "window": "q4",
+       "folds": 297,
+       "meanHits": 0.6936,
+       "edge": -0.0411
+      }
+     ],
+     "lastLine": [
+      6,
+      16,
+      22,
+      23,
+      26,
+      34
+     ],
+     "q": 0.8082,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpTop-rolling250",
+     "era": "e49",
+     "folds": 1188,
+     "meanHits": 0.7231,
+     "chanceMeanHits": 0.7347,
+     "edge": -0.0116,
+     "edgeCi95": [
+      -0.0537,
+      0.0313
+     ],
+     "edgeCiCoversZero": true,
+     "z": -0.54,
+     "p": 0.592,
+     "prizeRate": 0.0168,
+     "chancePrizeRate": 0.0186,
+     "prizeEdgeCi95": [
+      -0.0094,
+      0.0058
+     ],
+     "twoPlusRate": 0.1406,
+     "chanceTwoPlusRate": 0.151,
+     "prizePoints": 227,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 2,
+      "g6": 1,
+      "g7": 17
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 297,
+       "meanHits": 0.6397,
+       "edge": -0.095
+      },
+      {
+       "window": "q2",
+       "folds": 297,
+       "meanHits": 0.771,
+       "edge": 0.0363
+      },
+      {
+       "window": "q3",
+       "folds": 297,
+       "meanHits": 0.7542,
+       "edge": 0.0195
+      },
+      {
+       "window": "q4",
+       "folds": 297,
+       "meanHits": 0.7273,
+       "edge": -0.0074
+      }
+     ],
+     "lastLine": [
+      8,
+      10,
+      22,
+      43,
+      46,
+      49
+     ],
+     "q": 0.6996,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-expanding-w60",
+     "era": "e49",
+     "folds": 1188,
+     "meanHits": 0.7205,
+     "chanceMeanHits": 0.7347,
+     "edge": -0.0142,
+     "edgeCi95": [
+      -0.0571,
+      0.0288
+     ],
+     "edgeCiCoversZero": true,
+     "z": -0.64,
+     "p": 0.5215,
+     "prizeRate": 0.0177,
+     "chancePrizeRate": 0.0186,
+     "prizeEdgeCi95": [
+      -0.0077,
+      0.0075
+     ],
+     "twoPlusRate": 0.1507,
+     "chanceTwoPlusRate": 0.151,
+     "prizePoints": 120,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 1,
+      "g6": 0,
+      "g7": 20
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 297,
+       "meanHits": 0.6801,
+       "edge": -0.0546
+      },
+      {
+       "window": "q2",
+       "folds": 297,
+       "meanHits": 0.7778,
+       "edge": 0.0431
+      },
+      {
+       "window": "q3",
+       "folds": 297,
+       "meanHits": 0.7172,
+       "edge": -0.0175
+      },
+      {
+       "window": "q4",
+       "folds": 297,
+       "meanHits": 0.7071,
+       "edge": -0.0276
+      }
+     ],
+     "lastLine": [
+      15,
+      18,
+      29,
+      30,
+      32,
+      34
+     ],
+     "q": 0.6996,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-rolling250-w2",
+     "era": "e49",
+     "folds": 1188,
+     "meanHits": 0.7155,
+     "chanceMeanHits": 0.7347,
+     "edge": -0.0192,
+     "edgeCi95": [
+      -0.0605,
+      0.022
+     ],
+     "edgeCiCoversZero": true,
+     "z": -0.88,
+     "p": 0.3769,
+     "prizeRate": 0.016,
+     "chancePrizeRate": 0.0186,
+     "prizeEdgeCi95": [
+      -0.0094,
+      0.0049
+     ],
+     "twoPlusRate": 0.1465,
+     "chanceTwoPlusRate": 0.151,
+     "prizePoints": 19,
+     "bestGroup": 7,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 0,
+      "g6": 0,
+      "g7": 19
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 297,
+       "meanHits": 0.6566,
+       "edge": -0.0781
+      },
+      {
+       "window": "q2",
+       "folds": 297,
+       "meanHits": 0.6768,
+       "edge": -0.0579
+      },
+      {
+       "window": "q3",
+       "folds": 297,
+       "meanHits": 0.6936,
+       "edge": -0.0411
+      },
+      {
+       "window": "q4",
+       "folds": 297,
+       "meanHits": 0.835,
+       "edge": 0.1003
+      }
+     ],
+     "lastLine": [
+      10,
+      18,
+      20,
+      22,
+      31,
+      34
+     ],
+     "q": 0.6996,
+     "significantAtQ05": false
+    },
+    {
+     "id": "uniformQuickpick",
+     "era": "e49",
+     "folds": 1188,
+     "meanHits": 0.6944,
+     "chanceMeanHits": 0.7347,
+     "edge": -0.0402,
+     "edgeCi95": [
+      -0.0815,
+      0.0018
+     ],
+     "edgeCiCoversZero": true,
+     "z": -1.86,
+     "p": 0.0632,
+     "prizeRate": 0.0135,
+     "chancePrizeRate": 0.0186,
+     "prizeEdgeCi95": [
+      -0.0111,
+      0.0016
+     ],
+     "twoPlusRate": 0.1423,
+     "chanceTwoPlusRate": 0.151,
+     "prizePoints": 115,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 1,
+      "g6": 0,
+      "g7": 15
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 297,
+       "meanHits": 0.7306,
+       "edge": -0.0041
+      },
+      {
+       "window": "q2",
+       "folds": 297,
+       "meanHits": 0.67,
+       "edge": -0.0647
+      },
+      {
+       "window": "q3",
+       "folds": 297,
+       "meanHits": 0.6801,
+       "edge": -0.0546
+      },
+      {
+       "window": "q4",
+       "folds": 297,
+       "meanHits": 0.697,
+       "edge": -0.0377
+      }
+     ],
+     "lastLine": [
+      34,
+      35,
+      37,
+      44,
+      48,
+      49
+     ],
+     "q": 0.2054,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpTop-expanding",
+     "era": "e49",
+     "folds": 1188,
+     "meanHits": 0.6928,
+     "chanceMeanHits": 0.7347,
+     "edge": -0.0419,
+     "edgeCi95": [
+      -0.0815,
+      0.001
+     ],
+     "edgeCiCoversZero": true,
+     "z": -1.94,
+     "p": 0.052,
+     "prizeRate": 0.0177,
+     "chancePrizeRate": 0.0186,
+     "prizeEdgeCi95": [
+      -0.0077,
+      0.0066
+     ],
+     "twoPlusRate": 0.1288,
+     "chanceTwoPlusRate": 0.151,
+     "prizePoints": 1119,
+     "bestGroup": 4,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 1,
+      "g5": 1,
+      "g6": 0,
+      "g7": 19
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 297,
+       "meanHits": 0.6364,
+       "edge": -0.0983
+      },
+      {
+       "window": "q2",
+       "folds": 297,
+       "meanHits": 0.7273,
+       "edge": -0.0074
+      },
+      {
+       "window": "q3",
+       "folds": 297,
+       "meanHits": 0.7003,
+       "edge": -0.0344
+      },
+      {
+       "window": "q4",
+       "folds": 297,
+       "meanHits": 0.7071,
+       "edge": -0.0276
+      }
+     ],
+     "lastLine": [
+      8,
+      15,
+      22,
+      28,
+      40,
+      46
+     ],
+     "q": 0.2054,
+     "significantAtQ05": false
+    },
+    {
+     "id": "bpSample-rolling250-w300",
+     "era": "e49",
+     "folds": 1188,
+     "meanHits": 0.6877,
+     "chanceMeanHits": 0.7347,
+     "edge": -0.047,
+     "edgeCi95": [
+      -0.0891,
+      -0.0041
+     ],
+     "edgeCiCoversZero": false,
+     "z": -2.14,
+     "p": 0.0326,
+     "prizeRate": 0.0177,
+     "chancePrizeRate": 0.0186,
+     "prizeEdgeCi95": [
+      -0.0077,
+      0.0075
+     ],
+     "twoPlusRate": 0.1355,
+     "chanceTwoPlusRate": 0.151,
+     "prizePoints": 336,
+     "bestGroup": 5,
+     "tiers": {
+      "g1": 0,
+      "g2": 0,
+      "g3": 0,
+      "g4": 0,
+      "g5": 3,
+      "g6": 2,
+      "g7": 16
+     },
+     "quarters": [
+      {
+       "window": "q1",
+       "folds": 297,
+       "meanHits": 0.6667,
+       "edge": -0.068
+      },
+      {
+       "window": "q2",
+       "folds": 297,
+       "meanHits": 0.7003,
+       "edge": -0.0344
+      },
+      {
+       "window": "q3",
+       "folds": 297,
+       "meanHits": 0.7508,
+       "edge": 0.0161
+      },
+      {
+       "window": "q4",
+       "folds": 297,
+       "meanHits": 0.633,
+       "edge": -0.1017
+      }
+     ],
+     "lastLine": [
+      14,
+      23,
+      27,
+      32,
+      38,
+      49
+     ],
+     "q": 0.2054,
+     "significantAtQ05": false
+    }
+   ]
+  },
+  "nextDrawNo": 4233
+ },
+ "route4": {
+  "leagueAudit": {
+   "strategyCount": 103,
+   "trainFoldCount": 594,
+   "holdoutFoldCount": 594,
+   "rankCorrelationFullVsHoldout": 0.7085,
+   "meanTop10ScoreShrink": 0.3038,
+   "cacheParityFailures": [],
+   "topByTrain": [
+    {
+     "id": "crownAstra",
+     "name": "Crown Astra",
+     "family": "Crown Kings",
+     "trainScore": 1000021,
+     "holdoutScore": 34,
+     "scoreShrink": 0
+    },
+    {
+     "id": "hunterSirius",
+     "name": "Sirius",
+     "family": "Celestials",
+     "trainScore": 100119,
+     "holdoutScore": 22,
+     "scoreShrink": 0.0002
+    },
+    {
+     "id": "hunterComet",
+     "name": "Comet",
+     "family": "Celestials",
+     "trainScore": 100111,
+     "holdoutScore": 309,
+     "scoreShrink": 0.0031
+    },
+    {
+     "id": "hunterVega",
+     "name": "Vega",
+     "family": "Celestials",
+     "trainScore": 100110,
+     "holdoutScore": 112,
+     "scoreShrink": 0.0011
+    },
+    {
+     "id": "boardGram",
+     "name": "Hunter Gram",
+     "family": "Board Hunters",
+     "trainScore": 11218,
+     "holdoutScore": 2128,
+     "scoreShrink": 0.1897
+    },
+    {
+     "id": "boardTrident",
+     "name": "Hunter Trident",
+     "family": "Board Hunters",
+     "trainScore": 11124,
+     "holdoutScore": 10134,
+     "scoreShrink": 0.911
+    },
+    {
+     "id": "boardMjolnir",
+     "name": "Hunter Mjolnir",
+     "family": "Board Hunters",
+     "trainScore": 11124,
+     "holdoutScore": 10013,
+     "scoreShrink": 0.9001
+    },
+    {
+     "id": "boardExcalibur",
+     "name": "Hunter Excalibur",
+     "family": "Board Hunters",
+     "trainScore": 11018,
+     "holdoutScore": 1223,
+     "scoreShrink": 0.111
+    },
+    {
+     "id": "boardGungnir",
+     "name": "Hunter Gungnir",
+     "family": "Board Hunters",
+     "trainScore": 11015,
+     "holdoutScore": 10112,
+     "scoreShrink": 0.918
+    },
+    {
+     "id": "hollowMiddleBarbell",
+     "name": "Hollow-Middle Barbell",
+     "family": "Cross-Panel",
+     "trainScore": 10234,
+     "holdoutScore": 34,
+     "scoreShrink": 0.0033
+    }
+   ],
+   "tempoRows": [
+    {
+     "id": "tempoAllegro",
+     "name": "Tempo Allegro",
+     "score": 557,
+     "trainScore": 129,
+     "holdoutScore": 428,
+     "rank": 37
+    },
+    {
+     "id": "tempoAndante",
+     "name": "Tempo Andante",
+     "score": 388,
+     "trainScore": 239,
+     "holdoutScore": 149,
+     "rank": 47
+    },
+    {
+     "id": "tempoVivace",
+     "name": "Tempo Vivace",
+     "score": 275,
+     "trainScore": 38,
+     "holdoutScore": 237,
+     "rank": 59
+    },
+    {
+     "id": "tempoFortissimo",
+     "name": "Tempo Fortissimo",
+     "score": 242,
+     "trainScore": 21,
+     "holdoutScore": 221,
+     "rank": 69
+    },
+    {
+     "id": "tempoPresto",
+     "name": "Tempo Presto",
+     "score": 239,
+     "trainScore": 113,
+     "holdoutScore": 126,
+     "rank": 75
+    }
+   ],
+   "rows": [
+    {
+     "id": "crownRegis",
+     "name": "Crown Regis",
+     "family": "Crown Kings",
+     "leagueRank": 1,
+     "leagueScore": 1010352,
+     "folds": 1188,
+     "score": 1010352,
+     "meanHits": 0.7492,
+     "trainScore": 320,
+     "trainMeanHits": 0.7441,
+     "holdoutScore": 1010032,
+     "holdoutMeanHits": 0.7542,
+     "scoreShrink": 3156.35,
+     "parityWithLeague": true
+    },
+    {
+     "id": "crownImperator",
+     "name": "Crown Imperator",
+     "family": "Crown Kings",
+     "leagueRank": 2,
+     "leagueScore": 1010132,
+     "folds": 1188,
+     "score": 1010132,
+     "meanHits": 0.7306,
+     "trainScore": 12,
+     "trainMeanHits": 0.7458,
+     "holdoutScore": 1010120,
+     "holdoutMeanHits": 0.7155,
+     "scoreShrink": 84176.6667,
+     "parityWithLeague": true
+    },
+    {
+     "id": "crownValerian",
+     "name": "Crown Valerian",
+     "family": "Crown Kings",
+     "leagueRank": 3,
+     "leagueScore": 1000322,
+     "folds": 1188,
+     "score": 1000322,
+     "meanHits": 0.7256,
+     "trainScore": 209,
+     "trainMeanHits": 0.7525,
+     "holdoutScore": 1000113,
+     "holdoutMeanHits": 0.6987,
+     "scoreShrink": 4785.2297,
+     "parityWithLeague": true
+    },
+    {
+     "id": "crownConstantine",
+     "name": "Crown Constantine",
+     "family": "Crown Kings",
+     "leagueRank": 4,
+     "leagueScore": 1000242,
+     "folds": 1188,
+     "score": 1000242,
+     "meanHits": 0.7517,
+     "trainScore": 109,
+     "trainMeanHits": 0.7441,
+     "holdoutScore": 1000133,
+     "holdoutMeanHits": 0.7593,
+     "scoreShrink": 9175.5321,
+     "parityWithLeague": true
+    },
+    {
+     "id": "crownAstra",
+     "name": "Crown Astra",
+     "family": "Crown Kings",
+     "leagueRank": 5,
+     "leagueScore": 1000055,
+     "folds": 1188,
+     "score": 1000055,
+     "meanHits": 0.7281,
+     "trainScore": 1000021,
+     "trainMeanHits": 0.7357,
+     "holdoutScore": 34,
+     "holdoutMeanHits": 0.7205,
+     "scoreShrink": 0,
+     "parityWithLeague": true
+    },
+    {
+     "id": "hunterComet",
+     "name": "Comet",
+     "family": "Celestials",
+     "leagueRank": 6,
+     "leagueScore": 100420,
+     "folds": 1188,
+     "score": 100420,
+     "meanHits": 0.766,
+     "trainScore": 100111,
+     "trainMeanHits": 0.7912,
+     "holdoutScore": 309,
+     "holdoutMeanHits": 0.7407,
+     "scoreShrink": 0.0031,
+     "parityWithLeague": true
+    },
+    {
+     "id": "hunterNova",
+     "name": "Nova",
+     "family": "Celestials",
+     "leagueRank": 7,
+     "leagueScore": 100253,
+     "folds": 1188,
+     "score": 100253,
+     "meanHits": 0.7702,
+     "trainScore": 113,
+     "trainMeanHits": 0.7357,
+     "holdoutScore": 100140,
+     "holdoutMeanHits": 0.8047,
+     "scoreShrink": 886.1947,
+     "parityWithLeague": true
+    },
+    {
+     "id": "hunterVega",
+     "name": "Vega",
+     "family": "Celestials",
+     "leagueRank": 8,
+     "leagueScore": 100222,
+     "folds": 1188,
+     "score": 100222,
+     "meanHits": 0.7391,
+     "trainScore": 100110,
+     "trainMeanHits": 0.7189,
+     "holdoutScore": 112,
+     "holdoutMeanHits": 0.7593,
+     "scoreShrink": 0.0011,
+     "parityWithLeague": true
+    },
+    {
+     "id": "hunterSirius",
+     "name": "Sirius",
+     "family": "Celestials",
+     "leagueRank": 9,
+     "leagueScore": 100141,
+     "folds": 1188,
+     "score": 100141,
+     "meanHits": 0.7702,
+     "trainScore": 100119,
+     "trainMeanHits": 0.7643,
+     "holdoutScore": 22,
+     "holdoutMeanHits": 0.7761,
+     "scoreShrink": 0.0002,
+     "parityWithLeague": true
+    },
+    {
+     "id": "hunterEclipse",
+     "name": "Eclipse",
+     "family": "Celestials",
+     "leagueRank": 10,
+     "leagueScore": 100075,
+     "folds": 1188,
+     "score": 100075,
+     "meanHits": 0.7727,
+     "trainScore": 52,
+     "trainMeanHits": 0.7845,
+     "holdoutScore": 100023,
+     "holdoutMeanHits": 0.7609,
+     "scoreShrink": 1923.5192,
+     "parityWithLeague": true
+    },
+    {
+     "id": "boardLonginus",
+     "name": "Hunter Longinus",
+     "family": "Board Hunters",
+     "leagueRank": 11,
+     "leagueScore": 30249,
+     "folds": 1188,
+     "score": 30249,
+     "meanHits": 0.7357,
+     "trainScore": 10042,
+     "trainMeanHits": 0.7424,
+     "holdoutScore": 20207,
+     "holdoutMeanHits": 0.729,
+     "scoreShrink": 2.0122,
+     "parityWithLeague": true
+    },
+    {
+     "id": "boardTrident",
+     "name": "Hunter Trident",
+     "family": "Board Hunters",
+     "leagueRank": 12,
+     "leagueScore": 21258,
+     "folds": 1188,
+     "score": 21258,
+     "meanHits": 0.7508,
+     "trainScore": 11124,
+     "trainMeanHits": 0.7306,
+     "holdoutScore": 10134,
+     "holdoutMeanHits": 0.771,
+     "scoreShrink": 0.911,
+     "parityWithLeague": true
+    },
+    {
+     "id": "boardMjolnir",
+     "name": "Hunter Mjolnir",
+     "family": "Board Hunters",
+     "leagueRank": 13,
+     "leagueScore": 21137,
+     "folds": 1188,
+     "score": 21137,
+     "meanHits": 0.7828,
+     "trainScore": 11124,
+     "trainMeanHits": 0.7828,
+     "holdoutScore": 10013,
+     "holdoutMeanHits": 0.7828,
+     "scoreShrink": 0.9001,
+     "parityWithLeague": true
+    },
+    {
+     "id": "boardGungnir",
+     "name": "Hunter Gungnir",
+     "family": "Board Hunters",
+     "leagueRank": 14,
+     "leagueScore": 21127,
+     "folds": 1188,
+     "score": 21127,
+     "meanHits": 0.7584,
+     "trainScore": 11015,
+     "trainMeanHits": 0.7609,
+     "holdoutScore": 10112,
+     "holdoutMeanHits": 0.7559,
+     "scoreShrink": 0.918,
+     "parityWithLeague": true
+    },
+    {
+     "id": "boardBalmung",
+     "name": "Hunter Balmung",
+     "family": "Board Hunters",
+     "leagueRank": 15,
+     "leagueScore": 21125,
+     "folds": 1188,
+     "score": 21125,
+     "meanHits": 0.7323,
+     "trainScore": 112,
+     "trainMeanHits": 0.6801,
+     "holdoutScore": 21013,
+     "holdoutMeanHits": 0.7845,
+     "scoreShrink": 187.6161,
+     "parityWithLeague": true
+    },
+    {
+     "id": "boardGram",
+     "name": "Hunter Gram",
+     "family": "Board Hunters",
+     "leagueRank": 16,
+     "leagueScore": 13346,
+     "folds": 1188,
+     "score": 13346,
+     "meanHits": 0.7635,
+     "trainScore": 11218,
+     "trainMeanHits": 0.7912,
+     "holdoutScore": 2128,
+     "holdoutMeanHits": 0.7357,
+     "scoreShrink": 0.1897,
+     "parityWithLeague": true
+    },
+    {
+     "id": "boardKusanagi",
+     "name": "Hunter Kusanagi",
+     "family": "Board Hunters",
+     "leagueRank": 17,
+     "leagueScore": 12341,
+     "folds": 1188,
+     "score": 12341,
+     "meanHits": 0.7652,
+     "trainScore": 1117,
+     "trainMeanHits": 0.7744,
+     "holdoutScore": 11224,
+     "holdoutMeanHits": 0.7559,
+     "scoreShrink": 10.0483,
+     "parityWithLeague": true
+    },
+    {
+     "id": "boardZulfiqar",
+     "name": "Hunter Zulfiqar",
+     "family": "Board Hunters",
+     "leagueRank": 18,
+     "leagueScore": 12336,
+     "folds": 1188,
+     "score": 12336,
+     "meanHits": 0.7163,
+     "trainScore": 118,
+     "trainMeanHits": 0.7138,
+     "holdoutScore": 12218,
+     "holdoutMeanHits": 0.7189,
+     "scoreShrink": 103.5424,
+     "parityWithLeague": true
+    },
+    {
+     "id": "boardExcalibur",
+     "name": "Hunter Excalibur",
+     "family": "Board Hunters",
+     "leagueRank": 19,
+     "leagueScore": 12241,
+     "folds": 1188,
+     "score": 12241,
+     "meanHits": 0.7517,
+     "trainScore": 11018,
+     "trainMeanHits": 0.7576,
+     "holdoutScore": 1223,
+     "holdoutMeanHits": 0.7458,
+     "scoreShrink": 0.111,
+     "parityWithLeague": true
+    },
+    {
+     "id": "boardJoyeuse",
+     "name": "Hunter Joyeuse",
+     "family": "Board Hunters",
+     "leagueRank": 20,
+     "leagueScore": 12224,
+     "folds": 1188,
+     "score": 12224,
+     "meanHits": 0.7424,
+     "trainScore": 1211,
+     "trainMeanHits": 0.7492,
+     "holdoutScore": 11013,
+     "holdoutMeanHits": 0.7357,
+     "scoreShrink": 9.0941,
+     "parityWithLeague": true
+    },
+    {
+     "id": "boardDurandal",
+     "name": "Hunter Durandal",
+     "family": "Board Hunters",
+     "leagueRank": 21,
+     "leagueScore": 12156,
+     "folds": 1188,
+     "score": 12156,
+     "meanHits": 0.7441,
+     "trainScore": 25,
+     "trainMeanHits": 0.7071,
+     "holdoutScore": 12131,
+     "holdoutMeanHits": 0.7811,
+     "scoreShrink": 485.24,
+     "parityWithLeague": true
+    },
+    {
+     "id": "boardTizona",
+     "name": "Hunter Tizona",
+     "family": "Board Hunters",
+     "leagueRank": 22,
+     "leagueScore": 12143,
+     "folds": 1188,
+     "score": 12143,
+     "meanHits": 0.7441,
+     "trainScore": 121,
+     "trainMeanHits": 0.7273,
+     "holdoutScore": 12022,
+     "holdoutMeanHits": 0.7609,
+     "scoreShrink": 99.3554,
+     "parityWithLeague": true
+    },
+    {
+     "id": "hunterSovereign",
+     "name": "Hunter Sovereign",
+     "family": "Sovereigns",
+     "leagueRank": 23,
+     "leagueScore": 10730,
+     "folds": 1188,
+     "score": 10730,
+     "meanHits": 0.7466,
+     "trainScore": 226,
+     "trainMeanHits": 0.7273,
+     "holdoutScore": 10504,
+     "holdoutMeanHits": 0.766,
+     "scoreShrink": 46.4779,
+     "parityWithLeague": true
+    },
+    {
+     "id": "coldZoneRot",
+     "name": "Cold Zone Rotation",
+     "family": "Blends",
+     "leagueRank": 24,
+     "leagueScore": 10325,
+     "folds": 1188,
+     "score": 10325,
+     "meanHits": 0.7374,
+     "trainScore": 207,
+     "trainMeanHits": 0.6801,
+     "holdoutScore": 10118,
+     "holdoutMeanHits": 0.7946,
+     "scoreShrink": 48.8792,
+     "parityWithLeague": true
+    },
+    {
+     "id": "hollowMiddleBarbell",
+     "name": "Hollow-Middle Barbell",
+     "family": "Cross-Panel",
+     "leagueRank": 25,
+     "leagueScore": 10268,
+     "folds": 1188,
+     "score": 10268,
+     "meanHits": 0.7601,
+     "trainScore": 10234,
+     "trainMeanHits": 0.7727,
+     "holdoutScore": 34,
+     "holdoutMeanHits": 0.7475,
+     "scoreShrink": 0.0033,
+     "parityWithLeague": true
+    },
+    {
+     "id": "spectralHarmonicPhase",
+     "name": "Fisher Spectral Harmonic Phase Lock",
+     "family": "Indicators",
+     "leagueRank": 26,
+     "leagueScore": 10229,
+     "folds": 1188,
+     "score": 10229,
+     "meanHits": 0.7222,
+     "trainScore": 10008,
+     "trainMeanHits": 0.7172,
+     "holdoutScore": 221,
+     "holdoutMeanHits": 0.7273,
+     "scoreShrink": 0.0221,
+     "parityWithLeague": true
+    },
+    {
+     "id": "consensusStack",
+     "name": "CONSENSUS STACK Rank Fusion",
+     "family": "Ensemble",
+     "leagueRank": 27,
+     "leagueScore": 10130,
+     "folds": 1188,
+     "score": 10130,
+     "meanHits": 0.7449,
+     "trainScore": 10012,
+     "trainMeanHits": 0.7542,
+     "holdoutScore": 118,
+     "holdoutMeanHits": 0.7357,
+     "scoreShrink": 0.0118,
+     "parityWithLeague": true
+    },
+    {
+     "id": "mod9Root7",
+     "name": "Root-7 Trio",
+     "family": "Sum Band",
+     "leagueRank": 28,
+     "leagueScore": 10053,
+     "folds": 1188,
+     "score": 10053,
+     "meanHits": 0.7281,
+     "trainScore": 10021,
+     "trainMeanHits": 0.7104,
+     "holdoutScore": 32,
+     "holdoutMeanHits": 0.7458,
+     "scoreShrink": 0.0032,
+     "parityWithLeague": true
+    },
+    {
+     "id": "gapGradient",
+     "name": "Gap-Gradient Construction",
+     "family": "Structure",
+     "leagueRank": 29,
+     "leagueScore": 10042,
+     "folds": 1188,
+     "score": 10042,
+     "meanHits": 0.7626,
+     "trainScore": 21,
+     "trainMeanHits": 0.7374,
+     "holdoutScore": 10021,
+     "holdoutMeanHits": 0.7879,
+     "scoreShrink": 477.1905,
+     "parityWithLeague": true
+    },
+    {
+     "id": "couponSweepCompleter",
+     "name": "Coupon-Collector 49-Ball Sweep Completer",
+     "family": "Gap & Due",
+     "leagueRank": 30,
+     "leagueScore": 1430,
+     "folds": 1188,
+     "score": 1430,
+     "meanHits": 0.7365,
+     "trainScore": 9,
+     "trainMeanHits": 0.7071,
+     "holdoutScore": 1421,
+     "holdoutMeanHits": 0.766,
+     "scoreShrink": 157.8889,
+     "parityWithLeague": true
+    },
+    {
+     "id": "maxEntropy",
+     "name": "Max Entropy & Bonus Bridge",
+     "family": "Structure",
+     "leagueRank": 31,
+     "leagueScore": 1244,
+     "folds": 1188,
+     "score": 1244,
+     "meanHits": 0.7323,
+     "trainScore": 132,
+     "trainMeanHits": 0.702,
+     "holdoutScore": 1112,
+     "holdoutMeanHits": 0.7626,
+     "scoreShrink": 8.4242,
+     "parityWithLeague": true
+    },
+    {
+     "id": "corners",
+     "name": "Board Corners",
+     "family": "Pattern",
+     "leagueRank": 32,
+     "leagueScore": 1220,
+     "folds": 1188,
+     "score": 1220,
+     "meanHits": 0.7492,
+     "trainScore": 10,
+     "trainMeanHits": 0.6902,
+     "holdoutScore": 1210,
+     "holdoutMeanHits": 0.8081,
+     "scoreShrink": 121,
+     "parityWithLeague": true
+    },
+    {
+     "id": "hot40",
+     "name": "Hot 40-Draw Streak",
+     "family": "Hot & Cold",
+     "leagueRank": 33,
+     "leagueScore": 1049,
+     "folds": 1188,
+     "score": 1049,
+     "meanHits": 0.7643,
+     "trainScore": 25,
+     "trainMeanHits": 0.7576,
+     "holdoutScore": 1024,
+     "holdoutMeanHits": 0.771,
+     "scoreShrink": 40.96,
+     "parityWithLeague": true
+    },
+    {
+     "id": "hunterColossus",
+     "name": "Hunter Colossus",
+     "family": "Sovereigns",
+     "leagueRank": 34,
+     "leagueScore": 836,
+     "folds": 1188,
+     "score": 836,
+     "meanHits": 0.7702,
+     "trainScore": 329,
+     "trainMeanHits": 0.7559,
+     "holdoutScore": 507,
+     "holdoutMeanHits": 0.7845,
+     "scoreShrink": 1.541,
+     "parityWithLeague": true
+    },
+    {
+     "id": "hunterImperium",
+     "name": "Hunter Imperium",
+     "family": "Sovereigns",
+     "leagueRank": 35,
+     "leagueScore": 835,
+     "folds": 1188,
+     "score": 835,
+     "meanHits": 0.7854,
+     "trainScore": 423,
+     "trainMeanHits": 0.8485,
+     "holdoutScore": 412,
+     "holdoutMeanHits": 0.7222,
+     "scoreShrink": 0.974,
+     "parityWithLeague": true
+    },
+    {
+     "id": "hunterBehemoth",
+     "name": "Hunter Behemoth",
+     "family": "Sovereigns",
+     "leagueRank": 36,
+     "leagueScore": 829,
+     "folds": 1188,
+     "score": 829,
+     "meanHits": 0.7702,
+     "trainScore": 412,
+     "trainMeanHits": 0.7593,
+     "holdoutScore": 417,
+     "holdoutMeanHits": 0.7811,
+     "scoreShrink": 1.0121,
+     "parityWithLeague": true
+    },
+    {
+     "id": "tempoAllegro",
+     "name": "Tempo Allegro",
+     "family": "Tempos",
+     "leagueRank": 37,
+     "leagueScore": 557,
+     "folds": 1188,
+     "score": 557,
+     "meanHits": 0.798,
+     "trainScore": 129,
+     "trainMeanHits": 0.8367,
+     "holdoutScore": 428,
+     "holdoutMeanHits": 0.7593,
+     "scoreShrink": 3.3178,
+     "parityWithLeague": true
+    },
+    {
+     "id": "clusterDensity",
+     "name": "CLUSTER-DENSITY Pair Graph",
+     "family": "Pairs",
+     "leagueRank": 38,
+     "leagueScore": 553,
+     "folds": 1188,
+     "score": 553,
+     "meanHits": 0.7845,
+     "trainScore": 541,
+     "trainMeanHits": 0.8081,
+     "holdoutScore": 12,
+     "holdoutMeanHits": 0.7609,
+     "scoreShrink": 0.0222,
+     "parityWithLeague": true
+    },
+    {
+     "id": "mod10Line",
+     "name": "One Per Tail Digit",
+     "family": "Structure",
+     "leagueRank": 39,
+     "leagueScore": 528,
+     "folds": 1188,
+     "score": 528,
+     "meanHits": 0.7828,
+     "trainScore": 119,
+     "trainMeanHits": 0.7626,
+     "holdoutScore": 409,
+     "holdoutMeanHits": 0.803,
+     "scoreShrink": 3.437,
+     "parityWithLeague": true
+    },
+    {
+     "id": "dualRuns",
+     "name": "Double Consecutive Runs",
+     "family": "Structure",
+     "leagueRank": 40,
+     "leagueScore": 449,
+     "folds": 1188,
+     "score": 449,
+     "meanHits": 0.7247,
+     "trainScore": 321,
+     "trainMeanHits": 0.7155,
+     "holdoutScore": 128,
+     "holdoutMeanHits": 0.734,
+     "scoreShrink": 0.3988,
+     "parityWithLeague": true
+    },
+    {
+     "id": "sumOLS",
+     "name": "Sum Regression (OLS)",
+     "family": "Sum Band",
+     "leagueRank": 41,
+     "leagueScore": 449,
+     "folds": 1188,
+     "score": 449,
+     "meanHits": 0.7138,
+     "trainScore": 328,
+     "trainMeanHits": 0.7088,
+     "holdoutScore": 121,
+     "holdoutMeanHits": 0.7189,
+     "scoreShrink": 0.3689,
+     "parityWithLeague": true
+    },
+    {
+     "id": "ewma20",
+     "name": "EWMA 20",
+     "family": "Other",
+     "leagueRank": 42,
+     "leagueScore": 447,
+     "folds": 1188,
+     "score": 447,
+     "meanHits": 0.7466,
+     "trainScore": 222,
+     "trainMeanHits": 0.7424,
+     "holdoutScore": 225,
+     "holdoutMeanHits": 0.7508,
+     "scoreShrink": 1.0135,
+     "parityWithLeague": true
+    },
+    {
+     "id": "mod9Line",
+     "name": "Residue-4 Line",
+     "family": "Structure",
+     "leagueRank": 43,
+     "leagueScore": 429,
+     "folds": 1188,
+     "score": 429,
+     "meanHits": 0.7576,
+     "trainScore": 5,
+     "trainMeanHits": 0.729,
+     "holdoutScore": 424,
+     "holdoutMeanHits": 0.7862,
+     "scoreShrink": 84.8,
+     "parityWithLeague": true
+    },
+    {
+     "id": "zodRooster",
+     "name": "Rooster Column",
+     "family": "Zodiac",
+     "leagueRank": 44,
+     "leagueScore": 420,
+     "folds": 1188,
+     "score": 420,
+     "meanHits": 0.7441,
+     "trainScore": 211,
+     "trainMeanHits": 0.7071,
+     "holdoutScore": 209,
+     "holdoutMeanHits": 0.7811,
+     "scoreShrink": 0.9905,
+     "parityWithLeague": true
+    },
+    {
+     "id": "barbellHotCold",
+     "name": "Hot–Cold Barbell",
+     "family": "Blends",
+     "leagueRank": 45,
+     "leagueScore": 419,
+     "folds": 1188,
+     "score": 419,
+     "meanHits": 0.7172,
+     "trainScore": 109,
+     "trainMeanHits": 0.7357,
+     "holdoutScore": 310,
+     "holdoutMeanHits": 0.6987,
+     "scoreShrink": 2.844,
+     "parityWithLeague": true
+    },
+    {
+     "id": "sandwichLine",
+     "name": "Hot–Cold Sandwich",
+     "family": "Other",
+     "leagueRank": 46,
+     "leagueScore": 419,
+     "folds": 1188,
+     "score": 419,
+     "meanHits": 0.7172,
+     "trainScore": 109,
+     "trainMeanHits": 0.7357,
+     "holdoutScore": 310,
+     "holdoutMeanHits": 0.6987,
+     "scoreShrink": 2.844,
+     "parityWithLeague": true
+    },
+    {
+     "id": "tempoAndante",
+     "name": "Tempo Andante",
+     "family": "Tempos",
+     "leagueRank": 47,
+     "leagueScore": 388,
+     "folds": 1188,
+     "score": 388,
+     "meanHits": 0.7534,
+     "trainScore": 239,
+     "trainMeanHits": 0.7475,
+     "holdoutScore": 149,
+     "holdoutMeanHits": 0.7593,
+     "scoreShrink": 0.6234,
+     "parityWithLeague": true
+    },
+    {
+     "id": "haloExpand",
+     "name": "Halo Expand",
+     "family": "Other",
+     "leagueRank": 48,
+     "leagueScore": 360,
+     "folds": 1188,
+     "score": 360,
+     "meanHits": 0.718,
+     "trainScore": 319,
+     "trainMeanHits": 0.7071,
+     "holdoutScore": 41,
+     "holdoutMeanHits": 0.729,
+     "scoreShrink": 0.1285,
+     "parityWithLeague": true
+    },
+    {
+     "id": "lagMixCarry",
+     "name": "LAG-MIX Carry Vote",
+     "family": "Momentum",
+     "leagueRank": 49,
+     "leagueScore": 353,
+     "folds": 1188,
+     "score": 353,
+     "meanHits": 0.7626,
+     "trainScore": 132,
+     "trainMeanHits": 0.7475,
+     "holdoutScore": 221,
+     "holdoutMeanHits": 0.7778,
+     "scoreShrink": 1.6742,
+     "parityWithLeague": true
+    },
+    {
+     "id": "codex4",
+     "name": "Codex Core + 2",
+     "family": "Structure",
+     "leagueRank": 50,
+     "leagueScore": 350,
+     "folds": 1188,
+     "score": 350,
+     "meanHits": 0.7146,
+     "trainScore": 130,
+     "trainMeanHits": 0.7222,
+     "holdoutScore": 220,
+     "holdoutMeanHits": 0.7071,
+     "scoreShrink": 1.6923,
+     "parityWithLeague": true
+    },
+    {
+     "id": "primeSeq",
+     "name": "Prime Line",
+     "family": "Sequence",
+     "leagueRank": 51,
+     "leagueScore": 349,
+     "folds": 1188,
+     "score": 349,
+     "meanHits": 0.7205,
+     "trainScore": 229,
+     "trainMeanHits": 0.7256,
+     "holdoutScore": 120,
+     "holdoutMeanHits": 0.7155,
+     "scoreShrink": 0.524,
+     "parityWithLeague": true
+    },
+    {
+     "id": "shift24",
+     "name": "Board Shift +24",
+     "family": "Sequence",
+     "leagueRank": 52,
+     "leagueScore": 342,
+     "folds": 1188,
+     "score": 342,
+     "meanHits": 0.7391,
+     "trainScore": 229,
+     "trainMeanHits": 0.7475,
+     "holdoutScore": 113,
+     "holdoutMeanHits": 0.7306,
+     "scoreShrink": 0.4934,
+     "parityWithLeague": true
+    },
+    {
+     "id": "dayHexagram",
+     "name": "I-Ching Hexagram",
+     "family": "Almanac & Time",
+     "leagueRank": 53,
+     "leagueScore": 337,
+     "folds": 1188,
+     "score": 337,
+     "meanHits": 0.7264,
+     "trainScore": 224,
+     "trainMeanHits": 0.7576,
+     "holdoutScore": 113,
+     "holdoutMeanHits": 0.6953,
+     "scoreShrink": 0.5045,
+     "parityWithLeague": true
+    },
+    {
+     "id": "drawWheel",
+     "name": "Draw-Number Wheel",
+     "family": "Other",
+     "leagueRank": 54,
+     "leagueScore": 332,
+     "folds": 1188,
+     "score": 332,
+     "meanHits": 0.7205,
+     "trainScore": 212,
+     "trainMeanHits": 0.7121,
+     "holdoutScore": 120,
+     "holdoutMeanHits": 0.729,
+     "scoreShrink": 0.566,
+     "parityWithLeague": true
+    },
+    {
+     "id": "twiceFive",
+     "name": "Twice-in-Five",
+     "family": "Other",
+     "leagueRank": 55,
+     "leagueScore": 332,
+     "folds": 1188,
+     "score": 332,
+     "meanHits": 0.7601,
+     "trainScore": 7,
+     "trainMeanHits": 0.7744,
+     "holdoutScore": 325,
+     "holdoutMeanHits": 0.7458,
+     "scoreShrink": 46.4286,
+     "parityWithLeague": true
+    },
+    {
+     "id": "primeMirrorComposite",
+     "name": "Prime Mirror Twin & Composites",
+     "family": "Cross-Panel",
+     "leagueRank": 56,
+     "leagueScore": 329,
+     "folds": 1188,
+     "score": 329,
+     "meanHits": 0.7315,
+     "trainScore": 110,
+     "trainMeanHits": 0.7458,
+     "holdoutScore": 219,
+     "holdoutMeanHits": 0.7172,
+     "scoreShrink": 1.9909,
+     "parityWithLeague": true
+    },
+    {
+     "id": "skip12_20",
+     "name": "Skip 12–20 Window",
+     "family": "Gap & Due",
+     "leagueRank": 57,
+     "leagueScore": 322,
+     "folds": 1188,
+     "score": 322,
+     "meanHits": 0.7652,
+     "trainScore": 210,
+     "trainMeanHits": 0.7357,
+     "holdoutScore": 112,
+     "holdoutMeanHits": 0.7946,
+     "scoreShrink": 0.5333,
+     "parityWithLeague": true
+    },
+    {
+     "id": "highSumVolumeBarbell",
+     "name": "High-Sum Volume Barbell",
+     "family": "Cross-Panel",
+     "leagueRank": 58,
+     "leagueScore": 321,
+     "folds": 1188,
+     "score": 321,
+     "meanHits": 0.7677,
+     "trainScore": 209,
+     "trainMeanHits": 0.7845,
+     "holdoutScore": 112,
+     "holdoutMeanHits": 0.7508,
+     "scoreShrink": 0.5359,
+     "parityWithLeague": true
+    },
+    {
+     "id": "tempoVivace",
+     "name": "Tempo Vivace",
+     "family": "Tempos",
+     "leagueRank": 59,
+     "leagueScore": 275,
+     "folds": 1188,
+     "score": 275,
+     "meanHits": 0.7483,
+     "trainScore": 38,
+     "trainMeanHits": 0.6953,
+     "holdoutScore": 237,
+     "holdoutMeanHits": 0.8013,
+     "scoreShrink": 6.2368,
+     "parityWithLeague": true
+    },
+    {
+     "id": "seg7Due",
+     "name": "Segment Deficit",
+     "family": "Structure",
+     "leagueRank": 60,
+     "leagueScore": 252,
+     "folds": 1188,
+     "score": 252,
+     "meanHits": 0.7298,
+     "trainScore": 21,
+     "trainMeanHits": 0.7088,
+     "holdoutScore": 231,
+     "holdoutMeanHits": 0.7508,
+     "scoreShrink": 11,
+     "parityWithLeague": true
+    },
+    {
+     "id": "sumTgt135",
+     "name": "Sum Target 135",
+     "family": "Other",
+     "leagueRank": 61,
+     "leagueScore": 251,
+     "folds": 1188,
+     "score": 251,
+     "meanHits": 0.7071,
+     "trainScore": 232,
+     "trainMeanHits": 0.7104,
+     "holdoutScore": 19,
+     "holdoutMeanHits": 0.7037,
+     "scoreShrink": 0.0819,
+     "parityWithLeague": true
+    },
+    {
+     "id": "centerCross",
+     "name": "Centre Cross",
+     "family": "Pattern",
+     "leagueRank": 62,
+     "leagueScore": 250,
+     "folds": 1188,
+     "score": 250,
+     "meanHits": 0.7492,
+     "trainScore": 130,
+     "trainMeanHits": 0.7912,
+     "holdoutScore": 120,
+     "holdoutMeanHits": 0.7071,
+     "scoreShrink": 0.9231,
+     "parityWithLeague": true
+    },
+    {
+     "id": "ganzhiStemHarmony",
+     "name": "Ganzhi Stem Day-Regime Harmony",
+     "family": "Almanac & Time",
+     "leagueRank": 63,
+     "leagueScore": 250,
+     "folds": 1188,
+     "score": 250,
+     "meanHits": 0.7719,
+     "trainScore": 213,
+     "trainMeanHits": 0.7811,
+     "holdoutScore": 37,
+     "holdoutMeanHits": 0.7626,
+     "scoreShrink": 0.1737,
+     "parityWithLeague": true
+    },
+    {
+     "id": "heSumParity",
+     "name": "He-Sum Parity Balance",
+     "family": "Other",
+     "leagueRank": 64,
+     "leagueScore": 250,
+     "folds": 1188,
+     "score": 250,
+     "meanHits": 0.6995,
+     "trainScore": 122,
+     "trainMeanHits": 0.6734,
+     "holdoutScore": 128,
+     "holdoutMeanHits": 0.7256,
+     "scoreShrink": 1.0492,
+     "parityWithLeague": true
+    },
+    {
+     "id": "hotcold42",
+     "name": "Hot 4 · Cold 2",
+     "family": "Blends",
+     "leagueRank": 65,
+     "leagueScore": 249,
+     "folds": 1188,
+     "score": 249,
+     "meanHits": 0.713,
+     "trainScore": 121,
+     "trainMeanHits": 0.7104,
+     "holdoutScore": 128,
+     "holdoutMeanHits": 0.7155,
+     "scoreShrink": 1.0579,
+     "parityWithLeague": true
+    },
+    {
+     "id": "acLock7",
+     "name": "AC Lock 7",
+     "family": "Structure",
+     "leagueRank": 66,
+     "leagueScore": 248,
+     "folds": 1188,
+     "score": 248,
+     "meanHits": 0.6944,
+     "trainScore": 220,
+     "trainMeanHits": 0.6667,
+     "holdoutScore": 28,
+     "holdoutMeanHits": 0.7222,
+     "scoreShrink": 0.1273,
+     "parityWithLeague": true
+    },
+    {
+     "id": "repeat",
+     "name": "Masked Repeat Echo",
+     "family": "Sequence",
+     "leagueRank": 67,
+     "leagueScore": 248,
+     "folds": 1188,
+     "score": 248,
+     "meanHits": 0.7012,
+     "trainScore": 131,
+     "trainMeanHits": 0.6886,
+     "holdoutScore": 117,
+     "holdoutMeanHits": 0.7138,
+     "scoreShrink": 0.8931,
+     "parityWithLeague": true
+    },
+    {
+     "id": "ewma200",
+     "name": "EWMA 200",
+     "family": "Other",
+     "leagueRank": 68,
+     "leagueScore": 245,
+     "folds": 1188,
+     "score": 245,
+     "meanHits": 0.7382,
+     "trainScore": 21,
+     "trainMeanHits": 0.7441,
+     "holdoutScore": 224,
+     "holdoutMeanHits": 0.7323,
+     "scoreShrink": 10.6667,
+     "parityWithLeague": true
+    },
+    {
+     "id": "tempoFortissimo",
+     "name": "Tempo Fortissimo",
+     "family": "Tempos",
+     "leagueRank": 69,
+     "leagueScore": 242,
+     "folds": 1188,
+     "score": 242,
+     "meanHits": 0.7795,
+     "trainScore": 21,
+     "trainMeanHits": 0.7811,
+     "holdoutScore": 221,
+     "holdoutMeanHits": 0.7778,
+     "scoreShrink": 10.5238,
+     "parityWithLeague": true
+    },
+    {
+     "id": "wxMetal",
+     "name": "Metal Element Set",
+     "family": "Mark Six Charts",
+     "leagueRank": 70,
+     "leagueScore": 241,
+     "folds": 1188,
+     "score": 241,
+     "meanHits": 0.7525,
+     "trainScore": 129,
+     "trainMeanHits": 0.7626,
+     "holdoutScore": 112,
+     "holdoutMeanHits": 0.7424,
+     "scoreShrink": 0.8682,
+     "parityWithLeague": true
+    },
+    {
+     "id": "cusumDriftCounter",
+     "name": "CUSUM Structural Drift Counter-Tilt",
+     "family": "Indicators",
+     "leagueRank": 71,
+     "leagueScore": 240,
+     "folds": 1188,
+     "score": 240,
+     "meanHits": 0.7508,
+     "trainScore": 130,
+     "trainMeanHits": 0.7492,
+     "holdoutScore": 110,
+     "holdoutMeanHits": 0.7525,
+     "scoreShrink": 0.8462,
+     "parityWithLeague": true
+    },
+    {
+     "id": "lucas",
+     "name": "Lucas Numbers",
+     "family": "Sequence",
+     "leagueRank": 72,
+     "leagueScore": 240,
+     "folds": 1188,
+     "score": 240,
+     "meanHits": 0.7146,
+     "trainScore": 34,
+     "trainMeanHits": 0.7374,
+     "holdoutScore": 206,
+     "holdoutMeanHits": 0.6919,
+     "scoreShrink": 6.0588,
+     "parityWithLeague": true
+    },
+    {
+     "id": "markov2",
+     "name": "Markov Lift (Lag 2)",
+     "family": "Sequence",
+     "leagueRank": 73,
+     "leagueScore": 240,
+     "folds": 1188,
+     "score": 240,
+     "meanHits": 0.7315,
+     "trainScore": 209,
+     "trainMeanHits": 0.7475,
+     "holdoutScore": 31,
+     "holdoutMeanHits": 0.7155,
+     "scoreShrink": 0.1483,
+     "parityWithLeague": true
+    },
+    {
+     "id": "acLock9",
+     "name": "AC Lock 9",
+     "family": "Structure",
+     "leagueRank": 74,
+     "leagueScore": 239,
+     "folds": 1188,
+     "score": 239,
+     "meanHits": 0.7104,
+     "trainScore": 121,
+     "trainMeanHits": 0.6919,
+     "holdoutScore": 118,
+     "holdoutMeanHits": 0.729,
+     "scoreShrink": 0.9752,
+     "parityWithLeague": true
+    },
+    {
+     "id": "tempoPresto",
+     "name": "Tempo Presto",
+     "family": "Tempos",
+     "leagueRank": 75,
+     "leagueScore": 239,
+     "folds": 1188,
+     "score": 239,
+     "meanHits": 0.7736,
+     "trainScore": 113,
+     "trainMeanHits": 0.7407,
+     "holdoutScore": 126,
+     "holdoutMeanHits": 0.8064,
+     "scoreShrink": 1.115,
+     "parityWithLeague": true
+    },
+    {
+     "id": "repeat2",
+     "name": "Two-Back Repeats",
+     "family": "Sequence",
+     "leagueRank": 76,
+     "leagueScore": 237,
+     "folds": 1188,
+     "score": 237,
+     "meanHits": 0.7416,
+     "trainScore": 125,
+     "trainMeanHits": 0.729,
+     "holdoutScore": 112,
+     "holdoutMeanHits": 0.7542,
+     "scoreShrink": 0.896,
+     "parityWithLeague": true
+    },
+    {
+     "id": "macdBullCross",
+     "name": "MACD 12/26/9 Acceleration Crossover",
+     "family": "Indicators",
+     "leagueRank": 77,
+     "leagueScore": 236,
+     "folds": 1188,
+     "score": 236,
+     "meanHits": 0.782,
+     "trainScore": 120,
+     "trainMeanHits": 0.7643,
+     "holdoutScore": 116,
+     "holdoutMeanHits": 0.7997,
+     "scoreShrink": 0.9667,
+     "parityWithLeague": true
+    },
+    {
+     "id": "ewma100",
+     "name": "EWMA 100",
+     "family": "Other",
+     "leagueRank": 78,
+     "leagueScore": 234,
+     "folds": 1188,
+     "score": 234,
+     "meanHits": 0.7332,
+     "trainScore": 117,
+     "trainMeanHits": 0.7189,
+     "holdoutScore": 117,
+     "holdoutMeanHits": 0.7475,
+     "scoreShrink": 1,
+     "parityWithLeague": true
+    },
+    {
+     "id": "affinityAnchor",
+     "name": "Pair-Affinity Anchor",
+     "family": "Other",
+     "leagueRank": 79,
+     "leagueScore": 233,
+     "folds": 1188,
+     "score": 233,
+     "meanHits": 0.7483,
+     "trainScore": 114,
+     "trainMeanHits": 0.729,
+     "holdoutScore": 119,
+     "holdoutMeanHits": 0.7677,
+     "scoreShrink": 1.0439,
+     "parityWithLeague": true
+    },
+    {
+     "id": "odd42high42",
+     "name": "4 Odd · 4 High Mix",
+     "family": "Structure",
+     "leagueRank": 80,
+     "leagueScore": 233,
+     "folds": 1188,
+     "score": 233,
+     "meanHits": 0.718,
+     "trainScore": 119,
+     "trainMeanHits": 0.6869,
+     "holdoutScore": 114,
+     "holdoutMeanHits": 0.7492,
+     "scoreShrink": 0.958,
+     "parityWithLeague": true
+    },
+    {
+     "id": "wuxingFire",
+     "name": "Fire Element Set",
+     "family": "Mark Six Charts",
+     "leagueRank": 81,
+     "leagueScore": 231,
+     "folds": 1188,
+     "score": 231,
+     "meanHits": 0.713,
+     "trainScore": 23,
+     "trainMeanHits": 0.7205,
+     "holdoutScore": 208,
+     "holdoutMeanHits": 0.7054,
+     "scoreShrink": 9.0435,
+     "parityWithLeague": true
+    },
+    {
+     "id": "consecDue200",
+     "name": "Longest-Unseen Pair",
+     "family": "Sequence",
+     "leagueRank": 82,
+     "leagueScore": 230,
+     "folds": 1188,
+     "score": 230,
+     "meanHits": 0.7542,
+     "trainScore": 106,
+     "trainMeanHits": 0.7508,
+     "holdoutScore": 124,
+     "holdoutMeanHits": 0.7576,
+     "scoreShrink": 1.1698,
+     "parityWithLeague": true
+    },
+    {
+     "id": "mansion28",
+     "name": "28 Lunar Mansions",
+     "family": "Almanac & Time",
+     "leagueRank": 83,
+     "leagueScore": 229,
+     "folds": 1188,
+     "score": 229,
+     "meanHits": 0.7525,
+     "trainScore": 114,
+     "trainMeanHits": 0.7273,
+     "holdoutScore": 115,
+     "holdoutMeanHits": 0.7778,
+     "scoreShrink": 1.0088,
+     "parityWithLeague": true
+    },
+    {
+     "id": "velocitySurfer",
+     "name": "Short-Term Velocity Surfer",
+     "family": "Momentum",
+     "leagueRank": 84,
+     "leagueScore": 225,
+     "folds": 1188,
+     "score": 225,
+     "meanHits": 0.7407,
+     "trainScore": 208,
+     "trainMeanHits": 0.7407,
+     "holdoutScore": 17,
+     "holdoutMeanHits": 0.7407,
+     "scoreShrink": 0.0817,
+     "parityWithLeague": true
+    },
+    {
+     "id": "geoPattern",
+     "name": "Geometric Steps",
+     "family": "Pattern",
+     "leagueRank": 85,
+     "leagueScore": 224,
+     "folds": 1188,
+     "score": 224,
+     "meanHits": 0.7264,
+     "trainScore": 117,
+     "trainMeanHits": 0.7896,
+     "holdoutScore": 107,
+     "holdoutMeanHits": 0.6633,
+     "scoreShrink": 0.9145,
+     "parityWithLeague": true
+    },
+    {
+     "id": "pell",
+     "name": "Pell Numbers",
+     "family": "Sequence",
+     "leagueRank": 86,
+     "leagueScore": 221,
+     "folds": 1188,
+     "score": 221,
+     "meanHits": 0.7189,
+     "trainScore": 110,
+     "trainMeanHits": 0.7222,
+     "holdoutScore": 111,
+     "holdoutMeanHits": 0.7155,
+     "scoreShrink": 1.0091,
+     "parityWithLeague": true
+    },
+    {
+     "id": "digitSumLadder",
+     "name": "Digit-Sum Ladder",
+     "family": "Other",
+     "leagueRank": 87,
+     "leagueScore": 153,
+     "folds": 1188,
+     "score": 153,
+     "meanHits": 0.7374,
+     "trainScore": 133,
+     "trainMeanHits": 0.7222,
+     "holdoutScore": 20,
+     "holdoutMeanHits": 0.7525,
+     "scoreShrink": 0.1504,
+     "parityWithLeague": true
+    },
+    {
+     "id": "tailDeficit30",
+     "name": "Cold-Tail Rebound",
+     "family": "Structure",
+     "leagueRank": 88,
+     "leagueScore": 152,
+     "folds": 1188,
+     "score": 152,
+     "meanHits": 0.7239,
+     "trainScore": 145,
+     "trainMeanHits": 0.7256,
+     "holdoutScore": 7,
+     "holdoutMeanHits": 0.7222,
+     "scoreShrink": 0.0483,
+     "parityWithLeague": true
+    },
+    {
+     "id": "tripleAnchor",
+     "name": "Triple Anchor",
+     "family": "Triples",
+     "leagueRank": 89,
+     "leagueScore": 152,
+     "folds": 1188,
+     "score": 152,
+     "meanHits": 0.7222,
+     "trainScore": 41,
+     "trainMeanHits": 0.7088,
+     "holdoutScore": 111,
+     "holdoutMeanHits": 0.7357,
+     "scoreShrink": 2.7073,
+     "parityWithLeague": true
+    },
+    {
+     "id": "hybridFSB",
+     "name": "Feng-Shui × FFG",
+     "family": "Ensemble",
+     "leagueRank": 90,
+     "leagueScore": 150,
+     "folds": 1188,
+     "score": 150,
+     "meanHits": 0.734,
+     "trainScore": 34,
+     "trainMeanHits": 0.7525,
+     "holdoutScore": 116,
+     "holdoutMeanHits": 0.7155,
+     "scoreShrink": 3.4118,
+     "parityWithLeague": true
+    },
+    {
+     "id": "pentagonal",
+     "name": "Pentagonal Numbers",
+     "family": "Sequence",
+     "leagueRank": 91,
+     "leagueScore": 150,
+     "folds": 1188,
+     "score": 150,
+     "meanHits": 0.7542,
+     "trainScore": 19,
+     "trainMeanHits": 0.7306,
+     "holdoutScore": 131,
+     "holdoutMeanHits": 0.7778,
+     "scoreShrink": 6.8947,
+     "parityWithLeague": true
+    },
+    {
+     "id": "codexPlaySkip",
+     "name": "Codex Parity Picker",
+     "family": "Structure",
+     "leagueRank": 92,
+     "leagueScore": 149,
+     "folds": 1188,
+     "score": 149,
+     "meanHits": 0.7121,
+     "trainScore": 121,
+     "trainMeanHits": 0.6936,
+     "holdoutScore": 28,
+     "holdoutMeanHits": 0.7306,
+     "scoreShrink": 0.2314,
+     "parityWithLeague": true
+    },
+    {
+     "id": "parity33",
+     "name": "3-3 Parity Picker",
+     "family": "Structure",
+     "leagueRank": 93,
+     "leagueScore": 149,
+     "folds": 1188,
+     "score": 149,
+     "meanHits": 0.7113,
+     "trainScore": 120,
+     "trainMeanHits": 0.6902,
+     "holdoutScore": 29,
+     "holdoutMeanHits": 0.7323,
+     "scoreShrink": 0.2417,
+     "parityWithLeague": true
+    },
+    {
+     "id": "zigzagCurvatureSawtooth",
+     "name": "Second-Difference Zigzag Sawtooth",
+     "family": "Sequence",
+     "leagueRank": 94,
+     "leagueScore": 144,
+     "folds": 1188,
+     "score": 144,
+     "meanHits": 0.7382,
+     "trainScore": 124,
+     "trainMeanHits": 0.7357,
+     "holdoutScore": 20,
+     "holdoutMeanHits": 0.7407,
+     "scoreShrink": 0.1613,
+     "parityWithLeague": true
+    },
+    {
+     "id": "dateWheel",
+     "name": "Date Wheel",
+     "family": "Other",
+     "leagueRank": 95,
+     "leagueScore": 143,
+     "folds": 1188,
+     "score": 143,
+     "meanHits": 0.713,
+     "trainScore": 118,
+     "trainMeanHits": 0.7003,
+     "holdoutScore": 25,
+     "holdoutMeanHits": 0.7256,
+     "scoreShrink": 0.2119,
+     "parityWithLeague": true
+    },
+    {
+     "id": "lattice6",
+     "name": "Lattice ×6",
+     "family": "Pattern",
+     "leagueRank": 96,
+     "leagueScore": 142,
+     "folds": 1188,
+     "score": 142,
+     "meanHits": 0.7727,
+     "trainScore": 21,
+     "trainMeanHits": 0.7778,
+     "holdoutScore": 121,
+     "holdoutMeanHits": 0.7677,
+     "scoreShrink": 5.7619,
+     "parityWithLeague": true
+    },
+    {
+     "id": "primesHigh",
+     "name": "High Primes",
+     "family": "Sequence",
+     "leagueRank": 97,
+     "leagueScore": 142,
+     "folds": 1188,
+     "score": 142,
+     "meanHits": 0.75,
+     "trainScore": 22,
+     "trainMeanHits": 0.7525,
+     "holdoutScore": 120,
+     "holdoutMeanHits": 0.7475,
+     "scoreShrink": 5.4545,
+     "parityWithLeague": true
+    },
+    {
+     "id": "subgraphCliqueMarkovFlow",
+     "name": "Induced 6-Node Subgraph & Markov Flow",
+     "family": "Sequence",
+     "leagueRank": 98,
+     "leagueScore": 142,
+     "folds": 1188,
+     "score": 142,
+     "meanHits": 0.7508,
+     "trainScore": 121,
+     "trainMeanHits": 0.7407,
+     "holdoutScore": 21,
+     "holdoutMeanHits": 0.7609,
+     "scoreShrink": 0.1736,
+     "parityWithLeague": true
+    },
+    {
+     "id": "zodDragon",
+     "name": "Dragon Column",
+     "family": "Zodiac",
+     "leagueRank": 99,
+     "leagueScore": 142,
+     "folds": 1188,
+     "score": 142,
+     "meanHits": 0.7407,
+     "trainScore": 122,
+     "trainMeanHits": 0.7239,
+     "holdoutScore": 20,
+     "holdoutMeanHits": 0.7576,
+     "scoreShrink": 0.1639,
+     "parityWithLeague": true
+    },
+    {
+     "id": "positional",
+     "name": "Positional Favourites",
+     "family": "Structure",
+     "leagueRank": 100,
+     "leagueScore": 141,
+     "folds": 1188,
+     "score": 141,
+     "meanHits": 0.7685,
+     "trainScore": 119,
+     "trainMeanHits": 0.7508,
+     "holdoutScore": 22,
+     "holdoutMeanHits": 0.7862,
+     "scoreShrink": 0.1849,
+     "parityWithLeague": true
+    },
+    {
+     "id": "multiFactorQuant6",
+     "name": "Multi-Factor 6-Quant Composite Scorecard",
+     "family": "Ensemble",
+     "leagueRank": 101,
+     "leagueScore": 140,
+     "folds": 1188,
+     "score": 140,
+     "meanHits": 0.7332,
+     "trainScore": 110,
+     "trainMeanHits": 0.6818,
+     "holdoutScore": 30,
+     "holdoutMeanHits": 0.7845,
+     "scoreShrink": 0.2727,
+     "parityWithLeague": true
+    },
+    {
+     "id": "quickpick",
+     "name": "Quick Pick Control",
+     "family": "Controls",
+     "leagueRank": 102,
+     "leagueScore": 140,
+     "folds": 1188,
+     "score": 140,
+     "meanHits": 0.718,
+     "trainScore": 123,
+     "trainMeanHits": 0.7475,
+     "holdoutScore": 17,
+     "holdoutMeanHits": 0.6886,
+     "scoreShrink": 0.1382,
+     "parityWithLeague": true
+    },
+    {
+     "id": "rsi14TrendBreakout",
+     "name": "Wilder RSI-14 Momentum Breakout",
+     "family": "Indicators",
+     "leagueRank": 103,
+     "leagueScore": 140,
+     "folds": 1188,
+     "score": 140,
+     "meanHits": 0.7399,
+     "trainScore": 108,
+     "trainMeanHits": 0.7407,
+     "holdoutScore": 32,
+     "holdoutMeanHits": 0.7391,
+     "scoreShrink": 0.2963,
+     "parityWithLeague": true
+    }
+   ]
+  },
+  "ceilingProbe": {
+   "folds": 1188,
+   "variants": 300000,
+   "meanScore": 530.86,
+   "sdScore": 8959.69,
+   "maxScore": 1001224,
+   "maxScoreSeed": 51221,
+   "predictedMaxScore": 45529,
+   "maxScoreFirst50k": 1000161,
+   "maxMeanHits": 0.8451,
+   "maxMeanHitsFirst50k": 0.8283,
+   "meanHits": 0.7347,
+   "prizeRate": 0.0186,
+   "twoPlusRate": 0.151,
+   "topScores": [
+    {
+     "seed": 51221,
+     "score": 1001224,
+     "meanHits": 0.7382
+    },
+    {
+     "seed": 95213,
+     "score": 1001183,
+     "meanHits": 0.7332
+    },
+    {
+     "seed": 124435,
+     "score": 1000252,
+     "meanHits": 0.7273
+    },
+    {
+     "seed": 212466,
+     "score": 1000250,
+     "meanHits": 0.7391
+    },
+    {
+     "seed": 264060,
+     "score": 1000243,
+     "meanHits": 0.7264
+    },
+    {
+     "seed": 60481,
+     "score": 1000228,
+     "meanHits": 0.7247
+    },
+    {
+     "seed": 286853,
+     "score": 1000226,
+     "meanHits": 0.7407
+    },
+    {
+     "seed": 186392,
+     "score": 1000215,
+     "meanHits": 0.7517
+    },
+    {
+     "seed": 36464,
+     "score": 1000161,
+     "meanHits": 0.7433
+    },
+    {
+     "seed": 76795,
+     "score": 1000149,
+     "meanHits": 0.7357
+    }
+   ]
+  },
+  "nullShuffle": {
+   "count": 100,
+   "generator": {
+    "iid": 60,
+    "permuted": 40
+   },
+   "nullProbeM": 50000,
+   "matchedMRealProbe": {
+    "maxScoreFirst50k": 1000161,
+    "maxMeanHitsFirst50k": 0.8283
+   },
+   "statistics": [
+    {
+     "statistic": "r1MaxZ_e45",
+     "real": 2.64,
+     "nullMean": 1.6177,
+     "nullSd": 0.5706,
+     "nullMax": 2.9945,
+     "empiricalP": 0.0495,
+     "exceedsNullAtP01": false,
+     "marginalAtP05": true
+    },
+    {
+     "statistic": "r1MaxZ_e49",
+     "real": 2.25,
+     "nullMean": 1.5146,
+     "nullSd": 0.5672,
+     "nullMax": 3.1524,
+     "empiricalP": 0.1188,
+     "exceedsNullAtP01": false,
+     "marginalAtP05": false
+    },
+    {
+     "statistic": "bestTempoScore_e49",
+     "real": 557,
+     "nullMean": 1269.57,
+     "nullSd": 2667.2913,
+     "nullMax": 10365,
+     "empiricalP": 0.3366,
+     "exceedsNullAtP01": false,
+     "marginalAtP05": false
+    },
+    {
+     "statistic": "probeMaxScore",
+     "real": 1000161,
+     "nullMean": 983795.74,
+     "nullSd": 126137.2196,
+     "nullMax": 1020235,
+     "empiricalP": 0.8515,
+     "exceedsNullAtP01": false,
+     "marginalAtP05": false
+    },
+    {
+     "statistic": "probeMaxMeanHits",
+     "real": 0.8283,
+     "nullMean": 0.8309,
+     "nullSd": 0.0081,
+     "nullMax": 0.8611,
+     "empiricalP": 0.6139,
+     "exceedsNullAtP01": false,
+     "marginalAtP05": false
+    }
+   ],
+   "pValueThreshold": 0.01,
+   "consistentWithNull": true
+  }
+ },
+ "route2": {
+  "era": "e49",
+  "rows": [
+   {
+    "id": "rng-mulberry32-a",
+    "family": "mulberry32",
+    "seedLabel": "a",
+    "folds": 1188,
+    "score": 23,
+    "meanHits": 0.7466,
+    "prizeRate": 0.0194,
+    "twoPlusRate": 0.1633,
+    "bestGroup": 7
+   },
+   {
+    "id": "rng-mulberry32-b",
+    "family": "mulberry32",
+    "seedLabel": "b",
+    "folds": 1188,
+    "score": 47,
+    "meanHits": 0.718,
+    "prizeRate": 0.0168,
+    "twoPlusRate": 0.1406,
+    "bestGroup": 6
+   },
+   {
+    "id": "rng-mulberry32-c",
+    "family": "mulberry32",
+    "seedLabel": "c",
+    "folds": 1188,
+    "score": 426,
+    "meanHits": 0.7306,
+    "prizeRate": 0.0177,
+    "twoPlusRate": 0.1423,
+    "bestGroup": 5
+   },
+   {
+    "id": "rng-mt19937-a",
+    "family": "mt19937",
+    "seedLabel": "a",
+    "folds": 1188,
+    "score": 18,
+    "meanHits": 0.7205,
+    "prizeRate": 0.0152,
+    "twoPlusRate": 0.1456,
+    "bestGroup": 7
+   },
+   {
+    "id": "rng-mt19937-b",
+    "family": "mt19937",
+    "seedLabel": "b",
+    "folds": 1188,
+    "score": 324,
+    "meanHits": 0.7475,
+    "prizeRate": 0.0152,
+    "twoPlusRate": 0.1574,
+    "bestGroup": 5
+   },
+   {
+    "id": "rng-mt19937-c",
+    "family": "mt19937",
+    "seedLabel": "c",
+    "folds": 1188,
+    "score": 30,
+    "meanHits": 0.7458,
+    "prizeRate": 0.0177,
+    "twoPlusRate": 0.1439,
+    "bestGroup": 6
+   },
+   {
+    "id": "rng-philox-a",
+    "family": "philox",
+    "seedLabel": "a",
+    "folds": 1188,
+    "score": 59,
+    "meanHits": 0.7399,
+    "prizeRate": 0.0194,
+    "twoPlusRate": 0.165,
+    "bestGroup": 6
+   },
+   {
+    "id": "rng-philox-b",
+    "family": "philox",
+    "seedLabel": "b",
+    "folds": 1188,
+    "score": 49,
+    "meanHits": 0.7407,
+    "prizeRate": 0.0185,
+    "twoPlusRate": 0.1549,
+    "bestGroup": 6
+   },
+   {
+    "id": "rng-philox-c",
+    "family": "philox",
+    "seedLabel": "c",
+    "folds": 1188,
+    "score": 236,
+    "meanHits": 0.713,
+    "prizeRate": 0.0168,
+    "twoPlusRate": 0.1574,
+    "bestGroup": 5
+   }
+  ],
+  "bestScore": 426,
+  "note": "Search-space expansion only. These variants multiply quickpick coverage across PRNG engines; a hit under a new engine is not evidence of predictive skill — the winner's curse grows with the search size M, and the expected line for the next draw stays the uniform baseline (chance meanHits 0.7347, chance prize rate 1.86% per ticket)."
+ },
+ "verdict": {
+  "primaryMetric": "out-of-sample mean main-number hits per ticket vs the era chance null",
+  "route1PrimaryEdgeSignificant": false,
+  "nullShuffleConsistentWithUniformity": true,
+  "leagueWinnerCurse": {
+   "meanTop10ScoreShrink": 0.3038,
+   "rankCorrelationFullVsHoldout": 0.7085
+  },
+  "headline": "NO verifiable statistical edge. No walk-forward Bayesian biased-pool variant survives BH-FDR q<0.05, and the real archive's top scores sit inside the 100-history null distribution at the p<0.01 bar (empirical p ≥ 0.01 on every statistic): every max score in the league is an artifact of search size M — for a light-tailed statistic ≈ μ + σ√(2 ln M); for prize-point scores the matched-M empirical null is the ceiling — not a physical bias of the machine.",
+  "details": [
+   "Best 6/45 walk-forward variant bpTop-rolling250: edge 0.0907 hits/ticket, 95% CI [0.0195, 0.1553] excludes 0 but q=0.1079 ≥ 0.05, quarter edges [0.1139, 0.1272, 0.0477, 0.0742] — sign-stable.",
+   "Best 6/49 walk-forward variant bpSample-expanding-w2: edge 0.0507 hits/ticket, 95% CI [0.0077, 0.0961] excludes 0 but q=0.2054 ≥ 0.05, quarter edges [0.1104, 0.0667, -0.0781, 0.1037] — sign flips across quarters.",
+   "Marginal null-shuffle rows (p in [0.01, 0.05), below the review's p<0.01 bar — reported, not claimed): r1MaxZ_e45 p=0.0495.",
+   "Ceiling probe: best of 300,000 uniform variants scored 1001224 league-weighted points. The Gaussian reference μ+σ√(2 ln M) = 45529 deliberately underestimates a prize-point null — a single top-tier match inside M variants dominates the tail — so the authoritative ceiling is the matched-M empirical null: 983795.74 ± 126137.2196 over 100 synthetic histories (real: 1000161 at M=50000, p=0.8515)."
+  ]
+ }
+}

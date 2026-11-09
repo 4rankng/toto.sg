@@ -26,6 +26,15 @@
 //                    not carry a payout claim — the league scores matches, so
 //                    a prize amount, a share or an EV figure in the artifact is
 //                    a contract breach, not a formatting nit.
+//   edge-verification.json
+//                    the Route 1/4/2 edge experiment (`npm run edge`): era
+//                    accounting must match the archive's 2014-10-09 split, the
+//                    Route 1 grid must carry the full variant set with BH-FDR
+//                    q-values and 4 stability windows, the league audit must
+//                    regrade every row to its strategies.json score, the
+//                    ceiling probe must sit on the uniform null, the
+//                    null-shuffle flags must be internally consistent, and no
+//                    string in the artifact may carry a payout claim.
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { CHANCE } from "./lib/league-eval.mjs";
@@ -241,6 +250,103 @@ const checkPrizeEvents = (events, league, draws) => {
 
 
 
+const checkEdgeVerification = (edge, draws, league) => {
+    check(edge?.meta != null, "edge-verification.json: missing meta");
+    check(typeof edge?.meta?.generatedAt === "string", "edge-verification.json: meta.generatedAt missing");
+    check(Number.isInteger(edge?.meta?.warmupDraws) && edge.meta.warmupDraws > 0, "edge-verification.json: warmupDraws missing");
+    check(Number.isInteger(edge?.meta?.probeM) && edge.meta.probeM >= 10000, "edge-verification.json: probeM must be ≥ 10000 (a smaller ceiling probe cannot support the verdict)");
+    check(Number.isInteger(edge?.meta?.nullHistories) && edge.meta.nullHistories >= 20, "edge-verification.json: nullHistories must be ≥ 20 for an empirical p-value");
+    check(Array.isArray(edge?.meta?.methodNotes) && edge.meta.methodNotes.length > 0, "edge-verification.json: methodNotes missing");
+
+    const era45 = draws.filter((d) => d.date < "2014-10-09");
+    const era49 = draws.filter((d) => d.date >= "2014-10-09");
+    const acc = edge?.eraAccounting;
+    check(acc?.e45?.draws === era45.length && acc?.e49?.draws === era49.length, "edge-verification.json: era accounting must match the archive's 2014-10-09 split");
+    check(acc?.e45?.pool === 45 && acc?.e49?.pool === 49, "edge-verification.json: era pools must be 45 and 49");
+    check(acc?.e45?.folds === era45.length - edge.meta.warmupDraws && acc?.e49?.folds === era49.length - edge.meta.warmupDraws, "edge-verification.json: fold counts must be era draws minus warmup");
+
+    for (const eraKey of ["e45", "e49"]) {
+        const grid = edge?.route1?.[eraKey];
+        check(grid?.folds === acc?.[eraKey]?.folds, `edge-verification.json: route1.${eraKey} fold count must match eraAccounting`);
+        check(Array.isArray(grid?.variants) && grid.variants.length > 0, `edge-verification.json: route1.${eraKey}.variants missing`);
+        const seen = new Set();
+        const chanceMean = eraKey === "e45" ? 0.8 : 0.7347;
+        for (const [i, v] of (grid?.variants ?? []).entries()) {
+            const where = `edge-verification.json route1.${eraKey}.variants[${i}] (${v?.id ?? "?"})`;
+            check(typeof v?.id === "string" && !seen.has(v.id), `${where}: missing or duplicate variant id`);
+            seen.add(v?.id);
+            check(v?.era === eraKey, `${where}: era mismatch`);
+            check(Math.abs(v?.chanceMeanHits - chanceMean) < 0.0001, `${where}: chanceMeanHits must be the ${eraKey} null ${chanceMean}`);
+            check(
+                Array.isArray(v?.edgeCi95) && v.edgeCi95.length === 2 && v.edgeCi95[0] <= v.edgeCi95[1],
+                `${where}: edgeCi95 must be a sorted [lo,hi] pair`,
+            );
+            check(typeof v?.q === "number" && v.q >= 0 && v.q <= 1, `${where}: BH q must be in [0,1]`);
+            check(
+                Array.isArray(v?.quarters) && v.quarters.length === 4 && v.quarters.every((q) => Number.isInteger(q?.folds) && q.folds > 0),
+                `${where}: quarters must hold 4 non-empty stability windows`,
+            );
+            check(
+                v?.lastLine == null ||
+                    (Array.isArray(v.lastLine) && v.lastLine.length === 6 && new Set(v.lastLine).size === 6 && v.lastLine.every(isDraw)),
+                `${where}: lastLine must be 6 unique balls 1-49 or null`,
+            );
+        }
+        // The BH-FDR q-values must actually be over the whole grid (≥ 12 rows:
+        // 2 rankers + 10 shrinkage cells + the uniform control).
+        check((grid?.variants ?? []).length >= 12, `edge-verification.json: route1.${eraKey} grid must carry the full variant grid (≥12)`);
+    }
+
+    const audit = edge?.route4?.leagueAudit;
+    check(audit?.strategyCount === league?.strategies?.length, "edge-verification.json: league audit must cover every league row");
+    check(
+        Array.isArray(audit?.cacheParityFailures) && audit.cacheParityFailures.length === 0,
+        `edge-verification.json: league audit regrades disagree with strategies.json for: ${(audit?.cacheParityFailures ?? []).join(", ")}`,
+    );
+    check(Array.isArray(audit?.topByTrain) && audit.topByTrain.length > 0, "edge-verification.json: topByTrain missing");
+    check(typeof audit?.rankCorrelationFullVsHoldout === "number", "edge-verification.json: rank correlation missing");
+
+    const probe = edge?.route4?.ceilingProbe;
+    check(Number.isInteger(probe?.variants) && probe.variants >= 10000, "edge-verification.json: ceiling probe must cover ≥ 10000 uniform variants");
+    check(typeof probe?.maxScore === "number" && probe.maxScore >= probe?.meanScore, "edge-verification.json: probe maxScore must be ≥ meanScore");
+    check(probe?.folds === era49.length - edge.meta.warmupDraws, "edge-verification.json: probe must walk the full 6/49 fold set");
+    check(Math.abs(probe?.meanHits - 36 / 49) < 0.002, "edge-verification.json: probe meanHits must sit on the uniform null (36/49)");
+    check(Math.abs(probe?.prizeRate - (edge?.eraAccounting?.e49?.prizeRatePerTicket ?? -1)) < 0.001, "edge-verification.json: probe prizeRate must sit on the uniform null");
+
+    const shuffle = edge?.route4?.nullShuffle;
+    check(shuffle?.count === edge.meta.nullHistories, "edge-verification.json: nullShuffle count must match meta.nullHistories");
+    check(Array.isArray(shuffle?.statistics) && shuffle.statistics.length >= 4, "edge-verification.json: nullShuffle statistics missing");
+    for (const [i, s] of (shuffle?.statistics ?? []).entries()) {
+        const where = `edge-verification.json nullShuffle.statistics[${i}] (${s?.statistic ?? "?"})`;
+        check(typeof s?.empiricalP === "number" && s.empiricalP >= 0 && s.empiricalP <= 1, `${where}: empirical p must be in [0,1]`);
+        check(typeof s?.exceedsNullAtP01 === "boolean", `${where}: exceedsNullAtP01 flag missing`);
+    }
+    check(
+        typeof shuffle?.consistentWithNull === "boolean" &&
+            shuffle.consistentWithNull === (shuffle?.statistics ?? []).every((s) => !s.exceedsNullAtP01),
+        "edge-verification.json: consistentWithNull must equal 'no statistic exceeds the null at p<0.01'",
+    );
+
+    check(Array.isArray(edge?.route2?.rows) && edge.route2.rows.length > 0, "edge-verification.json: route2 rows missing");
+    check(typeof edge?.route2?.note === "string" && edge.route2.note.length > 0, "edge-verification.json: route2 must carry the coverage-only disclaimer");
+    check(typeof edge?.verdict?.headline === "string" && edge.verdict.headline.length > 0, "edge-verification.json: verdict headline missing");
+    check(typeof edge?.verdict?.route1PrimaryEdgeSignificant === "boolean", "edge-verification.json: verdict primary-edge flag missing");
+
+    // The experiment is a matched-numbers audit. A payout claim here is a
+    // contract breach, exactly as it is in the playbook.
+    const payoutWords = /S\$\s?\d|\bshare\b|\bco-?winner|\bexpected value\b|\bEV\b|\bpayout\b|\bjackpot\b|\bprize split/i;
+    const scan = (value, path) => {
+        if (typeof value === "string") {
+            check(!payoutWords.test(value), `edge-verification.json: ${path} carries a payout claim — this artifact reports matched-number facts only`);
+        } else if (Array.isArray(value)) {
+            value.forEach((item, i) => scan(item, `${path}[${i}]`));
+        } else if (value != null && typeof value === "object") {
+            for (const [k, v] of Object.entries(value)) scan(v, `${path}.${k}`);
+        }
+    };
+    scan(edge, "edge-verification.json");
+};
+
 const main = async () => {
     const read = async (name) => JSON.parse(await readFile(`${DATA_DIR}${name}`, "utf8"));
 
@@ -259,6 +365,9 @@ const main = async () => {
     const playbook = await read("cross-panel-playbook.json");
     checkCrossPanelPlaybook(playbook, league);
 
+    const edge = await read("edge-verification.json");
+    checkEdgeVerification(edge, draws, league);
+
 
 
     if (failures.length > 0) {
@@ -276,6 +385,9 @@ const main = async () => {
         `✓ prize-events.json ${Object.values(prizeEvents.strategies).reduce((a, list) => a + list.length, 0)} prize folds across ${Object.keys(prizeEvents.strategies).length} strategies`,
     );
     console.log(`✓ cross-panel-playbook.json ${playbook.strategies.length} documented strategies, no payout claims`);
+    console.log(
+        `✓ edge-verification.json ${edge.meta.nullHistories} null histories, probe M=${edge.meta.probeM}, verdict: ${edge.verdict.route1PrimaryEdgeSignificant ? "primary edge candidate" : "no verifiable edge"}, no payout claims`,
+    );
 };
 
 main().catch((err) => {

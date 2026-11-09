@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "refresh": "node scripts/refresh.mjs",
     "verify:data": "node scripts/verify-data.mjs",
+    "edge": "node scripts/edge-verification.mjs",
     "nulls": "node scripts/offline-null-tables.mjs",
     "verify:nulls": "vite build --ssr scripts/verify-sequence-nulls.ts --outDir node_modules/.cache/nulls-build --emptyOutDir && node node_modules/.cache/nulls-build/verify-sequence-nulls.js",
     "league": "node scripts/league-build.mjs",

@@ -10,6 +10,11 @@
 #   make verify-nulls
 #                 re-derive the sequence analytics' nulls from the archive and
 #                 fail when one of them drifts
+#   make edge     rerun the Route 1/4/2 edge-verification experiment (300k
+#                 ceiling probe + 100 null-shuffle histories; several minutes).
+#                 Offline and periodic — NOT part of make deploy; its committed
+#                 artifact public/data/edge-verification.json is contract-checked
+#                 by verify:data on every deploy.
 #
 # `verify` gates the whole pipeline: a corrupted strategies.json (null scores,
 # duplicate placeholder rows) fails npm run verify:data and aborts the deploy
@@ -32,7 +37,7 @@ PORT   := 172.17.0.1:8090:8080
 VHOST  := toto.tingting.vip
 CADDY  := /opt/vfic/Caddyfile
 
-.PHONY: dev deploy league graph verify verify-nulls nulls build login image ship caddy check
+.PHONY: dev deploy league graph verify verify-nulls nulls edge build login image ship caddy check
 
 dev:
 	npm run dev
@@ -44,6 +49,9 @@ nulls:
 
 verify-nulls:
 	npm run verify:nulls
+
+edge:
+	npm run edge
 
 league:
 	npm run league

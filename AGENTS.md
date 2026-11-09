@@ -62,6 +62,20 @@ npm run build       # 6. strict TypeScript (tsc -b) + production Vite bundle
 the live endpoints. **Never hand-edit the artifacts under `public/data/`** —
 they are outputs; change the generator and re-run.
 
+### The edge-verification experiment (`make edge`, periodic — not per-deploy)
+
+`npm run edge` reruns the Route 1/4/2 statistical edge audit (Bayesian
+biased-pool grid with walk-forward-only weights, the 300k uniform ceiling
+probe, the 100-history null-shuffle benchmark, and the RNG-family coverage
+study) and rewrites `public/data/edge-verification.json`. It takes several
+minutes (worker threads), is contract-checked by `verify:data`, and its
+committed artifact must stay in sync with the archive — rerun it whenever
+`draws.json` gains draws. Walk-forward is the hard rule: no weight at draw t
+may read draw t or anything after it, and eras never borrow each other's
+history. The primary metric is out-of-sample hits per ticket against the
+era's exact null; max historical score is reported only as a search-size
+artifact.
+
 ---
 
 ## 3. The order-statistic covariance constant
@@ -154,6 +168,7 @@ not just a lint rule.
 |---|---|
 | `public/data/draws.json` | the archive — the single source of truth |
 | `public/data/analysis.json`, `strategies.json`, `cross-panel-playbook.json`, `prize-events.json`, `graph.json` | **generated** artifacts — never hand-edit |
+| `public/data/edge-verification.json` | **generated** Route 1/4/2 edge-verification report — rebuilt by `make edge` |
 | `public/data/graph-*.csv` | **generated** CSV exports of `graph.json` |
 | `data/league-cache.json` | the evaluation cache — **generated** |
 | `src/lib/insights-sequence-dynamics.ts` | the two deep sequence galleries' calculators + the live deep-scan evaluator |
