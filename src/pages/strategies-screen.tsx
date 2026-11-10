@@ -555,7 +555,7 @@ export const StrategiesScreen = () => {
                             <span className="font-mono text-ink-muted tabular-nums">{formatNumber(data.strategies.length)}</span> strategies
                         </span>
                         <span aria-hidden="true">·</span>
-                        <span>{meta.folds} draws each</span>
+                        <span>graded on {meta.folds} past draws</span>
                         <span aria-hidden="true">·</span>
                         <span>Updated {formatDate(meta.generatedAt.slice(0, 10))}</span>
                     </>
@@ -563,7 +563,7 @@ export const StrategiesScreen = () => {
             />
 
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                <KpiCard label="Strategies" value={formatNumber(data.strategies.length)} hint={`${meta.folds} draws each`} icon={Grid01} tone="primary" />
+                <KpiCard label="Strategies" value={formatNumber(data.strategies.length)} hint={`each graded on ${meta.folds} past draws`} icon={Grid01} tone="primary" />
                 <KpiCard
                     label="Top score"
                     value={formatNumber(topRow.score)}
@@ -578,7 +578,7 @@ export const StrategiesScreen = () => {
             <Panel
                 isFlush
                 title="All strategies"
-                description={`${rows.length} of ${data.strategies.length} · picks for draw ${meta.nextDraw}`}
+                description={`${rows.length} of ${data.strategies.length} shown · one $1 line per draw each · picks for draw ${meta.nextDraw}`}
                 actions={filters}
             >
                 {/* Two league rows per row on lg. The open row renders its
