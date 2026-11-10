@@ -153,7 +153,7 @@ async function serveStatic(req, res, pathname) {
     const headers = { "Content-Type": MIME[ext] ?? "application/octet-stream" };
     if (pathname.startsWith("/assets/")) headers["Cache-Control"] = "public, max-age=31536000, immutable";
     else if (ext === ".html") headers["Cache-Control"] = "no-cache";
-    else if (pathname.startsWith("/data/")) headers["Cache-Control"] = "public, max-age=300";
+    else if (pathname.startsWith("/data/")) headers["Cache-Control"] = "no-cache";
     send(res, 200, body, headers);
 }
 

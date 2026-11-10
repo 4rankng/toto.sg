@@ -4,7 +4,7 @@
    "halfLifeDraws": 100,
    "chanceHotScore": 2.67
   },
-  "generatedAt": "2026-11-10T23:47:42.060174+08:00",
+  "generatedAt": "2026-11-11T00:05:43.112500+08:00",
   "nextDraw": 4234,
   "folds": 839,
   "chance": {
@@ -51,6 +51,11 @@
    "score100": 19,
    "hotScore": 3.3,
    "bestGroup": 3,
+   "tierCounts": {
+    "g6": 1,
+    "g7": 22,
+    "g3": 1
+   },
    "lastPrizeDraw": 4140,
    "totalPrizes": 24,
    "effPrizes": 24,
@@ -80,6 +85,11 @@
    "score100": 19,
    "hotScore": 5.0,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 19,
+    "g6": 2,
+    "g3": 1
+   },
    "lastPrizeDraw": 4204,
    "totalPrizes": 22,
    "effPrizes": 22,
@@ -109,6 +119,11 @@
    "score100": 19,
    "hotScore": 2.9,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 3,
+    "g3": 1
+   },
    "lastPrizeDraw": 4143,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -138,6 +153,11 @@
    "score100": 18,
    "hotScore": 4.7,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 18,
+    "g6": 5,
+    "g5": 2
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 25,
    "effPrizes": 25,
@@ -167,6 +187,11 @@
    "score100": 18,
    "hotScore": 4.7,
    "bestGroup": 4,
+   "tierCounts": {
+    "g7": 20,
+    "g6": 4,
+    "g4": 1
+   },
    "lastPrizeDraw": 4173,
    "totalPrizes": 25,
    "effPrizes": 25,
@@ -196,6 +221,11 @@
    "score100": 18,
    "hotScore": 4.9,
    "bestGroup": 4,
+   "tierCounts": {
+    "g7": 18,
+    "g5": 2,
+    "g4": 1
+   },
    "lastPrizeDraw": 4226,
    "totalPrizes": 21,
    "effPrizes": 21,
@@ -225,6 +255,11 @@
    "score100": 18,
    "hotScore": 4.9,
    "bestGroup": 4,
+   "tierCounts": {
+    "g7": 14,
+    "g5": 3,
+    "g4": 1
+   },
    "lastPrizeDraw": 4226,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -254,6 +289,11 @@
    "score100": 18,
    "hotScore": 4.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 23,
+    "g5": 2,
+    "g6": 1
+   },
    "lastPrizeDraw": 4208,
    "totalPrizes": 26,
    "effPrizes": 26,
@@ -283,6 +323,10 @@
    "score100": 18,
    "hotScore": 3.6,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 17,
+    "g3": 1
+   },
    "lastPrizeDraw": 4173,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -312,6 +356,11 @@
    "score100": 18,
    "hotScore": 3.0,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 18,
+    "g5": 3,
+    "g6": 1
+   },
    "lastPrizeDraw": 4203,
    "totalPrizes": 22,
    "effPrizes": 22,
@@ -341,6 +390,11 @@
    "score100": 18,
    "hotScore": 4.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 22,
+    "g5": 2,
+    "g6": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 25,
    "effPrizes": 25,
@@ -370,6 +424,11 @@
    "score100": 18,
    "hotScore": 4.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 20,
+    "g5": 2,
+    "g6": 2
+   },
    "lastPrizeDraw": 4157,
    "totalPrizes": 24,
    "effPrizes": 24,
@@ -399,6 +458,11 @@
    "score100": 18,
    "hotScore": 6.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 21,
+    "g5": 2,
+    "g6": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 24,
    "effPrizes": 24,
@@ -428,6 +492,11 @@
    "score100": 18,
    "hotScore": 6.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 23,
+    "g5": 1,
+    "g6": 2
+   },
    "lastPrizeDraw": 4221,
    "totalPrizes": 26,
    "effPrizes": 26,
@@ -457,6 +526,12 @@
    "score100": 18,
    "hotScore": 1.7,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 9,
+    "g3": 1,
+    "g5": 1,
+    "g6": 1
+   },
    "lastPrizeDraw": 4180,
    "totalPrizes": 12,
    "effPrizes": 12,
@@ -486,6 +561,11 @@
    "score100": 18,
    "hotScore": 4.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 18,
+    "g6": 4,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 23,
    "effPrizes": 23,
@@ -515,6 +595,11 @@
    "score100": 18,
    "hotScore": 3.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 14,
+    "g5": 3,
+    "g6": 2
+   },
    "lastPrizeDraw": 4143,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -544,6 +629,11 @@
    "score100": 18,
    "hotScore": 4.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 22,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4199,
    "totalPrizes": 25,
    "effPrizes": 25,
@@ -573,6 +663,11 @@
    "score100": 17,
    "hotScore": 4.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 1,
+    "g7": 23,
+    "g6": 1
+   },
    "lastPrizeDraw": 4173,
    "totalPrizes": 25,
    "effPrizes": 25,
@@ -602,6 +697,11 @@
    "score100": 17,
    "hotScore": 3.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 19,
+    "g6": 3,
+    "g5": 1
+   },
    "lastPrizeDraw": 4155,
    "totalPrizes": 23,
    "effPrizes": 23,
@@ -631,6 +731,12 @@
    "score100": 17,
    "hotScore": 1.9,
    "bestGroup": 4,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 1,
+    "g5": 1,
+    "g4": 1
+   },
    "lastPrizeDraw": 4170,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -660,6 +766,12 @@
    "score100": 17,
    "hotScore": 2.3,
    "bestGroup": 4,
+   "tierCounts": {
+    "g6": 1,
+    "g4": 1,
+    "g7": 11,
+    "g5": 2
+   },
    "lastPrizeDraw": 4143,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -689,6 +801,11 @@
    "score100": 17,
    "hotScore": 4.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 21,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4173,
    "totalPrizes": 24,
    "effPrizes": 24,
@@ -718,6 +835,11 @@
    "score100": 17,
    "hotScore": 1.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 17,
+    "g5": 2,
+    "g6": 2
+   },
    "lastPrizeDraw": 4114,
    "totalPrizes": 21,
    "effPrizes": 21,
@@ -747,6 +869,11 @@
    "score100": 17,
    "hotScore": 4.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 17,
+    "g6": 2,
+    "g5": 2
+   },
    "lastPrizeDraw": 4220,
    "totalPrizes": 21,
    "effPrizes": 21,
@@ -776,6 +903,11 @@
    "score100": 17,
    "hotScore": 6.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g6": 3,
+    "g7": 14,
+    "g5": 2
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -805,6 +937,11 @@
    "score100": 17,
    "hotScore": 4.6,
    "bestGroup": 4,
+   "tierCounts": {
+    "g7": 12,
+    "g4": 1,
+    "g5": 2
+   },
    "lastPrizeDraw": 4226,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -834,6 +971,11 @@
    "score100": 17,
    "hotScore": 4.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 22,
+    "g6": 1,
+    "g5": 1
+   },
    "lastPrizeDraw": 4208,
    "totalPrizes": 24,
    "effPrizes": 24,
@@ -863,6 +1005,11 @@
    "score100": 17,
    "hotScore": 5.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 20,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 23,
    "effPrizes": 23,
@@ -892,6 +1039,10 @@
    "score100": 17,
    "hotScore": 2.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 2,
+    "g7": 20
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 22,
    "effPrizes": 22,
@@ -921,6 +1072,11 @@
    "score100": 17,
    "hotScore": 4.6,
    "bestGroup": 4,
+   "tierCounts": {
+    "g7": 12,
+    "g4": 1,
+    "g5": 2
+   },
    "lastPrizeDraw": 4226,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -950,6 +1106,10 @@
    "score100": 17,
    "hotScore": 4.0,
    "bestGroup": 4,
+   "tierCounts": {
+    "g7": 19,
+    "g4": 1
+   },
    "lastPrizeDraw": 4216,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -979,6 +1139,11 @@
    "score100": 17,
    "hotScore": 5.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 19,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 22,
    "effPrizes": 22,
@@ -1008,6 +1173,10 @@
    "score100": 17,
    "hotScore": 4.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 3,
+    "g7": 15
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -1037,6 +1206,11 @@
    "score100": 17,
    "hotScore": 4.0,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 13,
+    "g5": 2,
+    "g6": 3
+   },
    "lastPrizeDraw": 4213,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -1066,6 +1240,11 @@
    "score100": 17,
    "hotScore": 2.7,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 1,
+    "g7": 19,
+    "g6": 2
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 22,
    "effPrizes": 22,
@@ -1095,6 +1274,10 @@
    "score100": 17,
    "hotScore": 3.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 4,
+    "g7": 11
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -1124,6 +1307,11 @@
    "score100": 17,
    "hotScore": 4.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 17,
+    "g5": 2,
+    "g6": 1
+   },
    "lastPrizeDraw": 4173,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -1153,6 +1341,11 @@
    "score100": 17,
    "hotScore": 4.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 2,
+    "g7": 15,
+    "g6": 2
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -1182,6 +1375,10 @@
    "score100": 17,
    "hotScore": 3.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g5": 3
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -1211,6 +1408,11 @@
    "score100": 17,
    "hotScore": 1.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 13,
+    "g6": 1,
+    "g5": 3
+   },
    "lastPrizeDraw": 4226,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -1240,6 +1442,11 @@
    "score100": 17,
    "hotScore": 1.7,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 17,
+    "g5": 2,
+    "g6": 1
+   },
    "lastPrizeDraw": 4162,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -1269,6 +1476,10 @@
    "score100": 17,
    "hotScore": 3.3,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 18,
+    "g5": 2
+   },
    "lastPrizeDraw": 4159,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -1298,6 +1509,11 @@
    "score100": 17,
    "hotScore": 2.8,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g5": 2,
+    "g6": 1
+   },
    "lastPrizeDraw": 4174,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -1327,6 +1543,11 @@
    "score100": 17,
    "hotScore": 3.3,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g6": 3,
+    "g5": 1
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -1356,6 +1577,10 @@
    "score100": 17,
    "hotScore": 3.8,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 24,
+    "g6": 1
+   },
    "lastPrizeDraw": 4162,
    "totalPrizes": 25,
    "effPrizes": 25,
@@ -1385,6 +1610,10 @@
    "score100": 17,
    "hotScore": 2.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 2,
+    "g7": 18
+   },
    "lastPrizeDraw": 4137,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -1414,6 +1643,11 @@
    "score100": 17,
    "hotScore": 2.8,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g6": 3,
+    "g5": 1
+   },
    "lastPrizeDraw": 4143,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -1443,6 +1677,11 @@
    "score100": 17,
    "hotScore": 4.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g5": 2,
+    "g6": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -1472,6 +1711,10 @@
    "score100": 17,
    "hotScore": 3.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 2,
+    "g7": 18
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -1501,6 +1744,11 @@
    "score100": 17,
    "hotScore": 4.8,
    "bestGroup": 4,
+   "tierCounts": {
+    "g7": 16,
+    "g6": 1,
+    "g4": 1
+   },
    "lastPrizeDraw": 4214,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -1530,6 +1778,11 @@
    "score100": 17,
    "hotScore": 1.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 10,
+    "g6": 2,
+    "g5": 3
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -1559,6 +1812,11 @@
    "score100": 17,
    "hotScore": 2.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 14,
+    "g6": 2,
+    "g5": 2
+   },
    "lastPrizeDraw": 4143,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -1588,6 +1846,11 @@
    "score100": 17,
    "hotScore": 4.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 20,
+    "g5": 1,
+    "g6": 1
+   },
    "lastPrizeDraw": 4208,
    "totalPrizes": 22,
    "effPrizes": 22,
@@ -1617,6 +1880,11 @@
    "score100": 17,
    "hotScore": 3.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 2,
+    "g7": 12,
+    "g6": 3
+   },
    "lastPrizeDraw": 4172,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -1646,6 +1914,11 @@
    "score100": 17,
    "hotScore": 3.7,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g5": 2,
+    "g6": 1
+   },
    "lastPrizeDraw": 4155,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -1675,6 +1948,11 @@
    "score100": 17,
    "hotScore": 2.7,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 18,
+    "g5": 1,
+    "g6": 2
+   },
    "lastPrizeDraw": 4143,
    "totalPrizes": 21,
    "effPrizes": 21,
@@ -1704,6 +1982,11 @@
    "score100": 17,
    "hotScore": 4.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 14,
+    "g5": 2,
+    "g6": 2
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -1733,6 +2016,10 @@
    "score100": 17,
    "hotScore": 3.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 14,
+    "g5": 3
+   },
    "lastPrizeDraw": 4162,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -1762,6 +2049,11 @@
    "score100": 17,
    "hotScore": 3.3,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 12,
+    "g5": 2,
+    "g6": 3
+   },
    "lastPrizeDraw": 4208,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -1791,6 +2083,10 @@
    "score100": 17,
    "hotScore": 4.8,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 18,
+    "g5": 2
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -1820,6 +2116,11 @@
    "score100": 17,
    "hotScore": 3.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g5": 2,
+    "g6": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -1849,6 +2150,10 @@
    "score100": 17,
    "hotScore": 4.8,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 21,
+    "g5": 1
+   },
    "lastPrizeDraw": 4208,
    "totalPrizes": 22,
    "effPrizes": 22,
@@ -1878,6 +2183,10 @@
    "score100": 17,
    "hotScore": 3.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 2,
+    "g7": 17
+   },
    "lastPrizeDraw": 4206,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -1907,6 +2216,11 @@
    "score100": 17,
    "hotScore": 5.7,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 19,
+    "g5": 1,
+    "g6": 1
+   },
    "lastPrizeDraw": 4215,
    "totalPrizes": 21,
    "effPrizes": 21,
@@ -1936,6 +2250,11 @@
    "score100": 17,
    "hotScore": 3.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 19,
+    "g5": 1,
+    "g6": 1
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 21,
    "effPrizes": 21,
@@ -1965,6 +2284,11 @@
    "score100": 17,
    "hotScore": 6.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 17,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -1994,6 +2318,11 @@
    "score100": 17,
    "hotScore": 3.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 17,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -2023,6 +2352,10 @@
    "score100": 17,
    "hotScore": 2.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 17,
+    "g5": 2
+   },
    "lastPrizeDraw": 4189,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -2052,6 +2385,10 @@
    "score100": 17,
    "hotScore": 3.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 17,
+    "g5": 2
+   },
    "lastPrizeDraw": 4199,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -2081,6 +2418,12 @@
    "score100": 17,
    "hotScore": 1.4,
    "bestGroup": 4,
+   "tierCounts": {
+    "g7": 11,
+    "g4": 1,
+    "g6": 1,
+    "g5": 1
+   },
    "lastPrizeDraw": 4135,
    "totalPrizes": 14,
    "effPrizes": 14,
@@ -2110,6 +2453,11 @@
    "score100": 17,
    "hotScore": 4.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 2,
+    "g7": 15,
+    "g6": 1
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -2139,6 +2487,11 @@
    "score100": 17,
    "hotScore": 3.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 17,
+    "g5": 1,
+    "g6": 2
+   },
    "lastPrizeDraw": 4173,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -2168,6 +2521,11 @@
    "score100": 17,
    "hotScore": 2.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 3,
+    "g5": 1
+   },
    "lastPrizeDraw": 4173,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -2197,6 +2555,10 @@
    "score100": 17,
    "hotScore": 4.2,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 19,
+    "g6": 3
+   },
    "lastPrizeDraw": 4208,
    "totalPrizes": 22,
    "effPrizes": 22,
@@ -2226,6 +2588,10 @@
    "score100": 17,
    "hotScore": 4.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 21,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 22,
    "effPrizes": 22,
@@ -2255,6 +2621,12 @@
    "score100": 17,
    "hotScore": 2.5,
    "bestGroup": 4,
+   "tierCounts": {
+    "g7": 11,
+    "g4": 1,
+    "g6": 1,
+    "g5": 1
+   },
    "lastPrizeDraw": 4155,
    "totalPrizes": 14,
    "effPrizes": 14,
@@ -2284,6 +2656,11 @@
    "score100": 17,
    "hotScore": 2.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 18,
+    "g6": 1,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -2313,6 +2690,11 @@
    "score100": 17,
    "hotScore": 5.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 14,
+    "g6": 3,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -2342,6 +2724,11 @@
    "score100": 17,
    "hotScore": 2.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 14,
+    "g5": 2,
+    "g6": 1
+   },
    "lastPrizeDraw": 4213,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -2371,6 +2758,11 @@
    "score100": 17,
    "hotScore": 0.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 3,
+    "g7": 10,
+    "g6": 1
+   },
    "lastPrizeDraw": 4046,
    "totalPrizes": 14,
    "effPrizes": 14,
@@ -2400,6 +2792,10 @@
    "score100": 17,
    "hotScore": 2.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 2,
+    "g7": 16
+   },
    "lastPrizeDraw": 4116,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -2429,6 +2825,11 @@
    "score100": 17,
    "hotScore": 3.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 12,
+    "g6": 4,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -2458,6 +2859,10 @@
    "score100": 17,
    "hotScore": 4.3,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g5": 2
+   },
    "lastPrizeDraw": 4226,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -2487,6 +2892,11 @@
    "score100": 17,
    "hotScore": 4.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4224,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -2516,6 +2926,10 @@
    "score100": 17,
    "hotScore": 5.5,
    "bestGroup": 6,
+   "tierCounts": {
+    "g6": 3,
+    "g7": 18
+   },
    "lastPrizeDraw": 4213,
    "totalPrizes": 21,
    "effPrizes": 21,
@@ -2545,6 +2959,11 @@
    "score100": 17,
    "hotScore": 3.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 8,
+    "g5": 2,
+    "g6": 4
+   },
    "lastPrizeDraw": 4226,
    "totalPrizes": 14,
    "effPrizes": 14,
@@ -2574,6 +2993,11 @@
    "score100": 17,
    "hotScore": 1.2,
    "bestGroup": 4,
+   "tierCounts": {
+    "g7": 8,
+    "g5": 2,
+    "g4": 1
+   },
    "lastPrizeDraw": 4063,
    "totalPrizes": 11,
    "effPrizes": 11,
@@ -2603,6 +3027,10 @@
    "score100": 16,
    "hotScore": 4.0,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 17,
+    "g6": 3
+   },
    "lastPrizeDraw": 4226,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -2632,6 +3060,11 @@
    "score100": 16,
    "hotScore": 4.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 13,
+    "g5": 1,
+    "g6": 3
+   },
    "lastPrizeDraw": 4233,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -2661,6 +3094,10 @@
    "score100": 16,
    "hotScore": 2.6,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 17,
+    "g6": 3
+   },
    "lastPrizeDraw": 4161,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -2690,6 +3127,10 @@
    "score100": 16,
    "hotScore": 3.9,
    "bestGroup": 6,
+   "tierCounts": {
+    "g6": 4,
+    "g7": 15
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -2719,6 +3160,11 @@
    "score100": 16,
    "hotScore": 4.7,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -2748,6 +3194,11 @@
    "score100": 16,
    "hotScore": 5.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 17,
+    "g5": 1,
+    "g6": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -2777,6 +3228,11 @@
    "score100": 16,
    "hotScore": 4.3,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 1,
+    "g7": 17,
+    "g6": 1
+   },
    "lastPrizeDraw": 4222,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -2806,6 +3262,11 @@
    "score100": 16,
    "hotScore": 3.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4189,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -2835,6 +3296,11 @@
    "score100": 16,
    "hotScore": 3.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 13,
+    "g5": 2,
+    "g6": 1
+   },
    "lastPrizeDraw": 4170,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -2864,6 +3330,10 @@
    "score100": 16,
    "hotScore": 2.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 19,
+    "g5": 1
+   },
    "lastPrizeDraw": 4143,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -2893,6 +3363,10 @@
    "score100": 16,
    "hotScore": 4.0,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 19,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -2922,6 +3396,11 @@
    "score100": 16,
    "hotScore": 3.8,
    "bestGroup": 4,
+   "tierCounts": {
+    "g4": 1,
+    "g7": 11,
+    "g6": 2
+   },
    "lastPrizeDraw": 4218,
    "totalPrizes": 14,
    "effPrizes": 14,
@@ -2951,6 +3430,11 @@
    "score100": 16,
    "hotScore": 3.3,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 17,
+    "g5": 1,
+    "g6": 1
+   },
    "lastPrizeDraw": 4203,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -2980,6 +3464,11 @@
    "score100": 16,
    "hotScore": 4.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 17,
+    "g6": 1,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -3009,6 +3498,10 @@
    "score100": 16,
    "hotScore": 3.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g5": 2
+   },
    "lastPrizeDraw": 4217,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -3038,6 +3531,10 @@
    "score100": 16,
    "hotScore": 2.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 2,
+    "g7": 15
+   },
    "lastPrizeDraw": 4175,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -3067,6 +3564,11 @@
    "score100": 16,
    "hotScore": 2.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g6": 4,
+    "g7": 11,
+    "g5": 1
+   },
    "lastPrizeDraw": 4180,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -3096,6 +3598,11 @@
    "score100": 16,
    "hotScore": 3.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 13,
+    "g5": 2,
+    "g6": 1
+   },
    "lastPrizeDraw": 4213,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -3125,6 +3632,10 @@
    "score100": 16,
    "hotScore": 3.5,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 21,
+    "g6": 1
+   },
    "lastPrizeDraw": 4161,
    "totalPrizes": 22,
    "effPrizes": 22,
@@ -3154,6 +3665,11 @@
    "score100": 16,
    "hotScore": 2.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 12,
+    "g5": 1,
+    "g6": 3
+   },
    "lastPrizeDraw": 4140,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -3183,6 +3699,9 @@
    "score100": 16,
    "hotScore": 4.8,
    "bestGroup": 7,
+   "tierCounts": {
+    "g7": 22
+   },
    "lastPrizeDraw": 4215,
    "totalPrizes": 22,
    "effPrizes": 22,
@@ -3212,6 +3731,9 @@
    "score100": 16,
    "hotScore": 4.0,
    "bestGroup": 7,
+   "tierCounts": {
+    "g7": 22
+   },
    "lastPrizeDraw": 4178,
    "totalPrizes": 22,
    "effPrizes": 22,
@@ -3241,6 +3763,10 @@
    "score100": 16,
    "hotScore": 2.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 10,
+    "g5": 3
+   },
    "lastPrizeDraw": 4184,
    "totalPrizes": 13,
    "effPrizes": 13,
@@ -3270,6 +3796,11 @@
    "score100": 16,
    "hotScore": 2.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g6": 1,
+    "g5": 1
+   },
    "lastPrizeDraw": 4162,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -3299,6 +3830,11 @@
    "score100": 16,
    "hotScore": 2.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 14,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4162,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -3328,6 +3864,11 @@
    "score100": 16,
    "hotScore": 3.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g6": 1,
+    "g5": 1
+   },
    "lastPrizeDraw": 4217,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -3357,6 +3898,11 @@
    "score100": 16,
    "hotScore": 3.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 14,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4197,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -3386,6 +3932,11 @@
    "score100": 16,
    "hotScore": 3.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 1,
+    "g7": 16,
+    "g6": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -3415,6 +3966,11 @@
    "score100": 16,
    "hotScore": 3.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g6": 3,
+    "g7": 12,
+    "g5": 1
+   },
    "lastPrizeDraw": 4173,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -3444,6 +4000,11 @@
    "score100": 16,
    "hotScore": 3.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g5": 1,
+    "g6": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -3473,6 +4034,11 @@
    "score100": 16,
    "hotScore": 4.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 2,
+    "g7": 12,
+    "g6": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -3502,6 +4068,10 @@
    "score100": 16,
    "hotScore": 3.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 14,
+    "g5": 2
+   },
    "lastPrizeDraw": 4184,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -3531,6 +4101,11 @@
    "score100": 16,
    "hotScore": 2.3,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g5": 1,
+    "g6": 1
+   },
    "lastPrizeDraw": 4162,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -3560,6 +4135,10 @@
    "score100": 16,
    "hotScore": 4.5,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 18,
+    "g6": 2
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -3589,6 +4168,10 @@
    "score100": 16,
    "hotScore": 1.7,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 14,
+    "g5": 2
+   },
    "lastPrizeDraw": 4162,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -3618,6 +4201,11 @@
    "score100": 16,
    "hotScore": 4.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g5": 1,
+    "g6": 1
+   },
    "lastPrizeDraw": 4203,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -3647,6 +4235,11 @@
    "score100": 16,
    "hotScore": 1.8,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 2,
+    "g6": 2,
+    "g7": 10
+   },
    "lastPrizeDraw": 4105,
    "totalPrizes": 14,
    "effPrizes": 14,
@@ -3676,6 +4269,11 @@
    "score100": 16,
    "hotScore": 2.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 16,
+    "g6": 1,
+    "g5": 1
+   },
    "lastPrizeDraw": 4129,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -3705,6 +4303,11 @@
    "score100": 16,
    "hotScore": 2.3,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 1,
+    "g6": 3,
+    "g7": 12
+   },
    "lastPrizeDraw": 4163,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -3734,6 +4337,10 @@
    "score100": 16,
    "hotScore": 2.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 18,
+    "g5": 1
+   },
    "lastPrizeDraw": 4226,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -3763,6 +4370,11 @@
    "score100": 16,
    "hotScore": 2.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 12,
+    "g5": 2,
+    "g6": 1
+   },
    "lastPrizeDraw": 4170,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -3792,6 +4404,10 @@
    "score100": 16,
    "hotScore": 7.2,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 20,
+    "g6": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 21,
    "effPrizes": 21,
@@ -3821,6 +4437,10 @@
    "score100": 16,
    "hotScore": 4.3,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 1,
+    "g7": 17
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -3850,6 +4470,11 @@
    "score100": 16,
    "hotScore": 4.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g5": 1,
+    "g6": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -3879,6 +4504,9 @@
    "score100": 16,
    "hotScore": 3.1,
    "bestGroup": 7,
+   "tierCounts": {
+    "g7": 21
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 21,
    "effPrizes": 21,
@@ -3908,6 +4536,11 @@
    "score100": 16,
    "hotScore": 1.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 2,
+    "g7": 9,
+    "g6": 2
+   },
    "lastPrizeDraw": 4164,
    "totalPrizes": 13,
    "effPrizes": 13,
@@ -3937,6 +4570,10 @@
    "score100": 16,
    "hotScore": 4.1,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 17,
+    "g6": 2
+   },
    "lastPrizeDraw": 4212,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -3966,6 +4603,10 @@
    "score100": 16,
    "hotScore": 3.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 13,
+    "g5": 2
+   },
    "lastPrizeDraw": 4164,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -3995,6 +4636,10 @@
    "score100": 16,
    "hotScore": 2.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 13,
+    "g5": 2
+   },
    "lastPrizeDraw": 4162,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -4024,6 +4669,11 @@
    "score100": 16,
    "hotScore": 1.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 13,
+    "g5": 1,
+    "g6": 2
+   },
    "lastPrizeDraw": 4185,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -4053,6 +4703,11 @@
    "score100": 16,
    "hotScore": 2.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 13,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4203,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -4082,6 +4737,11 @@
    "score100": 16,
    "hotScore": 3.3,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 1,
+    "g5": 1
+   },
    "lastPrizeDraw": 4174,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -4111,6 +4771,11 @@
    "score100": 16,
    "hotScore": 3.0,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 11,
+    "g6": 3,
+    "g5": 1
+   },
    "lastPrizeDraw": 4223,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -4140,6 +4805,11 @@
    "score100": 16,
    "hotScore": 3.8,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 1,
+    "g5": 1
+   },
    "lastPrizeDraw": 4173,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -4169,6 +4839,11 @@
    "score100": 16,
    "hotScore": 3.8,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g5": 1,
+    "g6": 1
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -4198,6 +4873,10 @@
    "score100": 16,
    "hotScore": 2.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 17,
+    "g5": 1
+   },
    "lastPrizeDraw": 4140,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -4227,6 +4906,10 @@
    "score100": 16,
    "hotScore": 4.9,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 19,
+    "g6": 1
+   },
    "lastPrizeDraw": 4208,
    "totalPrizes": 20,
    "effPrizes": 20,
@@ -4256,6 +4939,10 @@
    "score100": 16,
    "hotScore": 4.0,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 17,
+    "g6": 2
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -4285,6 +4972,10 @@
    "score100": 16,
    "hotScore": 2.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 2,
+    "g7": 13
+   },
    "lastPrizeDraw": 4182,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -4314,6 +5005,10 @@
    "score100": 16,
    "hotScore": 2.3,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 13,
+    "g5": 2
+   },
    "lastPrizeDraw": 4226,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -4343,6 +5038,11 @@
    "score100": 16,
    "hotScore": 2.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 13,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4224,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -4372,6 +5072,11 @@
    "score100": 16,
    "hotScore": 5.0,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 9,
+    "g6": 2,
+    "g5": 2
+   },
    "lastPrizeDraw": 4216,
    "totalPrizes": 13,
    "effPrizes": 13,
@@ -4401,6 +5106,10 @@
    "score100": 16,
    "hotScore": 2.0,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 17,
+    "g6": 2
+   },
    "lastPrizeDraw": 4150,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -4430,6 +5139,10 @@
    "score100": 16,
    "hotScore": 2.0,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 12,
+    "g5": 2
+   },
    "lastPrizeDraw": 4162,
    "totalPrizes": 14,
    "effPrizes": 14,
@@ -4459,6 +5172,11 @@
    "score100": 16,
    "hotScore": 2.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 14,
+    "g5": 1,
+    "g6": 1
+   },
    "lastPrizeDraw": 4213,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -4488,6 +5206,10 @@
    "score100": 16,
    "hotScore": 5.4,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 14,
+    "g6": 3
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -4517,6 +5239,11 @@
    "score100": 16,
    "hotScore": 2.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 1,
+    "g7": 14,
+    "g6": 1
+   },
    "lastPrizeDraw": 4163,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -4546,6 +5273,11 @@
    "score100": 16,
    "hotScore": 3.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 14,
+    "g6": 1,
+    "g5": 1
+   },
    "lastPrizeDraw": 4173,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -4575,6 +5307,11 @@
    "score100": 16,
    "hotScore": 3.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 12,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4223,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -4604,6 +5341,11 @@
    "score100": 16,
    "hotScore": 1.7,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 1,
+    "g7": 12,
+    "g6": 2
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 15,
    "effPrizes": 15,
@@ -4633,6 +5375,10 @@
    "score100": 16,
    "hotScore": 3.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 12,
+    "g5": 2
+   },
    "lastPrizeDraw": 4208,
    "totalPrizes": 14,
    "effPrizes": 14,
@@ -4662,6 +5408,10 @@
    "score100": 15,
    "hotScore": 3.1,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 2
+   },
    "lastPrizeDraw": 4190,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -4691,6 +5441,9 @@
    "score100": 15,
    "hotScore": 1.6,
    "bestGroup": 7,
+   "tierCounts": {
+    "g7": 19
+   },
    "lastPrizeDraw": 4123,
    "totalPrizes": 19,
    "effPrizes": 19,
@@ -4720,6 +5473,10 @@
    "score100": 15,
    "hotScore": 3.2,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 17,
+    "g6": 1
+   },
    "lastPrizeDraw": 4161,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -4749,6 +5506,10 @@
    "score100": 15,
    "hotScore": 2.4,
    "bestGroup": 6,
+   "tierCounts": {
+    "g6": 1,
+    "g7": 17
+   },
    "lastPrizeDraw": 4142,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -4778,6 +5539,10 @@
    "score100": 15,
    "hotScore": 2.3,
    "bestGroup": 6,
+   "tierCounts": {
+    "g6": 2,
+    "g7": 15
+   },
    "lastPrizeDraw": 4146,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -4807,6 +5572,10 @@
    "score100": 15,
    "hotScore": 1.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -4836,6 +5605,10 @@
    "score100": 15,
    "hotScore": 2.5,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 13,
+    "g6": 3
+   },
    "lastPrizeDraw": 4147,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -4865,6 +5638,10 @@
    "score100": 15,
    "hotScore": 2.9,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 13,
+    "g6": 3
+   },
    "lastPrizeDraw": 4216,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -4894,6 +5671,10 @@
    "score100": 15,
    "hotScore": 2.8,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g5": 1
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -4923,6 +5704,10 @@
    "score100": 15,
    "hotScore": 2.9,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 13,
+    "g6": 3
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -4952,6 +5737,10 @@
    "score100": 15,
    "hotScore": 3.8,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -4981,6 +5770,10 @@
    "score100": 15,
    "hotScore": 3.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5010,6 +5803,10 @@
    "score100": 15,
    "hotScore": 3.7,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 15,
+    "g5": 1
+   },
    "lastPrizeDraw": 4174,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5039,6 +5836,10 @@
    "score100": 15,
    "hotScore": 2.4,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 13,
+    "g6": 3
+   },
    "lastPrizeDraw": 4166,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5068,6 +5869,10 @@
    "score100": 15,
    "hotScore": 3.4,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 16,
+    "g6": 1
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -5097,6 +5902,10 @@
    "score100": 15,
    "hotScore": 2.8,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 14,
+    "g6": 2
+   },
    "lastPrizeDraw": 4190,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5126,6 +5935,9 @@
    "score100": 15,
    "hotScore": 2.2,
    "bestGroup": 7,
+   "tierCounts": {
+    "g7": 18
+   },
    "lastPrizeDraw": 4150,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -5155,6 +5967,10 @@
    "score100": 15,
    "hotScore": 2.7,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 16,
+    "g6": 1
+   },
    "lastPrizeDraw": 4193,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -5184,6 +6000,10 @@
    "score100": 15,
    "hotScore": 3.0,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 14,
+    "g6": 2
+   },
    "lastPrizeDraw": 4190,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5213,6 +6033,10 @@
    "score100": 15,
    "hotScore": 2.6,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 16,
+    "g6": 1
+   },
    "lastPrizeDraw": 4192,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -5242,6 +6066,9 @@
    "score100": 15,
    "hotScore": 3.5,
    "bestGroup": 7,
+   "tierCounts": {
+    "g7": 18
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -5271,6 +6098,10 @@
    "score100": 15,
    "hotScore": 3.1,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 16,
+    "g6": 1
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -5300,6 +6131,10 @@
    "score100": 15,
    "hotScore": 1.9,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 16,
+    "g6": 1
+   },
    "lastPrizeDraw": 4137,
    "totalPrizes": 17,
    "effPrizes": 17,
@@ -5329,6 +6164,9 @@
    "score100": 15,
    "hotScore": 4.7,
    "bestGroup": 7,
+   "tierCounts": {
+    "g7": 18
+   },
    "lastPrizeDraw": 4207,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -5358,6 +6196,9 @@
    "score100": 15,
    "hotScore": 3.2,
    "bestGroup": 7,
+   "tierCounts": {
+    "g7": 18
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 18,
    "effPrizes": 18,
@@ -5387,6 +6228,10 @@
    "score100": 15,
    "hotScore": 3.8,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 14,
+    "g6": 2
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5416,6 +6261,10 @@
    "score100": 15,
    "hotScore": 1.9,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 1
+   },
    "lastPrizeDraw": 4109,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5445,6 +6294,10 @@
    "score100": 15,
    "hotScore": 1.0,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 1
+   },
    "lastPrizeDraw": 4020,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5474,6 +6327,10 @@
    "score100": 15,
    "hotScore": 3.4,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 1
+   },
    "lastPrizeDraw": 4220,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5503,6 +6360,10 @@
    "score100": 15,
    "hotScore": 3.3,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 1
+   },
    "lastPrizeDraw": 4225,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5532,6 +6393,10 @@
    "score100": 15,
    "hotScore": 4.2,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 1
+   },
    "lastPrizeDraw": 4221,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5561,6 +6426,10 @@
    "score100": 15,
    "hotScore": 1.4,
    "bestGroup": 6,
+   "tierCounts": {
+    "g7": 15,
+    "g6": 1
+   },
    "lastPrizeDraw": 4174,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5590,6 +6459,9 @@
    "score100": 15,
    "hotScore": 2.5,
    "bestGroup": 7,
+   "tierCounts": {
+    "g7": 16
+   },
    "lastPrizeDraw": 4196,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5619,6 +6491,9 @@
    "score100": 15,
    "hotScore": 2.1,
    "bestGroup": 7,
+   "tierCounts": {
+    "g7": 16
+   },
    "lastPrizeDraw": 4132,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5648,6 +6523,9 @@
    "score100": 15,
    "hotScore": 2.0,
    "bestGroup": 7,
+   "tierCounts": {
+    "g7": 16
+   },
    "lastPrizeDraw": 4142,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5677,6 +6555,9 @@
    "score100": 15,
    "hotScore": 4.7,
    "bestGroup": 7,
+   "tierCounts": {
+    "g7": 16
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 16,
    "effPrizes": 16,
@@ -5706,9 +6587,15 @@
    "score100": 21,
    "hotScore": 3.5,
    "bestGroup": 2,
+   "tierCounts": {
+    "g7": 15,
+    "g2": 1,
+    "g6": 3,
+    "g5": 1
+   },
    "lastPrizeDraw": 4200,
    "totalPrizes": 20,
-   "effPrizes": null,
+   "effPrizes": 20,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -5735,9 +6622,14 @@
    "score100": 20,
    "hotScore": 3.2,
    "bestGroup": 2,
+   "tierCounts": {
+    "g7": 18,
+    "g6": 3,
+    "g2": 1
+   },
    "lastPrizeDraw": 4201,
    "totalPrizes": 22,
-   "effPrizes": null,
+   "effPrizes": 22,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -5764,9 +6656,14 @@
    "score100": 20,
    "hotScore": 2.1,
    "bestGroup": 2,
+   "tierCounts": {
+    "g7": 11,
+    "g2": 1,
+    "g5": 3
+   },
    "lastPrizeDraw": 4218,
    "totalPrizes": 15,
-   "effPrizes": null,
+   "effPrizes": 15,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -5793,9 +6690,14 @@
    "score100": 20,
    "hotScore": 1.3,
    "bestGroup": 2,
+   "tierCounts": {
+    "g7": 13,
+    "g5": 2,
+    "g2": 1
+   },
    "lastPrizeDraw": 4150,
    "totalPrizes": 16,
-   "effPrizes": null,
+   "effPrizes": 16,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -5822,9 +6724,14 @@
    "score100": 20,
    "hotScore": 1.9,
    "bestGroup": 2,
+   "tierCounts": {
+    "g7": 16,
+    "g2": 1,
+    "g5": 1
+   },
    "lastPrizeDraw": 4159,
    "totalPrizes": 18,
-   "effPrizes": null,
+   "effPrizes": 18,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -5851,9 +6758,14 @@
    "score100": 20,
    "hotScore": 3.4,
    "bestGroup": 2,
+   "tierCounts": {
+    "g7": 15,
+    "g2": 1,
+    "g6": 2
+   },
    "lastPrizeDraw": 4174,
    "totalPrizes": 18,
-   "effPrizes": null,
+   "effPrizes": 18,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -5880,9 +6792,14 @@
    "score100": 20,
    "hotScore": 3.2,
    "bestGroup": 2,
+   "tierCounts": {
+    "g2": 1,
+    "g7": 14,
+    "g6": 1
+   },
    "lastPrizeDraw": 4179,
    "totalPrizes": 16,
-   "effPrizes": null,
+   "effPrizes": 16,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -5909,9 +6826,14 @@
    "score100": 20,
    "hotScore": 1.9,
    "bestGroup": 2,
+   "tierCounts": {
+    "g7": 10,
+    "g5": 1,
+    "g2": 1
+   },
    "lastPrizeDraw": 4210,
    "totalPrizes": 12,
-   "effPrizes": null,
+   "effPrizes": 12,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -5938,9 +6860,15 @@
    "score100": 19,
    "hotScore": 1.3,
    "bestGroup": 2,
+   "tierCounts": {
+    "g6": 1,
+    "g2": 1,
+    "g7": 7,
+    "g5": 1
+   },
    "lastPrizeDraw": 4167,
    "totalPrizes": 10,
-   "effPrizes": null,
+   "effPrizes": 10,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -5967,9 +6895,16 @@
    "score100": 22,
    "hotScore": 5.8,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 20,
+    "g4": 1,
+    "g3": 2,
+    "g5": 2,
+    "g6": 3
+   },
    "lastPrizeDraw": 4213,
    "totalPrizes": 28,
-   "effPrizes": null,
+   "effPrizes": 28,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -5996,9 +6931,16 @@
    "score100": 21,
    "hotScore": 4.0,
    "bestGroup": 3,
+   "tierCounts": {
+    "g4": 2,
+    "g6": 2,
+    "g3": 1,
+    "g7": 17,
+    "g5": 2
+   },
    "lastPrizeDraw": 4202,
    "totalPrizes": 24,
-   "effPrizes": null,
+   "effPrizes": 24,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6025,9 +6967,14 @@
    "score100": 21,
    "hotScore": 3.0,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 20,
+    "g4": 1,
+    "g3": 2
+   },
    "lastPrizeDraw": 4187,
    "totalPrizes": 23,
-   "effPrizes": null,
+   "effPrizes": 23,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6054,9 +7001,15 @@
    "score100": 21,
    "hotScore": 2.9,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 17,
+    "g3": 2,
+    "g4": 1,
+    "g5": 1
+   },
    "lastPrizeDraw": 4184,
    "totalPrizes": 21,
-   "effPrizes": null,
+   "effPrizes": 21,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6083,9 +7036,16 @@
    "score100": 21,
    "hotScore": 4.3,
    "bestGroup": 3,
+   "tierCounts": {
+    "g4": 2,
+    "g7": 15,
+    "g5": 2,
+    "g6": 1,
+    "g3": 1
+   },
    "lastPrizeDraw": 4205,
    "totalPrizes": 21,
-   "effPrizes": null,
+   "effPrizes": 21,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6112,9 +7072,16 @@
    "score100": 20,
    "hotScore": 4.9,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 15,
+    "g5": 1,
+    "g3": 1,
+    "g6": 2,
+    "g4": 2
+   },
    "lastPrizeDraw": 4227,
    "totalPrizes": 21,
-   "effPrizes": null,
+   "effPrizes": 21,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6141,9 +7108,15 @@
    "score100": 20,
    "hotScore": 3.3,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 17,
+    "g3": 1,
+    "g6": 1,
+    "g4": 2
+   },
    "lastPrizeDraw": 4206,
    "totalPrizes": 21,
-   "effPrizes": null,
+   "effPrizes": 21,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6170,9 +7143,15 @@
    "score100": 22,
    "hotScore": 1.6,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 13,
+    "g6": 2,
+    "g3": 3,
+    "g5": 2
+   },
    "lastPrizeDraw": 4219,
    "totalPrizes": 20,
-   "effPrizes": null,
+   "effPrizes": 20,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6199,9 +7178,15 @@
    "score100": 20,
    "hotScore": 3.3,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 16,
+    "g4": 2,
+    "g5": 1,
+    "g3": 1
+   },
    "lastPrizeDraw": 4214,
    "totalPrizes": 20,
-   "effPrizes": null,
+   "effPrizes": 20,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6228,9 +7213,16 @@
    "score100": 21,
    "hotScore": 3.8,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 11,
+    "g5": 2,
+    "g6": 3,
+    "g3": 1,
+    "g4": 2
+   },
    "lastPrizeDraw": 4222,
    "totalPrizes": 19,
-   "effPrizes": null,
+   "effPrizes": 19,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6257,9 +7249,14 @@
    "score100": 20,
    "hotScore": 3.8,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 16,
+    "g3": 2,
+    "g4": 1
+   },
    "lastPrizeDraw": 4204,
    "totalPrizes": 19,
-   "effPrizes": null,
+   "effPrizes": 19,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6286,9 +7283,15 @@
    "score100": 20,
    "hotScore": 5.1,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 15,
+    "g3": 1,
+    "g4": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4226,
    "totalPrizes": 19,
-   "effPrizes": null,
+   "effPrizes": 19,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6315,9 +7318,16 @@
    "score100": 21,
    "hotScore": 3.0,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 10,
+    "g6": 2,
+    "g5": 3,
+    "g4": 2,
+    "g3": 1
+   },
    "lastPrizeDraw": 4160,
    "totalPrizes": 18,
-   "effPrizes": null,
+   "effPrizes": 18,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6344,9 +7354,16 @@
    "score100": 24,
    "hotScore": 4.1,
    "bestGroup": 1,
+   "tierCounts": {
+    "g7": 17,
+    "g5": 2,
+    "g6": 3,
+    "g3": 1,
+    "g1": 1
+   },
    "lastPrizeDraw": 4225,
    "totalPrizes": 24,
-   "effPrizes": null,
+   "effPrizes": 24,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6373,9 +7390,14 @@
    "score100": 23,
    "hotScore": 3.6,
    "bestGroup": 1,
+   "tierCounts": {
+    "g7": 20,
+    "g1": 1,
+    "g6": 3
+   },
    "lastPrizeDraw": 4226,
    "totalPrizes": 24,
-   "effPrizes": null,
+   "effPrizes": 24,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6402,9 +7424,14 @@
    "score100": 20,
    "hotScore": 3.1,
    "bestGroup": 3,
+   "tierCounts": {
+    "g7": 8,
+    "g5": 7,
+    "g3": 1
+   },
    "lastPrizeDraw": 4183,
    "totalPrizes": 16,
-   "effPrizes": null,
+   "effPrizes": 16,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6431,9 +7458,14 @@
    "score100": 20,
    "hotScore": 2.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 8,
+    "g7": 16,
+    "g6": 1
+   },
    "lastPrizeDraw": 4164,
    "totalPrizes": 25,
-   "effPrizes": null,
+   "effPrizes": 25,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6460,9 +7492,14 @@
    "score100": 19,
    "hotScore": 3.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g5": 8,
+    "g7": 9,
+    "g6": 1
+   },
    "lastPrizeDraw": 4220,
    "totalPrizes": 18,
-   "effPrizes": null,
+   "effPrizes": 18,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6489,9 +7526,14 @@
    "score100": 20,
    "hotScore": 2.6,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 13,
+    "g5": 8,
+    "g6": 1
+   },
    "lastPrizeDraw": 4156,
    "totalPrizes": 22,
-   "effPrizes": null,
+   "effPrizes": 22,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6518,9 +7560,16 @@
    "score100": 23,
    "hotScore": 1.7,
    "bestGroup": 1,
+   "tierCounts": {
+    "g7": 17,
+    "g1": 1,
+    "g5": 1,
+    "g6": 1,
+    "g3": 1
+   },
    "lastPrizeDraw": 4173,
    "totalPrizes": 21,
-   "effPrizes": null,
+   "effPrizes": 21,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6547,9 +7596,14 @@
    "score100": 23,
    "hotScore": 3.4,
    "bestGroup": 1,
+   "tierCounts": {
+    "g7": 18,
+    "g5": 3,
+    "g1": 1
+   },
    "lastPrizeDraw": 4192,
    "totalPrizes": 22,
-   "effPrizes": null,
+   "effPrizes": 22,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6576,9 +7630,15 @@
    "score100": 23,
    "hotScore": 1.7,
    "bestGroup": 1,
+   "tierCounts": {
+    "g7": 10,
+    "g6": 2,
+    "g1": 1,
+    "g3": 1
+   },
    "lastPrizeDraw": 4151,
    "totalPrizes": 14,
-   "effPrizes": null,
+   "effPrizes": 14,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6605,9 +7665,15 @@
    "score100": 23,
    "hotScore": 4.9,
    "bestGroup": 1,
+   "tierCounts": {
+    "g7": 17,
+    "g5": 2,
+    "g1": 1,
+    "g6": 2
+   },
    "lastPrizeDraw": 4211,
    "totalPrizes": 22,
-   "effPrizes": null,
+   "effPrizes": 22,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6634,9 +7700,13 @@
    "score100": 19,
    "hotScore": 6.8,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 36,
+    "g5": 2
+   },
    "lastPrizeDraw": 4209,
    "totalPrizes": 38,
-   "effPrizes": null,
+   "effPrizes": 38,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6663,9 +7733,14 @@
    "score100": 20,
    "hotScore": 5.0,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 30,
+    "g5": 5,
+    "g6": 2
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 37,
-   "effPrizes": null,
+   "effPrizes": 37,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6692,9 +7767,14 @@
    "score100": 19,
    "hotScore": 9.5,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 31,
+    "g6": 3,
+    "g5": 2
+   },
    "lastPrizeDraw": 4218,
    "totalPrizes": 36,
-   "effPrizes": null,
+   "effPrizes": 36,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6721,9 +7801,13 @@
    "score100": 19,
    "hotScore": 12.0,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 33,
+    "g5": 2
+   },
    "lastPrizeDraw": 4223,
    "totalPrizes": 35,
-   "effPrizes": null,
+   "effPrizes": 35,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6750,9 +7834,14 @@
    "score100": 19,
    "hotScore": 7.2,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 30,
+    "g6": 4,
+    "g5": 1
+   },
    "lastPrizeDraw": 4229,
    "totalPrizes": 35,
-   "effPrizes": null,
+   "effPrizes": 35,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6779,9 +7868,14 @@
    "score100": 20,
    "hotScore": 7.1,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 34,
+    "g5": 3,
+    "g6": 2
+   },
    "lastPrizeDraw": 4228,
    "totalPrizes": 39,
-   "effPrizes": null,
+   "effPrizes": 39,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6808,9 +7902,14 @@
    "score100": 19,
    "hotScore": 5.3,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 35,
+    "g6": 2,
+    "g5": 1
+   },
    "lastPrizeDraw": 4153,
    "totalPrizes": 38,
-   "effPrizes": null,
+   "effPrizes": 38,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6837,9 +7936,14 @@
    "score100": 20,
    "hotScore": 9.0,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 32,
+    "g6": 1,
+    "g5": 4
+   },
    "lastPrizeDraw": 4232,
    "totalPrizes": 37,
-   "effPrizes": null,
+   "effPrizes": 37,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6866,9 +7970,14 @@
    "score100": 20,
    "hotScore": 4.9,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 33,
+    "g6": 1,
+    "g5": 3
+   },
    "lastPrizeDraw": 4217,
    "totalPrizes": 37,
-   "effPrizes": null,
+   "effPrizes": 37,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6895,9 +8004,15 @@
    "score100": 23,
    "hotScore": 3.5,
    "bestGroup": 1,
+   "tierCounts": {
+    "g7": 19,
+    "g1": 1,
+    "g6": 1,
+    "g3": 1
+   },
    "lastPrizeDraw": 4198,
    "totalPrizes": 22,
-   "effPrizes": null,
+   "effPrizes": 22,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6924,9 +8039,15 @@
    "score100": 23,
    "hotScore": 5.2,
    "bestGroup": 1,
+   "tierCounts": {
+    "g7": 24,
+    "g1": 1,
+    "g4": 1,
+    "g6": 1
+   },
    "lastPrizeDraw": 4223,
    "totalPrizes": 27,
-   "effPrizes": null,
+   "effPrizes": 27,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6953,9 +8074,15 @@
    "score100": 23,
    "hotScore": 5.2,
    "bestGroup": 1,
+   "tierCounts": {
+    "g7": 15,
+    "g5": 3,
+    "g1": 1,
+    "g6": 3
+   },
    "lastPrizeDraw": 4216,
    "totalPrizes": 22,
-   "effPrizes": null,
+   "effPrizes": 22,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -6982,9 +8109,15 @@
    "score100": 23,
    "hotScore": 2.6,
    "bestGroup": 1,
+   "tierCounts": {
+    "g7": 13,
+    "g5": 1,
+    "g3": 1,
+    "g1": 1
+   },
    "lastPrizeDraw": 4157,
    "totalPrizes": 16,
-   "effPrizes": null,
+   "effPrizes": 16,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -7011,9 +8144,14 @@
    "score100": 19,
    "hotScore": 4.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 29,
+    "g5": 3,
+    "g6": 1
+   },
    "lastPrizeDraw": 4172,
    "totalPrizes": 33,
-   "effPrizes": null,
+   "effPrizes": 33,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -7040,9 +8178,13 @@
    "score100": 19,
    "hotScore": 5.4,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 38,
+    "g5": 1
+   },
    "lastPrizeDraw": 4225,
    "totalPrizes": 39,
-   "effPrizes": null,
+   "effPrizes": 39,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -7069,9 +8211,14 @@
    "score100": 20,
    "hotScore": 8.0,
    "bestGroup": 5,
+   "tierCounts": {
+    "g7": 38,
+    "g5": 4,
+    "g6": 1
+   },
    "lastPrizeDraw": 4228,
    "totalPrizes": 43,
-   "effPrizes": null,
+   "effPrizes": 43,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -7098,9 +8245,16 @@
    "score100": 21,
    "hotScore": 5.2,
    "bestGroup": 3,
+   "tierCounts": {
+    "g4": 2,
+    "g7": 27,
+    "g5": 1,
+    "g6": 3,
+    "g3": 1
+   },
    "lastPrizeDraw": 4230,
    "totalPrizes": 34,
-   "effPrizes": null,
+   "effPrizes": 34,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -7127,9 +8281,15 @@
    "score100": 21,
    "hotScore": 4.6,
    "bestGroup": 3,
+   "tierCounts": {
+    "g5": 5,
+    "g7": 28,
+    "g6": 2,
+    "g3": 1
+   },
    "lastPrizeDraw": 4198,
    "totalPrizes": 36,
-   "effPrizes": null,
+   "effPrizes": 36,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -7156,9 +8316,15 @@
    "score100": 21,
    "hotScore": 7.9,
    "bestGroup": 4,
+   "tierCounts": {
+    "g7": 30,
+    "g5": 6,
+    "g6": 2,
+    "g4": 1
+   },
    "lastPrizeDraw": 4228,
    "totalPrizes": 39,
-   "effPrizes": null,
+   "effPrizes": 39,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
@@ -7185,9 +8351,15 @@
    "score100": 21,
    "hotScore": 5.6,
    "bestGroup": 4,
+   "tierCounts": {
+    "g7": 29,
+    "g6": 4,
+    "g4": 1,
+    "g5": 3
+   },
    "lastPrizeDraw": 4205,
    "totalPrizes": 37,
-   "effPrizes": null,
+   "effPrizes": 37,
    "pnlPerDraw": 0.0,
    "recent12": null,
    "rank": null,
