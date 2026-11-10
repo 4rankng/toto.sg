@@ -45,7 +45,7 @@ const LeagueSkeleton = () => (
 );
 
 
-/** The expanded body of a strategy: performance vs chance + pick forensics. */
+/** The expanded body of a strategy: performance + pick forensics. */
 const StrategyDetail = ({
     row,
     chance,
@@ -135,7 +135,7 @@ const StrategyDetail = ({
                 </div>
             )}
 
-            {/* Walk-forward performance vs chance — one horizontal stat strip */}
+            {/* Walk-forward performance — one horizontal stat strip */}
             <dl className="flex flex-wrap items-stretch divide-x divide-line-soft rounded-lg bg-surface-2">
                 <div className="min-w-[120px] flex-1 px-3 py-2">
                     <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Draws tested</dt>
@@ -152,7 +152,7 @@ const StrategyDetail = ({
                             )}
                             title="Prize draws minus the chance expectation over the same folds"
                         >
-                            {prizeDelta > 0 ? `+${prizeDelta}` : prizeDelta < 0 ? `${prizeDelta}` : "±0"} vs chance
+                            {prizeDelta > 0 ? `+${prizeDelta}` : prizeDelta < 0 ? `${prizeDelta}` : "±0"}
                         </span>
                     </dd>
                 </div>
@@ -167,7 +167,7 @@ const StrategyDetail = ({
                             )}
                             title="Hot score minus the chance expectation for the same decay window"
                         >
-                            {hotDelta > 0 ? `+${hotDelta.toFixed(1)}` : hotDelta < 0 ? `${hotDelta.toFixed(1)}` : "±0"} vs chance
+                            {hotDelta > 0 ? `+${hotDelta.toFixed(1)}` : hotDelta < 0 ? `${hotDelta.toFixed(1)}` : "±0"}
                         </span>
                         {row.lastPrizeDraw != null && nextDraw != null && (
                             <span className="block font-mono text-[11px] font-normal text-ink-subtle tabular-nums">
