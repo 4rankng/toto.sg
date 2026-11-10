@@ -555,7 +555,7 @@ export const StrategiesScreen = () => {
                             <span className="font-mono text-ink-muted tabular-nums">{formatNumber(data.strategies.length)}</span> strategies
                         </span>
                         <span aria-hidden="true">·</span>
-                        <span>graded on {meta.folds} past draws</span>
+                        <span>{meta.folds} past draws</span>
                         <span aria-hidden="true">·</span>
                         <span>Updated {formatDate(meta.generatedAt.slice(0, 10))}</span>
                     </>
@@ -563,7 +563,7 @@ export const StrategiesScreen = () => {
             />
 
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                <KpiCard label="Strategies" value={formatNumber(data.strategies.length)} hint={`each graded on ${meta.folds} past draws`} icon={Grid01} tone="primary" />
+                <KpiCard label="Strategies" value={formatNumber(data.strategies.length)} hint={`${meta.folds} past draws`} icon={Grid01} tone="primary" />
                 <KpiCard
                     label="Top score"
                     value={formatNumber(topRow.score)}
