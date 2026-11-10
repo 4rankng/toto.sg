@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generatedAt": "2026-11-10T23:02:29.481794+08:00",
+  "generatedAt": "2026-11-10T23:07:31.370391+08:00",
   "nextDraw": 4233,
   "folds": 839,
   "chance": {
@@ -29,7 +29,9 @@
    "Skip",
    "Structure",
    "Sum Band",
-   "Triples"
+   "Triples",
+   "Tuned",
+   "Vanguard"
   ]
  },
  "strategies": [
@@ -336,8 +338,8 @@
   {
    "id": "Vanguard Regalia",
    "name": "Vanguard Regalia",
-   "family": "Other",
-   "description": "Documented strategy.",
+   "family": "Vanguard",
+   "description": "MEGA-32 quality leader \u2014 G3 + G4 x2 concentration among 46 full-era prizes.",
    "evaluatedDraws": 839,
    "totalHits": 674,
    "meanHits": 0.8033,
@@ -361,8 +363,8 @@
   {
    "id": "Vanguard Scepter",
    "name": "Vanguard Scepter",
-   "family": "Other",
-   "description": "Documented strategy.",
+   "family": "Vanguard",
+   "description": "MEGA-32 champion \u2014 46 full-era prizes with 5-main (G3) concentration.",
    "evaluatedDraws": 839,
    "totalHits": 696,
    "meanHits": 0.8296,
@@ -386,8 +388,8 @@
   {
    "id": "Vanguard Laurel",
    "name": "Vanguard Laurel",
-   "family": "Other",
-   "description": "Documented strategy.",
+   "family": "Vanguard",
+   "description": "MEGA-32 champion \u2014 47 full-era prizes, tier-balanced.",
    "evaluatedDraws": 839,
    "totalHits": 678,
    "meanHits": 0.8081,
@@ -511,8 +513,8 @@
   {
    "id": "Vanguard Tribute",
    "name": "Vanguard Tribute",
-   "family": "Other",
-   "description": "Documented strategy.",
+   "family": "Vanguard",
+   "description": "MEGA-32 champion \u2014 51 full-era prizes.",
    "evaluatedDraws": 839,
    "totalHits": 651,
    "meanHits": 0.7759,
@@ -611,8 +613,8 @@
   {
    "id": "Vanguard Apex",
    "name": "Vanguard Apex",
-   "family": "Other",
-   "description": "Documented strategy.",
+   "family": "Vanguard",
+   "description": "MEGA-32 stream champion \u2014 52 prizes full-era, 43 on the official window (record).",
    "evaluatedDraws": 839,
    "totalHits": 655,
    "meanHits": 0.7807,
@@ -1186,33 +1188,8 @@
   {
    "id": "Tuned Zenith",
    "name": "Tuned Zenith",
-   "family": "Other",
-   "description": "Documented strategy.",
-   "evaluatedDraws": 839,
-   "totalHits": 642,
-   "meanHits": 0.7652,
-   "expectedHits": 0.7347,
-   "zScore": 0.87,
-   "score": 43,
-   "totalPrizes": 33,
-   "effPrizes": 33,
-   "pnlPerDraw": 0.0,
-   "recent12": 6,
-   "rank": 48,
-   "currentPick": [
-    9,
-    10,
-    13,
-    21,
-    25,
-    27
-   ]
-  },
-  {
-   "id": "Tuned Zenith",
-   "name": "Tuned Zenith",
-   "family": "Other",
-   "description": "Documented strategy.",
+   "family": "Tuned",
+   "description": "Weighted-pool config champion \u2014 45 prizes full-era track (verified reproduction).",
    "evaluatedDraws": 839,
    "totalHits": 642,
    "meanHits": 0.7652,
@@ -1286,8 +1263,8 @@
   {
    "id": "Vanguard Prime",
    "name": "Vanguard Prime",
-   "family": "Other",
-   "description": "Documented strategy.",
+   "family": "Vanguard",
+   "description": "MEGA-32 stream champion \u2014 52 prizes on the full 1,188-draw track, the deepest search ever run on this archive.",
    "evaluatedDraws": 839,
    "totalHits": 653,
    "meanHits": 0.7783,
