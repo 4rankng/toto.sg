@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Activity, BarChart01, Calendar, ChevronDown, ChevronRight, Hash01 } from "@untitledui/icons";
-import { BallRow } from "@/components/balls";
+import { BallRow, Ball } from "@/components/balls";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
@@ -11,6 +11,7 @@ import { DataLoading, PageHeaderSkeleton, RowsSkeleton } from "@/components/prod
 import { td, tdNum, th, thNum } from "@/components/product/table";
 import {
     type Draw,
+    type PrizeEventsFile,
     drawDecades,
     drawLowCount,
     drawMatchesQuery,
@@ -80,8 +81,30 @@ const matchesRegime = (draw: Draw, regime: RegimeFilter) => {
     }
 };
 
+/** One strategy's prize hit on a historical draw, from the league ledger. */
+interface HistoryWinner {
+    id: string;
+    name: string;
+    tier: number;
+    pick: number[];
+}
+
 /** The expanded details of one draw: its cage structure, lag, and crowd forensics. */
-const DrawDetail = ({ draw, prevDraw, eraMeanG3 }: { draw: Draw; prevDraw: Draw | null; eraMeanG3: number }) => {
+const DrawDetail = ({
+    draw,
+    prevDraw,
+    eraMeanG3,
+    winners,
+    gradedFrom,
+}: {
+    draw: Draw;
+    prevDraw: Draw | null;
+    eraMeanG3: number;
+    /** Every league strategy that won a prize on this draw, tier then name. */
+    winners: HistoryWinner[] | null;
+    /** First draw the league grades — older draws have no ledger coverage. */
+    gradedFrom: number | null;
+}) => {
     const anatomy = useMemo(() => computeDrawAnatomy(draw, prevDraw, eraMeanG3), [draw, prevDraw, eraMeanG3]);
     const spread = drawDecades(draw.numbers);
 
@@ -195,6 +218,50 @@ const DrawDetail = ({ draw, prevDraw, eraMeanG3 }: { draw: Draw; prevDraw: Draw 
                     })}
                 </div>
             </div>
+
+            {/* League winners: every strategy that hit a prize on this draw,
+                tier chip first, then the exact hitting line with the matched
+                balls accent-ringed. Draws before the graded window carry one
+                hint line instead. */}
+            {winners && winners.length > 0 && (
+                <div className="rounded-lg border border-line-soft bg-surface-2/40 p-3">
+                    <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">
+                        League winners · {winners.length} prize {winners.length === 1 ? "draw" : "draws"}
+                    </p>
+                    <ol className="mt-1.5 flex flex-col divide-y divide-line-soft/60">
+                        {winners.map((winner) => {
+                            const matched = winner.pick.filter((n) => draw.numbers.includes(n));
+                            return (
+                                <li key={`${winner.id}-${winner.tier}`} className="flex flex-wrap items-center gap-x-2 gap-y-1 py-1.5 first:pt-0 last:pb-0">
+                                    <span
+                                        className={cx("w-6 shrink-0 font-mono text-[10px] font-semibold tabular-nums", winner.tier === 1 ? "text-gold" : "text-ink-subtle")}
+                                        title={`Group ${winner.tier} prize draw`}
+                                    >
+                                        G{winner.tier}
+                                    </span>
+                                    <span className="min-w-0 max-w-52 truncate text-xs font-medium text-ink" title={winner.name}>
+                                        {winner.name}
+                                    </span>
+                                    <span
+                                        className="flex items-center gap-1"
+                                        role="img"
+                                        aria-label={`Winning line ${winner.pick.join(", ")}; matched ${matched.length === 0 ? "none" : matched.join(", ")}`}
+                                    >
+                                        <span aria-hidden="true" className="contents">
+                                            {winner.pick.map((n) => (
+                                                <Ball key={n} n={n} size="xs" className={matched.includes(n) ? "ring-2 ring-accent" : "opacity-40"} />
+                                            ))}
+                                        </span>
+                                    </span>
+                                </li>
+                            );
+                        })}
+                    </ol>
+                </div>
+            )}
+            {(!winners || winners.length === 0) && gradedFrom != null && draw.draw < gradedFrom && (
+                <p className="text-[11px] text-ink-subtle">No league grading this far back — walk-forward folds start at draw {gradedFrom}.</p>
+            )}
         </div>
     );
 };
@@ -212,6 +279,7 @@ export const HistoryScreen = ({ embedded = false }: { embedded?: boolean } = {})
 
 
     const { data: draws, isLoading, error } = useJson<Draw[]>("/data/draws.json");
+    const { data: prizeEvents } = useJson<PrizeEventsFile>("/data/prize-events.json");
     const [search, setSearch] = useState("");
     const [year, setYear] = useState<string>(ALL_YEARS);
     const [regime, setRegime] = useState<RegimeFilter>("all");
@@ -222,6 +290,27 @@ export const HistoryScreen = ({ embedded = false }: { embedded?: boolean } = {})
     const newestFirst = useMemo(() => [...(draws ?? [])].sort((a, b) => b.draw - a.draw), [draws]);
 
     const drawMap = useMemo(() => new Map((draws ?? []).map((d) => [d.draw, d])), [draws]);
+
+    // The league ledger inverted: prize events grouped by draw, each sorted
+    // tier first then name. The ledger covers every graded rule, including
+    // the rows the below-chance trim keeps out of the league table.
+    const winnersByDraw = useMemo(() => {
+        if (!prizeEvents) return null;
+        const byDraw = new Map<number, HistoryWinner[]>();
+        for (const [id, events] of Object.entries(prizeEvents.strategies)) {
+            const name = prizeEvents.meta.directory[id]?.name ?? id;
+            for (const event of events) {
+                const list = byDraw.get(event.d);
+                const winner = { id, name, tier: event.g, pick: event.p };
+                if (list) list.push(winner);
+                else byDraw.set(event.d, [winner]);
+            }
+        }
+        for (const list of byDraw.values()) list.sort((a, b) => a.tier - b.tier || a.name.localeCompare(b.name));
+        return byDraw;
+    }, [prizeEvents]);
+    const gradedFrom = prizeEvents ? prizeEvents.meta.nextDraw - prizeEvents.meta.folds : null;
+
     const eraMeanG3 = useMemo(() => {
         if (!draws) return 1750;
         let sum = 0;
@@ -393,7 +482,7 @@ export const HistoryScreen = ({ embedded = false }: { embedded?: boolean } = {})
                     </>
                 }
                 actions={
-                    <span className="text-[11px] text-ink-subtle">Tap a row for sum, odd/even and the decade counts</span>
+                    <span className="text-[11px] text-ink-subtle">Tap a row for forensics, decade counts and the league winners</span>
                 }
             />
 
@@ -450,6 +539,7 @@ export const HistoryScreen = ({ embedded = false }: { embedded?: boolean } = {})
                                 const isOpen = expanded === draw.draw;
                                 const odd = drawOddCount(draw.numbers);
                                 const low = drawLowCount(draw.numbers);
+                                const drawWinners = winnersByDraw?.get(draw.draw) ?? null;
 
                                 return (
                                     <article key={draw.draw} className={cx("border-b border-line-soft last:border-0", isOpen && "bg-surface-2/50")}>
@@ -471,6 +561,7 @@ export const HistoryScreen = ({ embedded = false }: { embedded?: boolean } = {})
                                                 </div>
                                                 <p className="mt-1.5 font-mono text-[11px] text-ink-subtle tabular-nums">
                                                     sum {drawSum(draw.numbers)} · odd {odd} · ≤ 24: {low}
+                                                    {drawWinners != null && ` · ${drawWinners.length} league won`}
                                                 </p>
                                             </div>
                                             {isOpen ? (
@@ -485,6 +576,8 @@ export const HistoryScreen = ({ embedded = false }: { embedded?: boolean } = {})
                                                     draw={draw}
                                                     prevDraw={drawMap.get(draw.draw - 1) ?? null}
                                                     eraMeanG3={eraMeanG3}
+                                                    winners={drawWinners}
+                                                    gradedFrom={gradedFrom}
                                                 />
                                             </div>
                                         )}
@@ -505,6 +598,7 @@ export const HistoryScreen = ({ embedded = false }: { embedded?: boolean } = {})
                                         <th className={thNum}>Sum</th>
                                         <th className={thNum}>Odd</th>
                                         <th className={thNum}>≤ 24</th>
+                                        <th className={cx(thNum, "hidden lg:table-cell")} title="League strategies that won a prize on this draw">Won</th>
                                         <th className={cx(th, "w-10 pr-3 text-right last:rounded-tr-xl")}>
                                             <span className="sr-only">Detail</span>
                                         </th>
@@ -514,6 +608,7 @@ export const HistoryScreen = ({ embedded = false }: { embedded?: boolean } = {})
                                     {rows.map((draw) => {
                                         const isOpen = expanded === draw.draw;
                                         const detailId = `draw-detail-${draw.draw}`;
+                                        const drawWinners = winnersByDraw?.get(draw.draw) ?? null;
 
                                         return (
                                             <Fragment key={draw.draw}>
@@ -546,6 +641,9 @@ export const HistoryScreen = ({ embedded = false }: { embedded?: boolean } = {})
                                                     <td className={tdNum}>{drawSum(draw.numbers)}</td>
                                                     <td className={tdNum}>{drawOddCount(draw.numbers)}</td>
                                                     <td className={tdNum}>{drawLowCount(draw.numbers)}</td>
+                                                    <td className={cx(tdNum, "hidden text-ink-subtle lg:table-cell")} title={drawWinners != null ? `${drawWinners.length} league strategies won a prize` : undefined}>
+                                                        {drawWinners?.length ?? "—"}
+                                                    </td>
                                                     <td className={cx(td, "pr-3 text-right")}>
                                                         <span
                                                             aria-hidden="true"
@@ -557,11 +655,13 @@ export const HistoryScreen = ({ embedded = false }: { embedded?: boolean } = {})
                                                 </tr>
                                                 {isOpen && (
                                                     <tr id={detailId} className="border-b border-line-soft bg-surface-2/40">
-                                                        <td colSpan={8} className="px-3 py-3">
+                                                        <td colSpan={9} className="px-3 py-3">
                                                             <DrawDetail
                                                                 draw={draw}
                                                                 prevDraw={drawMap.get(draw.draw - 1) ?? null}
                                                                 eraMeanG3={eraMeanG3}
+                                                                winners={drawWinners}
+                                                                gradedFrom={gradedFrom}
                                                             />
                                                         </td>
                                                     </tr>
