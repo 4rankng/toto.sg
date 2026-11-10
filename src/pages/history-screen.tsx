@@ -19,7 +19,6 @@ import {
     drawSum,
     formatDate,
     formatNumber,
-    formatSgd,
     parseDrawQuery,
     useJson,
     weekdayOf,
