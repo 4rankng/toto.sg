@@ -426,7 +426,7 @@ export const StrategiesScreen = () => {
 
     // The league's size is part of the page title, and it changes with the data.
     useEffect(() => {
-        if (data) setTitle(`Strategy league — ${data.strategies.length} strategies vs random`);
+        if (data) setTitle(`Strategy league — ${data.strategies.length} strategies`);
     }, [data]);
 
     const familyOptions = useMemo(
@@ -489,8 +489,8 @@ export const StrategiesScreen = () => {
 
     const { meta } = data;
     // Chance nulls scale with the fold count: the meta rates are per 100 draws.
-    const chancePrizes = Math.round((meta.folds * meta.chance.prizesPer100Draws) / 100);
     const topRow = [...data.strategies].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0];
+    const topByPrizes = [...data.strategies].sort((a, b) => (b.totalPrizes ?? 0) - (a.totalPrizes ?? 0))[0];
     const toggle = (id: string) => setExpanded((current) => (current === id ? null : id));
 
     // Wrap rather than scroll: on phones the sort pills were clipped behind
@@ -566,23 +566,19 @@ export const StrategiesScreen = () => {
                 <KpiCard label="Strategies" value={formatNumber(data.strategies.length)} hint={`${meta.folds} draws each`} icon={Grid01} tone="primary" />
                 <KpiCard
                     label="Top score"
-                    value={String(topRow.score100 ?? 1)}
-                    hint={`${topRow.name} · ${formatNumber(topRow.score)} pts raw`}
+                    value={formatNumber(topRow.score)}
+                    hint={topRow.name}
                     icon={Award01}
                     tone="gold"
                 />
-                <KpiCard label="Prizes / 100" value={meta.chance.prizesPer100Draws.toFixed(1)} hint="chance for any line" icon={Coins01} tone="secondary" />
+                <KpiCard label="Top prizes" value={formatNumber(topByPrizes?.totalPrizes ?? 0)} hint={topByPrizes?.name ?? ""} icon={Coins01} tone="secondary" />
                 <KpiCard label="Next draw" value={meta.nextDraw} hint="picks below" icon={Calendar} tone="neutral" />
             </div>
 
             <Panel
                 isFlush
                 title="All strategies"
-                description={`${rows.length} of ${data.strategies.length} · picks for draw ${meta.nextDraw} · ${
-                    sort === "hot"
-                        ? `hot ranking: most recent prize first, then recency-weighted mass — each prize halves every ${meta.hot.halfLifeDraws} draws, chance ${meta.hot.chanceHotScore.toFixed(1)}`
-                        : `chance over ${formatNumber(meta.folds)} draws: ${formatNumber(chancePrizes)} prizes (score points: ${formatNumber(Math.round((meta.folds * meta.chance.weightedPrizesPer100Draws) / 100))})`
-                }`}
+                description={`${rows.length} of ${data.strategies.length} · picks for draw ${meta.nextDraw}`}
                 actions={filters}
             >
                 {/* Two league rows per row on lg. The open row renders its
@@ -654,7 +650,7 @@ export const StrategiesScreen = () => {
                                                     <span className="ml-auto shrink-0 font-mono text-[10px] text-ink-subtle tabular-nums">
                                                         {sort === "hot" && row.lastPrizeDraw != null
                                                             ? `last prize ${row.lastPrizeDraw} · ${meta.nextDraw - row.lastPrizeDraw} draw${meta.nextDraw - row.lastPrizeDraw === 1 ? "" : "s"} ago`
-                                                            : `${formatNumber(row.effPrizes ?? 0)}/${formatNumber(chancePrizes)} prizes · best ${row.bestGroup != null ? `G${row.bestGroup}` : "—"}`}
+                                                            : `${formatNumber(row.totalPrizes ?? 0)} prizes · best ${row.bestGroup != null ? `G${row.bestGroup}` : "—"}`}
                                                     </span>
                                                 </span>
                                             </button>
