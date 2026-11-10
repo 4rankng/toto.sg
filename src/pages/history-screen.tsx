@@ -482,7 +482,7 @@ export const HistoryScreen = ({ embedded = false }: { embedded?: boolean } = {})
                     </>
                 }
                 actions={
-                    <span className="text-[11px] text-ink-subtle">Tap a row for forensics, decade counts and the league winners</span>
+                    <span className="text-[11px] text-ink-subtle">Tap a row for forensics and league winners</span>
                 }
             />
 
