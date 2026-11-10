@@ -524,7 +524,7 @@ const directionVerdict = (
 /** Props for a null-model verdict: a real deviation from the null renders as an edge watch; chance-consistent renders nothing. */
 const edgeVerdict = (deviation: boolean, tokens?: string): { tone: VerdictTone; label: string; metric?: string } => ({
     tone: deviation ? "watch" : "null",
-    label: deviation ? "Edge found — favor the hottest, avoid the coldest" : "No edge — matches random draw",
+    label: deviation ? `Deviation observed (${fmtZ(z)}) — hottest vs coldest spread` : "No edge — matches random draw",
     metric: tokens,
 });
 
