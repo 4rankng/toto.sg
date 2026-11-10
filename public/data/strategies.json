@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generatedAt": "2026-11-10T23:08:10.146063+08:00",
+  "generatedAt": "2026-11-10T23:16:56.242636+08:00",
   "nextDraw": 4233,
   "folds": 839,
   "chance": {
@@ -11,22 +11,22 @@
   "families": [
    "Almanac & Time",
    "Blends",
+   "Celestial",
    "Controls",
    "Decades",
    "Ensemble",
    "Folk & Culture",
    "Frequency",
-   "G1 Hunters",
-   "G2 Hunters",
-   "G4 Hunters",
    "Gap & Due",
    "Hot & Cold",
+   "Hunter",
    "Machine Learning",
    "Mark Six Charts",
    "Momentum",
    "Other",
    "Pairs",
    "Pattern",
+   "Royal",
    "Sequence",
    "Sequences",
    "Skip",
@@ -42,7 +42,7 @@
   {
    "id": "Crown Regis",
    "name": "Crown Regis",
-   "family": "G1 Hunters",
+   "family": "Royal",
    "description": "Full-board seeded search strategy \u2014 carries a verified G1 jackpot (draw #3968) plus 23 more prizes.",
    "evaluatedDraws": 839,
    "totalHits": 642,
@@ -67,7 +67,7 @@
   {
    "id": "Crown Imperator",
    "name": "Crown Imperator",
-   "family": "G1 Hunters",
+   "family": "Royal",
    "description": "G1 jackpot carrier, 103 pts \u2014 second only to Crown Regis.",
    "evaluatedDraws": 839,
    "totalHits": 593,
@@ -92,7 +92,7 @@
   {
    "id": "Crown Maximus",
    "name": "Crown Maximus",
-   "family": "G1 Hunters",
+   "family": "Royal",
    "description": "G1 jackpot carrier (draw #3826), 101 pts \u2014 third all-time.",
    "evaluatedDraws": 839,
    "totalHits": 650,
@@ -117,7 +117,7 @@
   {
    "id": "Crown Honorius",
    "name": "Crown Honorius",
-   "family": "G1 Hunters",
+   "family": "Royal",
    "description": "G1 jackpot carrier (draw #3413), 27 prizes, 98 pts.",
    "evaluatedDraws": 839,
    "totalHits": 658,
@@ -142,7 +142,7 @@
   {
    "id": "Crown Theodosius",
    "name": "Crown Theodosius",
-   "family": "G1 Hunters",
+   "family": "Royal",
    "description": "G1 jackpot carrier (draw #3659).",
    "evaluatedDraws": 839,
    "totalHits": 637,
@@ -167,7 +167,7 @@
   {
    "id": "Crown Septimius",
    "name": "Crown Septimius",
-   "family": "G1 Hunters",
+   "family": "Royal",
    "description": "G1 jackpot carrier (draw #4157).",
    "evaluatedDraws": 839,
    "totalHits": 661,
@@ -192,7 +192,7 @@
   {
    "id": "Crown Valerian",
    "name": "Crown Valerian",
-   "family": "G1 Hunters",
+   "family": "Royal",
    "description": "G1 jackpot carrier with 22 prizes across the full era.",
    "evaluatedDraws": 839,
    "totalHits": 602,
@@ -217,7 +217,7 @@
   {
    "id": "Crown Augustus",
    "name": "Crown Augustus",
-   "family": "G1 Hunters",
+   "family": "Royal",
    "description": "G1 jackpot carrier \u2014 sharpest concentration profile.",
    "evaluatedDraws": 839,
    "totalHits": 628,
@@ -242,7 +242,7 @@
   {
    "id": "Crown Constantine",
    "name": "Crown Constantine",
-   "family": "G1 Hunters",
+   "family": "Royal",
    "description": "G1 jackpot carrier with 22 prizes.",
    "evaluatedDraws": 839,
    "totalHits": 642,
@@ -267,7 +267,7 @@
   {
    "id": "Crown Astra",
    "name": "Crown Astra",
-   "family": "G1 Hunters",
+   "family": "Royal",
    "description": "G1 jackpot carrier (draw #3425) plus 23 more prizes.",
    "evaluatedDraws": 839,
    "totalHits": 606,
@@ -292,7 +292,7 @@
   {
    "id": "Hunter Trident",
    "name": "Hunter Trident",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "Most-decorated classic: 3 at-least-G4 hits, 28 prizes.",
    "evaluatedDraws": 839,
    "totalHits": 650,
@@ -317,7 +317,7 @@
   {
    "id": "Hunter Longinus",
    "name": "Hunter Longinus",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "Three 5-main (G3) hits \u2014 pure concentration record.",
    "evaluatedDraws": 839,
    "totalHits": 620,
@@ -417,7 +417,7 @@
   {
    "id": "Hunter Gungnir",
    "name": "Hunter Gungnir",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "G3 x2 + G4 x1 full-era record.",
    "evaluatedDraws": 839,
    "totalHits": 638,
@@ -442,7 +442,7 @@
   {
    "id": "Hunter Excalibur",
    "name": "Hunter Excalibur",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "G4 x2 + G3 across the era, 24 prizes.",
    "evaluatedDraws": 839,
    "totalHits": 645,
@@ -467,7 +467,7 @@
   {
    "id": "Hunter Mjolnir",
    "name": "Hunter Mjolnir",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "G3 x2 + G4 x1, 23 prizes.",
    "evaluatedDraws": 839,
    "totalHits": 657,
@@ -492,7 +492,7 @@
   {
    "id": "Hunter Zulfiqar",
    "name": "Hunter Zulfiqar",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "G4 x2 + G3 x1 full-era record.",
    "evaluatedDraws": 839,
    "totalHits": 606,
@@ -542,7 +542,7 @@
   {
    "id": "Nova",
    "name": "Nova",
-   "family": "G2 Hunters",
+   "family": "Celestial",
    "description": "Verified G2 carrier (draw #3815).",
    "evaluatedDraws": 839,
    "totalHits": 649,
@@ -567,7 +567,7 @@
   {
    "id": "Hunter Kusanagi",
    "name": "Hunter Kusanagi",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "G4 x2 + G3 x1, 21 prizes.",
    "evaluatedDraws": 839,
    "totalHits": 630,
@@ -592,7 +592,7 @@
   {
    "id": "Hunter Gram",
    "name": "Hunter Gram",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "G4 x2 + G3 x1 full-era record.",
    "evaluatedDraws": 839,
    "totalHits": 625,
@@ -642,7 +642,7 @@
   {
    "id": "Hunter Balmung",
    "name": "Hunter Balmung",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "G3 x2 + G4 x1 full-era record.",
    "evaluatedDraws": 839,
    "totalHits": 619,
@@ -667,7 +667,7 @@
   {
    "id": "Eclipse",
    "name": "Eclipse",
-   "family": "G2 Hunters",
+   "family": "Celestial",
    "description": "Verified G2 carrier (draw #3924) \u2014 22 prizes.",
    "evaluatedDraws": 839,
    "totalHits": 644,
@@ -692,7 +692,7 @@
   {
    "id": "Hunter Durandal",
    "name": "Hunter Durandal",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "G4 x2 + G3 x1 full-era record.",
    "evaluatedDraws": 839,
    "totalHits": 637,
@@ -717,7 +717,7 @@
   {
    "id": "Comet",
    "name": "Comet",
-   "family": "G2 Hunters",
+   "family": "Celestial",
    "description": "Verified G2 carrier (draw #3513).",
    "evaluatedDraws": 839,
    "totalHits": 614,
@@ -767,7 +767,7 @@
   {
    "id": "Aurora",
    "name": "Aurora",
-   "family": "G2 Hunters",
+   "family": "Celestial",
    "description": "Verified G2 carrier (draw #4150).",
    "evaluatedDraws": 839,
    "totalHits": 600,
@@ -792,7 +792,7 @@
   {
    "id": "Vega",
    "name": "Vega",
-   "family": "G2 Hunters",
+   "family": "Celestial",
    "description": "Verified G2 carrier (draw #3468).",
    "evaluatedDraws": 839,
    "totalHits": 634,
@@ -817,7 +817,7 @@
   {
    "id": "Hunter Sovereign",
    "name": "Hunter Sovereign",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "8 at-least-G4 hits \u2014 joint record: G3 x1 + G5 x7.",
    "evaluatedDraws": 839,
    "totalHits": 635,
@@ -842,7 +842,7 @@
   {
    "id": "Hunter Joyeuse",
    "name": "Hunter Joyeuse",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "G4 x2 + G3 x1 full-era record.",
    "evaluatedDraws": 839,
    "totalHits": 618,
@@ -867,7 +867,7 @@
   {
    "id": "Sirius",
    "name": "Sirius",
-   "family": "G2 Hunters",
+   "family": "Celestial",
    "description": "Verified G2 carrier (draw #3483).",
    "evaluatedDraws": 839,
    "totalHits": 649,
@@ -892,7 +892,7 @@
   {
    "id": "Hunter Tizona",
    "name": "Hunter Tizona",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "G4 x2 + G3 x1 full-era record.",
    "evaluatedDraws": 839,
    "totalHits": 649,
@@ -917,7 +917,7 @@
   {
    "id": "Hunter Arondight",
    "name": "Hunter Arondight",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "G4 x2 + G3 x1 full-era record.",
    "evaluatedDraws": 839,
    "totalHits": 651,
@@ -992,7 +992,7 @@
   {
    "id": "Hunter Imperium",
    "name": "Hunter Imperium",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "8 at-least-G4 hits (G5 x8) plus 17 further prizes.",
    "evaluatedDraws": 839,
    "totalHits": 633,
@@ -1017,7 +1017,7 @@
   {
    "id": "Orion",
    "name": "Orion",
-   "family": "G2 Hunters",
+   "family": "Celestial",
    "description": "Verified G2 carrier (draw #3437).",
    "evaluatedDraws": 839,
    "totalHits": 594,
@@ -1067,7 +1067,7 @@
   {
    "id": "Hunter Behemoth",
    "name": "Hunter Behemoth",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "8 at-least-G4 hits plus 14 further prizes.",
    "evaluatedDraws": 839,
    "totalHits": 661,
@@ -1092,7 +1092,7 @@
   {
    "id": "Lyra",
    "name": "Lyra",
-   "family": "G2 Hunters",
+   "family": "Celestial",
    "description": "Verified G2 carrier (draw #4210).",
    "evaluatedDraws": 839,
    "totalHits": 622,
@@ -1142,7 +1142,7 @@
   {
    "id": "Phoenix",
    "name": "Phoenix",
-   "family": "G2 Hunters",
+   "family": "Celestial",
    "description": "Verified G2 carrier (draw #3514).",
    "evaluatedDraws": 839,
    "totalHits": 608,
@@ -1242,7 +1242,7 @@
   {
    "id": "Hunter Colossus",
    "name": "Hunter Colossus",
-   "family": "G4 Hunters",
+   "family": "Hunter",
    "description": "8 at-least-G4 hits spanning 2018 to 2026.",
    "evaluatedDraws": 839,
    "totalHits": 662,
