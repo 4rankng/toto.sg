@@ -169,31 +169,13 @@ const DrawDetail = ({
                     </dl>
                 </div>
 
-                {/* 3. Draw Tier Records & Split */}
+                {/* 3. Calendar Bias */}
                 <div className="rounded-lg border border-line-soft bg-surface-2/40 p-3 sm:col-span-2 lg:col-span-1">
-                    <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Draw Tier Records & Split</p>
-                    <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                    <p className="text-[10px] font-semibold tracking-wider text-ink-subtle uppercase">Calendar Bias</p>
+                    <dl className="mt-2 grid grid-cols-1 gap-x-3 gap-y-2 text-xs">
                         <div>
-                            <dt className="text-[10px] text-ink-muted">Group 1</dt>
-                            <dd className="font-mono text-xs font-semibold text-ink">
-                                {anatomy.isRollover ? "Rollover (0 wins)" : anatomy.isSoloG1 ? "Solo Winner (1)" : anatomy.isSplitG1 ? `Split (${draw.prizes?.g1?.winners})` : "—"}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-[10px] text-ink-muted">Group 3 Prize</dt>
-                            <dd className="font-mono text-xs font-semibold text-primary tabular-nums">
-                                {anatomy.g3Share !== null ? formatSgd(anatomy.g3Share) : "—"}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-[10px] text-ink-muted">G3 vs Era Mean</dt>
-                            <dd className={cx("font-mono text-xs font-semibold tabular-nums", anatomy.g3DeltaVsEra !== null && anatomy.g3DeltaVsEra >= 0 ? "text-primary" : "text-heat-hot")}>
-                                {anatomy.g3DeltaVsEra !== null ? formatSigned(anatomy.g3DeltaVsEra, 0) : "—"}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-[10px] text-ink-muted">Calendar Bias (≤31)</dt>
-                            <dd className="font-mono text-xs text-ink tabular-nums">{anatomy.birthdayCount} / 6 balls</dd>
+                            <dt className="text-[10px] text-ink-muted">Balls within day-of-month range (≤31)</dt>
+                            <dd className="font-mono text-xs font-semibold text-ink tabular-nums">{anatomy.birthdayCount} / 6 balls</dd>
                         </div>
                     </dl>
                 </div>
