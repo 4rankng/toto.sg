@@ -21,6 +21,7 @@ import {
     useJson,
 } from "@/lib/data";
 import { lineAcValue } from "@/lib/ticket-xray";
+import { InfoHint, METRIC_HINTS } from "@/components/product/info-hint";
 import { usePageTitle } from "@/pages/layout";
 import { cx } from "@/utils/cx";
 
@@ -269,27 +270,27 @@ const StrategyDetail = ({
                     </div>
                     <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
                         <div className="rounded bg-surface px-1.5 py-1 text-center">
-                            <p className="text-[10px] text-ink-muted uppercase">Sum</p>
+                            <p className="text-[10px] text-ink-muted uppercase">Sum<InfoHint label="Sum" text={METRIC_HINTS.sum} /></p>
                             <p className="font-mono text-xs font-semibold text-ink tabular-nums">{sum}</p>
                         </div>
                         <div className="rounded bg-surface px-1.5 py-1 text-center">
-                            <p className="text-[10px] text-ink-muted uppercase">AC</p>
+                            <p className="text-[10px] text-ink-muted uppercase">AC<InfoHint label="AC" text={METRIC_HINTS.ac} /></p>
                             <p className="font-mono text-xs font-semibold text-primary-strong tabular-nums">{ac}/10</p>
                         </div>
                         <div className="rounded bg-surface px-1.5 py-1 text-center">
-                            <p className="text-[10px] text-ink-muted uppercase">Span</p>
+                            <p className="text-[10px] text-ink-muted uppercase">Span<InfoHint label="Span" text={METRIC_HINTS.span} /></p>
                             <p className="font-mono text-xs font-semibold text-ink tabular-nums">{span}</p>
                         </div>
                         <div className="rounded bg-surface px-1.5 py-1 text-center">
-                            <p className="text-[10px] text-ink-muted uppercase">Odd/Even</p>
+                            <p className="text-[10px] text-ink-muted uppercase">Odd/Even<InfoHint label="Odd/Even" text={METRIC_HINTS.oddEven} /></p>
                             <p className="font-mono text-xs font-semibold text-ink tabular-nums">{odds}/{6 - odds}</p>
                         </div>
                         <div className="rounded bg-surface px-1.5 py-1 text-center">
-                            <p className="text-[10px] text-ink-muted uppercase">Tails</p>
+                            <p className="text-[10px] text-ink-muted uppercase">Tails<InfoHint label="Tails" text={METRIC_HINTS.tails} /></p>
                             <p className="font-mono text-xs font-semibold text-ink tabular-nums">{tails}/6</p>
                         </div>
                         <div className="rounded bg-surface px-1.5 py-1 text-center">
-                            <p className="text-[10px] text-ink-muted uppercase">Consec</p>
+                            <p className="text-[10px] text-ink-muted uppercase">Consec<InfoHint label="Consec" text={METRIC_HINTS.consecutive} /></p>
                             <p className={cx("font-mono text-xs font-semibold tabular-nums", consec > 1 ? "text-heat-hot" : "text-ink")}>{consec}</p>
                         </div>
                     </div>
@@ -628,12 +629,12 @@ export const StrategiesScreen = () => {
                                                             className="hidden shrink-0 items-center gap-1 rounded-md bg-surface-inset px-1.5 py-0.5 sm:flex"
                                                             title={`Recency-weighted prizes: each prize fold counts 0.5^(draws since / ${meta.hot.halfLifeDraws}) — a win last draw is worth 1.0, one from ${meta.hot.halfLifeDraws} draws ago 0.5 (chance ${meta.hot.chanceHotScore.toFixed(1)})`}
                                                         >
-                                                            <span className="font-mono text-[9px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">hot</span>
+                                                            <span className="font-mono text-[9px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">hot<InfoHint label="hot" text={METRIC_HINTS.hot} /></span>
                                                             <span className="font-mono text-[13px] font-semibold text-ink tabular-nums">{(row.hotScore ?? 0).toFixed(1)}</span>
                                                         </span>
                                                     ) : (
                                                         <span className="hidden shrink-0 items-center gap-1 rounded-md bg-surface-inset px-1.5 py-0.5 sm:flex" title={`Score 1–100, log-scaled from ${formatNumber(row.score ?? 0)} raw prize points against the theoretical ceiling (every fold a Group 1)`}>
-                                                            <span className="font-mono text-[9px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">score</span>
+                                                            <span className="font-mono text-[9px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">score<InfoHint label="score" text={METRIC_HINTS.score100} /></span>
                                                             <span className="font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score100 ?? 1}</span>
                                                         </span>
                                                     )}
