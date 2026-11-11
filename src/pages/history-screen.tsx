@@ -39,11 +39,6 @@ const DECADE_LABELS = ["1–10", "11–20", "21–30", "31–40", "41–49"];
 /** Regime filter chips for isolating historical draw conditions. */
 const REGIME_OPTIONS = [
     { id: "all", label: "All draws" },
-    { id: "rollover", label: "Rollover (Snowball)" },
-    { id: "solo-g1", label: "Solo G1" },
-    { id: "split-g1", label: "Split G1" },
-    { id: "high-g3", label: "High G3 (≥S$2.2k)" },
-    { id: "crowded-g3", label: "Crowded G3 (≤S$1.2k)" },
     { id: "run-3", label: "3+ Consecutive" },
 ] as const;
 
@@ -59,19 +54,7 @@ const has3Run = (numbers: number[]) => {
 
 const matchesRegime = (draw: Draw, regime: RegimeFilter) => {
     if (regime === "all") return true;
-    const g1w = draw.prizes?.g1?.winners;
-    const g3s = draw.prizes?.g3?.share;
     switch (regime) {
-        case "rollover":
-            return g1w === 0;
-        case "solo-g1":
-            return g1w === 1;
-        case "split-g1":
-            return typeof g1w === "number" && g1w > 1;
-        case "high-g3":
-            return typeof g3s === "number" && g3s >= 2200;
-        case "crowded-g3":
-            return typeof g3s === "number" && g3s > 0 && g3s <= 1200;
         case "run-3":
             return has3Run(draw.numbers);
         default:
