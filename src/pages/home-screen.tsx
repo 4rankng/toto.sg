@@ -108,6 +108,8 @@ export const HomeScreen = () => {
     const { line, size, setSize, toggle, setLine } = useLineBuilder();
     const [period, setPeriod] = useState("all");
     const [quickPickName, setQuickPickName] = useState<string | null>(null);
+    /** The winners panel lists 8 prize draws by default; 21+ rows stretch the column under the board. */
+    const [allWinners, setAllWinners] = useState(false);
 
     // /api/latest is served by server.mjs in the deployed container; local
     // dev has no route, and the bundled head stands in.
@@ -325,6 +327,38 @@ export const HomeScreen = () => {
                             onToggle={handleToggle}
                         />
                     </Panel>
+
+                    {/* League — lives under the board so both grid columns
+                        carry real content; the winners list on the right no
+                        longer leaves a bare well beside the board. */}
+                    <Panel
+                        title="Top strategies"
+                        description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on ${league?.meta.folds ?? 0} draws · chance scores ${Math.round(((league?.meta.folds ?? 0) * (league?.meta.chance.weightedPrizesPer100Draws ?? 0)) / 100)}.`}
+                        actions={
+                            <Link to="/strategies" className="text-xs font-semibold text-accent-strong transition-colors duration-100 hover:text-ink">
+                                All →
+                            </Link>
+                        }
+                        bodyClassName="flex flex-col"
+                        isFlush
+                    >
+                        <ol className="flex flex-col justify-around divide-y divide-line-soft">
+                            {topStrategies.map((strategy) => (
+                                <li key={strategy.id} className="px-4 py-1">
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="w-4 shrink-0 font-mono text-[11px] text-ink-subtle tabular-nums">{strategy.rank}</span>
+                                        <span className="min-w-0 flex-1 truncate text-[13px] leading-5 font-medium text-ink">{strategy.name}</span>
+                                        <span className="shrink-0 font-mono text-xs font-semibold text-ink tabular-nums" title={`Score 1–100, log-scaled from ${formatNumber(strategy.score)} raw prize points`}>{strategy.score100 ?? 1}</span>
+                                    </div>
+                                    <div className="mt-1 flex items-center gap-1 pl-6" aria-hidden="true">
+                                        {strategy.currentPick.map((n) => (
+                                            <Ball key={n} n={n} size="sm" />
+                                        ))}
+                                    </div>
+                                </li>
+                            ))}
+                        </ol>
+                    </Panel>
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-3 lg:col-span-7 lg:col-start-6">
@@ -367,8 +401,9 @@ export const HomeScreen = () => {
                                     No strategy won a prize in draw {latestWinners.graded.draw}.
                                 </p>
                             ) : (
-                                <ol className="flex flex-1 flex-col divide-y divide-line-soft">
-                                    {latestWinners.rows.map((winner) => (
+                                <>
+                                    <ol className="flex flex-col divide-y divide-line-soft">
+                                        {(allWinners ? latestWinners.rows : latestWinners.rows.slice(0, 8)).map((winner) => (
                                         <li key={`${winner.id}-${winner.tier}`} className="px-4 py-1.5">
                                             <div className="flex items-baseline gap-2">
                                                 <span
@@ -402,42 +437,26 @@ export const HomeScreen = () => {
                                                 </span>
                                             </div>
                                         </li>
-                                    ))}
-                                </ol>
+                                        ))}
+                                    </ol>
+                                    {latestWinners.rows.length > 8 && (
+                                        <footer className="border-t border-line/70 px-4 py-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setAllWinners((v) => !v)}
+                                                aria-expanded={allWinners}
+                                                className="min-h-7 font-mono text-[10px] font-semibold tracking-[0.08em] text-ink-subtle uppercase transition-colors duration-100 hover:text-accent-strong"
+                                            >
+                                                {allWinners
+                                                    ? "Show fewer"
+                                                    : `Show all ${latestWinners.rows.length} prize draws`}
+                                            </button>
+                                        </footer>
+                                    )}
+                                </>
                             )}
                         </Panel>
                     )}
-
-                    {/* League */}
-                    <Panel
-                        title="Top strategies"
-                        description={`Best ${LEAGUE_ROWS} of ${league?.strategies.length ?? 0} on ${league?.meta.folds ?? 0} draws · chance scores ${Math.round(((league?.meta.folds ?? 0) * (league?.meta.chance.weightedPrizesPer100Draws ?? 0)) / 100)}.`}
-                        actions={
-                            <Link to="/strategies" className="text-xs font-semibold text-accent-strong transition-colors duration-100 hover:text-ink">
-                                All →
-                            </Link>
-                        }
-                        className="flex-1"
-                        bodyClassName="flex flex-1 flex-col"
-                        isFlush
-                    >
-                        <ol className="flex flex-1 flex-col justify-around divide-y divide-line-soft">
-                            {topStrategies.map((strategy) => (
-                                <li key={strategy.id} className="px-4 py-1">
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="w-4 shrink-0 font-mono text-[11px] text-ink-subtle tabular-nums">{strategy.rank}</span>
-                                        <span className="min-w-0 flex-1 truncate text-[13px] leading-5 font-medium text-ink">{strategy.name}</span>
-                                        <span className="shrink-0 font-mono text-xs font-semibold text-ink tabular-nums" title={`Score 1–100, log-scaled from ${formatNumber(strategy.score)} raw prize points`}>{strategy.score100 ?? 1}</span>
-                                    </div>
-                                    <div className="mt-1 flex items-center gap-1 pl-6" aria-hidden="true">
-                                        {strategy.currentPick.map((n) => (
-                                            <Ball key={n} n={n} size="sm" />
-                                        ))}
-                                    </div>
-                                </li>
-                            ))}
-                        </ol>
-                    </Panel>
                 </div>
             </div>
 
