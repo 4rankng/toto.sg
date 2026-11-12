@@ -743,8 +743,7 @@ export function TransitionMatrixHeatmap({
                     const y = padTop + row * (cellH + 12);
                     const key = `${t.from}->${t.to}`;
                     const isHovered = hoverPair === key;
-                    const liftRatio = Math.min(1, (t.lift - 1) / (maxLift - 1 || 1)); // TODO: shade cells by lift
-                    void liftRatio;
+                    const liftRatio = Math.min(1, (t.lift - 1) / (maxLift - 1 || 1));
                     const fillColor = t.lift >= 1.25
                         ? "var(--color-primary)"
                         : "var(--color-secondary)";
@@ -773,7 +772,7 @@ export function TransitionMatrixHeatmap({
                                 height={cellH}
                                 rx={4}
                                 fill={fillColor}
-                                fillOpacity={isHovered ? 0.35 : 0.15}
+                                fillOpacity={isHovered ? 0.5 : 0.1 + 0.25 * liftRatio}
                                 stroke={isHovered ? "var(--color-gold)" : fillColor}
                                 strokeWidth={isHovered ? 1.5 : 1}
                             />
