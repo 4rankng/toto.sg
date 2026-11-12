@@ -4,7 +4,7 @@
    "halfLifeDraws": 100,
    "chanceHotScore": 2.67
   },
-  "generatedAt": "2026-11-12T20:40:56.179007+08:00",
+  "generatedAt": "2026-11-12T21:30:22.234741+08:00",
   "nextDraw": 4235,
   "folds": 1190,
   "chance": {
@@ -19,6 +19,7 @@
    "NoRepeat",
    "Other",
    "PrizeFreq",
+   "SkipGate",
    "StreamPick"
   ]
  },
@@ -903,8 +904,8 @@
   {
    "id": "SkipGate Summit",
    "name": "SkipGate Summit",
-   "family": "Other",
-   "description": "Strategy rule from the documented catalogue.",
+   "family": "SkipGate",
+   "description": "One carry ball from the previous draw + one neighbour + three skip-3-8 balls + a skip-9-15 balancer, filtered by five shape gates. 43 prizes \u2014 champion of a 100,000-seed search.",
    "evaluatedDraws": 1140,
    "totalHits": 897,
    "meanHits": 0.7868,
@@ -1150,8 +1151,8 @@
   {
    "id": "SkipGate Anchor",
    "name": "SkipGate Anchor",
-   "family": "Other",
-   "description": "Strategy rule from the documented catalogue.",
+   "family": "SkipGate",
+   "description": "Same carry + neighbour + skip-band + gates construction; 41 prizes on the full era track.",
    "evaluatedDraws": 1140,
    "totalHits": 924,
    "meanHits": 0.8105,
@@ -1870,8 +1871,8 @@
   {
    "id": "SkipGate Sentry",
    "name": "SkipGate Sentry",
-   "family": "Other",
-   "description": "Strategy rule from the documented catalogue.",
+   "family": "SkipGate",
+   "description": "Same construction, different sampling seed; 39 prizes on the full era track.",
    "evaluatedDraws": 1140,
    "totalHits": 890,
    "meanHits": 0.7807,
@@ -1937,8 +1938,8 @@
   {
    "id": "SkipGate Vigil",
    "name": "SkipGate Vigil",
-   "family": "Other",
-   "description": "Strategy rule from the documented catalogue.",
+   "family": "SkipGate",
+   "description": "Same construction, different sampling seed; 37 prizes on the full era track.",
    "evaluatedDraws": 1140,
    "totalHits": 903,
    "meanHits": 0.7921,
