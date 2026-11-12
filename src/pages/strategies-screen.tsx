@@ -567,7 +567,7 @@ export const StrategiesScreen = () => {
                 <KpiCard
                     label="Top score"
                     value={formatNumber(topRow.score ?? 0)}
-                    hint={`${topRow.name} · ${formatNumber(topRow.totalPrizes ?? 0)} prize draws`}
+                    hint={topRow.name}
                     icon={Award01}
                     tone="gold"
                 />
