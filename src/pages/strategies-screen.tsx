@@ -178,8 +178,8 @@ const StrategyDetail = ({
                 </div>
                 <div className="min-w-[110px] flex-1 px-3 py-2">
                     <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Score</dt>
-                    <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums" title={`Log-normalised to 1–100 against the theoretical ceiling (every fold a Group 1) from ${formatNumber(row.score ?? 0)} raw prize points — each prize hit earns its tier's weight, G7=1 G6=2 G5=3 G4=4 G3=5 G2=8 G1=13; 100 is the perfect league`}>
-                        {row.score100 ?? 1} <span className="text-ink-muted">/ 100</span>
+                    <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums" title={`Prize points on the tier ladder — each prize draw earns its tier's weight: G7=1 G6=2 G5=3 G4=4 G3=5 G2=8 G1=13`}>
+                        {formatNumber(row.score ?? 0)}
                     </dd>
                 </div>
                 <div className="min-w-[90px] flex-[0.8] px-3 py-2">
@@ -566,8 +566,8 @@ export const StrategiesScreen = () => {
                 <KpiCard label="Strategies" value={formatNumber(data.strategies.length)} hint={`${meta.folds} past draws`} icon={Grid01} tone="primary" />
                 <KpiCard
                     label="Top score"
-                    value={topRow.score100 ?? 1}
-                    hint={`${topRow.name} · ${formatNumber(topRow.score)} raw points`}
+                    value={formatNumber(topRow.score ?? 0)}
+                    hint={`${topRow.name} · ${formatNumber(topRow.totalPrizes ?? 0)} prize draws`}
                     icon={Award01}
                     tone="gold"
                 />
@@ -632,9 +632,9 @@ export const StrategiesScreen = () => {
                                                             <span className="font-mono text-[13px] font-semibold text-ink tabular-nums">{(row.hotScore ?? 0).toFixed(1)}</span>
                                                         </span>
                                                     ) : (
-                                                        <span className="hidden shrink-0 items-center gap-1 rounded-md bg-surface-inset px-1.5 py-0.5 sm:flex" title={`Score 1–100, log-scaled from ${formatNumber(row.score ?? 0)} raw prize points against the theoretical ceiling (every fold a Group 1)`}>
+                                                        <span className="hidden shrink-0 items-center gap-1 rounded-md bg-surface-inset px-1.5 py-0.5 sm:flex" title={`Prize points on the tier ladder — each prize draw earns its tier's weight: G7=1 G6=2 G5=3 G4=4 G3=5 G2=8 G1=13`}>
                                                             <span className="font-mono text-[9px] font-semibold tracking-[0.08em] text-ink-subtle uppercase">score</span>
-                                                            <span className="font-mono text-[13px] font-semibold text-ink tabular-nums">{row.score100 ?? 1}</span>
+                                                            <span className="font-mono text-[13px] font-semibold text-ink tabular-nums">{formatNumber(row.score ?? 0)}</span>
                                                         </span>
                                                     )}
                                                     <span className="w-20 shrink-0 text-right font-mono text-[11px] text-ink-subtle tabular-nums">
