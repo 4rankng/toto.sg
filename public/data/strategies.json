@@ -4,7 +4,7 @@
    "halfLifeDraws": 100,
    "chanceHotScore": 2.67
   },
-  "generatedAt": "2026-11-12T09:37:37.696083+08:00",
+  "generatedAt": "2026-11-12T09:42:29.314490+08:00",
   "nextDraw": 4234,
   "folds": 1189,
   "chance": {
@@ -1626,39 +1626,6 @@
     22,
     31,
     45
-   ]
-  },
-  {
-   "id": "GateKeeper Prime",
-   "name": "GateKeeper Prime",
-   "family": "Other",
-   "description": "Strategy rule from the documented catalogue.",
-   "evaluatedDraws": 789,
-   "totalHits": 617,
-   "meanHits": 0.782,
-   "expectedHits": 0.7347,
-   "zScore": 1.3,
-   "score": 52.7,
-   "score100": 18,
-   "hotScore": 0.5,
-   "bestGroup": 6,
-   "tierCounts": {
-    "g7": 31,
-    "g6": 2
-   },
-   "lastPrizeDraw": 3786,
-   "totalPrizes": 33,
-   "effPrizes": 33,
-   "pnlPerDraw": 0.0,
-   "recent12": 6,
-   "rank": 47,
-   "currentPick": [
-    1,
-    20,
-    22,
-    35,
-    42,
-    46
    ]
   },
   {
