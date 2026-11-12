@@ -19,6 +19,7 @@ import { CATALOG_STRUCTURE_FAMILY } from "./catalog-structure-rules.mjs";
 import { CATALOG_ALMANAC_FAMILY } from "./catalog-almanac-rules.mjs";
 import { CATALOG_ML_FAMILY, META_VOTE_FAMILY } from "./catalog-ml-rules.mjs";
 import { SEQUENCE_DYNAMICS_FAMILY } from "./sequence-dynamics-rules.mjs";
+import { SKIPGATE_FAMILY } from "./skipgate-rules.mjs";
 import { INSIGHT_FUSION_FAMILY } from "./insight-fusion-rules.mjs";
 import { CROSS_PANEL_FAMILY } from "./cross-panel-rules.mjs";
 import { FUSION_CONSENSUS_FAMILY } from "./insight-fusion-rules.mjs";
@@ -36,6 +37,7 @@ export const BASE_FAMILIES = [
     CATALOG_ALMANAC_FAMILY,
     CATALOG_ML_FAMILY,
     SEQUENCE_DYNAMICS_FAMILY,
+    SKIPGATE_FAMILY,
     INSIGHT_FUSION_FAMILY,
 ];
 
