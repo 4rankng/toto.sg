@@ -4,9 +4,9 @@
    "halfLifeDraws": 100,
    "chanceHotScore": 2.67
   },
-  "generatedAt": "2026-11-12T18:48:20.516326+08:00",
-  "nextDraw": 4234,
-  "folds": 1189,
+  "generatedAt": "2026-11-12T18:52:08.325153+08:00",
+  "nextDraw": 4235,
+  "folds": 1190,
   "chance": {
    "expectedHitsPerLine": 0.7347,
    "prizesPer100Draws": 1.86,
@@ -28,9 +28,9 @@
    "name": "JackpotSeed Regis",
    "family": "JackpotSeed",
    "description": "Full-board seeded search strategy \u2014 carries a verified prize-tier jackpot (draw #3968) plus 23 more prizes.",
-   "evaluatedDraws": 1189,
-   "totalHits": 892,
-   "meanHits": 0.7502,
+   "evaluatedDraws": 1190,
+   "totalHits": 894,
+   "meanHits": 0.7513,
    "expectedHits": 0.7347,
    "zScore": 0.52,
    "score": 119.9,
@@ -51,12 +51,12 @@
    "recent12": 10,
    "rank": 1,
    "currentPick": [
-    7,
-    9,
-    10,
-    14,
-    27,
-    38
+    24,
+    25,
+    30,
+    32,
+    43,
+    46
    ]
   },
   {
@@ -64,14 +64,14 @@
    "name": "JackpotSeed Maximus",
    "family": "JackpotSeed",
    "description": "prize-tier jackpot carrier (draw #3826), 101 pts \u2014 third all-time.",
-   "evaluatedDraws": 1189,
-   "totalHits": 902,
-   "meanHits": 0.7586,
+   "evaluatedDraws": 1190,
+   "totalHits": 904,
+   "meanHits": 0.7597,
    "expectedHits": 0.7347,
    "zScore": 0.81,
    "score": 109.9,
    "score100": 23,
-   "hotScore": 3.5,
+   "hotScore": 3.4,
    "bestGroup": 1,
    "tierCounts": {
     "g7": 28,
@@ -86,12 +86,12 @@
    "recent12": 6,
    "rank": 2,
    "currentPick": [
-    4,
-    9,
+    1,
+    17,
+    21,
     32,
-    33,
-    36,
-    48
+    39,
+    44
    ]
   },
   {
@@ -99,9 +99,9 @@
    "name": "JackpotSeed Imperator",
    "family": "JackpotSeed",
    "description": "prize-tier jackpot carrier, 103 pts \u2014 second only to Crown Regis.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 868,
-   "meanHits": 0.73,
+   "meanHits": 0.7294,
    "expectedHits": 0.7347,
    "zScore": -0.16,
    "score": 107.9,
@@ -122,12 +122,12 @@
    "recent12": 6,
    "rank": 3,
    "currentPick": [
-    6,
-    24,
-    34,
-    39,
+    1,
+    20,
+    22,
+    25,
     42,
-    49
+    46
    ]
   },
   {
@@ -135,14 +135,14 @@
    "name": "JackpotSeed Honorius",
    "family": "JackpotSeed",
    "description": "prize-tier jackpot carrier (draw #3413), 27 prizes, 98 pts.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 922,
-   "meanHits": 0.7754,
+   "meanHits": 0.7748,
    "expectedHits": 0.7347,
    "zScore": 1.38,
    "score": 106.9,
    "score100": 23,
-   "hotScore": 5.3,
+   "hotScore": 5.2,
    "bestGroup": 1,
    "tierCounts": {
     "g7": 33,
@@ -158,11 +158,11 @@
    "rank": 4,
    "currentPick": [
     6,
-    12,
-    13,
-    17,
-    20,
-    49
+    9,
+    14,
+    16,
+    29,
+    40
    ]
   },
   {
@@ -170,9 +170,9 @@
    "name": "JackpotSeed Septimius",
    "family": "JackpotSeed",
    "description": "prize-tier jackpot carrier (draw #4157).",
-   "evaluatedDraws": 1189,
-   "totalHits": 897,
-   "meanHits": 0.7544,
+   "evaluatedDraws": 1190,
+   "totalHits": 898,
+   "meanHits": 0.7546,
    "expectedHits": 0.7347,
    "zScore": 0.67,
    "score": 101.9,
@@ -192,12 +192,12 @@
    "recent12": 9,
    "rank": 5,
    "currentPick": [
-    15,
-    27,
-    28,
-    32,
-    36,
-    41
+    1,
+    3,
+    4,
+    12,
+    30,
+    37
    ]
   },
   {
@@ -205,9 +205,9 @@
    "name": "JackpotSeed Theodosius",
    "family": "JackpotSeed",
    "description": "prize-tier jackpot carrier (draw #3659).",
-   "evaluatedDraws": 1189,
-   "totalHits": 877,
-   "meanHits": 0.7376,
+   "evaluatedDraws": 1190,
+   "totalHits": 878,
+   "meanHits": 0.7378,
    "expectedHits": 0.7347,
    "zScore": 0.1,
    "score": 100.9,
@@ -227,12 +227,12 @@
    "recent12": 12,
    "rank": 6,
    "currentPick": [
-    5,
-    6,
-    11,
-    13,
-    34,
-    49
+    10,
+    14,
+    17,
+    20,
+    21,
+    41
    ]
   },
   {
@@ -240,9 +240,9 @@
    "name": "JackpotSeed Augustus",
    "family": "JackpotSeed",
    "description": "prize-tier jackpot carrier \u2014 sharpest concentration profile.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 907,
-   "meanHits": 0.7628,
+   "meanHits": 0.7622,
    "expectedHits": 0.7347,
    "zScore": 0.95,
    "score": 98.9,
@@ -262,12 +262,12 @@
    "recent12": 12,
    "rank": 7,
    "currentPick": [
+    9,
+    12,
+    13,
     18,
-    27,
-    30,
-    33,
-    40,
-    48
+    32,
+    47
    ]
   },
   {
@@ -275,9 +275,9 @@
    "name": "JackpotSeed Valerian",
    "family": "JackpotSeed",
    "description": "prize-tier jackpot carrier with 22 prizes across the full era.",
-   "evaluatedDraws": 1189,
-   "totalHits": 863,
-   "meanHits": 0.7258,
+   "evaluatedDraws": 1190,
+   "totalHits": 864,
+   "meanHits": 0.7261,
    "expectedHits": 0.7347,
    "zScore": -0.3,
    "score": 97.9,
@@ -296,12 +296,12 @@
    "recent12": 8,
    "rank": 8,
    "currentPick": [
-    1,
-    3,
-    6,
     14,
+    23,
     27,
-    35
+    33,
+    34,
+    44
    ]
   },
   {
@@ -309,14 +309,14 @@
    "name": "JackpotSeed Constantine",
    "family": "JackpotSeed",
    "description": "prize-tier jackpot carrier with 22 prizes.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 894,
-   "meanHits": 0.7519,
+   "meanHits": 0.7513,
    "expectedHits": 0.7347,
    "zScore": 0.58,
    "score": 97.9,
    "score100": 23,
-   "hotScore": 4.9,
+   "hotScore": 4.8,
    "bestGroup": 1,
    "tierCounts": {
     "g7": 22,
@@ -331,12 +331,12 @@
    "recent12": 7,
    "rank": 9,
    "currentPick": [
-    7,
-    10,
-    17,
+    4,
+    15,
     29,
-    31,
-    32
+    33,
+    35,
+    47
    ]
   },
   {
@@ -344,9 +344,9 @@
    "name": "JackpotSeed Astra",
    "family": "JackpotSeed",
    "description": "prize-tier jackpot carrier (draw #3425) plus 23 more prizes.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 865,
-   "meanHits": 0.7275,
+   "meanHits": 0.7269,
    "expectedHits": 0.7347,
    "zScore": -0.24,
    "score": 94.9,
@@ -365,12 +365,12 @@
    "recent12": 6,
    "rank": 10,
    "currentPick": [
-    4,
-    11,
-    26,
-    39,
+    8,
+    16,
+    21,
+    33,
     41,
-    44
+    42
    ]
   },
   {
@@ -378,9 +378,9 @@
    "name": "MatchHunter Trident",
    "family": "MatchHunter",
    "description": "Most-decorated classic: 3 at-least-prize-tier hits, 28 prizes.",
-   "evaluatedDraws": 1189,
-   "totalHits": 893,
-   "meanHits": 0.7511,
+   "evaluatedDraws": 1190,
+   "totalHits": 894,
+   "meanHits": 0.7513,
    "expectedHits": 0.7347,
    "zScore": 0.55,
    "score": 81.9,
@@ -401,12 +401,12 @@
    "recent12": 3,
    "rank": 11,
    "currentPick": [
-    4,
-    22,
-    24,
-    36,
+    15,
+    19,
+    34,
     39,
-    40
+    44,
+    47
    ]
   },
   {
@@ -414,9 +414,9 @@
    "name": "StreamPick Regalia",
    "family": "StreamPick",
    "description": "MEGA-32 quality leader \u2014 prize-tier + prize-tier x2 concentration among 46 full-era prizes.",
-   "evaluatedDraws": 1189,
-   "totalHits": 956,
-   "meanHits": 0.804,
+   "evaluatedDraws": 1190,
+   "totalHits": 957,
+   "meanHits": 0.8042,
    "expectedHits": 0.7347,
    "zScore": 2.34,
    "score": 80.9,
@@ -437,12 +437,12 @@
    "recent12": 16,
    "rank": 12,
    "currentPick": [
-    6,
-    9,
-    15,
-    33,
-    35,
-    46
+    5,
+    7,
+    14,
+    24,
+    25,
+    29
    ]
   },
   {
@@ -450,9 +450,9 @@
    "name": "MatchHunter Longinus",
    "family": "MatchHunter",
    "description": "Three 5-main (prize-tier) hits \u2014 pure concentration record.",
-   "evaluatedDraws": 1189,
-   "totalHits": 874,
-   "meanHits": 0.7351,
+   "evaluatedDraws": 1190,
+   "totalHits": 875,
+   "meanHits": 0.7353,
    "expectedHits": 0.7347,
    "zScore": 0.01,
    "score": 80.9,
@@ -473,11 +473,11 @@
    "rank": 13,
    "currentPick": [
     3,
-    10,
-    11,
+    8,
     20,
-    31,
-    35
+    27,
+    29,
+    30
    ]
   },
   {
@@ -485,9 +485,9 @@
    "name": "StreamPick Scepter",
    "family": "StreamPick",
    "description": "MEGA-32 champion \u2014 46 full-era prizes with 5-main (prize-tier) concentration.",
-   "evaluatedDraws": 1189,
-   "totalHits": 941,
-   "meanHits": 0.7914,
+   "evaluatedDraws": 1190,
+   "totalHits": 943,
+   "meanHits": 0.7924,
    "expectedHits": 0.7347,
    "zScore": 1.92,
    "score": 78.9,
@@ -507,12 +507,12 @@
    "recent12": 10,
    "rank": 14,
    "currentPick": [
-    1,
-    3,
-    17,
+    5,
+    29,
     30,
-    31,
-    39
+    35,
+    44,
+    46
    ]
   },
   {
@@ -520,33 +520,33 @@
    "name": "StreamPick Laurel",
    "family": "StreamPick",
    "description": "MEGA-32 champion \u2014 47 full-era prizes, tier-balanced.",
-   "evaluatedDraws": 1189,
-   "totalHits": 947,
-   "meanHits": 0.7965,
+   "evaluatedDraws": 1190,
+   "totalHits": 950,
+   "meanHits": 0.7983,
    "expectedHits": 0.7347,
    "zScore": 2.09,
    "score": 77.9,
    "score100": 22,
-   "hotScore": 7.9,
+   "hotScore": 8.9,
    "bestGroup": 4,
    "tierCounts": {
-    "g7": 36,
+    "g7": 37,
     "g6": 3,
     "g5": 7,
     "g4": 1
    },
-   "lastPrizeDraw": 4228,
-   "totalPrizes": 47,
-   "effPrizes": 47,
+   "lastPrizeDraw": 4234,
+   "totalPrizes": 48,
+   "effPrizes": 48,
    "pnlPerDraw": 0.0,
    "recent12": 18,
    "rank": 15,
    "currentPick": [
-    26,
-    29,
-    36,
-    41,
-    42,
+    6,
+    24,
+    44,
+    46,
+    48,
     49
    ]
   },
@@ -555,9 +555,9 @@
    "name": "MatchHunter Gram",
    "family": "MatchHunter",
    "description": "prize-tier x2 + prize-tier x1 full-era record.",
-   "evaluatedDraws": 1189,
-   "totalHits": 908,
-   "meanHits": 0.7637,
+   "evaluatedDraws": 1190,
+   "totalHits": 909,
+   "meanHits": 0.7639,
    "expectedHits": 0.7347,
    "zScore": 0.98,
    "score": 73.9,
@@ -578,12 +578,12 @@
    "recent12": 10,
    "rank": 16,
    "currentPick": [
-    1,
-    19,
-    25,
-    27,
+    5,
+    14,
     30,
-    47
+    33,
+    34,
+    42
    ]
   },
   {
@@ -591,14 +591,14 @@
    "name": "MatchHunter Mjolnir",
    "family": "MatchHunter",
    "description": "prize-tier x2 + prize-tier x1, 23 prizes.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 932,
-   "meanHits": 0.7839,
+   "meanHits": 0.7832,
    "expectedHits": 0.7347,
    "zScore": 1.66,
    "score": 72.9,
    "score100": 21,
-   "hotScore": 3.1,
+   "hotScore": 3.0,
    "bestGroup": 3,
    "tierCounts": {
     "g7": 27,
@@ -614,12 +614,12 @@
    "recent12": 12,
    "rank": 17,
    "currentPick": [
-    4,
-    11,
+    1,
+    8,
     16,
-    27,
-    29,
-    31
+    26,
+    35,
+    39
    ]
   },
   {
@@ -627,9 +627,9 @@
    "name": "StreamPick Tribute",
    "family": "StreamPick",
    "description": "MEGA-32 champion \u2014 51 full-era prizes.",
-   "evaluatedDraws": 1189,
-   "totalHits": 934,
-   "meanHits": 0.7855,
+   "evaluatedDraws": 1190,
+   "totalHits": 935,
+   "meanHits": 0.7857,
    "expectedHits": 0.7347,
    "zScore": 1.72,
    "score": 70.9,
@@ -649,12 +649,12 @@
    "recent12": 5,
    "rank": 18,
    "currentPick": [
-    1,
-    10,
-    11,
-    12,
-    20,
-    39
+    7,
+    21,
+    23,
+    28,
+    30,
+    48
    ]
   },
   {
@@ -662,9 +662,9 @@
    "name": "MatchHunter Gungnir",
    "family": "MatchHunter",
    "description": "prize-tier x2 + prize-tier x1 full-era record.",
-   "evaluatedDraws": 1189,
-   "totalHits": 902,
-   "meanHits": 0.7586,
+   "evaluatedDraws": 1190,
+   "totalHits": 903,
+   "meanHits": 0.7588,
    "expectedHits": 0.7347,
    "zScore": 0.81,
    "score": 70.9,
@@ -684,12 +684,12 @@
    "recent12": 5,
    "rank": 19,
    "currentPick": [
-    2,
-    10,
-    13,
-    31,
-    34,
-    38
+    8,
+    14,
+    35,
+    37,
+    46,
+    49
    ]
   },
   {
@@ -697,9 +697,9 @@
    "name": "NoRepeat Nova",
    "family": "NoRepeat",
    "description": "Verified prize-tier carrier (draw #3815).",
-   "evaluatedDraws": 1189,
-   "totalHits": 915,
-   "meanHits": 0.7696,
+   "evaluatedDraws": 1190,
+   "totalHits": 916,
+   "meanHits": 0.7697,
    "expectedHits": 0.7347,
    "zScore": 1.18,
    "score": 68.9,
@@ -719,11 +719,11 @@
    "recent12": 7,
    "rank": 20,
    "currentPick": [
-    26,
+    16,
+    22,
     30,
-    32,
     36,
-    46,
+    42,
     48
    ]
   },
@@ -732,14 +732,14 @@
    "name": "MatchHunter Kusanagi",
    "family": "MatchHunter",
    "description": "prize-tier x2 + prize-tier x1, 21 prizes.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 910,
-   "meanHits": 0.7653,
+   "meanHits": 0.7647,
    "expectedHits": 0.7347,
    "zScore": 1.04,
    "score": 68.9,
    "score100": 21,
-   "hotScore": 4.3,
+   "hotScore": 4.2,
    "bestGroup": 3,
    "tierCounts": {
     "g7": 21,
@@ -755,12 +755,12 @@
    "recent12": 11,
    "rank": 21,
    "currentPick": [
-    4,
-    14,
-    27,
-    31,
-    47,
-    48
+    8,
+    9,
+    11,
+    25,
+    34,
+    36
    ]
   },
   {
@@ -768,14 +768,14 @@
    "name": "MatchHunter Balmung",
    "family": "MatchHunter",
    "description": "prize-tier x2 + prize-tier x1 full-era record.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 871,
-   "meanHits": 0.7325,
+   "meanHits": 0.7319,
    "expectedHits": 0.7347,
    "zScore": -0.07,
    "score": 68.9,
    "score100": 21,
-   "hotScore": 3.9,
+   "hotScore": 3.8,
    "bestGroup": 3,
    "tierCounts": {
     "g7": 25,
@@ -790,12 +790,12 @@
    "recent12": 13,
    "rank": 22,
    "currentPick": [
+    1,
     2,
-    12,
-    17,
-    22,
-    23,
-    38
+    3,
+    7,
+    37,
+    43
    ]
   },
   {
@@ -803,14 +803,14 @@
    "name": "StreamPick Apex",
    "family": "StreamPick",
    "description": "MEGA-32 stream champion \u2014 52 prizes full-era, 43 on the official window (record).",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 922,
-   "meanHits": 0.7754,
+   "meanHits": 0.7748,
    "expectedHits": 0.7347,
    "zScore": 1.38,
    "score": 67.9,
    "score100": 21,
-   "hotScore": 8.1,
+   "hotScore": 8.0,
    "bestGroup": 5,
    "tierCounts": {
     "g5": 5,
@@ -824,12 +824,12 @@
    "recent12": 10,
    "rank": 23,
    "currentPick": [
-    8,
-    14,
-    23,
+    9,
+    19,
+    20,
+    26,
     35,
-    37,
-    40
+    46
    ]
   },
   {
@@ -837,9 +837,9 @@
    "name": "NoRepeat Comet",
    "family": "NoRepeat",
    "description": "Verified prize-tier carrier (draw #3513).",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 911,
-   "meanHits": 0.7662,
+   "meanHits": 0.7655,
    "expectedHits": 0.7347,
    "zScore": 1.06,
    "score": 67.9,
@@ -858,12 +858,12 @@
    "recent12": 9,
    "rank": 24,
    "currentPick": [
+    2,
+    11,
     16,
     18,
     22,
-    39,
-    43,
-    48
+    28
    ]
   },
   {
@@ -871,9 +871,9 @@
    "name": "NoRepeat Eclipse",
    "family": "NoRepeat",
    "description": "Verified prize-tier carrier (draw #3924) \u2014 22 prizes.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 919,
-   "meanHits": 0.7729,
+   "meanHits": 0.7723,
    "expectedHits": 0.7347,
    "zScore": 1.29,
    "score": 66.9,
@@ -893,11 +893,11 @@
    "rank": 25,
    "currentPick": [
     10,
-    17,
-    19,
-    28,
-    43,
-    44
+    13,
+    16,
+    18,
+    20,
+    37
    ]
   },
   {
@@ -905,9 +905,9 @@
    "name": "MatchHunter Sovereign",
    "family": "MatchHunter",
    "description": "8 at-least-prize-tier hits \u2014 joint record: prize-tier x1 + prize-tier x7.",
-   "evaluatedDraws": 1189,
-   "totalHits": 887,
-   "meanHits": 0.746,
+   "evaluatedDraws": 1190,
+   "totalHits": 888,
+   "meanHits": 0.7462,
    "expectedHits": 0.7347,
    "zScore": 0.38,
    "score": 65.9,
@@ -928,11 +928,11 @@
    "rank": 26,
    "currentPick": [
     7,
-    10,
-    16,
-    20,
-    32,
-    49
+    12,
+    26,
+    30,
+    39,
+    45
    ]
   },
   {
@@ -940,9 +940,9 @@
    "name": "PrizeFreq Maestoso",
    "family": "PrizeFreq",
    "description": "39 prizes \u2014 official-window record holder.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 953,
-   "meanHits": 0.8015,
+   "meanHits": 0.8008,
    "expectedHits": 0.7347,
    "zScore": 2.26,
    "score": 64.9,
@@ -963,9 +963,9 @@
    "currentPick": [
     5,
     8,
+    9,
     23,
     27,
-    35,
     37
    ]
   },
@@ -974,9 +974,9 @@
    "name": "MatchHunter Excalibur",
    "family": "MatchHunter",
    "description": "prize-tier x2 + prize-tier across the era, 24 prizes.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 893,
-   "meanHits": 0.7511,
+   "meanHits": 0.7504,
    "expectedHits": 0.7347,
    "zScore": 0.55,
    "score": 64.9,
@@ -997,12 +997,12 @@
    "recent12": 8,
    "rank": 28,
    "currentPick": [
-    1,
-    3,
-    4,
-    44,
-    45,
-    49
+    8,
+    10,
+    16,
+    28,
+    29,
+    33
    ]
   },
   {
@@ -1010,9 +1010,9 @@
    "name": "MatchHunter Zulfiqar",
    "family": "MatchHunter",
    "description": "prize-tier x2 + prize-tier x1 full-era record.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 852,
-   "meanHits": 0.7166,
+   "meanHits": 0.716,
    "expectedHits": 0.7347,
    "zScore": -0.61,
    "score": 63.9,
@@ -1033,12 +1033,12 @@
    "recent12": 7,
    "rank": 29,
    "currentPick": [
-    5,
+    6,
     10,
-    17,
-    22,
-    26,
-    28
+    19,
+    23,
+    28,
+    36
    ]
   },
   {
@@ -1046,9 +1046,9 @@
    "name": "MatchHunter Joyeuse",
    "family": "MatchHunter",
    "description": "prize-tier x2 + prize-tier x1 full-era record.",
-   "evaluatedDraws": 1189,
-   "totalHits": 882,
-   "meanHits": 0.7418,
+   "evaluatedDraws": 1190,
+   "totalHits": 883,
+   "meanHits": 0.742,
    "expectedHits": 0.7347,
    "zScore": 0.24,
    "score": 63.9,
@@ -1068,12 +1068,12 @@
    "recent12": 10,
    "rank": 30,
    "currentPick": [
-    4,
-    8,
-    9,
-    15,
+    13,
     18,
-    39
+    28,
+    29,
+    30,
+    37
    ]
   },
   {
@@ -1081,14 +1081,14 @@
    "name": "SkipGate Anchor",
    "family": "Other",
    "description": "Strategy rule from the documented catalogue.",
-   "evaluatedDraws": 1139,
+   "evaluatedDraws": 1140,
    "totalHits": 924,
-   "meanHits": 0.8112,
+   "meanHits": 0.8105,
    "expectedHits": 0.7347,
    "zScore": 2.53,
    "score": 63.6,
    "score100": 21,
-   "hotScore": 2.6,
+   "hotScore": 2.5,
    "bestGroup": 4,
    "tierCounts": {
     "g7": 35,
@@ -1103,12 +1103,12 @@
    "recent12": 6,
    "rank": 31,
    "currentPick": [
-    7,
-    16,
-    20,
-    29,
-    42,
-    46
+    2,
+    4,
+    15,
+    35,
+    37,
+    47
    ]
   },
   {
@@ -1116,35 +1116,35 @@
    "name": "MatchHunter Tizona",
    "family": "MatchHunter",
    "description": "prize-tier x2 + prize-tier x1 full-era record.",
-   "evaluatedDraws": 1189,
-   "totalHits": 885,
-   "meanHits": 0.7443,
+   "evaluatedDraws": 1190,
+   "totalHits": 888,
+   "meanHits": 0.7462,
    "expectedHits": 0.7347,
    "zScore": 0.33,
    "score": 62.9,
    "score100": 21,
-   "hotScore": 3.3,
+   "hotScore": 4.3,
    "bestGroup": 3,
    "tierCounts": {
-    "g7": 23,
+    "g7": 24,
     "g5": 1,
     "g6": 2,
     "g3": 1,
     "g4": 2
    },
-   "lastPrizeDraw": 4206,
-   "totalPrizes": 29,
-   "effPrizes": 29,
+   "lastPrizeDraw": 4234,
+   "totalPrizes": 30,
+   "effPrizes": 30,
    "pnlPerDraw": 0.0,
    "recent12": 8,
    "rank": 32,
    "currentPick": [
-    2,
-    4,
-    23,
-    27,
+    16,
+    24,
+    31,
+    34,
     41,
-    47
+    44
    ]
   },
   {
@@ -1152,9 +1152,9 @@
    "name": "NoRepeat Vega",
    "family": "NoRepeat",
    "description": "Verified prize-tier carrier (draw #3468).",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 879,
-   "meanHits": 0.7393,
+   "meanHits": 0.7387,
    "expectedHits": 0.7347,
    "zScore": 0.15,
    "score": 61.9,
@@ -1173,12 +1173,12 @@
    "recent12": 11,
    "rank": 33,
    "currentPick": [
+    1,
+    9,
+    10,
     16,
-    38,
-    42,
-    44,
-    47,
-    48
+    25,
+    37
    ]
   },
   {
@@ -1186,9 +1186,9 @@
    "name": "PrizeFreq Allegro",
    "family": "PrizeFreq",
    "description": "37 prizes \u2014 second-highest classic frequency.",
-   "evaluatedDraws": 1189,
-   "totalHits": 949,
-   "meanHits": 0.7981,
+   "evaluatedDraws": 1190,
+   "totalHits": 950,
+   "meanHits": 0.7983,
    "expectedHits": 0.7347,
    "zScore": 2.14,
    "score": 60.9,
@@ -1207,12 +1207,12 @@
    "recent12": 14,
    "rank": 34,
    "currentPick": [
-    10,
-    11,
-    13,
-    26,
-    36,
-    38
+    1,
+    18,
+    19,
+    28,
+    48,
+    49
    ]
   },
   {
@@ -1220,9 +1220,9 @@
    "name": "NoRepeat Sirius",
    "family": "NoRepeat",
    "description": "Verified prize-tier carrier (draw #3483).",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 916,
-   "meanHits": 0.7704,
+   "meanHits": 0.7697,
    "expectedHits": 0.7347,
    "zScore": 1.21,
    "score": 60.9,
@@ -1242,12 +1242,12 @@
    "recent12": 4,
    "rank": 35,
    "currentPick": [
-    25,
-    30,
-    32,
-    38,
-    44,
-    49
+    2,
+    3,
+    7,
+    15,
+    28,
+    42
    ]
   },
   {
@@ -1255,9 +1255,9 @@
    "name": "PrizeFreq Andante",
    "family": "PrizeFreq",
    "description": "35 prizes with the steadiest cadence.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 895,
-   "meanHits": 0.7527,
+   "meanHits": 0.7521,
    "expectedHits": 0.7347,
    "zScore": 0.61,
    "score": 59.9,
@@ -1276,12 +1276,12 @@
    "recent12": 9,
    "rank": 36,
    "currentPick": [
-    3,
-    6,
-    8,
+    1,
     14,
-    21,
-    28
+    20,
+    26,
+    37,
+    40
    ]
   },
   {
@@ -1289,9 +1289,9 @@
    "name": "NoRepeat Aurora",
    "family": "NoRepeat",
    "description": "Verified prize-tier carrier (draw #4150).",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 850,
-   "meanHits": 0.7149,
+   "meanHits": 0.7143,
    "expectedHits": 0.7347,
    "zScore": -0.67,
    "score": 59.9,
@@ -1312,11 +1312,11 @@
    "rank": 37,
    "currentPick": [
     1,
-    5,
-    27,
-    32,
-    37,
-    39
+    2,
+    6,
+    8,
+    12,
+    26
    ]
   },
   {
@@ -1324,9 +1324,9 @@
    "name": "MatchHunter Durandal",
    "family": "MatchHunter",
    "description": "prize-tier x2 + prize-tier x1 full-era record.",
-   "evaluatedDraws": 1189,
-   "totalHits": 886,
-   "meanHits": 0.7452,
+   "evaluatedDraws": 1190,
+   "totalHits": 887,
+   "meanHits": 0.7454,
    "expectedHits": 0.7347,
    "zScore": 0.35,
    "score": 59.9,
@@ -1347,12 +1347,12 @@
    "recent12": 11,
    "rank": 38,
    "currentPick": [
-    3,
-    7,
-    40,
-    43,
-    47,
-    48
+    5,
+    6,
+    9,
+    14,
+    17,
+    47
    ]
   },
   {
@@ -1360,14 +1360,14 @@
    "name": "PrizeFreq Ritenuto",
    "family": "PrizeFreq",
    "description": "37 prizes.",
-   "evaluatedDraws": 1189,
-   "totalHits": 949,
-   "meanHits": 0.7981,
+   "evaluatedDraws": 1190,
+   "totalHits": 950,
+   "meanHits": 0.7983,
    "expectedHits": 0.7347,
    "zScore": 2.14,
    "score": 59.0,
    "score100": 20,
-   "hotScore": 9.0,
+   "hotScore": 8.9,
    "bestGroup": 5,
    "tierCounts": {
     "g7": 41,
@@ -1381,11 +1381,11 @@
    "recent12": 17,
    "rank": 39,
    "currentPick": [
-    24,
-    34,
+    21,
+    25,
+    26,
     38,
-    44,
-    48,
+    42,
     49
    ]
   },
@@ -1394,9 +1394,9 @@
    "name": "MatchHunter Imperium",
    "family": "MatchHunter",
    "description": "8 at-least-prize-tier hits (prize-tier x8) plus 17 further prizes.",
-   "evaluatedDraws": 1189,
-   "totalHits": 935,
-   "meanHits": 0.7864,
+   "evaluatedDraws": 1190,
+   "totalHits": 936,
+   "meanHits": 0.7866,
    "expectedHits": 0.7347,
    "zScore": 1.75,
    "score": 59.0,
@@ -1416,11 +1416,11 @@
    "rank": 40,
    "currentPick": [
     6,
-    8,
-    10,
-    18,
+    21,
+    24,
     38,
-    43
+    40,
+    41
    ]
   },
   {
@@ -1428,9 +1428,9 @@
    "name": "StreamPick Prime",
    "family": "StreamPick",
    "description": "MEGA-32 stream champion \u2014 52 prizes on the full 1,188-draw track, the deepest search ever run on this archive.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 939,
-   "meanHits": 0.7897,
+   "meanHits": 0.7891,
    "expectedHits": 0.7347,
    "zScore": 1.86,
    "score": 58.0,
@@ -1448,12 +1448,12 @@
    "recent12": 7,
    "rank": 41,
    "currentPick": [
-    2,
-    4,
+    3,
+    9,
+    16,
     33,
-    43,
-    46,
-    49
+    42,
+    43
    ]
   },
   {
@@ -1461,9 +1461,9 @@
    "name": "HotColdWeight Zenith",
    "family": "Other",
    "description": "Shrunk hotness x recency weights with skip-boost, tuned by 240k-config search; 45 prizes full-era (verified).",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 913,
-   "meanHits": 0.7679,
+   "meanHits": 0.7672,
    "expectedHits": 0.7347,
    "zScore": 1.12,
    "score": 58.0,
@@ -1482,12 +1482,12 @@
    "recent12": 6,
    "rank": 42,
    "currentPick": [
-    9,
-    10,
-    13,
-    21,
-    25,
-    27
+    11,
+    27,
+    29,
+    37,
+    38,
+    40
    ]
   },
   {
@@ -1495,9 +1495,9 @@
    "name": "NoRepeat Phoenix",
    "family": "NoRepeat",
    "description": "Verified prize-tier carrier (draw #3514).",
-   "evaluatedDraws": 1189,
-   "totalHits": 894,
-   "meanHits": 0.7519,
+   "evaluatedDraws": 1190,
+   "totalHits": 895,
+   "meanHits": 0.7521,
    "expectedHits": 0.7347,
    "zScore": 0.58,
    "score": 53.0,
@@ -1517,11 +1517,11 @@
    "recent12": 12,
    "rank": 43,
    "currentPick": [
-    7,
-    9,
-    16,
-    18,
+    2,
+    3,
     21,
+    35,
+    41,
     49
    ]
   },
@@ -1530,9 +1530,9 @@
    "name": "NoRepeat Orion",
    "family": "NoRepeat",
    "description": "Verified prize-tier carrier (draw #3437).",
-   "evaluatedDraws": 1189,
-   "totalHits": 835,
-   "meanHits": 0.7023,
+   "evaluatedDraws": 1190,
+   "totalHits": 836,
+   "meanHits": 0.7025,
    "expectedHits": 0.7347,
    "zScore": -1.1,
    "score": 53.0,
@@ -1551,12 +1551,12 @@
    "recent12": 11,
    "rank": 44,
    "currentPick": [
-    2,
-    22,
-    27,
-    29,
-    30,
-    48
+    1,
+    23,
+    24,
+    25,
+    35,
+    47
    ]
   },
   {
@@ -1564,9 +1564,9 @@
    "name": "NoRepeat Lyra",
    "family": "NoRepeat",
    "description": "Verified prize-tier carrier (draw #4210).",
-   "evaluatedDraws": 1189,
-   "totalHits": 893,
-   "meanHits": 0.7511,
+   "evaluatedDraws": 1190,
+   "totalHits": 894,
+   "meanHits": 0.7513,
    "expectedHits": 0.7347,
    "zScore": 0.55,
    "score": 53.0,
@@ -1586,12 +1586,12 @@
    "recent12": 7,
    "rank": 45,
    "currentPick": [
-    12,
-    15,
-    26,
-    28,
-    29,
-    48
+    10,
+    11,
+    17,
+    20,
+    46,
+    47
    ]
   },
   {
@@ -1599,14 +1599,14 @@
    "name": "MatchHunter Behemoth",
    "family": "MatchHunter",
    "description": "8 at-least-prize-tier hits plus 14 further prizes.",
-   "evaluatedDraws": 1189,
-   "totalHits": 917,
-   "meanHits": 0.7712,
+   "evaluatedDraws": 1190,
+   "totalHits": 919,
+   "meanHits": 0.7723,
    "expectedHits": 0.7347,
    "zScore": 1.23,
    "score": 53.0,
    "score100": 20,
-   "hotScore": 2.6,
+   "hotScore": 2.5,
    "bestGroup": 5,
    "tierCounts": {
     "g7": 19,
@@ -1620,12 +1620,12 @@
    "recent12": 8,
    "rank": 46,
    "currentPick": [
-    8,
-    12,
-    27,
-    32,
+    6,
+    30,
+    33,
     37,
-    43
+    44,
+    48
    ]
   },
   {
@@ -1633,9 +1633,9 @@
    "name": "MatchHunter Arondight",
    "family": "MatchHunter",
    "description": "prize-tier x2 + prize-tier x1 full-era record.",
-   "evaluatedDraws": 1189,
-   "totalHits": 915,
-   "meanHits": 0.7696,
+   "evaluatedDraws": 1190,
+   "totalHits": 917,
+   "meanHits": 0.7706,
    "expectedHits": 0.7347,
    "zScore": 1.18,
    "score": 53.0,
@@ -1655,12 +1655,12 @@
    "recent12": 10,
    "rank": 47,
    "currentPick": [
-    10,
-    14,
-    18,
-    22,
-    31,
-    45
+    1,
+    11,
+    12,
+    16,
+    17,
+    31
    ]
   },
   {
@@ -1668,9 +1668,9 @@
    "name": "MatchHunter Colossus",
    "family": "MatchHunter",
    "description": "8 at-least-prize-tier hits spanning 2018 to 2026.",
-   "evaluatedDraws": 1189,
-   "totalHits": 915,
-   "meanHits": 0.7696,
+   "evaluatedDraws": 1190,
+   "totalHits": 917,
+   "meanHits": 0.7706,
    "expectedHits": 0.7347,
    "zScore": 1.18,
    "score": 52.0,
@@ -1689,12 +1689,12 @@
    "recent12": 4,
    "rank": 48,
    "currentPick": [
-    9,
-    16,
+    4,
     17,
+    19,
+    27,
     37,
-    42,
-    49
+    44
    ]
   },
   {
@@ -1702,14 +1702,14 @@
    "name": "PrizeFreq Vivace",
    "family": "PrizeFreq",
    "description": "36 prizes across the era.",
-   "evaluatedDraws": 1189,
-   "totalHits": 889,
-   "meanHits": 0.7477,
+   "evaluatedDraws": 1190,
+   "totalHits": 891,
+   "meanHits": 0.7487,
    "expectedHits": 0.7347,
    "zScore": 0.44,
    "score": 51.0,
    "score100": 20,
-   "hotScore": 9.5,
+   "hotScore": 9.4,
    "bestGroup": 5,
    "tierCounts": {
     "g7": 35,
@@ -1723,12 +1723,12 @@
    "recent12": 9,
    "rank": 49,
    "currentPick": [
-    6,
-    12,
-    32,
+    7,
+    10,
+    15,
     41,
-    46,
-    47
+    44,
+    49
    ]
   },
   {
@@ -1736,9 +1736,9 @@
    "name": "PrizeFreq Giocoso",
    "family": "PrizeFreq",
    "description": "37 prizes.",
-   "evaluatedDraws": 1189,
-   "totalHits": 976,
-   "meanHits": 0.8209,
+   "evaluatedDraws": 1190,
+   "totalHits": 978,
+   "meanHits": 0.8218,
    "expectedHits": 0.7347,
    "zScore": 2.91,
    "score": 51.0,
@@ -1757,11 +1757,11 @@
    "recent12": 8,
    "rank": 50,
    "currentPick": [
-    1,
-    19,
+    4,
+    14,
+    17,
     22,
-    33,
-    34,
+    30,
     40
    ]
   },
@@ -1770,14 +1770,14 @@
    "name": "PrizeFreq Fortissimo",
    "family": "PrizeFreq",
    "description": "Most frequent classic winner: 38 prizes over the era.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 927,
-   "meanHits": 0.7796,
+   "meanHits": 0.779,
    "expectedHits": 0.7347,
    "zScore": 1.52,
    "score": 50.0,
    "score100": 20,
-   "hotScore": 6.8,
+   "hotScore": 6.7,
    "bestGroup": 5,
    "tierCounts": {
     "g7": 42,
@@ -1790,12 +1790,12 @@
    "recent12": 12,
    "rank": 51,
    "currentPick": [
-    9,
     14,
-    16,
-    17,
-    43,
-    45
+    15,
+    21,
+    22,
+    28,
+    37
    ]
   },
   {
@@ -1803,14 +1803,14 @@
    "name": "PrizeFreq Sostenuto",
    "family": "PrizeFreq",
    "description": "38 prizes.",
-   "evaluatedDraws": 1189,
-   "totalHits": 896,
-   "meanHits": 0.7536,
+   "evaluatedDraws": 1190,
+   "totalHits": 897,
+   "meanHits": 0.7538,
    "expectedHits": 0.7347,
    "zScore": 0.64,
    "score": 49.0,
    "score100": 20,
-   "hotScore": 5.3,
+   "hotScore": 5.2,
    "bestGroup": 5,
    "tierCounts": {
     "g7": 37,
@@ -1824,12 +1824,12 @@
    "recent12": 9,
    "rank": 52,
    "currentPick": [
-    1,
-    9,
-    10,
-    31,
-    41,
-    48
+    32,
+    35,
+    37,
+    47,
+    48,
+    49
    ]
   },
   {
@@ -1837,14 +1837,14 @@
    "name": "PrizeFreq Presto",
    "family": "PrizeFreq",
    "description": "35 prizes across the era.",
-   "evaluatedDraws": 1189,
-   "totalHits": 921,
-   "meanHits": 0.7746,
+   "evaluatedDraws": 1190,
+   "totalHits": 922,
+   "meanHits": 0.7748,
    "expectedHits": 0.7347,
    "zScore": 1.35,
    "score": 47.0,
    "score100": 19,
-   "hotScore": 12.0,
+   "hotScore": 11.9,
    "bestGroup": 5,
    "tierCounts": {
     "g7": 39,
@@ -1858,11 +1858,11 @@
    "rank": 53,
    "currentPick": [
     4,
-    19,
-    27,
-    30,
-    32,
-    43
+    14,
+    37,
+    40,
+    44,
+    47
    ]
   },
   {
@@ -1870,9 +1870,9 @@
    "name": "Lag Mix",
    "family": "Other",
    "description": "Blends frequency votes from several lags (last 5/10/20/50 draws) into one weighted pick.",
-   "evaluatedDraws": 1189,
-   "totalHits": 895,
-   "meanHits": 0.7527,
+   "evaluatedDraws": 1190,
+   "totalHits": 896,
+   "meanHits": 0.7529,
    "expectedHits": 0.7347,
    "zScore": 0.61,
    "score": 37.0,
@@ -1891,11 +1891,11 @@
    "recent12": 6,
    "rank": 54,
    "currentPick": [
-    8,
-    9,
-    10,
+    6,
     19,
-    37,
+    31,
+    34,
+    45,
     48
    ]
   },
@@ -1904,9 +1904,9 @@
    "name": "Sum Posterior",
    "family": "Other",
    "description": "Exact posterior P(ball | draw total) via dynamic programming over sum bands.",
-   "evaluatedDraws": 1189,
+   "evaluatedDraws": 1190,
    "totalHits": 909,
-   "meanHits": 0.7645,
+   "meanHits": 0.7639,
    "expectedHits": 0.7347,
    "zScore": 1.01,
    "score": 33.0,
@@ -1927,9 +1927,9 @@
     1,
     2,
     3,
-    4,
-    5,
-    7
+    6,
+    7,
+    8
    ]
   },
   {
@@ -1937,9 +1937,9 @@
    "name": "Affinity Anchor",
    "family": "Other",
    "description": "Anchor one of the top-5 positive-z pairs; fill 4 slots with balls whose pair-z with BOTH anchors lies in [\u22121,+1] (neutral); ensemble fill the rest.",
-   "evaluatedDraws": 1189,
-   "totalHits": 918,
-   "meanHits": 0.7721,
+   "evaluatedDraws": 1190,
+   "totalHits": 920,
+   "meanHits": 0.7731,
    "expectedHits": 0.7347,
    "zScore": 1.26,
    "score": 32.0,
@@ -1961,8 +1961,8 @@
     2,
     11,
     15,
-    23,
-    46,
+    39,
+    44,
     49
    ]
   },
@@ -1971,9 +1971,9 @@
    "name": "Hollow Barbell",
    "family": "Other",
    "description": "Two low anchors + four high anchors with the middle band left hollow.",
-   "evaluatedDraws": 1189,
-   "totalHits": 885,
-   "meanHits": 0.7443,
+   "evaluatedDraws": 1190,
+   "totalHits": 886,
+   "meanHits": 0.7445,
    "expectedHits": 0.7347,
    "zScore": 0.33,
    "score": 30.0,
@@ -1992,10 +1992,10 @@
    "recent12": 7,
    "rank": 57,
    "currentPick": [
-    4,
+    6,
     37,
     39,
-    43,
+    44,
     46,
     48
    ]
@@ -2005,9 +2005,9 @@
    "name": "Halo Expand",
    "family": "Other",
    "description": "Two balls from the \u00b11 WRAPAROUND halo (1\u219449 wrap) of the previous draw, ensemble fill.",
-   "evaluatedDraws": 1189,
-   "totalHits": 884,
-   "meanHits": 0.7435,
+   "evaluatedDraws": 1190,
+   "totalHits": 886,
+   "meanHits": 0.7445,
    "expectedHits": 0.7347,
    "zScore": 0.3,
    "score": 30.0,
@@ -2029,8 +2029,8 @@
     8,
     22,
     30,
-    32,
-    46,
+    39,
+    44,
     48
    ]
   },
@@ -2039,9 +2039,9 @@
    "name": "Additional-Ball Echo",
    "family": "Other",
    "description": "Recentres on the last draw's additional ball and echoes its neighbourhood.",
-   "evaluatedDraws": 1189,
-   "totalHits": 898,
-   "meanHits": 0.7553,
+   "evaluatedDraws": 1190,
+   "totalHits": 899,
+   "meanHits": 0.7555,
    "expectedHits": 0.7347,
    "zScore": 0.69,
    "score": 28.0,
@@ -2059,12 +2059,12 @@
    "recent12": 11,
    "rank": 59,
    "currentPick": [
+    4,
     11,
-    20,
     22,
-    23,
-    30,
-    35
+    39,
+    48,
+    49
    ]
   },
   {
@@ -2072,9 +2072,9 @@
    "name": "Drought Border",
    "family": "Other",
    "description": "Loads the boundary balls of long absence droughts (the edge of the gap distribution).",
-   "evaluatedDraws": 1189,
-   "totalHits": 885,
-   "meanHits": 0.7443,
+   "evaluatedDraws": 1190,
+   "totalHits": 886,
+   "meanHits": 0.7445,
    "expectedHits": 0.7347,
    "zScore": 0.33,
    "score": 27.0,
@@ -2094,11 +2094,11 @@
    "rank": 60,
    "currentPick": [
     2,
+    8,
     22,
-    27,
-    29,
     30,
-    32
+    39,
+    48
    ]
   },
   {
@@ -2106,9 +2106,9 @@
    "name": "Quick Pick Control",
    "family": "Controls",
    "description": "Seeded random line \u2014 the honest baseline. Every other strategy is measured against this.",
-   "evaluatedDraws": 839,
-   "totalHits": 604,
-   "meanHits": 0.7199,
+   "evaluatedDraws": 840,
+   "totalHits": 605,
+   "meanHits": 0.7202,
    "expectedHits": 0.7347,
    "zScore": -0.42,
    "score": 26.9,
@@ -2126,12 +2126,12 @@
    "recent12": 4,
    "rank": 61,
    "currentPick": [
-    1,
-    9,
-    10,
     21,
-    22,
-    39
+    23,
+    25,
+    33,
+    34,
+    44
    ]
   },
   {
@@ -2139,9 +2139,9 @@
    "name": "Logit Calibration",
    "family": "Other",
    "description": "Logistic calibration of per-ball lift scores into pick probabilities.",
-   "evaluatedDraws": 1189,
-   "totalHits": 881,
-   "meanHits": 0.741,
+   "evaluatedDraws": 1190,
+   "totalHits": 882,
+   "meanHits": 0.7412,
    "expectedHits": 0.7347,
    "zScore": 0.21,
    "score": 26.0,
@@ -2161,10 +2161,10 @@
    "currentPick": [
     2,
     3,
-    4,
-    8,
-    10,
-    11
+    6,
+    11,
+    13,
+    31
    ]
   },
   {
@@ -2172,9 +2172,9 @@
    "name": "Rook6",
    "family": "Other",
    "description": "Rook-tour over the 7x7 number grid \u2014 six mutually non-adjacent squares per draw.",
-   "evaluatedDraws": 1189,
-   "totalHits": 880,
-   "meanHits": 0.7401,
+   "evaluatedDraws": 1190,
+   "totalHits": 882,
+   "meanHits": 0.7412,
    "expectedHits": 0.7347,
    "zScore": 0.18,
    "score": 24.0,
@@ -2195,8 +2195,8 @@
     8,
     22,
     30,
-    32,
-    46,
+    39,
+    44,
     48
    ]
   },
@@ -2205,9 +2205,9 @@
    "name": "Ignition2of10",
    "family": "Other",
    "description": "Indicator of exactly 2 hits in the last 10 draws (early ignition); balls with \u22654 hits in 10 are banned.",
-   "evaluatedDraws": 1189,
-   "totalHits": 896,
-   "meanHits": 0.7536,
+   "evaluatedDraws": 1190,
+   "totalHits": 898,
+   "meanHits": 0.7546,
    "expectedHits": 0.7347,
    "zScore": 0.64,
    "score": 24.0,
@@ -2230,8 +2230,8 @@
     11,
     18,
     24,
-    27,
-    41
+    30,
+    34
    ]
   },
   {
@@ -2239,14 +2239,14 @@
    "name": "Modal Sum Core",
    "family": "Other",
    "description": "Targets the modal sum band core with balanced decade coverage.",
-   "evaluatedDraws": 1189,
-   "totalHits": 840,
-   "meanHits": 0.7065,
+   "evaluatedDraws": 1190,
+   "totalHits": 841,
+   "meanHits": 0.7067,
    "expectedHits": 0.7347,
    "zScore": -0.95,
    "score": 23.0,
    "score100": 16,
-   "hotScore": 3.0,
+   "hotScore": 2.9,
    "bestGroup": 5,
    "tierCounts": {
     "g7": 13,
@@ -2261,10 +2261,10 @@
    "rank": 65,
    "currentPick": [
     8,
-    21,
+    20,
     22,
     30,
-    32,
+    39,
     48
    ]
   },
@@ -2273,9 +2273,9 @@
    "name": "Prime Twins",
    "family": "Other",
    "description": "Plays prime numbers and their +-2 twins (3-5, 5-7, 11-13 ...) weighted by hit rate.",
-   "evaluatedDraws": 1189,
-   "totalHits": 869,
-   "meanHits": 0.7309,
+   "evaluatedDraws": 1190,
+   "totalHits": 870,
+   "meanHits": 0.7311,
    "expectedHits": 0.7347,
    "zScore": -0.13,
    "score": 22.0,
@@ -2296,8 +2296,68 @@
     3,
     22,
     30,
-    32,
-    46,
+    39,
+    47,
+    48
+   ]
+  },
+  {
+   "id": "SkipGate Sentry",
+   "name": "SkipGate Sentry",
+   "family": "Other",
+   "description": "Strategy rule from the documented catalogue.",
+   "evaluatedDraws": 1,
+   "totalHits": 0,
+   "meanHits": 0.0,
+   "expectedHits": 0.7347,
+   "zScore": null,
+   "score": null,
+   "score100": 1,
+   "hotScore": 0.0,
+   "bestGroup": null,
+   "tierCounts": {},
+   "lastPrizeDraw": null,
+   "totalPrizes": 0,
+   "effPrizes": 0,
+   "pnlPerDraw": 0.0,
+   "recent12": null,
+   "rank": null,
+   "currentPick": [
+    2,
+    18,
+    23,
+    28,
+    43,
+    46
+   ]
+  },
+  {
+   "id": "SkipGate Vigil",
+   "name": "SkipGate Vigil",
+   "family": "Other",
+   "description": "Strategy rule from the documented catalogue.",
+   "evaluatedDraws": 1,
+   "totalHits": 1,
+   "meanHits": 1.0,
+   "expectedHits": 0.7347,
+   "zScore": null,
+   "score": null,
+   "score100": 1,
+   "hotScore": 0.0,
+   "bestGroup": null,
+   "tierCounts": {},
+   "lastPrizeDraw": null,
+   "totalPrizes": 0,
+   "effPrizes": 0,
+   "pnlPerDraw": 0.0,
+   "recent12": null,
+   "rank": null,
+   "currentPick": [
+    6,
+    15,
+    24,
+    25,
+    43,
     47
    ]
   }
