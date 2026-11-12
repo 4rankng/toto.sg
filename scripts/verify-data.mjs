@@ -131,7 +131,7 @@ const checkStrategies = (league) => {
         check(Number.isFinite(row?.meanHits) && Number.isFinite(row?.expectedHits) && Number.isFinite(row?.zScore), `${where}: non-finite metrics`);
         check(Number.isInteger(row?.recent12) && row.recent12 >= 0 && row.recent12 <= 72, `${where}: recent12 must be 0-72 (12 draws × 6 numbers)`);
         check(Number.isInteger(row?.totalPrizes) && Number.isInteger(row?.effPrizes), `${where}: prize counts must be integers`);
-        check(Number.isInteger(row?.weightedPrizes) && row.weightedPrizes >= row.totalPrizes && row.weightedPrizes <= row.totalPrizes * 1_000_000, `${where}: weightedPrizes must be 1–1,000,000 per prize draw`);
+        check(Number.isInteger(row?.weightedPrizes) && row.weightedPrizes >= row.totalPrizes && row.weightedPrizes <= row.totalPrizes * 13, `${where}: weightedPrizes must be 1–13 per prize draw (tier ladder G7=1 … G1=13)`);
         check(row.weightedPrizes === row.score, `${where}: score must equal weightedPrizes (the score is the prize points)`);
         check(row?.bestGroup === null || (Number.isInteger(row.bestGroup) && row.bestGroup >= 1 && row.bestGroup <= 7), `${where}: bestGroup must be null or 1-7`);
         check(Number.isInteger(row?.depthPoints) && row.depthPoints >= 0 && row.depthPoints <= league.meta.folds * 16, `${where}: depthPoints must be 0-${league.meta.folds * 16}`);

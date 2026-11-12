@@ -16,8 +16,8 @@
 //   * totalPrizes counts prize draws (≥3 matched, or 2 with the additional);
 //     chance is P(prize) ≈ 1.86 per 100 draws. effPrizes = totalPrizes.
 //   * zScore standardises meanHits against chance; score is pure prize
-//     points — each prize hit earns its tier's decade weight, nothing else
-//     moves it.
+//     points — each prize hit earns its tier's weight on the fixed ladder
+//     G7=1 … G1=13, nothing else moves it.
 import { scoreLine } from "./toto.mjs";
 
 export const REJECT_CAP = 10000; // per draw; a cap hit means a bug in the rule encoding
@@ -48,22 +48,22 @@ export const CHANCE = {
     hitsPer100Draws: Math.round((3600 / 49) * 10) / 10, // 73.5
     twoPlusPer100Draws: Math.round((1 - pExactly(0) - pExactly(1)) * 1000) / 10, // 15.1
     prizesPer100Draws: Math.round((1 - pExactly(0) - pExactly(1) - pExactly(2)) * 10000) / 100, // 1.86
-    // Prize points — the score itself: each prize draw earns 10^(7−group),
-    // i.e. G7=1, G6=10, G5=100, G4=1_000, G3=10_000, G2=100_000, G1=1_000_000
-    // — a decade per tier, so one Group 1 outweighs any number of Group 7s.
-    // The additional ball never changes the tier: G2 weighs like G3, G6 like
-    // G7. Chance null = Σ P(tier)·10^(7−group).
+    // Prize points — the score itself: each prize draw earns its tier's
+    // weight on the fixed ladder G7=1, G6=2, G5=3, G4=4, G3=5, G2=8, G1=13
+    // (owner-specified scoring system, 2026-11-12). The additional ball
+    // never changes the tier: G2 weighs like G3, G6 like G7. Chance null =
+    // Σ P(tier)·weight(tier) ≈ 2.11 per 100 draws.
     weightedPrizesPer100Draws:
         Math.round(
-            (pExactly(6) * 1_000_000 +
-                (pExactly(5) * 100_000) / 43 +
-                (pExactly(5) * 42 * 10_000) / 43 +
-                (pExactly(4) * 1_000) / 43 +
-                (pExactly(4) * 42 * 100) / 43 +
-                (pExactly(3) * 10) / 43 +
+            (pExactly(6) * 13 +
+                (pExactly(5) * 8) / 43 +
+                (pExactly(5) * 42 * 5) / 43 +
+                (pExactly(4) * 4) / 43 +
+                (pExactly(4) * 42 * 3) / 43 +
+                (pExactly(3) * 2) / 43 +
                 (pExactly(3) * 42) / 43) *
                 10000,
-        ) / 100, // 43.31
+        ) / 100, // 2.11
     // Per-tier hit probabilities. The additional ball is uniform over the 43
     // unmatched numbers, so G2/G4/G6 (with additional) = P(k matches)/43 and
     // G3/G5/G7 = P(k matches)·42/43. Exact floats — no rounding.
@@ -83,6 +83,13 @@ export const CHANCE = {
             (pExactly(2) * 1 + pExactly(3) * 2 + pExactly(4) * 4 + pExactly(5) * 8 + pExactly(6) * 16) * 10000,
         ) / 100, // 17.17
 };
+/**
+ * The tier→points ladder the league scores on (owner-specified, 2026-11-12):
+ * G7=1, G6=2, G5=3, G4=4, G3=5, G2=8, G1=13. The score is Σ weights over
+ * prize folds — nothing else moves it.
+ */
+export const TIER_WEIGHTS = { 1: 13, 2: 8, 3: 5, 4: 4, 5: 3, 6: 2, 7: 1 };
+
 /** mulberry32 PRNG. */
 export function mulberry32(seed) {
     let a = seed >>> 0;
@@ -198,11 +205,11 @@ export function evaluateStrategy(
         if (matched >= 2) depthPoints += 2 ** (matched - 2); // 1/2/4/8/16 for 2/3/4/5/6 matched
         if (group > 0) {
             totalPrizes += 1;
-            // The score IS the weighted prize points: G7=1, G6=10, G5=100,
-            // G4=1_000, G3=10_000, G2=100_000, G1=1_000_000 — a decade per
-            // tier, so one Group 1 outweighs any number of Group 7s. Prize
-            // money never enters the league: a hit counts, whatever it paid.
-            weightedPrizes += 10 ** (7 - group);
+            // The score IS the weighted prize points: each prize fold earns
+            // its tier's weight on the ladder G7=1, G6=2, G5=3, G4=4, G3=5,
+            // G2=8, G1=13 (TIER_WEIGHTS). Prize money never enters the
+            // league: a hit counts, whatever it paid.
+            weightedPrizes += TIER_WEIGHTS[group];
             if (bestGroup === null || group < bestGroup) bestGroup = group;
             tierCounts[`g${group}`] += 1;
         }
@@ -214,8 +221,8 @@ export function evaluateStrategy(
     const zScore = sd === 0 ? 0 : round2((meanHits - expectedHits) / (sd / Math.sqrt(folds)));
     const effPrizes = totalPrizes;
     const recent12 = perFoldHits.slice(-12).reduce((a, b) => a + b, 0);
-    // The score is the weighted prize points alone — G7=1 … G1=1,000,000, a
-    // decade per tier. Nothing else moves it.
+    // The score is the weighted prize points alone — G7=1 … G1=13
+    // (TIER_WEIGHTS). Nothing else moves it.
     const score = weightedPrizes;
     const currentPick =
         nextPickCache?.get() ??

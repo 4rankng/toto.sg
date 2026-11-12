@@ -102,7 +102,7 @@ export interface StrategyRow {
     score100: number;
     totalPrizes: number;
     effPrizes: number;
-    /** The score itself: each prize draw earns 10^(7−group) — G7 1 … G1 1,000,000, a decade per tier (chance ≈ 43.3 per 100). */
+    /** The score itself: each prize draw earns its tier's weight — G7=1, G6=2, G5=3, G4=4, G3=5, G2=8, G1=13 (chance ≈ 2.11 per 100). */
     weightedPrizes: number;
     /** Hit depth total: each fold earns 2^(matched−2) — 1/2/4/8/16 for 2–6 matched. */
     depthPoints: number;

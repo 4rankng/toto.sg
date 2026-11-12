@@ -178,7 +178,7 @@ const StrategyDetail = ({
                 </div>
                 <div className="min-w-[110px] flex-1 px-3 py-2">
                     <dt className="text-[10px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Score</dt>
-                    <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums" title={`Log-normalised to 1–100 against the theoretical ceiling (every fold a Group 1) from ${formatNumber(row.score ?? 0)} raw prize points — each prize hit earns its tier's weight, G7 1 … G1 1M; 100 is the perfect league, the leader sits near 54`}>
+                    <dd className="mt-0.5 font-mono text-sm font-semibold text-ink tabular-nums" title={`Log-normalised to 1–100 against the theoretical ceiling (every fold a Group 1) from ${formatNumber(row.score ?? 0)} raw prize points — each prize hit earns its tier's weight, G7=1 G6=2 G5=3 G4=4 G3=5 G2=8 G1=13; 100 is the perfect league`}>
                         {row.score100 ?? 1} <span className="text-ink-muted">/ 100</span>
                     </dd>
                 </div>
@@ -566,8 +566,8 @@ export const StrategiesScreen = () => {
                 <KpiCard label="Strategies" value={formatNumber(data.strategies.length)} hint={`${meta.folds} past draws`} icon={Grid01} tone="primary" />
                 <KpiCard
                     label="Top score"
-                    value={formatNumber(topRow.score)}
-                    hint={topRow.name}
+                    value={topRow.score100 ?? 1}
+                    hint={`${topRow.name} · ${formatNumber(topRow.score)} raw points`}
                     icon={Award01}
                     tone="gold"
                 />

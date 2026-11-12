@@ -285,15 +285,15 @@ const main = async () => {
         row.rank = i + 1;
     });
 
-    // Display score: raw prize points are decade-weighted (one G3 = 10,000), so
-    // a single mid-tier hit makes five-digit scores while the rest sit near 0.
+    // Display score: raw prize points are ladder-weighted (G7=1, G6=2, G5=3,
+    // G4=4, G3=5, G2=8, G1=13 — TIER_WEIGHTS), so scores are small integers.
     // Normalise on a log scale against the league's THEORETICAL CEILING — every
-    // fold a Group 1, folds × 1,000,000 points — not against the current
+    // fold a Group 1, folds × 13 points — not against the current
     // leader. The absolute anchor keeps 100 an impossible perfect league
-    // instead of a badge the leader gets for free: today the top sits at ~54,
-    // a chance-grade row at ~30, zero-score rows floor at 1, and the number
-    // stays comparable as the fold count grows.
-    const ceiling = (foldEnd - foldStart) * 1_000_000;
+    // instead of a badge the leader gets for free: the top sits well below
+    // 100, chance-grade rows sit near the low tens, zero-score rows floor
+    // at 1, and the number stays comparable as the fold count grows.
+    const ceiling = (foldEnd - foldStart) * 13;
     for (const row of kept) row.score100 = Math.max(1, 1 + Math.round((99 * Math.log1p(row.score)) / Math.log1p(ceiling)));
 
     const league = {
