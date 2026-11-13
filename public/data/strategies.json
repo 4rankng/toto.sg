@@ -58,10 +58,7 @@
    "name": "StreamPick Nova",
    "family": "StreamPick",
    "description": "MEGA-33 record holder \u2014 54 prizes on the full era track, found in a 356-billion-line-draw search; seeded stream pick with surgical replay.",
-   "prizes": 54,
-   "score": 63,
-   "drawsTested": 1190,
-   "line": [
+   "currentPick": [
     29,
     30,
     33,
@@ -69,14 +66,28 @@
     39,
     43
    ],
+   "totalPrizes": 54,
+   "effPrizes": 54,
+   "weightedPrizes": 63,
+   "score": 63,
+   "score100": 21,
+   "evaluatedDraws": 1190,
    "lastPrizeDraw": 4205,
    "bestGroup": 5,
-   "prizeTiers": {
+   "tierCounts": {
     "g7": 49,
     "g5": 4,
     "g6": 1
    },
-   "meanHits": 0.8092
+   "totalHits": 963,
+   "meanHits": 0.8092,
+   "expectedHits": 0.7347,
+   "twoPlusDraws": 219,
+   "recent12": 8,
+   "hotScore": 0.0,
+   "depthPoints": 0,
+   "zScore": 2.18,
+   "rank": 1
   },
   {
    "id": "tempoMaestoso",
