@@ -189,7 +189,25 @@ export function computeAnalysis(draws49) {
         lastSeen,
         oddEven,
         lowHigh,
-        sum: { bands, mean: ROUND2(sums.reduce((a, b) => a + b, 0) / total), median: median(sums) },
+        sum: (() => {
+            // Owner rule 2026-11-15: insights never show averages — only
+            // most-frequent (modal) indicators. Mean/median stay in the data
+            // for internal verdict math; the UI reads mode/modalRange.
+            const counts = new Map();
+            for (const v of sums) counts.set(v, (counts.get(v) ?? 0) + 1);
+            let mode = sums[0], best = 0;
+            for (const [v, c] of counts) if (c > best || (c === best && v < mode)) { mode = v; best = c; }
+            const rangeCounts = new Map();
+            for (const v of sums) {
+                const lo = Math.floor((v - 100) / 10) * 10 + 100;
+                const key = `${lo}-${lo + 9}`;
+                rangeCounts.set(key, (rangeCounts.get(key) ?? 0) + 1);
+            }
+            let modalRange = "", rc = 0;
+            for (const [k, c] of rangeCounts) if (c > rc) { modalRange = k; rc = c; }
+            return { bands, mean: ROUND2(sums.reduce((a, b) => a + b, 0) / total), median: median(sums),
+                     mode, modeCount: best, modalRange, modalRangeCount: rc, modalRangeShare: ROUND2(100 * rc / total) };
+        })(),
         decades: decades.map((c) => ROUND2(c / total)),
         consecutive: {
             drawRate: ROUND4(drawsWithConsecutive / total),

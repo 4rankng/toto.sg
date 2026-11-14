@@ -68,6 +68,12 @@ export interface Analysis {
         bands: { band: string; count: number }[];
         mean: number;
         median: number;
+        /** Owner rule 2026-11-15: the UI shows modal indicators, never averages. */
+        mode?: number;
+        modeCount?: number;
+        modalRange?: string;
+        modalRangeCount?: number;
+        modalRangeShare?: number;
     };
     decades: number[];
     consecutive: {

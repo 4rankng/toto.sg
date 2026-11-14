@@ -966,7 +966,7 @@ export const InsightsScreen = () => {
             {/* The headline numbers: 8 console KPI cards. */}
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">
                 <KpiCard label="Draws" value={formatNumber(total)} hint="6/49 era" icon={Hash01} tone="primary" />
-                <KpiCard label="Mean sum" value={analysis.sum.mean.toFixed(1)} hint={`median ${analysis.sum.median}`} icon={BarChart01} tone="secondary" />
+                <KpiCard label="Most frequent sum" value={`${analysis.sum.mode ?? analysis.sum.mean.toFixed(0)}`} hint={`${analysis.sum.modeCount ?? 0} draws`} icon={BarChart01} tone="secondary" />
                 <KpiCard label="Most seen" value={hot?.number ?? "—"} hint={hot ? `${formatNumber(hot.count)} draws` : undefined} icon={Lightning01} tone="gold" />
                 <KpiCard label="Least seen" value={cold?.number ?? "—"} hint={cold ? `${formatNumber(cold.count)} draws` : undefined} icon={Activity} tone="neutral" />
                 <KpiCard label="Overdue" value={gaps.overdueCount} hint="of 49 numbers" icon={Clock} tone="primary" />
@@ -2217,7 +2217,8 @@ export const InsightsScreen = () => {
                                 family="Sum Band"
                                 className="lg:col-span-6"
                                 stats={[
-                                    { label: "Mean", value: analysis.sum.mean.toFixed(1), hint: `median ${analysis.sum.median}` },
+                                    { label: "Top sum", value: `${analysis.sum.mode ?? "—"}`, hint: `${analysis.sum.modeCount ?? 0} draws` },
+                                    { label: "Top range", value: analysis.sum.modalRange ?? "—", hint: `${analysis.sum.modalRangeShare ?? 0}% of draws` },
                                     { label: "In band", value: pct(band.share), hint: `${band.lo}–${band.hi}` },
                                     { label: "Draws in band", value: formatNumber(band.count), hint: `of ${formatNumber(total)}` },
                                 ]}
@@ -2243,8 +2244,8 @@ export const InsightsScreen = () => {
                                             { label: "150–179", value: analysis.sum.bands[3]?.count ?? 0, colour: "var(--color-heat-hot)" },
                                             { label: "180 and over", value: analysis.sum.bands.slice(4).reduce((sum, b) => sum + b.count, 0), colour: "var(--color-gold)" },
                                         ]}
-                                        centerValue={analysis.sum.mean.toFixed(0)}
-                                        centerLabel="mean sum"
+                                        centerValue={analysis.sum.modalRange ?? analysis.sum.mean.toFixed(0)}
+                                        centerLabel="most frequent range"
                                     />
                                 </div>
                             </InsightPanel>
@@ -2260,7 +2261,7 @@ export const InsightsScreen = () => {
                                 family="Momentum"
                                 className="lg:col-span-6"
                                 stats={[
-                                    { label: "Era mean", value: analysis.sum.mean.toFixed(1), hint: "all draws" },
+                                    { label: "Top range", value: analysis.sum.modalRange ?? "—", hint: `most frequent · ${analysis.sum.modalRangeShare ?? 0}%` },
                                     { label: "Band", value: `${band.lo}–${band.hi}`, hint: "most draws" },
                                     { label: "Longest run", value: formatNumber(analysis.consecutive.drawRate * total), hint: "draws with a pair" },
                                 ]}

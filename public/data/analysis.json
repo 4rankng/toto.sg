@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-13T11:05:04.594Z",
+  "generatedAt": "2026-11-14T08:11:20.141Z",
   "coverage": {
     "firstDraw": 2995,
     "lastDraw": 4234,
@@ -677,7 +677,12 @@
       }
     ],
     "mean": 149.55,
-    "median": 150
+    "median": 150,
+    "mode": 130,
+    "modeCount": 20,
+    "modalRange": "150-159",
+    "modalRangeCount": 162,
+    "modalRangeShare": 13.06
   },
   "decades": [
     1.25,
