@@ -374,6 +374,9 @@ export interface DeltaStats {
     observedAverage: number;
     /** Theoretical mean gap: (49 + 1) ÷ (6 + 1). */
     expectedAverage: number;
+    /** Most frequent adjacent gap (owner rule: modal indicators only). */
+    modeGap: number;
+    modeGapCount: number;
 }
 
 /**
@@ -402,10 +405,15 @@ export function deltaStats(draws: Draw[], maxGap = 25): DeltaStats {
         rows.push({ gap, count: counts.get(gap) ?? 0, expected });
     }
 
+    // Owner rule 2026-11-15: modal indicator for display; mean stays internal.
+    let modeGap = 1, modeGapCount = 0;
+    for (const r of rows) if (r.count > modeGapCount) { modeGap = r.gap; modeGapCount = r.count; }
     return {
         rows,
         observedAverage: total > 0 ? sumOfGaps(draws) / total : 0,
         expectedAverage: (POOL + 1) / (PICKS + 1),
+        modeGap,
+        modeGapCount,
     };
 }
 

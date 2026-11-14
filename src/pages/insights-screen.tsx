@@ -2412,9 +2412,9 @@ export const InsightsScreen = () => {
                                     return (
                                         <PanelVerdict
                                             tone={tone}
-                                            label={tone === "watch" ? `Avoid mean gaps outside 6.5–8.0 (now ${deltas.observedAverage.toFixed(2)})` : "No edge — any shape is as good"}
+                                            label={tone === "watch" ? `Most frequent gap: ${deltas.modeGap} (${deltas.modeGapCount}×)` : "No edge — any shape is as good"}
                                             {...(tone === "watch" ? { avoid: "gap-outside-6.5-8" } : {})}
-                                            detail={`mean gap ${deltas.observedAverage.toFixed(2)}`}
+                                            detail={`top gap ${deltas.modeGap} (${deltas.modeGapCount}×)`}
                                             metric={`mean:${deltas.observedAverage.toFixed(2)}|band:6.5-8`}
                                         />
                                     );
@@ -2459,7 +2459,7 @@ export const InsightsScreen = () => {
                                 family="Structure"
                                 className="lg:col-span-6"
                                 stats={[
-                                    { label: "Observed mean", value: spans.observedMean.toFixed(1), hint: "span size" },
+                                    { label: "Top span", value: `${spans.mostCommonSpan}`, hint: "most frequent" },
                                     { label: "Expected mean", value: spans.expectedMean.toFixed(1), hint: "theory 35.7" },
                                     { label: "Modal span", value: spans.mostCommonSpan, hint: "most frequent" },
                                 ]}
@@ -2471,7 +2471,7 @@ export const InsightsScreen = () => {
                                             tone={tone}
                                             label={tone === "watch" ? `Avoid spans outside 33–43 (now ${spans.observedMean.toFixed(1)})` : "No edge — any shape is as good"}
                                             {...(tone === "watch" ? { avoid: "span-outside-33-43" } : {})}
-                                            detail={`mean span ${spans.observedMean.toFixed(1)}`}
+                                            detail={`top span ${spans.mostCommonSpan}`}
                                             metric={`mean:${spans.observedMean.toFixed(1)}|band:33-43`}
                                         />
                                     );
@@ -2501,7 +2501,7 @@ export const InsightsScreen = () => {
                                 family="Structure"
                                 className="lg:col-span-6"
                                 stats={[
-                                    { label: "Observed mean", value: acValues.observedMean.toFixed(2), hint: "AC value" },
+                                    { label: "Top AC", value: `${acValues.mostCommonAc}`, hint: `${acValues.mostCommonAcCount}× — most frequent` },
                                     { label: "Expected mean", value: acValues.expectedMean.toFixed(2), hint: "theory 8.16" },
                                     { label: "AC ≥ 7 share", value: `${(acValues.rateAbove6 * 100).toFixed(1)}%`, hint: "complex lines" },
                                 ]}

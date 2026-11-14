@@ -796,7 +796,8 @@ export function spreadStats(draws: Draw[]): SpanStats {
     // Theoretical expected span: 5 * (50 / 7) = 35.714
     const expectedMean = (5 * (POOL + 1)) / (PICKS + 1);
 
-    return {
+        return {
+
         rows,
         observedMean: draws.length > 0 ? totalSpan / draws.length : 0,
         expectedMean,
@@ -809,6 +810,9 @@ export interface ACValueStats {
     observedMean: number;
     expectedMean: number;
     rateAbove6: number;
+    /** Most frequent AC value (owner rule: modal indicators only). */
+    mostCommonAc: number;
+    mostCommonAcCount: number;
 }
 
 /**
@@ -858,12 +862,16 @@ export function acValueStats(draws: Draw[]): ACValueStats {
     });
 
     const highCount = counts.slice(7).reduce((a, b) => a + b, 0);
+    let acMode = 0, acModeCount = 0;
+    for (let i = 0; i < counts.length; i += 1) if (counts[i] > acModeCount) { acMode = i; acModeCount = counts[i]; }
 
     return {
         rows,
         observedMean: draws.length > 0 ? totalAC / draws.length : 0,
         expectedMean: 8.16,
         rateAbove6: draws.length > 0 ? highCount / draws.length : 0,
+        mostCommonAc: acMode,
+        mostCommonAcCount: acModeCount,
     };
 }
 
