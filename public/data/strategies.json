@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generatedAt": "2026-11-16T21:48:44+08:00",
+  "generatedAt": "2026-11-18T22:55:11+08:00",
   "nextDraw": 4236,
   "folds": 1191,
   "chance": {
@@ -53,6 +53,43 @@
   ]
  },
  "strategies": [
+  {
+   "id": "StreamPick Zenith",
+   "name": "StreamPick Zenith",
+   "family": "StreamPick",
+   "description": "MEGA-34b record holder \u2014 58 prizes and 82 ladder points on the full era track, found in a 600-billion-line-draw search; seeded stream pick with surgical replay.",
+   "evaluatedDraws": 1191,
+   "totalHits": 978,
+   "meanHits": 0.8212,
+   "expectedHits": 0.7347,
+   "zScore": 2.53,
+   "score": 69,
+   "totalPrizes": 58,
+   "effPrizes": 58,
+   "weightedPrizes": 69,
+   "depthPoints": 0,
+   "bestGroup": 3,
+   "tierCounts": {
+    "g7": 52,
+    "g5": 2,
+    "g6": 3,
+    "g3": 1
+   },
+   "twoPlusDraws": 212,
+   "recent12": 11,
+   "rank": 1,
+   "currentPick": [
+    2,
+    3,
+    9,
+    10,
+    38,
+    40
+   ],
+   "hotScore": 6.54,
+   "lastPrizeDraw": 4230,
+   "score100": 21
+  },
   {
    "id": "StreamPick Nova",
    "name": "StreamPick Nova",
