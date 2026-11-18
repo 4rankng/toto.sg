@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generatedAt": "2026-11-19T01:00:01+08:00",
+  "generatedAt": "2026-11-19T01:25:07+08:00",
   "nextDraw": 4236,
   "folds": 1191,
   "chance": {
@@ -53,6 +53,43 @@
   ]
  },
  "strategies": [
+  {
+   "id": "CycleBlend 26",
+   "name": "CycleBlend 26",
+   "family": "CycleBlend",
+   "description": "Deep fold-cycle composite \u2014 each draw's line comes from the champion of that fold's class in a fixed 26-fold cycle (fixed rule, one line per draw). 133 prizes, the deepest single-line record.",
+   "evaluatedDraws": 1191,
+   "totalHits": 1144,
+   "meanHits": 0.9605,
+   "expectedHits": 0.7347,
+   "zScore": 6.61,
+   "score": 166,
+   "totalPrizes": 133,
+   "effPrizes": 133,
+   "weightedPrizes": 166,
+   "depthPoints": 0,
+   "bestGroup": 3,
+   "tierCounts": {
+    "g7": 114,
+    "g5": 11,
+    "g6": 7,
+    "g3": 1
+   },
+   "twoPlusDraws": 276,
+   "recent12": 17,
+   "rank": 1,
+   "currentPick": [
+    19,
+    20,
+    25,
+    27,
+    41,
+    44
+   ],
+   "hotScore": 16.63,
+   "lastPrizeDraw": 4229,
+   "score100": 25
+  },
   {
    "id": "CycleBlend Seven",
    "name": "CycleBlend Seven",
