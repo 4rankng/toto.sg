@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generatedAt": "2026-11-19T01:48:09+08:00",
+  "generatedAt": "2026-11-19T02:06:24+08:00",
   "nextDraw": 4236,
   "folds": 1191,
   "chance": {
@@ -53,43 +53,6 @@
   ]
  },
  "strategies": [
-  {
-   "id": "FormFollow",
-   "name": "FormFollow",
-   "family": "FormFollow",
-   "description": "Walk-forward by construction \u2014 each draw plays the line of the champion with the best all-history form before that draw (past information only, one line per draw). 128 prizes = 10.7%/draw walk-forward rule; the champion pool it rotates through was search-selected, so live grading is the final test.",
-   "evaluatedDraws": 1191,
-   "totalHits": 1117,
-   "meanHits": 0.9379,
-   "expectedHits": 0.7347,
-   "zScore": 5.94,
-   "score": 159,
-   "totalPrizes": 128,
-   "effPrizes": 128,
-   "weightedPrizes": 159,
-   "depthPoints": 0,
-   "bestGroup": 3,
-   "tierCounts": {
-    "g7": 110,
-    "g5": 10,
-    "g6": 7,
-    "g3": 1
-   },
-   "twoPlusDraws": 270,
-   "recent12": 17,
-   "rank": 1,
-   "currentPick": [
-    4,
-    14,
-    15,
-    20,
-    33,
-    49
-   ],
-   "hotScore": 16.63,
-   "lastPrizeDraw": 4229,
-   "score100": 25
-  },
   {
    "id": "StreamPick Zenith",
    "name": "StreamPick Zenith",
