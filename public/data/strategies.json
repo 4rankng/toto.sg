@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generatedAt": "2026-11-19T01:34:41+08:00",
+  "generatedAt": "2026-11-19T01:40:29+08:00",
   "nextDraw": 4236,
   "folds": 1191,
   "chance": {
@@ -53,80 +53,6 @@
   ]
  },
  "strategies": [
-  {
-   "id": "CycleBlend 26",
-   "name": "CycleBlend 26",
-   "family": "CycleBlend",
-   "description": "Deep fold-cycle composite \u2014 each draw's line comes from the champion of that fold's class in a fixed 26-fold cycle. 133 prizes in-sample; walk-forward rate 4.0%/draw (the deep cycle is largely selection stitching \u2014 read it as an exhibit, not an edge). Live grading is the test.",
-   "evaluatedDraws": 1191,
-   "totalHits": 1144,
-   "meanHits": 0.9605,
-   "expectedHits": 0.7347,
-   "zScore": 6.61,
-   "score": 166,
-   "totalPrizes": 133,
-   "effPrizes": 133,
-   "weightedPrizes": 166,
-   "depthPoints": 0,
-   "bestGroup": 3,
-   "tierCounts": {
-    "g7": 114,
-    "g5": 11,
-    "g6": 7,
-    "g3": 1
-   },
-   "twoPlusDraws": 276,
-   "recent12": 17,
-   "rank": 1,
-   "currentPick": [
-    19,
-    20,
-    25,
-    27,
-    41,
-    44
-   ],
-   "hotScore": 16.63,
-   "lastPrizeDraw": 4229,
-   "score100": 25
-  },
-  {
-   "id": "CycleBlend Seven",
-   "name": "CycleBlend Seven",
-   "family": "CycleBlend",
-   "description": "Fold-cycle composite \u2014 7-fold rotation of champions. 79 prizes in-sample; walk-forward rate 9.9%/draw. Live grading is the test.",
-   "evaluatedDraws": 1191,
-   "totalHits": 1020,
-   "meanHits": 0.8564,
-   "expectedHits": 0.7347,
-   "zScore": 3.56,
-   "score": 92,
-   "totalPrizes": 79,
-   "effPrizes": 79,
-   "weightedPrizes": 92,
-   "depthPoints": 0,
-   "bestGroup": 4,
-   "tierCounts": {
-    "g7": 71,
-    "g5": 3,
-    "g4": 1,
-    "g6": 4
-   },
-   "twoPlusDraws": 228,
-   "recent12": 16,
-   "rank": 1,
-   "currentPick": [
-    5,
-    8,
-    11,
-    37,
-    39,
-    49
-   ],
-   "hotScore": 16.58,
-   "lastPrizeDraw": 4232,
-   "score100": 22
-  },
   {
    "id": "StreamPick Zenith",
    "name": "StreamPick Zenith",
