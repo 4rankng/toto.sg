@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generatedAt": "2026-11-19T01:25:07+08:00",
+  "generatedAt": "2026-11-19T01:34:41+08:00",
   "nextDraw": 4236,
   "folds": 1191,
   "chance": {
@@ -57,7 +57,7 @@
    "id": "CycleBlend 26",
    "name": "CycleBlend 26",
    "family": "CycleBlend",
-   "description": "Deep fold-cycle composite \u2014 each draw's line comes from the champion of that fold's class in a fixed 26-fold cycle (fixed rule, one line per draw). 133 prizes, the deepest single-line record.",
+   "description": "Deep fold-cycle composite \u2014 each draw's line comes from the champion of that fold's class in a fixed 26-fold cycle. 133 prizes in-sample; walk-forward rate 4.0%/draw (the deep cycle is largely selection stitching \u2014 read it as an exhibit, not an edge). Live grading is the test.",
    "evaluatedDraws": 1191,
    "totalHits": 1144,
    "meanHits": 0.9605,
@@ -94,7 +94,7 @@
    "id": "CycleBlend Seven",
    "name": "CycleBlend Seven",
    "family": "CycleBlend",
-   "description": "Fold-cycle composite \u2014 each draw's line comes from the champion of that fold's class in a fixed 7-fold cycle (fixed rule, one line per draw). 79 prizes, the deepest single-line record.",
+   "description": "Fold-cycle composite \u2014 7-fold rotation of champions. 79 prizes in-sample; walk-forward rate 9.9%/draw. Live grading is the test.",
    "evaluatedDraws": 1191,
    "totalHits": 1020,
    "meanHits": 0.8564,
@@ -131,7 +131,7 @@
    "id": "StreamPick Zenith",
    "name": "StreamPick Zenith",
    "family": "StreamPick",
-   "description": "MEGA-34b record holder \u2014 58 prizes and 82 ladder points on the full era track, found in a 600-billion-line-draw search; seeded stream pick with surgical replay.",
+   "description": "MEGA-34b search champion \u2014 58 prizes on the full era track (in-sample selection of a seeded stream). Live grading is the out-of-sample test.",
    "evaluatedDraws": 1191,
    "totalHits": 978,
    "meanHits": 0.8212,
