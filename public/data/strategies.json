@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generatedAt": "2026-11-18T22:55:11+08:00",
+  "generatedAt": "2026-11-19T01:00:01+08:00",
   "nextDraw": 4236,
   "folds": 1191,
   "chance": {
@@ -53,6 +53,43 @@
   ]
  },
  "strategies": [
+  {
+   "id": "CycleBlend Seven",
+   "name": "CycleBlend Seven",
+   "family": "CycleBlend",
+   "description": "Fold-cycle composite \u2014 each draw's line comes from the champion of that fold's class in a fixed 7-fold cycle (fixed rule, one line per draw). 79 prizes, the deepest single-line record.",
+   "evaluatedDraws": 1191,
+   "totalHits": 1020,
+   "meanHits": 0.8564,
+   "expectedHits": 0.7347,
+   "zScore": 3.56,
+   "score": 92,
+   "totalPrizes": 79,
+   "effPrizes": 79,
+   "weightedPrizes": 92,
+   "depthPoints": 0,
+   "bestGroup": 4,
+   "tierCounts": {
+    "g7": 71,
+    "g5": 3,
+    "g4": 1,
+    "g6": 4
+   },
+   "twoPlusDraws": 228,
+   "recent12": 16,
+   "rank": 1,
+   "currentPick": [
+    5,
+    8,
+    11,
+    37,
+    39,
+    49
+   ],
+   "hotScore": 16.58,
+   "lastPrizeDraw": 4232,
+   "score100": 22
+  },
   {
    "id": "StreamPick Zenith",
    "name": "StreamPick Zenith",
