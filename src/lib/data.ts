@@ -129,6 +129,8 @@ export interface StrategyMeta {
     generatedAt: string;
     nextDraw: number;
     folds: number;
+    /** Forward-skill verdict from the sub-window persistence experiment, if present. */
+    honestyNote?: string;
     /** The chance nulls every league metric is rendered against. */
     chance: {
         expectedHitsPerLine: number;
@@ -185,7 +187,7 @@ export interface LedgerDirectoryEntry {
 /** The prize-hit ledger: per rule id, every prize fold ascending by draw —
  * every graded rule, including those trimmed from the league table. */
 export interface PrizeEventsFile {
-    meta: { generatedAt: string; nextDraw: number; folds: number; directory: Record<string, LedgerDirectoryEntry> };
+    meta: { generatedAt: string; nextDraw: number; folds: number; honestyNote?: string; directory: Record<string, LedgerDirectoryEntry> };
     strategies: Record<string, PrizeEvent[]>;
 }
 

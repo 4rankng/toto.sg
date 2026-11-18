@@ -561,6 +561,11 @@ export const StrategiesScreen = () => {
                     </>
                 }
             />
+            {meta.honestyNote ? (
+                <div className="mb-4 rounded-lg border border-teal-500/30 bg-teal-500/10 px-4 py-3">
+                    <p className="text-xs leading-relaxed text-teal-100">{meta.honestyNote}</p>
+                </div>
+            ) : null}
 
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                 <KpiCard label="Strategies" value={formatNumber(data.strategies.length)} hint={`${meta.folds} past draws`} icon={Grid01} tone="primary" />

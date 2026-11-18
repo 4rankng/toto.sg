@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generatedAt": "2026-11-19T02:06:24+08:00",
+  "generatedAt": "2026-11-19T03:56:00+08:00",
   "nextDraw": 4236,
   "folds": 1191,
   "chance": {
@@ -50,7 +50,8 @@
    "Tempos",
    "Triples",
    "Zodiac"
-  ]
+  ],
+  "honestyNote": "Measured 19 Nov 2026: sub-window search champions graded on 541 unseen draws hit exactly chance (1.86%/line) \u2014 no strategy family has shown forward skill. In-window prize counts are selection on the past, not prediction. Live grading below each strategy is the only forward test; a 6-line book wins something on ~10.7% of draws by coverage math alone."
  },
  "strategies": [
   {
