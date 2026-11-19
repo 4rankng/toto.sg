@@ -200,14 +200,20 @@ export interface SumPoint {
 
 /** Rolling mean of the six-number sum across the whole era. */
 export function sumTrend(draws: Draw[], window = 20): SumPoint[] {
+    // Owner rule (2026-11-15): modal indicators only — the trend series is
+    // the most common sum BAND of the trailing window, not its mean.
     const sums = draws.map((draw) => draw.numbers.reduce((total, n) => total + n, 0));
-    let running = 0;
+    const bandOf = (s: number) => Math.floor(s / 10) * 10;
 
     return draws.map((draw, index) => {
-        running += sums[index];
-        if (index >= window) running -= sums[index - window];
-        const count = Math.min(index + 1, window);
-        return { index, date: draw.date, sum: sums[index], mean: running / count };
+        const start = Math.max(0, index - window + 1);
+        const windowSums = sums.slice(start, index + 1);
+        const counts = new Map<number, number>();
+        for (const s of windowSums) counts.set(bandOf(s), (counts.get(bandOf(s)) || 0) + 1);
+        let modalBand = bandOf(sums[index]);
+        let bestC = -1;
+        for (const [b, c] of counts) if (c > bestC) { bestC = c; modalBand = b; }
+        return { index, date: draw.date, sum: sums[index], mean: modalBand + 4.5 };
     });
 }
 
@@ -503,7 +509,9 @@ export interface MonthCell {
     year: number;
     /** Mean sum of the draws in that month, or null when there were none. */
     meanSum: number | null;
-    /** Draws behind that mean. */
+    /** Most common sum band in that month (owner rule: modal indicators). */
+    modalBand: number | null;
+    /** Draws behind those stats. */
     draws: number;
 }
 
@@ -522,7 +530,7 @@ export interface MonthStats {
 /** Mean sum and draw count by calendar month. */
 export function monthStats(draws: Draw[]): MonthStats {
     const years = [...new Set(draws.map((draw) => Number(draw.date.slice(0, 4))))].sort();
-    const buckets = new Map<string, { sum: number; count: number }>();
+    const buckets = new Map<string, { sum: number; count: number; bands: Map<number, number> }>();
     let totalSum = 0;
 
     for (const draw of draws) {
@@ -531,9 +539,11 @@ export function monthStats(draws: Draw[]): MonthStats {
         const sum = draw.numbers.reduce((acc, n) => acc + n, 0);
         totalSum += sum;
         const key = `${year}-${month}`;
-        const bucket = buckets.get(key) ?? { sum: 0, count: 0 };
+        const bucket = buckets.get(key) ?? { sum: 0, count: 0, bands: new Map<number, number>() };
         bucket.sum += sum;
         bucket.count += 1;
+        const band = Math.floor(sum / 10) * 10;
+        bucket.bands.set(band, (bucket.bands.get(band) || 0) + 1);
         buckets.set(key, bucket);
     }
 
@@ -542,10 +552,16 @@ export function monthStats(draws: Draw[]): MonthStats {
         cells.push(
             years.map((year) => {
                 const bucket = buckets.get(`${year}-${month}`);
+                let modalBand: number | null = null;
+                if (bucket && bucket.count > 0) {
+                    let bestC = -1;
+                    for (const [b, c] of bucket.bands) if (c > bestC) { bestC = c; modalBand = b; }
+                }
                 return {
                     month,
                     year,
                     meanSum: bucket && bucket.count > 0 ? bucket.sum / bucket.count : null,
+                    modalBand,
                     draws: bucket?.count ?? 0,
                 };
             }),

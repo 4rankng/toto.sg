@@ -408,6 +408,8 @@ export function autocorrelationStats(draws: Draw[], maxLag = 20): Autocorrelatio
 export interface MultiLagRow {
     lag: number;
     meanRepeats: number;
+    /** Most common repeat count at this lag. */
+    modalRepeats: number;
     expectedRepeats: number;
     delta: number;
 }
@@ -434,9 +436,20 @@ export function multiLagOverlapStats(draws: Draw[], maxLag = 12): MultiLagStats 
             count += 1;
         }
         const meanRepeats = count > 0 ? totalOverlap / count : 0;
+        // modal repeat count at this lag (owner rule: modal indicators)
+        const repeatH = new Map<number, number>();
+        for (let t = lag; t < draws.length; t += 1) {
+            const set = new Set(draws[t - lag].numbers);
+            const k = draws[t].numbers.filter((n) => set.has(n)).length;
+            repeatH.set(k, (repeatH.get(k) || 0) + 1);
+        }
+        let modalRepeats = 0;
+        let bestC = -1;
+        for (const [v, n] of repeatH) if (n > bestC) { bestC = n; modalRepeats = v; }
         rows.push({
             lag,
             meanRepeats,
+            modalRepeats,
             expectedRepeats,
             delta: meanRepeats - expectedRepeats,
         });

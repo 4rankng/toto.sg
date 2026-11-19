@@ -11,6 +11,16 @@ import { pearsonCorrelation } from "@/lib/insights-correlations";
 
 const NULL_PROB = PICKS / POOL; // 6 / 49
 
+/** Modal (most-frequent) value of a numeric series + its share. */
+function modalOf(xs: number[]): { value: number; share: number } {
+    if (!xs.length) return { value: 0, share: 0 };
+    const counts = new Map<number, number>();
+    for (const x of xs) counts.set(x, (counts.get(x) || 0) + 1);
+    let best = xs[0], bestC = 0;
+    for (const [v, c] of counts) if (c > bestC || (c === bestC && v < best)) { best = v; bestC = c; }
+    return { value: best, share: bestC / xs.length };
+}
+
 /** Regularized upper incomplete gamma Q(a, x) via the series/CF split. */
 function gammaQ(a: number, x: number): number {
     if (x <= 0) return 1;
@@ -272,11 +282,14 @@ export interface BollingerSumStats {
     currentPercentB: number;
     regime: "overbought" | "oversold" | "inside";
     meanBandwidth: number;
+    /** Most common bandwidth bucket, % (owner rule: modal indicators only). */
+    mostCommonBandwidthPct: number;
+    mostCommonBandwidthShare: number;
 }
 
 export function computeBollingerSumStats(draws: Draw[], window = 20): BollingerSumStats {
     if (draws.length === 0) {
-        return { recentPoints: [], currentBandwidth: 0, isSqueezed: false, currentPercentB: 50, regime: "inside", meanBandwidth: 0 };
+        return { recentPoints: [], currentBandwidth: 0, isSqueezed: false, currentPercentB: 50, regime: "inside", meanBandwidth: 0, mostCommonBandwidthPct: 0, mostCommonBandwidthShare: 0 };
     }
     const sorted = [...draws].sort((a, b) => a.draw - b.draw);
     const points: BollingerSumPoint[] = [];
@@ -309,6 +322,7 @@ export function computeBollingerSumStats(draws: Draw[], window = 20): BollingerS
 
     const last = points[points.length - 1];
     const meanBw = mean(allBandwidths);
+    const bwModal = modalOf(allBandwidths.map((b) => Math.round(b * 100)));
     const sortedBw = [...allBandwidths].sort((a, b) => a - b);
     const p25 = sortedBw[Math.floor(sortedBw.length * 0.25)] ?? meanBw;
 
@@ -319,6 +333,8 @@ export function computeBollingerSumStats(draws: Draw[], window = 20): BollingerS
         currentPercentB: last.percentB,
         regime: last.percentB > 1.0 ? "overbought" : last.percentB < 0.0 ? "oversold" : "inside",
         meanBandwidth: Math.round(meanBw * 1000) / 1000,
+        mostCommonBandwidthPct: bwModal.value,
+        mostCommonBandwidthShare: Math.round(bwModal.share * 1000) / 10,
     };
 }
 
@@ -742,6 +758,9 @@ export function computeGiniConcentrationStats(draws: Draw[]): GiniStats {
 
 export interface FanoStats {
     meanFano: number;
+    /** Most common dispersion regime across the 49 balls. */
+    mostCommonRegime: "sub_poisson" | "poisson" | "super_poisson";
+    mostCommonRegimeShare: number;
     ballFano: { number: number; fano: number; regime: "sub_poisson" | "poisson" | "super_poisson" }[];
     topClustered: { number: number; fano: number }[];
     topClockwork: { number: number; fano: number }[];
@@ -778,10 +797,15 @@ export function computeFanoDispersionStats(draws: Draw[], windowSize = 25): Fano
     }
 
     const meanFano = Math.round(mean(ballFano.map((b) => b.fano)) * 100) / 100;
+    const regimeCounts = { sub_poisson: 0, poisson: 0, super_poisson: 0 };
+    for (const b of ballFano) regimeCounts[b.regime] += 1;
+    const mostCommonRegime = (Object.entries(regimeCounts).sort((a, b) => b[1] - a[1])[0][0] as FanoStats["mostCommonRegime"]);
     const sortedFano = [...ballFano].sort((a, b) => b.fano - a.fano);
 
     return {
         meanFano,
+        mostCommonRegime,
+        mostCommonRegimeShare: Math.round((regimeCounts[mostCommonRegime] / ballFano.length) * 1000) / 10,
         ballFano,
         topClustered: sortedFano.slice(0, 6),
         topClockwork: sortedFano.slice(-6).reverse(),
@@ -806,6 +830,9 @@ export interface KaplanMeierStats {
     peakHazardSkip: number;
     hazardCliffSkip: number;
     medianSurvivalDraws: number;
+    /** Most common inter-arrival gap (owner rule: modal indicators only). */
+    mostCommonSkip: number;
+    mostCommonSkipShare: number;
 }
 
 export function computeKaplanMeierHazardStats(draws: Draw[]): KaplanMeierStats {
@@ -878,11 +905,15 @@ export function computeKaplanMeierHazardStats(draws: Draw[]): KaplanMeierStats {
         }
     }
 
+    const skipModal = modalOf(allIntervals);
+
     return {
         hazardCurve,
         peakHazardSkip: peakSkip,
         hazardCliffSkip: cliffSkip,
         medianSurvivalDraws: medianSurvival,
+        mostCommonSkip: skipModal.value,
+        mostCommonSkipShare: Math.round(skipModal.share * 1000) / 10,
     };
 }
 
@@ -900,6 +931,9 @@ export interface BallCycleRatio {
 
 export interface CycleRatioStats {
     balls: BallCycleRatio[];
+    /** Most common rotation status across the 49 balls. */
+    mostCommonStatus: "due_overdue" | "fresh_hit" | "normal";
+    mostCommonStatusShare: number;
     highestRatios: BallCycleRatio[];
     lowestRatios: BallCycleRatio[];
     medianRatio: number;
@@ -941,8 +975,14 @@ export function computeCycleRatioStats(draws: Draw[]): CycleRatioStats {
     const mid = Math.floor(ratios.length / 2);
     const medianRatio =
         ratios.length % 2 === 0 ? (ratios[mid - 1] + ratios[mid]) / 2 : ratios[mid];
+    const statusCounts = { due_overdue: 0, fresh_hit: 0, normal: 0 };
+    for (const b of balls) statusCounts[b.status] += 1;
+    const mostCommonStatus = (Object.entries(statusCounts).sort((a, b) => b[1] - a[1])[0][0] as CycleRatioStats["mostCommonStatus"]);
+
     return {
         balls,
+        mostCommonStatus,
+        mostCommonStatusShare: Math.round((statusCounts[mostCommonStatus] / balls.length) * 1000) / 10,
         highestRatios: sortedByRatio.slice(0, 6),
         lowestRatios: sortedByRatio.slice(-6).reverse(),
         medianRatio: Math.round(medianRatio * 100) / 100,
@@ -1185,6 +1225,9 @@ export function computeMeanReversionSlopeStats(draws: Draw[], window = 40): Mean
 export interface CouponSweepStats {
     theoreticalMeanSweepDraws: number; // ≈ 36.6 draws
     observedMeanSweepDraws: number;
+    /** Most common full-sweep length (owner rule: modal indicators only). */
+    mostCommonSweepDraws: number;
+    mostCommonSweepShare: number;
     fastestSweepDraws: number;
     slowestSweepDraws: number;
     currentSweepSeenCount: number;
@@ -1227,6 +1270,10 @@ export function computeCouponSweepStats(draws: Draw[]): CouponSweepStats {
     return {
         theoreticalMeanSweepDraws: theoreticalMean,
         observedMeanSweepDraws: Math.round(mean(sweepLengths) * 10) / 10 || theoreticalMean,
+        ...(() => {
+            const m = modalOf(sweepLengths);
+            return { mostCommonSweepDraws: m.value, mostCommonSweepShare: Math.round(m.share * 1000) / 10 };
+        })(),
         fastestSweepDraws: sweepLengths.length > 0 ? Math.min(...sweepLengths) : 28,
         slowestSweepDraws: sweepLengths.length > 0 ? Math.max(...sweepLengths) : 52,
         currentSweepSeenCount: currentSeen.size,

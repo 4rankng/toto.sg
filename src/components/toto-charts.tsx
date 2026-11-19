@@ -159,19 +159,17 @@ export interface SumBin {
 
 interface SumHistogramProps {
     bins: SumBin[];
-    mean: number;
-    median: number;
-    /** The shaded middle band and the share of draws it holds. */
+    /** The shaded modal band and the share of draws it holds. */
     band: { lo: number; hi: number; count: number; share: number };
     totalDraws: number;
     className?: string;
 }
 
 /**
- * Histogram of the six-number sum on a continuous axis, with the middle band
- * shaded and the mean and median marked.
+ * Histogram of the six-number sum on a continuous axis, with the modal band
+ * shaded (owner rule: no mean/median overlays).
  */
-export function SumHistogram({ bins, mean, median, band, totalDraws, className }: SumHistogramProps) {
+export function SumHistogram({ bins, band, totalDraws, className }: SumHistogramProps) {
     const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
 
     const width = Math.max(measured, 320);
@@ -205,7 +203,7 @@ export function SumHistogram({ bins, mean, median, band, totalDraws, className }
             ref={hostRef}
             className={cx("relative", className)}
             role="img"
-            aria-label={`Histogram of the sum of the six winning numbers across ${formatNumber(totalDraws)} draws. Mean ${mean.toFixed(1)}, median ${median}. The band ${band.lo} to ${band.hi} holds ${Math.round(band.share * 100)}% of draws.`}
+            aria-label={`Histogram of the sum of the six winning numbers across ${formatNumber(totalDraws)} draws. The band ${band.lo} to ${band.hi} holds ${Math.round(band.share * 100)}% of draws.`}
         >
             <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" aria-hidden="true">
                 <rect x={bandX} y={padTop} width={bandW} height={plotH} fill="var(--color-primary)" fillOpacity={0.14} />
@@ -273,20 +271,6 @@ export function SumHistogram({ bins, mean, median, band, totalDraws, className }
                     />
                     <text x={bandX + bandW / 2} y={padTop - 26} textAnchor="middle" fontSize={11} fill="var(--color-primary)">
                         {band.lo}–{band.hi} · {Math.round(band.share * 100)}% of draws
-                    </text>
-                </g>
-
-                <g>
-                    <line x1={xOf(mean)} x2={xOf(mean)} y1={padTop} y2={baseline} stroke="var(--color-ink-muted)" strokeWidth={1} strokeDasharray="4 4" />
-                    <text x={xOf(mean) - 5} y={padTop - 8} textAnchor="end" fontSize={11} fill="var(--color-ink-muted)">
-                        mean {mean.toFixed(1)}
-                    </text>
-                </g>
-
-                <g>
-                    <line x1={xOf(median)} x2={xOf(median)} y1={padTop} y2={baseline} stroke="var(--color-ink-faint)" strokeWidth={1} strokeDasharray="2 3" />
-                    <text x={xOf(median) + 5} y={padTop - 8} textAnchor="start" fontSize={11} fill="var(--color-ink-faint)">
-                        median {median}
                     </text>
                 </g>
             </svg>
@@ -624,7 +608,9 @@ export function DecadeHeatmap({ rows, columns, cells, marginal, className }: Dec
 export interface WeekdayDatum {
     label: string;
     count: number;
-    meanSum: number;
+    meanSum?: never;
+    /** Most common sum band for that weekday (modal indicator). */
+    modalBand: string;
 }
 
 interface WeekdayChartProps {
@@ -678,7 +664,7 @@ export function WeekdayChart({ days, className }: WeekdayChartProps) {
                 {days.map((day, index) => {
                     const x = padLeft + index * slot + (slot - barW) / 2;
                     const title = day.label;
-                    const lines = day.count > 0 ? [`${formatNumber(day.count)} draws`, `mean sum ${day.meanSum.toFixed(1)}`] : ["no draws"];
+                    const lines = day.count > 0 ? [`${formatNumber(day.count)} draws`, `modal sum ${day.modalBand}`] : ["no draws"];
 
                     if (day.count === 0) {
                         return (
@@ -702,7 +688,7 @@ export function WeekdayChart({ days, className }: WeekdayChartProps) {
                     return (
                         <g key={day.label}>
                             <text x={x + barW / 2} y={baseline - barHeight - 7} textAnchor="middle" fontSize={11} fill="var(--color-ink-subtle)">
-                                {day.meanSum.toFixed(1)}
+                                {day.modalBand}
                             </text>
                             <rect
                                 x={x}

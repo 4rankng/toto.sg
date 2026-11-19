@@ -14,6 +14,16 @@ const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
 const NULL_PROB = PICKS / POOL; // 6 / 49 ≈ 0.122449
 
 /** Exact binomial C(n, k) — integers stay exact well past C(49,6). */
+/** Modal (most-frequent) value of a numeric series + its share. */
+function modalOfTs(xs: number[]): { value: number; share: number } {
+    if (!xs.length) return { value: 0, share: 0 };
+    const counts = new Map<number, number>();
+    for (const x of xs) counts.set(x, (counts.get(x) || 0) + 1);
+    let best = xs[0], bestC = 0;
+    for (const [v, c] of counts) if (c > bestC || (c === bestC && v < best)) { best = v; bestC = c; }
+    return { value: best, share: bestC / xs.length };
+}
+
 function combBig(n: number, k: number): number {
     if (k < 0 || k > n) return 0;
     let r = 1;
@@ -336,6 +346,9 @@ export interface LedStrokeStats {
     strokeDistribution: { strokes: number; count: number; expectedPct: number; observedPct: number }[];
     meanTicketStrokes: number;
     theoreticalMeanStrokes: number;
+    /** Most common ticket stroke total (owner rule: modal indicators only). */
+    mostCommonTicketStrokes: number;
+    mostCommonTicketStrokesShare: number;
 }
 
 export function computeLedStrokeStats(draws: Draw[]): LedStrokeStats {
@@ -398,10 +411,20 @@ export function computeLedStrokeStats(draws: Draw[]): LedStrokeStats {
         };
     });
 
+    let mBand = strokeDistribution[0];
+    for (const b of strokeDistribution) if (b.count > mBand.count) mBand = b;
+    // modal single stroke total: recompute from allDrawStrokes
+    const strokeCounts = new Map<number, number>();
+    for (const s of allDrawStrokes) strokeCounts.set(s, (strokeCounts.get(s) || 0) + 1);
+    let mVal = 0, mCnt = -1;
+    for (const [v, c] of strokeCounts) if (c > mCnt) { mCnt = c; mVal = v; }
+
     return {
         strokeDistribution,
         meanTicketStrokes: meanStrokes,
         theoreticalMeanStrokes: theoreticalMean,
+        mostCommonTicketStrokes: mVal,
+        mostCommonTicketStrokesShare: Math.round((mCnt / (n || 1)) * 1000) / 10,
     };
 }
 
@@ -896,6 +919,9 @@ export function computeCrossEraReplicationStats(allDraws?: Draw[]): CrossEraRepl
 export interface GapExtremesStats {
     minGapMean: number;
     maxGapMean: number;
+    /** Most common min/max gap (owner rule: modal indicators only). */
+    mostCommonMinGap: number;
+    mostCommonMaxGap: number;
     theoreticalMinGapMean: number;
     theoreticalMaxGapMean: number;
 }
@@ -904,6 +930,8 @@ export function computeGapExtremesStats(draws: Draw[]): GapExtremesStats {
     const n = draws.length;
     let sumMin = 0;
     let sumMax = 0;
+    const minH = new Map<number, number>();
+    const maxH = new Map<number, number>();
 
     for (const d of draws) {
         const s = [...d.numbers].sort((a, b) => a - b);
@@ -916,11 +944,21 @@ export function computeGapExtremesStats(draws: Draw[]): GapExtremesStats {
         }
         sumMin += minG;
         sumMax += maxG;
+        minH.set(minG, (minH.get(minG) || 0) + 1);
+        maxH.set(maxG, (maxH.get(maxG) || 0) + 1);
     }
+
+    const modalKey = (h: Map<number, number>) => {
+        let best = 0, bestC = -1;
+        for (const [v, c] of h) if (c > bestC) { bestC = c; best = v; }
+        return best;
+    };
 
     return {
         minGapMean: Math.round((sumMin / n) * 10) / 10,
         maxGapMean: Math.round((sumMax / n) * 10) / 10,
+        mostCommonMinGap: modalKey(minH),
+        mostCommonMaxGap: modalKey(maxH),
         theoreticalMinGapMean: 1.8,
         theoreticalMaxGapMean: 17.4,
     };
@@ -932,6 +970,9 @@ export function computeGapExtremesStats(draws: Draw[]): GapExtremesStats {
 
 export interface LineSdSkewStats {
     meanLineSd: number;
+    /** Most common per-line SD (owner rule: modal indicators only). */
+    mostCommonLineSd: number;
+    mostCommonLineSdShare: number;
     theoreticalLineSd: number;
     meanLineSkewness: number;
     theoreticalSkewness: number;
@@ -941,6 +982,7 @@ export function computeLineSdSkewStats(draws: Draw[]): LineSdSkewStats {
     const n = draws.length;
     let sumSd = 0;
     let sumSkew = 0;
+    const allSds: number[] = [];
 
     for (const d of draws) {
         const s = d.numbers;
@@ -949,6 +991,7 @@ export function computeLineSdSkewStats(draws: Draw[]): LineSdSkewStats {
         for (const n of s) v += (n - m) ** 2;
         const sd = Math.sqrt(v / 5);
         sumSd += sd;
+        allSds.push(sd);
 
         let m3 = 0;
         for (const n of s) m3 += (n - m) ** 3;
@@ -956,8 +999,12 @@ export function computeLineSdSkewStats(draws: Draw[]): LineSdSkewStats {
         sumSkew += skew;
     }
 
+    const sdModal = modalOfTs(allSds.map((s: number) => Math.round(s * 10) / 10));
+
     return {
         meanLineSd: Math.round((sumSd / n) * 10) / 10,
+        mostCommonLineSd: sdModal.value,
+        mostCommonLineSdShare: Math.round(sdModal.share * 1000) / 10,
         theoreticalLineSd: 14.1,
         meanLineSkewness: Math.round((sumSkew / n) * 100) / 100,
         theoreticalSkewness: 0.0,

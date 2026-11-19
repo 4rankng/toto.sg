@@ -663,8 +663,10 @@ export const InsightsScreen = () => {
     /** Decade by year: average picks per draw in each cell of the strip. */
     const decades = useMemo(() => {
         const years = [...new Set(eraDraws.map((draw) => draw.date.slice(0, 4)))].sort();
-        const picks: number[][] = Array.from({ length: DECADE_LABELS.length }, () => years.map(() => 0));
-        const drawCounts: number[][] = Array.from({ length: DECADE_LABELS.length }, () => years.map(() => 0));
+        // Modal picks-from-decade per draw (owner rule: no averages).
+        const hists: Map<number, number>[][] = Array.from({ length: DECADE_LABELS.length }, () =>
+            years.map(() => new Map<number, number>()),
+        );
 
         for (const draw of eraDraws) {
             const column = years.indexOf(draw.date.slice(0, 4));
@@ -672,15 +674,22 @@ export const InsightsScreen = () => {
 
             const decadeCounts = drawDecades(draw.numbers);
             for (let row = 0; row < DECADE_LABELS.length; row += 1) {
-                picks[row][column] += decadeCounts[row];
-                drawCounts[row][column] += 1;
+                const h = hists[row][column];
+                const k = decadeCounts[row];
+                h.set(k, (h.get(k) || 0) + 1);
             }
         }
 
-        const cells: HeatmapCell[][] = picks.map((row, rowIndex) =>
-            row.map((picksInCell, columnIndex) => {
-                const drawCount = drawCounts[rowIndex][columnIndex];
-                return { value: drawCount > 0 ? picksInCell / drawCount : null, draws: drawCount };
+        const cells: HeatmapCell[][] = hists.map((row) =>
+            row.map((h) => {
+                let value: number | null = null;
+                let draws = 0;
+                let bestC = -1;
+                for (const [k, c] of h) {
+                    draws += c;
+                    if (c > bestC) { bestC = c; value = k; }
+                }
+                return { value, draws };
             }),
         );
 
@@ -707,14 +716,31 @@ export const InsightsScreen = () => {
             .slice(0, 10);
     }, [eraDraws]);
 
-    const weekdayDays = useMemo(
-        () =>
-            WEEKDAY_ORDER.map((label) => {
-                const entry = analysis?.weekday[label];
-                return { label, count: entry?.count ?? 0, meanSum: entry?.meanSum ?? 0 };
-            }),
-        [analysis],
-    );
+    const weekdayDays = useMemo(() => {
+        // Modal sum band per weekday (owner rule: no mean displays) —
+        // computed from the raw era draws, not from aggregate averages.
+        const bandOf = (s: number) => `${Math.floor(s / 10) * 10}–${Math.floor(s / 10) * 10 + 9}`;
+        const byDay = new Map<string, Map<string, number>>();
+        for (const d of eraDraws) {
+            const day = new Date(`${d.date}T00:00:00Z`).getUTCDay();
+            const label = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day];
+            let m = byDay.get(label);
+            if (!m) byDay.set(label, (m = new Map()));
+            const b = bandOf(d.numbers.reduce((acc: number, n: number) => acc + n, 0));
+            m.set(b, (m.get(b) || 0) + 1);
+        }
+        return WEEKDAY_ORDER.map((label) => {
+            const entry = analysis?.weekday[label];
+            let modalBand = "—";
+            const m = byDay.get(label);
+            if (m) {
+                let best = "—", bestC = -1;
+                for (const [b, c] of m) if (c > bestC) { bestC = c; best = b; }
+                modalBand = best;
+            }
+            return { label, count: entry?.count ?? 0, modalBand };
+        });
+    }, [analysis, eraDraws]);
 
     /** The last 50 draws against the all-time rate: who is heating up. */
     const movement = useMemo(() => {
@@ -1167,7 +1193,7 @@ export const InsightsScreen = () => {
                                 number={pNum("panel-decades")}
                                 section="The numbers"
                                 title="Decade spread"
-                                caption="Numbers per draw from each decade, year by year, with the all-time average on the right."
+                                caption="Most common picks-from-decade per draw, year by year."
                                 id="panel-decades"
                                 family="Structure"
                                 className="lg:col-span-6"
@@ -1183,7 +1209,7 @@ export const InsightsScreen = () => {
                                     return (
                                         <PanelVerdict
                                             tone={tone}
-                                            label={tone === "watch" ? `Avoid decade averages outside 8.4–10.2 (now ${value.toFixed(2)})` : "No edge — any shape is as good"}
+                                            label={tone === "watch" ? "Some decades sit outside their usual pick count" : "No edge — any shape is as good"}
                                             {...(tone === "watch" ? { avoid: "decade-outside-8.4-10.2" } : {})}
                                             detail={`${value.toFixed(2)} vs band 8.4–10.2`}
                                             metric={`mean:${value.toFixed(2)}|band:8.4-10.2`}
@@ -1528,7 +1554,7 @@ export const InsightsScreen = () => {
                                 number={pNum("panel-personal-skip-quantiles")}
                                 section="The numbers"
                                 title="Personal skip quantiles & stretch"
-                                caption="Each ball's current absence compared against its own historical 25th, median (50th), and 75th percentile skip intervals."
+                                caption="Each ball's current absence compared against its own historical 25th and 75th percentile skip intervals."
                                 id="panel-personal-skip-quantiles"
                                 family="Gaps"
                                 className="lg:col-span-6"
@@ -1545,7 +1571,6 @@ export const InsightsScreen = () => {
                                                 <th className={th}>Ball</th>
                                                 <th className={thNum}>Current Skip</th>
                                                 <th className={thNum}>p25</th>
-                                                <th className={thNum}>Median</th>
                                                 <th className={thNum}>p75</th>
                                                 <th className={thNum}>Status</th>
                                             </tr>
@@ -1556,7 +1581,6 @@ export const InsightsScreen = () => {
                                                     <td className={td}><CandidateBallChip number={r.number} /></td>
                                                     <td className={tdNum}><span className="text-gold font-semibold">{r.currentSkip}d</span></td>
                                                     <td className={tdNum}>{r.p25}d</td>
-                                                    <td className={tdNum}>{r.median}d</td>
                                                     <td className={tdNum}>{r.p75}d</td>
                                                     <td className={tdNum}><span className="text-primary font-semibold">{humanizeStatus(r.status)}</span></td>
                                                 </tr>
@@ -1698,12 +1722,12 @@ export const InsightsScreen = () => {
                                 number={pNum("panel-multi-lag")}
                                 section="Correlations"
                                 title="Multi-lag carry-over decay"
-                                caption="Mean count of numbers repeating from draws 1 to 12 steps back vs expected 0.735."
+                                caption="How many numbers repeat from draws 1 to 12 steps back — observed rate vs the exact 0.735 expectation."
                                 id="panel-multi-lag"
                                 family="Sequence"
                                 className="lg:col-span-6"
                                 stats={[
-                                    { label: "Lag 1 repeat", value: multiLag.rows[0]?.meanRepeats.toFixed(3) ?? "—", hint: "vs 0.735 expected" },
+                                    { label: "Most common lag-1 repeat", value: `${multiLag.rows[0]?.modalRepeats ?? "—"}`, hint: "numbers carried over" },
                                     { label: "2-Draw Union", value: `${multiLag.twoDrawUnionHits.toFixed(2)} hits`, hint: `vs ${multiLag.expectedTwoDrawUnion.toFixed(2)} exp` },
                                     { label: "3-Draw Union", value: `${multiLag.threeDrawUnionHits.toFixed(2)} hits`, hint: `vs ${multiLag.expectedThreeDrawUnion.toFixed(2)} exp` },
                                 ]}
@@ -1863,7 +1887,7 @@ export const InsightsScreen = () => {
                                 number={pNum("panel-strategy-consensus")}
                                 section="Correlations"
                                 title={`${league?.strategies.length ?? 263}-Strategy consensus & family z-score`}
-                                caption={`Wisdom of the crowd across ${league?.strategies.length ?? 263} strategies, and mean z-score walk-forward performance by family.`}
+                                caption={`Wisdom of the crowd across ${league?.strategies.length ?? 263} strategies, and walk-forward performance by family.`}
                                 id="panel-strategy-consensus"
                                 family="Ensemble"
                                 className="lg:col-span-12"
@@ -1889,7 +1913,7 @@ export const InsightsScreen = () => {
                                     </div>
                                 }
                                 stats={[
-                                    { label: "Top family", value: stratConsensus.familyScores[0]?.family ?? "—", hint: `mean score ${stratConsensus.familyScores[0]?.meanScore.toFixed(1)}` },
+                                    { label: "Top family", value: stratConsensus.familyScores[0]?.family ?? "—", hint: stratConsensus.familyScores[0]?.bestStrategy ?? "" },
                                     { label: "Best z-score", value: `+${stratConsensus.familyScores[0]?.meanZ.toFixed(2)}σ`, hint: stratConsensus.familyScores[0]?.bestStrategy },
                                     { label: "Total families", value: stratConsensus.familyScores.length, hint: `${league?.strategies.length ?? 263} rules scored` },
                                 ]}
@@ -2236,7 +2260,7 @@ export const InsightsScreen = () => {
                                     );
                                 })()}
                                 <div className="grid items-center gap-3 lg:grid-cols-[minmax(0,1fr)_11rem]">
-                                    <SumHistogram bins={sumBins} mean={analysis.sum.mean} median={analysis.sum.median} band={band} totalDraws={total} />
+                                    <SumHistogram bins={sumBins} band={band} totalDraws={total} />
                                     <DonutChart
                                         segments={[
                                             { label: "under 120", value: analysis.sum.bands.slice(0, 2).reduce((sum, b) => sum + b.count, 0), colour: "var(--color-secondary)" },
@@ -2256,7 +2280,7 @@ export const InsightsScreen = () => {
                                 number={pNum("panel-sum-trend")}
                                 section="The lines"
                                 title="Sum trend"
-                                caption={`Rolling ${SUM_TREND_WINDOW}-draw mean of the draw sum.`}
+                                caption={`Rolling ${SUM_TREND_WINDOW}-draw modal sum band.`}
                                 id="panel-sum-trend"
                                 family="Momentum"
                                 className="lg:col-span-6"
@@ -2266,7 +2290,7 @@ export const InsightsScreen = () => {
                                     { label: "Longest run", value: formatNumber(analysis.consecutive.drawRate * total), hint: "draws with a pair" },
                                 ]}
                             >
-                                <SumTrend points={sums} band={{ lo: band.lo, hi: band.hi }} mean={analysis.sum.mean} className="mt-2" />
+                                <SumTrend points={sums} band={{ lo: band.lo, hi: band.hi }} className="mt-2" />
                             </InsightPanel>
                         )}
 
@@ -2736,8 +2760,8 @@ export const InsightsScreen = () => {
                                 family="Geometry"
                                 className="lg:col-span-6"
                                 stats={[
-                                    { label: "Mean Distinct Rows", value: `${rowColDispersion.distinctRowsMean} rows`, hint: "of 7 rows" },
-                                    { label: "Mean Distinct Cols", value: `${rowColDispersion.distinctColsMean} cols`, hint: "of 7 columns" },
+                                    { label: "Most common rows", value: `${rowColDispersion.mostCommonRows}`, hint: `${rowColDispersion.mostCommonRowsShare}% of draws` },
+                                    { label: "Most common cols", value: `${rowColDispersion.mostCommonCols}`, hint: "distinct columns" },
                                     { label: "Distinct Cells", value: "6.0", hint: "zero ball collisions" },
                                 ]}
                             >
@@ -2767,7 +2791,7 @@ export const InsightsScreen = () => {
                                 family="Geometry"
                                 className="lg:col-span-6"
                                 stats={[
-                                    { label: "Mean Entropy", value: `${gapEntropy.meanEntropy.toFixed(2)}`, hint: "normalized (0..1)" },
+                                    { label: "Most common band", value: gapEntropy.mostCommonBand, hint: `${gapEntropy.mostCommonBandPct}% of draws` },
                                     { label: "Sweet Range", value: gapEntropy.sweetEntropyRange, hint: "optimal dispersion" },
                                     { label: "Clumpy Lines", value: `${gapEntropy.lowEntropyPct.toFixed(1)}%`, hint: "entropy < 0.70" },
                                 ]}
@@ -2952,12 +2976,12 @@ export const InsightsScreen = () => {
                                 number={pNum("panel-lunar")}
                                 section="Folklore"
                                 title="Lo Shu 9-palace & Moon phases"
-                                caption="Lo Shu magic square palace density and mean sum by astronomical synodic moon phase."
+                                caption="Lo Shu magic square palace density by astronomical synodic moon phase."
                                 id="panel-lunar"
                                 family="Almanac & Time"
                                 className="lg:col-span-6"
                                 stats={[
-                                    { label: "Full Moon sum", value: loShu.moonPhases[4]?.meanSum.toFixed(1) ?? "—", hint: "vs 150 exp" },
+                                    { label: "Busiest palace", value: `${[...loShu.loShuCells].sort((a, b) => b.count - a.count)[0]?.palace ?? "—"}`, hint: "most drawn palace" },
                                     { label: "New Moon sum", value: loShu.moonPhases[0]?.meanSum.toFixed(1) ?? "—", hint: "vs 150 exp" },
                                     { label: "Lunar Cycle", value: "29.53 days", hint: "synodic period" },
                                 ]}
@@ -3085,7 +3109,7 @@ export const InsightsScreen = () => {
                                 number={pNum("panel-month")}
                                 section="The cage"
                                 title="Month of year"
-                                caption="Mean sum by calendar month and year, with the draws behind each cell."
+                                caption="Most common sum band by calendar month and year, with the draws behind each cell."
                                 id="panel-month"
                                 family="Almanac & Time"
                                 className="lg:col-span-6"
@@ -3110,7 +3134,7 @@ export const InsightsScreen = () => {
                                 number={pNum("panel-weekday")}
                                 section="The cage"
                                 title="Weekday"
-                                caption="Draws per weekday, with the mean sum above each bar."
+                                caption="Draws per weekday, with the most common sum band above each bar."
                                 id="panel-weekday"
                                 family="Almanac & Time"
                                 className="lg:col-span-6"
@@ -3192,7 +3216,7 @@ export const InsightsScreen = () => {
                                         value={analysis.repeaters.rate}
                                         display={pct(analysis.repeaters.rate)}
                                         label="Repeats"
-                                        hint={`${analysis.repeaters.avgCount.toFixed(2)} per draw`}
+                                        hint="repeaters in most draws"
                                         tone="secondary"
                                     />
                                 </div>
@@ -3222,7 +3246,7 @@ export const InsightsScreen = () => {
                                 stats={[
                                     { label: "Top Monday", value: `Ball ${weekdaySplit.topMonBiased[0]?.number}`, hint: `${formatSigned(weekdaySplit.topMonBiased[0]?.delta * 100, 1)}%` },
                                     { label: "Top Thursday", value: `Ball ${weekdaySplit.topThuBiased[0]?.number}`, hint: `${formatSigned(-weekdaySplit.topThuBiased[0]?.delta * 100, 1)}%` },
-                                    { label: "Odd/Even Draw", value: `${weekdaySplit.oddDrawSumMean.toFixed(1)} / ${weekdaySplit.evenDrawSumMean.toFixed(1)}`, hint: "mean sums" },
+                                    { label: "Top Monday bias", value: `Ball ${weekdaySplit.topMonBiased[0]?.number ?? "—"}`, hint: "strongest Monday tilt" },
                                 ]}
                             >
                                 <ButterflySplitChart
@@ -3349,7 +3373,7 @@ export const InsightsScreen = () => {
                             stats={[
                                 { label: "Current Bandwidth", value: `${(bollingerStats.currentBandwidth * 100).toFixed(1)}%`, hint: bollingerStats.isSqueezed ? "SQUEEZE ACTIVE" : "normal width" },
                                 { label: "Current %B", value: `${(bollingerStats.currentPercentB * 100).toFixed(0)}%`, hint: humanizeStatus(bollingerStats.regime) },
-                                { label: "Mean Bandwidth", value: `${(bollingerStats.meanBandwidth * 100).toFixed(1)}%`, hint: "20-draw historical" },
+                                { label: "Most common bandwidth", value: `${bollingerStats.mostCommonBandwidthPct}%`, hint: `${bollingerStats.mostCommonBandwidthShare}% of draws` },
                             ]}
                         >
                             {(() => {
@@ -3624,7 +3648,7 @@ export const InsightsScreen = () => {
                             family="Indicators"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Mean Fano Index", value: `${fanoStats.meanFano}`, hint: "Poisson null = 1.00" },
+                                { label: "Most common regime", value: fanoStats.mostCommonRegime.replace("_", "-"), hint: `${fanoStats.mostCommonRegimeShare}% of balls (Poisson null = 1.00)` },
                                 { label: "Top Clockwork Ball", value: `Ball ${fanoStats.topClockwork[0]?.number}`, hint: `Fano ${fanoStats.topClockwork[0]?.fano} (regular)` },
                                 { label: "Top Clustered Ball", value: `Ball ${fanoStats.topClustered[0]?.number}`, hint: `Fano ${fanoStats.topClustered[0]?.fano} (bursty)` },
                             ]}
@@ -3670,7 +3694,7 @@ export const InsightsScreen = () => {
                             stats={[
                                 { label: "Peak Hazard Skip", value: `Skip ${kaplanStats.peakHazardSkip}`, hint: "highest empirical pull" },
                                 { label: "Hazard Cliff", value: `Skip ${kaplanStats.hazardCliffSkip}`, hint: "conditional dropoff" },
-                                { label: "Median Survival", value: `${kaplanStats.medianSurvivalDraws} draws`, hint: "geometric median" },
+                                { label: "Most common gap", value: `${kaplanStats.mostCommonSkip} draws`, hint: `${kaplanStats.mostCommonSkipShare}% of intervals` },
                             ]}
                         >
                             {(() => {
@@ -3706,7 +3730,7 @@ export const InsightsScreen = () => {
                             stats={[
                                 { label: "Highest Ratio", value: `Ball ${cycleStats.highestRatios[0]?.number}`, hint: `${cycleStats.highestRatios[0]?.ratio}x cycle (${cycleStats.highestRatios[0]?.currentSkip} draws)` },
                                 { label: "Lowest Ratio", value: `Ball ${cycleStats.lowestRatios[0]?.number}`, hint: `${cycleStats.lowestRatios[0]?.ratio}x cycle (fresh hit)` },
-                                { label: "Median Ratio", value: `${cycleStats.medianRatio}x`, hint: "healthy rotation" },
+                                { label: "Most common status", value: cycleStats.mostCommonStatus.replace("_", " "), hint: `${cycleStats.mostCommonStatusShare}% of balls` },
                             ]}
                         >
                             {(() => {
@@ -3832,9 +3856,9 @@ export const InsightsScreen = () => {
                             family="Indicators"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Regression Slope (β)", value: `${reversionStats.slope}`, hint: "negative = mean-reverting" },
-                                { label: "R² Goodness", value: `${reversionStats.rSquared}`, hint: "variance explained" },
-                                { label: "Reversion Strength", value: humanizeStatus(reversionStats.reversionStrength), hint: "law of large numbers" },
+                                { label: "Slope β (fitted)", value: `${reversionStats.slope}`, hint: "negative = reversion" },
+                                { label: "R² (fitted)", value: `${reversionStats.rSquared}`, hint: "variance explained" },
+                                { label: "Reversion strength", value: humanizeStatus(reversionStats.reversionStrength), hint: "law of large numbers" },
                             ]}
                         >
                             {(() => {
@@ -3868,8 +3892,8 @@ export const InsightsScreen = () => {
                             family="Indicators"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Theoretical Mean", value: `${couponStats.theoreticalMeanSweepDraws} draws`, hint: "49 · H_49 ÷ 6" },
-                                { label: "Observed Mean", value: `${couponStats.observedMeanSweepDraws} draws`, hint: "across era sweeps" },
+                                { label: "Theoretical sweep", value: `${couponStats.theoreticalMeanSweepDraws} draws`, hint: "49 · H_49 ÷ 6 (exact)" },
+                                { label: "Most common sweep", value: `${couponStats.mostCommonSweepDraws} draws`, hint: `${couponStats.mostCommonSweepShare}% of sweeps` },
                                 { label: "Active Sweep", value: `${couponStats.currentSweepSeenCount} / 49`, hint: `${couponStats.unseenInCurrentSweep.length} unseen balls` },
                             ]}
                         >
@@ -4021,7 +4045,7 @@ export const InsightsScreen = () => {
                             className="lg:col-span-6"
                             stats={[
                                 { label: "Breakouts Seen", value: dormancyBreakout.totalBreakoutsObserved, hint: "drought ends" },
-                                { label: "Next 10d Mean", value: `${dormancyBreakout.hitsInNext10DrawsMean.toFixed(2)} hits`, hint: `null ${dormancyBreakout.hitsInNext10DrawsNull.toFixed(2)}` },
+                                { label: "Most common next-10d", value: `${dormancyBreakout.mostCommonNext10Hits} hits`, hint: `after a breakout; null ${dormancyBreakout.hitsInNext10DrawsNull.toFixed(2)}` },
                                 { label: "≥2 Hits in 10d", value: `${dormancyBreakout.continuationRate.toFixed(1)}%`, hint: "continuation rate" },
                             ]}
                         >
@@ -4273,7 +4297,7 @@ export const InsightsScreen = () => {
                             family="Structure"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Mean Ticket Strokes", value: `${ledStrokes.meanTicketStrokes}`, hint: "empirical mean" },
+                                { label: "Most common total", value: `${ledStrokes.mostCommonTicketStrokes} strokes`, hint: `${ledStrokes.mostCommonTicketStrokesShare}% of draws` },
                                 { label: "Theoretical Null", value: `${ledStrokes.theoreticalMeanStrokes}`, hint: "expected segments" },
                             ]}
                         >
@@ -4557,8 +4581,8 @@ export const InsightsScreen = () => {
                             family="Structure"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Observed Min Gap", value: `${gapExtremes?.minGapMean ?? 1.8}`, hint: `exp ${gapExtremes?.theoreticalMinGapMean ?? 1.8}` },
-                                { label: "Observed Max Gap", value: `${gapExtremes?.maxGapMean ?? 17.4}`, hint: `exp ${gapExtremes?.theoreticalMaxGapMean ?? 17.4}` },
+                                { label: "Most common min gap", value: `${gapExtremes?.mostCommonMinGap ?? "—"}`, hint: "between adjacent picks" },
+                                { label: "Most common max gap", value: `${gapExtremes?.mostCommonMaxGap ?? "—"}`, hint: "widest stretch in a line" },
                             ]}
                         >
                             {(() => {
@@ -4581,8 +4605,8 @@ export const InsightsScreen = () => {
                             family="Structure"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Mean Line SD", value: `${lineSd?.meanLineSd ?? 14.1}`, hint: `exp ${lineSd?.theoreticalLineSd ?? 14.1}` },
-                                { label: "Mean Skewness", value: `${lineSd?.meanLineSkewness ?? 0.0}`, hint: `exp ${lineSd?.theoreticalSkewness ?? 0.0}` },
+                                { label: "Most common line SD", value: `${lineSd?.mostCommonLineSd ?? "—"}`, hint: `theory ${lineSd?.theoreticalLineSd ?? 14.1}` },
+                                { label: "Modal share", value: `${lineSd?.mostCommonLineSdShare ?? "—"}%`, hint: "of draws at the mode" },
                             ]}
                         >
                             {(() => {
@@ -4600,7 +4624,7 @@ export const InsightsScreen = () => {
                                 number={pNum("panel-runs-test")}
                             section="Forensics"
                             title="Wald–Wolfowitz non-parametric runs test"
-                            caption="Tests whether sequences of draw sums falling above or below the median 150 exhibit serial dependence."
+                            caption="Tests whether sequences of draw sums falling above or below the sample median exhibit serial dependence."
                             id="panel-runs-test"
                             family="Controls"
                             className="lg:col-span-6"
@@ -4800,8 +4824,8 @@ export const InsightsScreen = () => {
                             family="Blueprint"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Slot 1 Median", value: `Ball ${slotQuantiles.slots[0]?.median ?? 7}`, hint: `IQR ${slotQuantiles.slots[0]?.p25}–${slotQuantiles.slots[0]?.p75}` },
-                                { label: "Slot 6 Median", value: `Ball ${slotQuantiles.slots[5]?.median ?? 43}`, hint: `IQR ${slotQuantiles.slots[5]?.p25}–${slotQuantiles.slots[5]?.p75}` },
+                                { label: "Slot 1 usual band", value: `${slotQuantiles.slots[0]?.p25 ?? "–"}–${slotQuantiles.slots[0]?.p75 ?? "–"}`, hint: "middle 50% of first balls" },
+                                { label: "Slot 6 usual band", value: `${slotQuantiles.slots[5]?.p25 ?? "–"}–${slotQuantiles.slots[5]?.p75 ?? "–"}`, hint: "middle 50% of last balls" },
                                 { label: "Selected In-Zone", value: `${sortedLine.slice(0, 6).filter((n, idx) => { const s = slotQuantiles.slots[idx]; return s ? n >= s.p25 && n <= s.p75 : false; }).length} / ${Math.min(sortedLine.length, 6)}`, hint: "current line slots" },
                             ]}
                         >
@@ -5033,7 +5057,7 @@ export const InsightsScreen = () => {
                             number={pNum("panel-family-match-leaderboard")}
                             section="Blueprint"
                             title="League family match-count leaderboard"
-                            caption="Empirical performance ranking across all 15 strategy families graded purely on match count (mean hits and 2+ hit rate), zero payout math."
+                            caption="Empirical performance ranking across all strategy families graded purely on match count (2+ hit rate), zero payout math."
                             id="panel-family-match-leaderboard"
                             family="Blueprint"
                             className="lg:col-span-12"
@@ -5090,12 +5114,12 @@ export const InsightsScreen = () => {
                             number={pNum("panel-mahalanobis-ellipsoid")}
                             section="Order geometry"
                             title="Order-statistic Mahalanobis ellipsoid"
-                            caption="Each draw's six sorted numbers measured against the exact order-statistic mean and covariance of a uniform 6-of-49 line, against the chi-square(6) null."
+                            caption="Each draw's six sorted numbers measured against the exact order-statistic profile of a uniform 6-of-49 line, against the chi-square(6) null."
                             id="panel-mahalanobis-ellipsoid"
                             family="Structure"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Mean D²", value: mahalanobis.meanD2.toFixed(2), hint: "null 6.00" },
+                                { label: "Most common D² band", value: `${mahalanobis.mostCommonD2Bucket}`, hint: `${mahalanobis.mostCommonD2Share}% of draws` },
                                 { label: "Typical", value: formatNumber(mahalanobis.typicalCount), hint: "inside the median" },
                                 { label: "Extreme", value: formatNumber(mahalanobis.extremeCount), hint: "past the p95" },
                             ]}
@@ -5107,18 +5131,11 @@ export const InsightsScreen = () => {
                             <ObservedExpectedBarChart
                                 items={[
                                     {
-                                        label: "Mean D²",
-                                        observedValue: mahalanobis.meanD2,
+                                        label: "Modal D² band",
+                                        observedValue: mahalanobis.mostCommonD2Bucket + 0.5,
                                         expectedValue: 6,
-                                        formattedObserved: mahalanobis.meanD2.toFixed(2),
-                                        formattedExpected: "6.00",
-                                    },
-                                    {
-                                        label: "Median D²",
-                                        observedValue: mahalanobis.medianD2,
-                                        expectedValue: chiSquareQuantile(0.5, 6),
-                                        formattedObserved: mahalanobis.medianD2.toFixed(2),
-                                        formattedExpected: chiSquareQuantile(0.5, 6).toFixed(2),
+                                        formattedObserved: `${mahalanobis.mostCommonD2Bucket} (${mahalanobis.mostCommonD2Share}%)`,
+                                        formattedExpected: "χ²₆ null",
                                     },
                                     {
                                         label: "p95 D²",
@@ -5207,7 +5224,7 @@ export const InsightsScreen = () => {
                             family="Structure"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Mean |A+A|", value: sidon.meanSumset.toFixed(2), hint: `null ${sidon.nullMeanSumset.toFixed(2)}` },
+                                { label: "Most common |A+A|", value: `${sidon.mostCommonSumset}`, hint: `${sidon.mostCommonSumsetShare}% of draws` },
                                 { label: "Pure Sidon", value: pct(sidon.pureSidonShare), hint: `${formatNumber(sidon.pureSidonCount)} lines` },
                                 { label: "Max |A+A|", value: "21", hint: "zero collisions" },
                             ]}
@@ -5239,9 +5256,9 @@ export const InsightsScreen = () => {
                             family="Pattern"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Mean MST", value: constellation.meanMst.toFixed(2), hint: `lattice ${constellation.latticeMstMean.toFixed(2)}` },
+                                { label: "Most common MST", value: `${constellation.mostCommonMst}`, hint: `${constellation.mostCommonMstShare}% of draws` },
                                 { label: "Wider than lattice", value: pct(constellation.spreadShare), hint: "of all lines" },
-                                { label: "Mean gyration", value: constellation.meanGyration.toFixed(2), hint: "radius of gyration" },
+                                { label: "Lattice baseline", value: constellation.latticeMstMean.toFixed(2), hint: "uniform-sample expectation" },
                             ]}
                         >
                             {(() => {
@@ -5271,12 +5288,12 @@ export const InsightsScreen = () => {
                             number={pNum("panel-subgraph-cohesion")}
                             section="Order geometry"
                             title="Induced sub-graph cohesion"
-                            caption="The mean co-occurrence Z over the fifteen internal pair edges of each draw, against the zero-lift hypergeometric baseline."
+                            caption="Co-occurrence Z over the fifteen internal pair edges of each draw, against the zero-lift hypergeometric baseline."
                             id="panel-subgraph-cohesion"
                             family="Pairs"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Mean pair Z", value: subgraph.meanPairZ.toFixed(3), hint: "15 internal edges" },
+                                { label: "Most common edges+", value: `${subgraph.mostCommonPositiveEdges}`, hint: `${subgraph.mostCommonPositiveEdgesShare}% of lines` },
                                 { label: "Positive edges", value: subgraph.meanPositiveEdges.toFixed(1), hint: "of 15 per draw" },
                                 { label: "Components", value: subgraph.meanComponents.toFixed(2), hint: "over positive edges" },
                             ]}
@@ -5298,7 +5315,7 @@ export const InsightsScreen = () => {
                                 center={0}
                                 valueSuffix=" Z"
                                 className="mt-2"
-                                ariaLabel="Mean internal co-occurrence Z over the last sixty draws"
+                                ariaLabel="Internal co-occurrence Z over the last sixty draws"
                             />
                         </InsightPanel>
                     )}
@@ -5314,7 +5331,7 @@ export const InsightsScreen = () => {
                             className="lg:col-span-6"
                             stats={[
                                 {
-                                    label: "Mean coprime",
+                                    label: "Coprime pairs (typical)",
                                     value: coprime.meanCoprimePairs.toFixed(2),
                                     hint: `null ${coprime.expectedCoprimePairs.toFixed(2)} of 15`,
                                 },
@@ -5357,7 +5374,7 @@ export const InsightsScreen = () => {
                             family="Structure"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Mean max gap", value: torus.meanMaxGap.toFixed(2), hint: `null ${torus.nullMeanMaxGap.toFixed(2)}` },
+                                { label: "Most common max gap", value: `${torus.mostCommonMaxGap}`, hint: `${torus.mostCommonMaxGapShare}% of draws` },
                                 { label: "Covering arc", value: torus.meanCoveringArc.toFixed(2), hint: "balls of arc" },
                                 { label: "Reflection |μ−25|", value: torus.meanReflection.toFixed(2), hint: "symmetry offset" },
                             ]}
@@ -5394,8 +5411,8 @@ export const InsightsScreen = () => {
                                     value: resonance.latest?.label ?? "—",
                                     hint: resonance.latest ? `${resonance.latest.hits} of 6 balls` : undefined,
                                 },
-                                { label: "Mean z", value: resonance.meanZ.toFixed(3), hint: "across the twelve sets" },
-                                { label: "Mean hits", value: resonance.meanHits.toFixed(2), hint: `null ${resonance.meanExpected.toFixed(2)}` },
+                                { label: "Most common hits", value: `${resonance.mostCommonHits}`, hint: `${resonance.mostCommonHitsShare}% of sets` },
+                                { label: "Expected hits", value: resonance.meanExpected.toFixed(2), hint: "exact hypergeometric" },
                             ]}
                         >
                             {(() => {
@@ -5433,7 +5450,7 @@ export const InsightsScreen = () => {
                             family="Sequence"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Mean W₁", value: wasserstein.meanW1.toFixed(2), hint: `null ${wasserstein.expectedW1.toFixed(2)}` },
+                                { label: "Most common W₁", value: `${wasserstein.mostCommonW1Bucket}`, hint: `${wasserstein.mostCommonW1Share}% of draws` },
                                 { label: "Quiet / jump", value: `${wasserstein.quietCount} / ${wasserstein.jumpCount}`, hint: "inside vs past the p95" },
                                 { label: "Reversion", value: wasserstein.reversionCorrelation.toFixed(3), hint: "lag-1 correlation" },
                             ]}
@@ -5462,7 +5479,7 @@ export const InsightsScreen = () => {
                             family="Indicators"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Mean phrases", value: lempelZiv.meanPhraseCount.toFixed(2), hint: "per 100-draw window" },
+                                { label: "Most common phrases", value: `${lempelZiv.mostCommonPhraseCount}`, hint: `${lempelZiv.mostCommonPhraseShare}% of windows` },
                                 { label: "Shuffled null", value: lempelZiv.nullPhraseCount.toFixed(2), hint: "same stream, shuffled" },
                                 { label: "Π ceiling", value: pct(lempelZivCeiling(lempelZiv)), hint: "Feder–Merhav bound" },
                             ]}
@@ -5541,7 +5558,7 @@ export const InsightsScreen = () => {
                             stats={[
                                 { label: "Hottest", value: hawkes.hottest ? `Ball ${hawkes.hottest.ball}` : "—", hint: hawkes.hottest ? `λ ${hawkes.hottest.intensity.toFixed(2)}` : undefined },
                                 { label: "Base rate", value: hawkes.baseRate.toFixed(4), hint: "6 / 49" },
-                                { label: "Mean λ", value: hawkes.meanIntensity.toFixed(3), hint: "across the 49 balls" },
+                                { label: "Most common λ", value: `${hawkes.mostCommonIntensity}`, hint: `${hawkes.mostCommonIntensityShare}% of balls` },
                             ]}
                         >
                             {(() => {
@@ -5653,7 +5670,7 @@ export const InsightsScreen = () => {
                             family="Sequence"
                             className="lg:col-span-6"
                             stats={[
-                                { label: "Mean D_JS", value: turnover.meanDivergence.toFixed(4), hint: "bits" },
+                                { label: "Most common D_JS", value: `${turnover.mostCommonDivergenceBucket}`, hint: `${turnover.mostCommonDivergenceShare}% of windows` },
                                 { label: "Null median", value: turnover.nullMedian.toFixed(4), hint: "matched 15-in-45 null" },
                                 { label: "Above null", value: pct(turnover.aboveNullShare), hint: "of windows" },
                             ]}

@@ -26,6 +26,17 @@
 import type { Draw } from "@/lib/data";
 import { PICKS, POOL, binomial, percentile } from "@/lib/insights-stats";
 
+/** Modal (most-frequent) value of a numeric series + its share. */
+function modalOf(xs: number[]): { value: number; share: number } {
+    if (!xs.length) return { value: 0, share: 0 };
+    const counts = new Map<number, number>();
+    for (const x of xs) counts.set(x, (counts.get(x) || 0) + 1);
+    let best = xs[0], bestC = 0;
+    for (const [v, c] of counts) if (c > bestC || (c === bestC && v < best)) { best = v; bestC = c; }
+    return { value: best, share: bestC / xs.length };
+}
+
+
 /* ================================================================== *
  * PART 0 — Shared constants and deterministic helpers
  * ================================================================== */
@@ -553,6 +564,9 @@ export interface MahalanobisOrderRow {
 export interface MahalanobisOrderStats {
     rows: MahalanobisOrderRow[];
     meanD2: number;
+    /** Most common floor(D²) band (owner rule: modal indicators only). */
+    mostCommonD2Bucket: number;
+    mostCommonD2Share: number;
     medianD2: number;
     p95D2: number;
     maxD2: number;
@@ -603,6 +617,10 @@ export function computeMahalanobisOrderStats(draws: readonly Draw[]): Mahalanobi
     const byDraw = [...rows].sort((a, b) => a.d2 - b.d2);
     return {
         rows,
+        ...(() => {
+            const mm = modalOf(rows.map((r: { d2: number }) => Math.floor(r.d2)));
+            return { mostCommonD2Bucket: mm.value, mostCommonD2Share: Math.round(mm.share * 1000) / 10 };
+        })(),
         meanD2: values.length > 0 ? values.reduce((acc, v) => acc + v, 0) / values.length : 0,
         medianD2: median,
         p95D2: p95,
@@ -713,6 +731,9 @@ export interface SidonSumsetStatsResult {
     /** The observed share of each |A+A| value, 11..21. */
     observedDistribution: number[];
     meanSumset: number;
+    /** Most common |A+A| value (owner rule: modal indicators only). */
+    mostCommonSumset: number;
+    mostCommonSumsetShare: number;
     nullMeanSumset: number;
     pureSidonCount: number;
     pureSidonShare: number;
@@ -744,6 +765,19 @@ export function computeSidonSumsetStats(draws: readonly Draw[]): SidonSumsetStat
         rows,
         nullDistribution: SIDON_SUMSET_NULL,
         observedDistribution: observed.map((count) => count / total),
+        ...(() => {
+            let bi = 0;
+            observed.forEach((c, i) => { if (c > observed[bi]) bi = i; });
+            return {
+                mostCommonSumset: bi + 11,
+                mostCommonSumsetShare: Math.round((observed[bi] / total) * 1000) / 10,
+            };
+        })(),
+        ...(() => {
+            let bi = 0;
+            observed.forEach((c, i) => { if (c > observed[bi]) bi = i; });
+            return { mostCommonSumset: bi + 11, mostCommonSumsetShare: Math.round((observed[bi] / (rows.length || 1)) * 1000) / 10 };
+        })(),
         meanSumset: sumsetTotal / total,
         nullMeanSumset: nullWeighted,
         pureSidonCount,
@@ -769,6 +803,9 @@ export interface PlayslipConstellationStats {
     latticeMstMean: number;
     meanMst: number;
     meanGyration: number;
+    /** Most common MST length bucket (owner rule: modal indicators only). */
+    mostCommonMst: number;
+    mostCommonMstShare: number;
     /** The share of lines whose MST is longer than the lattice expectation. */
     spreadShare: number;
     latest: ConstellationRow | null;
@@ -795,11 +832,15 @@ export function computePlayslipConstellationStats(draws: readonly Draw[]): Plays
     const total = rows.length || 1;
 
     const byMst = [...rows].sort((a, b) => b.stats.mstLength - a.stats.mstLength);
+    const mstModal = modalOf(rows.map((r) => Math.round(r.stats.mstLength)));
+
     return {
         rows,
         latticeMstMean: baseline,
         meanMst: mstTotal / total,
         meanGyration: gyrationTotal / total,
+        mostCommonMst: mstModal.value,
+        mostCommonMstShare: Math.round(mstModal.share * 1000) / 10,
         spreadShare: spreadCount / total,
         latest: rows.length > 0 ? rows[rows.length - 1] : null,
         widest: byMst.slice(0, 5),
@@ -836,6 +877,9 @@ export interface SubgraphCohesionStats {
     markovCellNull: number;
     latest: SubgraphCohesionRow | null;
     strongest: SubgraphCohesionRow[];
+    /** Most common positive-edge count per line (modal indicator). */
+    mostCommonPositiveEdges: number;
+    mostCommonPositiveEdgesShare: number;
 }
 
 /** The pair-meeting table over a window of draws, as a flat 49x49 counter. */
@@ -930,6 +974,8 @@ export function computeSubgraphCohesionStats(draws: readonly Draw[]): SubgraphCo
         liftTotal += row.markovLift;
     }
 
+    const edgesModal = modalOf(rows.map((r) => r.positiveEdges));
+
     return {
         rows,
         expectedPairMeetings: expected,
@@ -940,6 +986,8 @@ export function computeSubgraphCohesionStats(draws: readonly Draw[]): SubgraphCo
         markovCellNull: (POOL * PICKS) / (POOL * POOL),
         latest: rows.length > 0 ? rows[rows.length - 1] : null,
         strongest: [...rows].sort((a, b) => b.meanPairZ - a.meanPairZ).slice(0, 5),
+        mostCommonPositiveEdges: edgesModal.value,
+        mostCommonPositiveEdgesShare: Math.round(edgesModal.share * 1000) / 10,
     };
 }
 
@@ -1059,6 +1107,8 @@ export interface CyclicTorusArcStats {
     /** The observed distribution of the largest cyclic gap, index 0 = gap 1. */
     observedDistribution: number[];
     meanMaxGap: number;
+    mostCommonMaxGap: number;
+    mostCommonMaxGapShare: number;
     nullMeanMaxGap: number;
     meanCoveringArc: number;
     meanReflection: number;
@@ -1096,6 +1146,10 @@ export function computeCyclicTorusArcStats(draws: readonly Draw[]): CyclicTorusA
         nullDistribution: TORUS_MAX_GAP_NULL,
         observedDistribution: observed.map((count) => count / total),
         meanMaxGap: rows.reduce((acc, row) => acc + row.maxGap, 0) / total,
+        ...(() => {
+            const m = modalOf(rows.map((r: { maxGap: number }) => r.maxGap));
+            return { mostCommonMaxGap: m.value, mostCommonMaxGapShare: Math.round(m.share * 1000) / 10 };
+        })(),
         nullMeanMaxGap: nullMean,
         meanCoveringArc: rows.reduce((acc, row) => acc + row.coveringArc, 0) / total,
         meanReflection: rows.reduce((acc, row) => acc + row.reflectionAsymmetry, 0) / total,
@@ -1153,6 +1207,9 @@ export interface ExtendedSequenceResonanceStats {
     meanZ: number;
     /** The archive-mean hits per set. */
     meanHits: number;
+    /** Most common hit count across sets (modal indicator). */
+    mostCommonHits: number;
+    mostCommonHitsShare: number;
     /** The archive-wide average hits per set, for reference. */
     meanExpected: number;
 }
@@ -1206,6 +1263,10 @@ export function computeExtendedSequenceResonanceStats(draws: readonly Draw[]): E
         latest: rows.length > 0 ? [...rows].sort((a, b) => b.hits - a.hits || b.zScore - a.zScore)[0] : null,
         meanZ: rows.reduce((acc, row) => acc + row.zScore, 0) / total,
         meanHits: rows.reduce((acc, row) => acc + row.meanHits, 0) / total,
+        ...(() => {
+            const m = modalOf(rows.map((r: { hits: number }) => r.hits));
+            return { mostCommonHits: m.value, mostCommonHitsShare: Math.round(m.share * 1000) / 10 };
+        })(),
         meanExpected: rows.reduce((acc, row) => acc + row.expected, 0) / total,
     };
 }
@@ -1255,6 +1316,8 @@ export interface WassersteinTransportStats {
     expectedW1: number;
     /** The mean W1 over the archive's transitions. */
     meanW1: number;
+    mostCommonW1Bucket: number;
+    mostCommonW1Share: number;
     medianW1: number;
     p05W1: number;
     p95W1: number;
@@ -1319,6 +1382,10 @@ export function computeWassersteinTransportStats(draws: readonly Draw[]): Wasser
         rows,
         expectedW1: expected,
         meanW1: values.length > 0 ? values.reduce((acc, v) => acc + v, 0) / values.length : 0,
+        ...(() => {
+            const m = modalOf(values.map((v: number) => Math.round(v)));
+            return { mostCommonW1Bucket: m.value, mostCommonW1Share: Math.round(m.share * 1000) / 10 };
+        })(),
         medianW1: median,
         p05W1: p05,
         p95W1: p95,
@@ -1405,6 +1472,8 @@ export interface LempelZivStats {
     rolling: { label: string; value: number; nullValue: number; normalized: number }[];
     /** The mean phrase count per 100-draw window in the archive. */
     meanPhraseCount: number;
+    mostCommonPhraseCount: number;
+    mostCommonPhraseShare: number;
     /** The mean phrase count per 100-draw window of the shuffled twin. */
     nullPhraseCount: number;
     /** The mean normalized complexity of both streams. */
@@ -1457,6 +1526,8 @@ export function computeLempelZivComplexityStats(draws: readonly Draw[]): LempelZ
     const nullPhraseCount =
         rolling.length > 0 ? rolling.reduce((acc, point) => acc + point.nullValue, 0) / rolling.length : 0;
 
+    const phraseModal = modalOf(rolling.map((p: { value: number }) => p.value));
+
     return {
         sumStream,
         parityStream,
@@ -1465,6 +1536,8 @@ export function computeLempelZivComplexityStats(draws: readonly Draw[]): LempelZ
         rolling,
         meanPhraseCount,
         nullPhraseCount,
+        mostCommonPhraseCount: phraseModal.value,
+        mostCommonPhraseShare: Math.round(phraseModal.share * 1000) / 10,
         meanComplexity,
         asymptoticTarget: 1,
     };
@@ -1784,6 +1857,9 @@ export interface HawkesPointProcessStats {
     baseRate: number;
     /** The mean live intensity. */
     meanIntensity: number;
+    /** Most common ball intensity bucket (modal indicator). */
+    mostCommonIntensity: number;
+    mostCommonIntensityShare: number;
     /** The most self-exciting ball. */
     hottest: HawkesBallRow | null;
     /** The most refractory ball. */
@@ -1832,12 +1908,16 @@ export function computeHawkesPointProcessStats(draws: readonly Draw[]): HawkesPo
     }
 
     const byIntensity = [...rows].sort((a, b) => b.intensity - a.intensity);
+    const intensityModal = modalOf(rows.map((r: { intensity: number }) => Math.round(r.intensity * 100) / 100));
+
     return {
         rows,
         baseRate,
         meanIntensity: rows.reduce((acc, row) => acc + row.intensity, 0) / rows.length,
         hottest: byIntensity[0] ?? null,
         coldest: byIntensity[byIntensity.length - 1] ?? null,
+        mostCommonIntensity: intensityModal.value,
+        mostCommonIntensityShare: Math.round(intensityModal.share * 1000) / 10,
     };
 }
 
@@ -2203,6 +2283,9 @@ export interface JensenShannonTurnoverStats {
     rows: JensenShannonRow[];
     /** The mean divergence over the sliding windows. */
     meanDivergence: number;
+    /** Most common divergence bucket (owner rule: modal indicators only). */
+    mostCommonDivergenceBucket: number;
+    mostCommonDivergenceShare: number;
     /** The median divergence of the structurally matched null. */
     nullMedian: number;
     /** The 5th percentile of the null. */
@@ -2321,6 +2404,10 @@ export function computeJensenShannonTurnoverStats(draws: readonly Draw[]): Jense
     return {
         rows,
         meanDivergence: divergenceTotal / count,
+        ...(() => {
+            const m = modalOf(rows.map((r: { divergence: number }) => Math.round(r.divergence * 10000) / 10000));
+            return { mostCommonDivergenceBucket: m.value, mostCommonDivergenceShare: Math.round(m.share * 1000) / 10 };
+        })(),
         nullMedian,
         nullP5,
         nullP95,

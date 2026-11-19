@@ -420,13 +420,11 @@ interface SumTrendProps {
     points: SumPoint[];
     /** The band that holds most draws. */
     band: { lo: number; hi: number };
-    /** Era-wide mean sum, drawn as the reference line. */
-    mean: number;
     className?: string;
 }
 
-/** Rolling mean of the six-number sum across the era, with the modal band. */
-export function SumTrend({ points, band, mean, className }: SumTrendProps) {
+/** Rolling modal sum band across the era (owner rule: no mean overlays). */
+export function SumTrend({ points, band, className }: SumTrendProps) {
     const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
     const [hoverIndex, setHoverIndex] = useState(-1);
 
@@ -469,17 +467,10 @@ export function SumTrend({ points, band, mean, className }: SumTrendProps) {
             ref={hostRef}
             className={cx("relative", className)}
             role="img"
-            aria-label={`Rolling 20-draw mean of the six-number sum across ${formatNumber(points.length)} draws. Era mean ${mean.toFixed(1)}.`}
+            aria-label={`Rolling 20-draw modal sum band across ${formatNumber(points.length)} draws.`}
         >
             <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" aria-hidden="true">
                 <rect x={padLeft} y={yOf(band.hi)} width={plotW} height={Math.max(0, yOf(band.lo) - yOf(band.hi))} fill="var(--color-primary)" fillOpacity={0.1} />
-
-                <g>
-                    <line x1={padLeft} x2={width - padRight} y1={yOf(mean)} y2={yOf(mean)} stroke="var(--color-chart-ref)" strokeWidth={1} strokeDasharray="5 4" />
-                    <text x={padLeft + 4} y={yOf(mean) - 7} fontSize={11} fill="var(--color-ink-subtle)">
-                        era mean {mean.toFixed(1)}
-                    </text>
-                </g>
 
                 <path d={path} fill="none" stroke="var(--color-primary)" strokeWidth={1.6} strokeLinejoin="round" strokeLinecap="round" />
 
@@ -502,7 +493,7 @@ export function SumTrend({ points, band, mean, className }: SumTrendProps) {
                         const index = Math.min(points.length - 1, Math.max(0, Math.round(ratio * (points.length - 1))));
                         setHoverIndex(index);
                         const point = points[index];
-                        show(event, point.date, [`rolling mean ${point.mean.toFixed(1)}`, `draw sum ${point.sum}`]);
+                        show(event, point.date, [`modal band ${Math.floor(point.mean / 10) * 10}–${Math.floor(point.mean / 10) * 10 + 9}`, `draw sum ${point.sum}`]);
                     }}
                     onPointerLeave={() => {
                         setHoverIndex(-1);
@@ -872,8 +863,7 @@ interface PositionLadderProps {
 
 /**
  * Where each sorted position lands. The pale band is the fair-cage range
- * (5th to 95th percentile), the solid bar the observed one, and the tick the
- * median.
+ * (5th to 95th percentile), the solid bar the observed one.
  */
 export function PositionLadder({ rows, className }: PositionLadderProps) {
     const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
@@ -912,8 +902,7 @@ export function PositionLadder({ rows, className }: PositionLadderProps) {
                     const title = `Position ${row.position}`;
                     const lines = [
                         `observed ${row.observedLow.toFixed(0)}–${row.observedHigh.toFixed(0)}`,
-                        `median ${row.observedMedian.toFixed(0)}`,
-                        `expected ${row.expectedLow}–${row.expectedHigh}`,
+                        `fair-cage ${row.expectedLow}–${row.expectedHigh}`,
                     ];
 
                     return (
@@ -944,25 +933,6 @@ export function PositionLadder({ rows, className }: PositionLadderProps) {
                                 onPointerMove={(event) => show(event, title, lines)}
                                 onPointerLeave={hide}
                             />
-                            {/* Observed median. */}
-                            <line
-                                x1={xOf(row.observedMedian)}
-                                x2={xOf(row.observedMedian)}
-                                y1={y - barH / 2 - 2}
-                                y2={y + barH / 2 + 2}
-                                stroke="var(--color-ink)"
-                                strokeWidth={1.6}
-                            />
-                            {/* The fair-cage median, as a hollow tick. */}
-                            <line
-                                x1={xOf(row.expectedMedian)}
-                                x2={xOf(row.expectedMedian)}
-                                y1={y - barH / 2 + 1}
-                                y2={y + barH / 2 - 1}
-                                stroke="var(--color-chart-ref)"
-                                strokeWidth={1.4}
-                                strokeDasharray="2 2"
-                            />
                         </g>
                     );
                 })}
@@ -981,7 +951,7 @@ interface MonthHeatmapProps {
     className?: string;
 }
 
-/** Mean sum by calendar month against the era mean — the December question. */
+/** Modal sum band by calendar month (owner rule: no mean displays). */
 export function MonthHeatmap({ stats, className }: MonthHeatmapProps) {
     const { hostRef, tip, show, hide, width: measured } = useChartTooltip();
 
@@ -1022,7 +992,7 @@ export function MonthHeatmap({ stats, className }: MonthHeatmapProps) {
             ref={hostRef}
             className={cx("relative", className)}
             role="img"
-            aria-label={`Mean sum by calendar month and year, against the era mean of ${stats.overallMean.toFixed(1)}.`}
+            aria-label={`Most common sum band by calendar month and year.`}
         >
             <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" aria-hidden="true">
                 {stats.years.map((year, column) => {
@@ -1078,9 +1048,8 @@ export function MonthHeatmap({ stats, className }: MonthHeatmapProps) {
                             const above = deviation > 0;
                             const title = `${MONTH_LABELS[monthIndex]} ${cell.year}`;
                             const lines = [
-                                `mean sum ${cell.meanSum.toFixed(1)}`,
+                                `modal band ${cell.modalBand}–${(cell.modalBand ?? 0) + 9}`,
                                 `${cell.draws} draw${cell.draws === 1 ? "" : "s"}`,
-                                `era mean ${stats.overallMean.toFixed(1)}`,
                             ];
 
                             return (
@@ -1103,7 +1072,7 @@ export function MonthHeatmap({ stats, className }: MonthHeatmapProps) {
                 ))}
 
                 <text x={padLeft} y={padTop + gridH + 16} fontSize={10} fill="var(--color-ink-faint)">
-                    cooler than the era mean → warmer
+                    lower modal band → higher
                 </text>
 
                 <text x={padLeft} y={stripTop - 8} fontSize={10} fill="var(--color-ink-subtle)">
@@ -1118,7 +1087,7 @@ export function MonthHeatmap({ stats, className }: MonthHeatmapProps) {
                         const x = padLeft + index * slot + (slot - barW) / 2;
                         const barHeight = (row.draws / countPeak) * (stripH - 12);
                         const title = `${MONTH_LABELS[index]}`;
-                        const lines = [`${formatNumber(row.draws)} draws`, `mean sum ${row.mean.toFixed(1)}`];
+                        const lines = [`${formatNumber(row.draws)} draws`];
 
                         return (
                             <g key={row.month}>

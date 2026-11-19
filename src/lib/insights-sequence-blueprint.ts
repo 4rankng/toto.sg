@@ -416,6 +416,8 @@ export interface DormancyBreakoutStats {
     totalBreakoutsObserved: number;
     hitsInNext10DrawsMean: number;
     hitsInNext10DrawsNull: number; // 10 * (6/49) = 1.224
+    /** Most common hit count in the 10 draws after a breakout. */
+    mostCommonNext10Hits: number;
     continuationRate: number; // % of breakouts with >= 2 hits in next 10 draws
     activeBreakoutBalls: { number: number; drawsSinceBreakout: number; priorDormancy: number }[];
 }
@@ -427,6 +429,7 @@ export function computeDormancyBreakoutStats(draws: Draw[], droughtThreshold = 1
     const lastSeen = new Int32Array(50).fill(-1);
     let totalBreakouts = 0;
     let next10HitsTotal = 0;
+    const next10HitsList = new Map<number, number>();
     let twoPlusContinuation = 0;
 
     for (let t = 0; t < n; t += 1) {
@@ -442,6 +445,7 @@ export function computeDormancyBreakoutStats(draws: Draw[], droughtThreshold = 1
                         if (sorted[f].numbers.includes(num)) subHits += 1;
                     }
                     next10HitsTotal += subHits;
+            next10HitsList.set(subHits, (next10HitsList.get(subHits) || 0) + 1);
                     if (subHits >= 2) twoPlusContinuation += 1;
                 }
             }
@@ -480,6 +484,11 @@ export function computeDormancyBreakoutStats(draws: Draw[], droughtThreshold = 1
         totalBreakoutsObserved: totalBreakouts,
         hitsInNext10DrawsMean: totalBreakouts > 0 ? next10HitsTotal / totalBreakouts : 1.224,
         hitsInNext10DrawsNull: 10 * NULL_PROB,
+        mostCommonNext10Hits: (() => {
+            let best = 0, bestC = -1;
+            for (const [v, c] of next10HitsList) if (c > bestC) { bestC = c; best = v; }
+            return best;
+        })(),
         continuationRate: totalBreakouts > 0 ? twoPlusContinuation / totalBreakouts : 0.35,
         activeBreakoutBalls,
     };
@@ -1291,6 +1300,10 @@ export interface BoardRowColDispersionStats {
     distinctRowsMean: number;
     distinctColsMean: number;
     distinctCellsMean: number;
+    /** Most common distinct-row/col count (owner rule: modal indicators). */
+    mostCommonRows: number;
+    mostCommonRowsShare: number;
+    mostCommonCols: number;
     rowsCoverageDistribution: { rows: number; pct: number }[];
     colsCoverageDistribution: { cols: number; pct: number }[];
 }
@@ -1326,10 +1339,19 @@ export function computeBoardRowColDispersion(draws: Draw[]): BoardRowColDispersi
         colsCoverageDistribution.push({ cols: k, pct: n > 0 ? (colHist[k] / n) * 100 : 0 });
     }
 
+    let mRows = 0, mRowsC = -1, mCols = 0, mColsC = -1;
+    for (let k = 1; k <= 7; k += 1) {
+        if (rowHist[k] > mRowsC) { mRowsC = rowHist[k]; mRows = k; }
+        if (colHist[k] > mColsC) { mColsC = colHist[k]; mCols = k; }
+    }
+
     return {
         distinctRowsMean: n > 0 ? Math.round((totalRows / n) * 100) / 100 : 5.0,
         distinctColsMean: n > 0 ? Math.round((totalCols / n) * 100) / 100 : 5.0,
         distinctCellsMean: 6.0,
+        mostCommonRows: mRows,
+        mostCommonRowsShare: n > 0 ? Math.round((mRowsC / n) * 1000) / 10 : 0,
+        mostCommonCols: mCols,
         rowsCoverageDistribution,
         colsCoverageDistribution,
     };
@@ -1382,6 +1404,9 @@ export function computePrimeCountDistribution(draws: Draw[]): PrimeDistributionS
 
 export interface GapSpacingEntropyStats {
     meanEntropy: number; // 0..1
+    /** Most common entropy band (owner rule: modal indicators only). */
+    mostCommonBand: string;
+    mostCommonBandPct: number;
     sweetEntropyRange: string;
     lowEntropyPct: number; // clumpy lines
     highEntropyPct: number; // well-spread lines
@@ -1413,6 +1438,14 @@ export function computeGapSpacingEntropyStats(draws: Draw[]): GapSpacingEntropyS
 
     return {
         meanEntropy: n > 0 ? Math.round((sumH / n) * 100) / 100 : 0.88,
+        ...(() => {
+            // recompute band membership from the same loop counters is not
+            // possible here — derive modal band from clumpy/wellSpread split
+            const mid = n - clumpy - wellSpread;
+            const entries: [string, number][] = [["<0.70", clumpy], ["0.70–0.85", mid], ["≥0.85", wellSpread]];
+            entries.sort((a, b) => b[1] - a[1]);
+            return { mostCommonBand: entries[0][0], mostCommonBandPct: n > 0 ? Math.round((entries[0][1] / n) * 1000) / 10 : 0 };
+        })(),
         sweetEntropyRange: "0.80 to 0.98",
         lowEntropyPct: n > 0 ? (clumpy / n) * 100 : 0,
         highEntropyPct: n > 0 ? (wellSpread / n) * 100 : 0,
