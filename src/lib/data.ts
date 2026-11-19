@@ -131,6 +131,13 @@ export interface StrategyMeta {
     folds: number;
     /** Forward-skill verdict from the sub-window persistence experiment, if present. */
     honestyNote?: string;
+    /** Exact book-coverage math panel: optimal book + k-line probability curve. */
+    bookScience?: {
+        note: string;
+        optimalBook: number[][];
+        pAny6: number;
+        curve: Record<string, number>;
+    };
     /** The chance nulls every league metric is rendered against. */
     chance: {
         expectedHitsPerLine: number;

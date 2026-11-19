@@ -566,6 +566,19 @@ export const StrategiesScreen = () => {
                     <p className="text-xs leading-relaxed text-teal-100">{meta.honestyNote}</p>
                 </div>
             ) : null}
+            {meta.bookScience ? (
+                <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-200">Book science (exact math, all 13.98M draws)</p>
+                    <p className="mb-2 text-xs leading-relaxed text-amber-100/90">{meta.bookScience.note}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(meta.bookScience.curve).map(([k, p]: [string, number]) => (
+                            <span key={k} className="rounded-md bg-amber-500/15 px-2 py-1 font-mono text-[11px] text-amber-100">
+                                {k} line{k === "1" ? "" : "s"}: {(p * 100).toFixed(2)}%
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            ) : null}
 
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                 <KpiCard label="Strategies" value={formatNumber(data.strategies.length)} hint={`${meta.folds} past draws`} icon={Grid01} tone="primary" />

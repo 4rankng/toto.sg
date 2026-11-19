@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generatedAt": "2026-11-19T03:56:00+08:00",
+  "generatedAt": "2026-11-19T14:36:46+08:00",
   "nextDraw": 4236,
   "folds": 1191,
   "chance": {
@@ -51,7 +51,69 @@
    "Triples",
    "Zodiac"
   ],
-  "honestyNote": "Measured 19 Nov 2026: sub-window search champions graded on 541 unseen draws hit exactly chance (1.86%/line) \u2014 no strategy family has shown forward skill. In-window prize counts are selection on the past, not prediction. Live grading below each strategy is the only forward test; a 6-line book wins something on ~10.7% of draws by coverage math alone."
+  "honestyNote": "Measured 19 Nov 2026: sub-window search champions graded on 541 unseen draws hit exactly chance (1.86%/line) \u2014 no strategy family has shown forward skill. In-window prize counts are selection on the past, not prediction. Live grading below each strategy is the only forward test; a 6-line book wins something on ~10.7% of draws by coverage math alone.",
+  "bookScience": {
+   "note": "Exact coverage math over all 13,983,816 possible draws. Six well-spread $1 lines win something on 11.14% of draws \u2014 the ceiling for any six ordinary lines. One line = 1.86% (chance). No strategy changes these numbers; structure does.",
+   "optimalBook": [
+    [
+     13,
+     28,
+     29,
+     30,
+     34,
+     48
+    ],
+    [
+     4,
+     22,
+     24,
+     36,
+     39,
+     40
+    ],
+    [
+     2,
+     18,
+     21,
+     27,
+     38,
+     49
+    ],
+    [
+     6,
+     12,
+     32,
+     41,
+     46,
+     47
+    ],
+    [
+     9,
+     14,
+     16,
+     17,
+     43,
+     45
+    ],
+    [
+     3,
+     10,
+     11,
+     20,
+     31,
+     35
+    ]
+   ],
+   "pAny6": 0.111396,
+   "curve": {
+    "1": 0.01863754500202234,
+    "2": 0.037246485508676604,
+    "3": 0.055826821519962794,
+    "4": 0.07437855303588091,
+    "5": 0.09290168005643094,
+    "6": 0.11139620258161291
+   }
+  }
  },
  "strategies": [
   {
