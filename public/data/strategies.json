@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generatedAt": "2026-11-19T16:20:42+08:00",
-  "nextDraw": 4236,
-  "folds": 1191,
+  "generatedAt": "2026-11-19T18:46:04+08:00",
+  "nextDraw": 4237,
+  "folds": 1192,
   "chance": {
    "expectedHitsPerLine": 0.7347,
    "hitsPer100Draws": 73.5,
@@ -146,12 +146,12 @@
    "recent12": 11,
    "rank": 1,
    "currentPick": [
-    2,
     3,
-    9,
     10,
-    38,
-    40
+    19,
+    22,
+    29,
+    43
    ],
    "hotScore": 6.54,
    "lastPrizeDraw": 4230,
@@ -163,11 +163,11 @@
    "family": "StreamPick",
    "description": "MEGA-33 record holder \u2014 54 prizes on the full era track, found in a 356-billion-line-draw search; seeded stream pick with surgical replay.",
    "currentPick": [
-    13,
-    28,
+    3,
+    4,
+    6,
+    14,
     29,
-    30,
-    34,
     48
    ],
    "totalPrizes": 54,
@@ -2142,12 +2142,12 @@
    "recent12": 7,
    "rank": 49,
    "currentPick": [
-    8,
+    7,
     11,
-    30,
     35,
-    46,
-    48
+    39,
+    43,
+    46
    ],
    "hotScore": 3.04,
    "lastPrizeDraw": 4162,
@@ -2323,8 +2323,8 @@
    "meanHits": 0.72,
    "expectedHits": 0.7347,
    "zScore": -0.88,
-   "score": 35,
-   "totalPrizes": 26,
+   "score": 36,
+   "totalPrizes": 27,
    "effPrizes": 26,
    "weightedPrizes": 35,
    "depthPoints": 200,
@@ -2336,7 +2336,7 @@
     "g4": 0,
     "g5": 3,
     "g6": 3,
-    "g7": 20
+    "g7": 21
    },
    "twoPlusDraws": 168,
    "recent12": 6,
@@ -2349,8 +2349,8 @@
     36,
     37
    ],
-   "hotScore": 2.08,
-   "lastPrizeDraw": 4150,
+   "hotScore": 3.08,
+   "lastPrizeDraw": 4236,
    "score100": 38
   },
   {
@@ -5662,12 +5662,12 @@
    "recent12": 11,
    "rank": 151,
    "currentPick": [
-    4,
-    14,
-    15,
-    20,
-    33,
-    49
+    1,
+    3,
+    16,
+    29,
+    35,
+    44
    ],
    "hotScore": 1.6,
    "lastPrizeDraw": 4175,

@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generatedAt": "2026-11-19T02:06:24+08:00",
-  "nextDraw": 4236,
-  "folds": 1191,
+  "generatedAt": "2026-11-19T18:46:04+08:00",
+  "nextDraw": 4237,
+  "folds": 1192,
   "directory": {
    "zScoreHub": {
     "name": "Z-Score Hub & Momentum Bridge",
@@ -62742,6 +62742,19 @@
      30,
      37,
      44
+    ]
+   },
+   {
+    "d": 4236,
+    "date": "2026-11-19",
+    "g": 7,
+    "p": [
+     8,
+     28,
+     30,
+     32,
+     36,
+     37
     ]
    }
   ],

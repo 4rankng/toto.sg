@@ -72091,7 +72091,50 @@
       43
     ],
     "additional": 41,
+    "prizes": {
+      "g1": {
+        "share": 606120,
+        "winners": 2
+      },
+      "g2": {
+        "share": 255209,
+        "winners": 1
+      },
+      "g3": {
+        "share": 2089,
+        "winners": 84
+      },
+      "g4": {
+        "share": 634,
+        "winners": 151
+      },
+      "g5": {
+        "share": 50,
+        "winners": 4267
+      },
+      "g6": {
+        "share": 25,
+        "winners": 5222
+      },
+      "g7": {
+        "share": 10,
+        "winners": 87359
+      }
+    },
     "date": "2026-11-16",
     "draw": 4235
+  },
+  {
+    "numbers": [
+      8,
+      26,
+      28,
+      37,
+      41,
+      42
+    ],
+    "additional": 34,
+    "date": "2026-11-19",
+    "draw": 4236
   }
 ]
