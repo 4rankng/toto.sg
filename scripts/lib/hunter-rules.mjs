@@ -279,73 +279,36 @@ const NOROLL_CROWNS = [
 
 const NO_ROLL = new Set([...NOROLL_TEMPOS, ...NOROLL_CROWNS].map(([id]) => id));
 
-const CELESTIAL_FAMILY = "Celestials";
-const BOARD_FAMILY = "Board Hunters";
-const CROWN_FAMILY = "Crown Kings";
-const SOVEREIGN_FAMILY = "Sovereigns";
-const TEMPO_FAMILY = "Tempos";
+const CELESTIAL_FAMILY = "No-Repeat Dial";
+const BOARD_FAMILY = "Full-Board Dial";
+const CROWN_FAMILY = "Full-Board Dial";
+const SOVEREIGN_FAMILY = "Full-Board Dial";
+const TEMPO_FAMILY = "Full-Board Dial";
 
-/** Plain-language line per strategy — the "lucky dial" is the seed v. */
-const DIAL_TEXT = {
-    hunterEclipse: "Sets aside the previous draw's seven balls, then its lucky dial (928) picks six of the survivors.",
-    hunterNova: "After parking the previous draw's seven balls, its lucky dial (10677) points to the six it plays.",
-    hunterVega: "Plays six balls its lucky dial (6436) picks from everything the previous draw missed.",
-    hunterSirius: "Its lucky dial (4756) chooses six from the 43 balls the previous draw left behind.",
-    hunterOrion: "Skips every ball the previous draw used, then its lucky dial (2612) picks six.",
-    hunterAurora: "Turns away from the previous draw's numbers and reads six from its lucky dial (3142).",
-    hunterComet: "A fresh spin of its lucky dial (11145) over the balls the previous draw did not touch.",
-    hunterLyra: "The previous draw's seven sit out; its lucky dial (9682) fills the line with six of the rest.",
-    hunterPhoenix: "Rises from the previous draw's leftovers — its lucky dial (1542) picks six of the 43.",
-    boardTrident: "Spins its lucky dial (756885) across the full 1–49 board and plays the six it points to.",
-    boardLonginus: "One fixed spin of its lucky dial (742996) over the whole board decides the line.",
-    boardExcalibur: "The whole board, one lucky dial (976976), six balls — nothing else gets a say.",
-    boardGungnir: "Its lucky dial (1357203) shows up every round: full board in, six balls out.",
-    boardMjolnir: "Brings the same lucky dial (824842) down on the full board every single draw.",
-    boardZulfiqar: "The full 1–49 board is its field; its lucky dial (276091) marks the six it plays.",
-    boardKusanagi: "Its lucky dial (549982) sweeps the entire board and plays whatever six it rests on.",
-    boardGram: "A fixed lucky dial (392238) turns over the full board once per draw and picks six.",
-    boardDurandal: "The board never changes and neither does its lucky dial (957889) — six balls per spin.",
-    boardBalmung: "Reads the full 1–49 board through its own lucky dial (837872) and plays six.",
-    boardTizona: "Its lucky dial (1331464) takes the whole board for a spin before naming six.",
-    boardArondight: "Every round its lucky dial (1257656) walks the full board and stops on six.",
-    boardJoyeuse: "The full board spins past its lucky dial (1055603); six balls stay in the line.",
-    crownRegis: "Its lucky dial (1033843) has landed a perfect six before — full board, fresh spin every round.",
-    crownImperator: "An emperor's dial (1209615): the full board spins and six balls answer.",
-    crownValerian: "Steady as its dial (333155) — the full board turns, six stay crowned.",
-    crownAugustus: "Its lucky dial (937931) rules the whole board and names six every round.",
-    crownConstantine: "True to one dial (430349): the full board, six balls, every draw.",
-    crownAstra: "A perfect six on its record; its lucky dial (534156) keeps spinning over the full board.",
-    crownMaximus: "Its lucky dial (1611558) has matched all six once — full board, fresh spin every round.",
-    crownHonorius: "A perfect six already on its dial (2912417); the full board keeps turning.",
-    crownTheodosius: "Its lucky dial (3589435) has ruled a perfect six; the board answers again each round.",
-    crownSeptimius: "True to one dial (4052556) — once it named all six, and it keeps spinning.",
-    hunterSovereign: "Reigns over the full 1–49 board — its lucky dial (390919) names the six it plays.",
-    hunterImperium: "An empire of one: its lucky dial (490261) rules six balls of the full board.",
-    hunterColossus: "Strides the whole board every round; its lucky dial (830513) lands on six.",
-    hunterBehemoth: "The full board under one lucky dial (875141) — six balls, every round.",
-    tempoFortissimo: "Plays at full volume — its lucky dial (797215) hammers six out of the board.",
-    tempoAllegro: "Fast and bright; its lucky dial (525696) picks six from the full board.",
-    tempoVivace: "Lively every round — its lucky dial (1025307) lands six on the board.",
-    tempoPresto: "Quick off the dial (262125): full board in, six balls out.",
-    tempoAndante: "Unhurried, constant; its lucky dial (421781) walks the board for six.",
-    tempoMaestoso: "The tempo division's record folder; its lucky dial (2630248) sweeps the full board for six.",
-    tempoSostenuto: "Held and steady; its lucky dial (3894435) picks six straight off the board.",
-    tempoRitenuto: "Slowing on purpose; its lucky dial (1906523) lands six on the board.",
-    tempoGiocoso: "Playful by nature; its lucky dial (2857215) bounces six out of the board.",
-};
+/**
+ * Mechanism names + descriptions (owner 2026-11-19): every row in this file
+ * is a seeded random dial — the seed v is the ONLY thing distinguishing
+ * siblings, so it belongs in the name and the description states the
+ * generation rule plainly.
+ */
+const dialName = (fullBoard, v) => (fullBoard ? `Full-Board Dial ${v}` : `No-Repeat Dial ${v}`);
+const dialText = (fullBoard, v) =>
+    fullBoard
+        ? `Picks a uniform 6 of 49 from a fixed random dial (seed ${v}) that re-spins every draw. No draw history is used.`
+        : `Drops the previous draw's seven balls, then a fixed random dial (seed ${v}) picks 6 of the remaining 42. No other history is used.`;
 
 const FULL_BOARD = new Set(
     [...BOARD_HUNTERS, ...CROWN_KINGS, ...NOROLL_CROWNS, ...SOVEREIGNS, ...TEMPOS, ...NOROLL_TEMPOS].map(([id]) => id),
 );
 
 export const HUNTER_STRATEGIES = [
-    ...CELESTIALS.map(([id, name, v]) => [id, name, CELESTIAL_FAMILY, DIAL_TEXT[id]]),
-    ...BOARD_HUNTERS.map(([id, name, v]) => [id, name, BOARD_FAMILY, DIAL_TEXT[id]]),
-    ...CROWN_KINGS.map(([id, name, v]) => [id, name, CROWN_FAMILY, DIAL_TEXT[id]]),
-    ...SOVEREIGNS.map(([id, name, v]) => [id, name, SOVEREIGN_FAMILY, DIAL_TEXT[id]]),
-    ...TEMPOS.map(([id, name, v]) => [id, name, TEMPO_FAMILY, DIAL_TEXT[id]]),
-    ...NOROLL_CROWNS.map(([id, name, v]) => [id, name, CROWN_FAMILY, DIAL_TEXT[id]]),
-    ...NOROLL_TEMPOS.map(([id, name, v]) => [id, name, TEMPO_FAMILY, DIAL_TEXT[id]]),
+    ...CELESTIALS.map(([id, , v]) => [id, dialName(false, v), CELESTIAL_FAMILY, dialText(false, v)]),
+    ...BOARD_HUNTERS.map(([id, , v]) => [id, dialName(true, v), BOARD_FAMILY, dialText(true, v)]),
+    ...CROWN_KINGS.map(([id, , v]) => [id, dialName(true, v), CROWN_FAMILY, dialText(true, v)]),
+    ...SOVEREIGNS.map(([id, , v]) => [id, dialName(true, v), SOVEREIGN_FAMILY, dialText(true, v)]),
+    ...TEMPOS.map(([id, , v]) => [id, dialName(true, v), TEMPO_FAMILY, dialText(true, v)]),
+    ...NOROLL_CROWNS.map(([id, , v]) => [id, dialName(true, v), CROWN_FAMILY, dialText(true, v)]),
+    ...NOROLL_TEMPOS.map(([id, , v]) => [id, dialName(true, v), TEMPO_FAMILY, dialText(true, v)]),
 ];
 
 // Manifest: 9 celestials + 13 hunters + 10 crowns + 4 sovereigns + 9 tempos = 45 rows.
