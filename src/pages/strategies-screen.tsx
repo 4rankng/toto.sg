@@ -26,10 +26,10 @@ import { cx } from "@/utils/cx";
 
 type SortKey = "score" | "prizes" | "hot";
 
-const SORTS: { id: SortKey; label: string }[] = [
-    { id: "score", label: "Score" },
-    { id: "prizes", label: "Prizes" },
-    { id: "hot", label: "Hot" },
+const SORTS: { id: SortKey; label: string; hint: string }[] = [
+    { id: "score", label: "Score", hint: "Prize points on the tier ladder: G7=1, G6=2, G5=3, G4=4, G3=5, G2=8, G1=13 per prize draw" },
+    { id: "prizes", label: "Prizes", hint: "Number of draws where the pick won any prize (matched 3+ of the 6 main numbers)" },
+    { id: "hot", label: "Hot", hint: "Who won most recently — recency-weighted prize mass with a 100-draw half-life" },
 ];
 
 const TIERS = ["g1", "g2", "g3", "g4", "g5", "g6", "g7"] as const;
@@ -531,6 +531,7 @@ export const StrategiesScreen = () => {
                         key={option.id}
                         type="button"
                         aria-pressed={sort === option.id}
+                        title={option.hint}
                         onClick={() => setSort(option.id)}
                         className={cx(
                             "min-h-8 rounded-md px-2 text-[11px] font-semibold transition-colors duration-100",

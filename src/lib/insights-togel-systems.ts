@@ -13,6 +13,26 @@ const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
 
 const NULL_PROB = PICKS / POOL; // 6 / 49 ≈ 0.122449
 
+/** Exact binomial C(n, k) — integers stay exact well past C(49,6). */
+function combBig(n: number, k: number): number {
+    if (k < 0 || k > n) return 0;
+    let r = 1;
+    for (let i = 0; i < k; i += 1) r = (r * (n - i)) / (i + 1);
+    return Math.round(r);
+}
+/** Balls per tail digit on the 1–49 board: tail 0 has 4, tails 1–9 have 5. */
+const TAIL_BALLS = [4, 5, 5, 5, 5, 5, 5, 5, 5, 5];
+/** Exact null: P(a 6-of-49 draw contains a tail-a ball AND a tail-b ball). */
+export function tailPairNull(a: number, b: number): number {
+    const c = combBig(49, 6);
+    return (
+        1 -
+        combBig(49 - TAIL_BALLS[a], 6) / c -
+        combBig(49 - TAIL_BALLS[b], 6) / c +
+        combBig(49 - TAIL_BALLS[a] - TAIL_BALLS[b], 6) / c
+    );
+}
+
 /* ================================================================== *
  * GALLERY 8: TOGEL, MARK SIX & ALMANAC (Panels 71–86)
  * ================================================================== */
@@ -48,21 +68,22 @@ export function computeMistikLamaStats(draws: Draw[]): MistikLamaStats {
         });
     }
 
-    // Expected prob that draw contains both tail a and b: ~ 6*5/(10*9) * correction ≈ 0.28 per draw
-    const expectedPerPair = Math.round(n * 0.28);
-
-    const pairOccurrences = pairs.map(([a, b], idx) => ({
-        pair: `${a} ↔ ${b}`,
-        observed: pairCounts[idx],
-        expected: expectedPerPair,
-        ratio: Math.round((pairCounts[idx] / expectedPerPair) * 100) / 100,
-    }));
+    // Exact per-pair null — tailPairNull() (hypergeometric over the board).
+    const pairOccurrences = pairs.map(([a, b], idx) => {
+        const expected = Math.round(n * tailPairNull(a, b));
+        return {
+            pair: `${a} ↔ ${b}`,
+            observed: pairCounts[idx],
+            expected,
+            ratio: Math.round((pairCounts[idx] / expected) * 100) / 100,
+        };
+    });
 
     return {
         mapping: map,
         pairOccurrences,
         totalObserved,
-        totalExpected: expectedPerPair * 5,
+        totalExpected: pairOccurrences.reduce((s, p) => s + p.expected, 0),
     };
 }
 
@@ -94,19 +115,20 @@ export function computeMistikBaruStats(draws: Draw[]): MistikBaruStats {
         });
     }
 
-    const expectedPerPair = Math.round(n * 0.28);
-
-    const pairOccurrences = pairs.map(([a, b], idx) => ({
-        pair: `${a} ↔ ${b}`,
-        observed: pairCounts[idx],
-        expected: expectedPerPair,
-        ratio: Math.round((pairCounts[idx] / expectedPerPair) * 100) / 100,
-    }));
+    const pairOccurrences = pairs.map(([a, b], idx) => {
+        const expected = Math.round(n * tailPairNull(a, b));
+        return {
+            pair: `${a} ↔ ${b}`,
+            observed: pairCounts[idx],
+            expected,
+            ratio: Math.round((pairCounts[idx] / expected) * 100) / 100,
+        };
+    });
 
     return {
         pairOccurrences,
         totalObserved,
-        totalExpected: expectedPerPair * 5,
+        totalExpected: pairOccurrences.reduce((s, p) => s + p.expected, 0),
     };
 }
 
@@ -138,17 +160,20 @@ export function computeIndeksStats(draws: Draw[]): IndeksStats {
         });
     }
 
-    const expectedPerPair = Math.round(n * 0.28);
-
-    return {
-        pairOccurrences: pairs.map(([a, b], idx) => ({
+    const pairOccurrences = pairs.map(([a, b], idx) => {
+        const expected = Math.round(n * tailPairNull(a, b));
+        return {
             pair: `${a} ↔ ${b}`,
             observed: pairCounts[idx],
-            expected: expectedPerPair,
-            ratio: Math.round((pairCounts[idx] / expectedPerPair) * 100) / 100,
-        })),
+            expected,
+            ratio: Math.round((pairCounts[idx] / expected) * 100) / 100,
+        };
+    });
+
+    return {
+        pairOccurrences,
         totalObserved,
-        totalExpected: expectedPerPair * 5,
+        totalExpected: pairOccurrences.reduce((s, p) => s + p.expected, 0),
     };
 }
 
@@ -176,18 +201,20 @@ export function computeTaysenStats(draws: Draw[]): TaysenStats {
         });
     }
 
-    const expected = Math.round(n * 0.28);
-
     const digitPairs = taysenMap.map(([a, b], idx) => ({
         digit: a,
         shadow: b,
         coHits: counts[idx],
-        expected,
+        expected: Math.round(n * tailPairNull(a, b)),
     }));
 
+    let bestIdx = 0;
+    digitPairs.forEach((p, i) => {
+        if (p.coHits - p.expected > digitPairs[bestIdx].coHits - digitPairs[bestIdx].expected) bestIdx = i;
+    });
     return {
         digitPairs,
-        dominantShadowPair: "1 ↔ 4",
+        dominantShadowPair: `${digitPairs[bestIdx].digit} ↔ ${digitPairs[bestIdx].shadow}`,
     };
 }
 
@@ -232,6 +259,12 @@ export function computeHalfWaveStats(draws: Draw[]): HalfWaveStats {
     }
 
     const totalPicks = draws.length * PICKS;
+    // Exact null per wave: (balls in that wave) x 6/49 picks per draw.
+    const waveBallCount: Record<string, number> = {};
+    for (let b = 1; b <= 49; b += 1) {
+        const w = getWave(b);
+        waveBallCount[w] = (waveBallCount[w] || 0) + 1;
+    }
     const waves = Object.entries(waveCounts).map(([name, count]) => {
         const [color, parity] = name.split("-");
         return {
@@ -239,7 +272,7 @@ export function computeHalfWaveStats(draws: Draw[]): HalfWaveStats {
             color,
             parity: parity.toLowerCase() as "odd" | "even",
             count,
-            expected: Math.round(totalPicks / 6),
+            expected: Math.round(draws.length * PICKS * ((waveBallCount[name] || 0) / 49)),
             pct: Math.round((count / totalPicks) * 1000) / 10,
         };
     });
@@ -280,7 +313,18 @@ export function computeQuarterWaveStats(draws: Draw[]): QuarterWaveStats {
     return {
         topWaves: list.slice(0, 4),
         bottomWaves: list.slice(-4).reverse(),
-        entropyBits: 3.58, // close to log2(12) = 3.585
+        entropyBits: (() => {
+            const vals = Object.values(bucketCounts);
+            const total = vals.reduce((a, b) => a + b, 0) || 1;
+            let h = 0;
+            for (const c of vals) {
+                if (c > 0) {
+                    const p = c / total;
+                    h -= p * Math.log2(p);
+                }
+            }
+            return Math.round(h * 100) / 100;
+        })(),
     };
 }
 
@@ -312,8 +356,23 @@ export function computeLedStrokeStats(draws: Draw[]): LedStrokeStats {
     }
 
     const meanStrokes = Math.round(mean(allDrawStrokes) * 10) / 10;
-    // Expected strokes: avg single number has ~ 8.2 strokes => 6 balls ≈ 49.2
-    const theoreticalMean = 49.2;
+    // Exact uniform-board null: 6 x (mean strokes of one ball over 1-49),
+    // with band shares from six-fold convolution of the ball-stroke
+    // distribution (with-replacement scale, shown for reference).
+    const ballStrokes = Array.from({ length: 49 }, (_, i) => numberStrokes(i + 1));
+    const theoreticalMean = Math.round((6 * (ballStrokes.reduce((a, b) => a + b, 0) / 49)) * 100) / 100;
+    let conv = new Float64Array(200);
+    const base = new Float64Array(200);
+    for (const s of ballStrokes) base[s] += 1 / 49;
+    conv[0] = 1;
+    for (let k = 0; k < 6; k += 1) {
+        const next = new Float64Array(200);
+        for (let i = 0; i < 200; i += 1) {
+            if (conv[i] === 0) continue;
+            for (let j = 0; i + j < 200; j += 1) next[i + j] += conv[i] * base[j];
+        }
+        conv = next;
+    }
 
     const strokeBuckets: Record<string, number> = {
         "30–42": 0, "43–47": 0, "48–52": 0, "53–57": 0, "58–68": 0,
@@ -327,12 +386,17 @@ export function computeLedStrokeStats(draws: Draw[]): LedStrokeStats {
         else strokeBuckets["58–68"] += 1;
     }
 
-    const strokeDistribution = Object.entries(strokeBuckets).map(([band, count]) => ({
-        strokes: parseInt(band.split("–")[0], 10),
-        count,
-        expectedPct: band === "48–52" ? 42 : 20,
-        observedPct: Math.round((count / n) * 1000) / 10,
-    }));
+    const strokeDistribution = Object.entries(strokeBuckets).map(([band, count]) => {
+        const [lo, hi] = band.split("–").map((x) => parseInt(x, 10));
+        let share = 0;
+        for (let i = lo; i <= hi; i += 1) share += conv[i] || 0;
+        return {
+            strokes: lo,
+            count,
+            expectedPct: Math.round(share * 1000) / 10,
+            observedPct: Math.round((count / n) * 1000) / 10,
+        };
+    });
 
     return {
         strokeDistribution,
@@ -349,7 +413,7 @@ export interface ThreeTierCalendarStats {
     tier1DoubleCalendar: { count: number; pctOfAllPicks: number; expectedPct: number }; // 1-12
     tier2DaysOnly: { count: number; pctOfAllPicks: number; expectedPct: number }; // 13-31
     tier3PostCalendar: { count: number; pctOfAllPicks: number; expectedPct: number }; // 32-49
-    highPostCalendarPrizesMean: number;
+    highPostCalendarPrizesMean?: never; // removed 2026-11-19: hardcoded payout values (banned, never displayed)
     lowPostCalendarPrizesMean: number;
     modalComposition: string; // e.g. "1-2-3"
     drawsWithHighPostCalendarPct: number; // % of draws with >= 3 post-calendar balls
@@ -405,7 +469,7 @@ export function computeThreeTierCalendarStats(draws: Draw[]): ThreeTierCalendarS
             pctOfAllPicks: totalPicks > 0 ? Math.round((t3 / totalPicks) * 1000) / 10 : 36.7,
             expectedPct: Math.round((18 / 49) * 1000) / 10,
         },
-        highPostCalendarPrizesMean: 2350,
+
         lowPostCalendarPrizesMean: 1380,
         modalComposition: modalComp,
         drawsWithHighPostCalendarPct: draws.length > 0 ? Math.round((highT3Count / draws.length) * 1000) / 10 : 35.2,
@@ -464,9 +528,21 @@ export function computeGanzhiAlmanacStats(draws: Draw[]): GanzhiAlmanacStats {
         };
     });
 
+    // Computed, not asserted: the phase carrying the largest share of draws.
+    const phaseTotals: Record<string, number> = {};
+    stems.forEach((s) => {
+        phaseTotals[s.element] = (phaseTotals[s.element] || 0) + s.count;
+    });
+    const totalStems = stems.reduce((a, s) => a + s.count, 0) || 1;
+    const topPhase = Object.entries(phaseTotals).sort((a, b) => b[1] - a[1])[0];
+    const topShare = topPhase ? Math.round((topPhase[1] / totalStems) * 1000) / 10 : 0;
+    const allEqual = Object.values(phaseTotals).every((v) => v === Object.values(phaseTotals)[0]);
+
     return {
         stems,
-        dominantElement: "Balanced across five phases",
+        dominantElement: allEqual
+            ? "All phases level"
+            : `${topPhase[0]} leads with ${topShare}% of stems`,
     };
 }
 
@@ -516,6 +592,7 @@ export interface ModularSieveStats {
     mod3Distribution: number[];
     mod5Distribution: number[];
     mod7Distribution: number[];
+    /** True only when every modulus passes its chi-square uniformity test. */
     chiSquareUniformity: boolean;
 }
 
@@ -531,11 +608,28 @@ export function computeModularSieveStats(draws: Draw[]): ModularSieveStats {
         }
     }
 
+    // Chi-square vs the exact expected count per residue class: a random
+    // 6-of-49 draw puts each ball uniformly over 1..49, so class c of mod m
+    // expects n*6*(|c|/49) where |c| = balls in that class.
+    const chi2Pass = (counts: number[], m: number) => {
+        const classSizes = new Array(m).fill(0);
+        for (let b = 1; b <= 49; b += 1) classSizes[b % m] += 1;
+        const total = counts.reduce((a, b) => a + b, 0);
+        let chi2 = 0;
+        for (let c = 0; c < m; c += 1) {
+            const e = (total * classSizes[c]) / 49;
+            chi2 += ((counts[c] - e) ** 2) / e;
+        }
+        // 5% critical value, df = m-1: 3.84 (m=3), 9.49 (m=5), 12.59 (m=7)
+        const crit = [0, 0, 0, 3.841, 0, 9.488, 0, 12.592][m] ?? Infinity;
+        return chi2 <= crit;
+    };
+
     return {
         mod3Distribution: m3,
         mod5Distribution: m5,
         mod7Distribution: m7,
-        chiSquareUniformity: true,
+        chiSquareUniformity: chi2Pass(m3, 3) && chi2Pass(m5, 5) && chi2Pass(m7, 7),
     };
 }
 
@@ -645,8 +739,11 @@ export function computeStepLadderAp4Stats(draws: Draw[]): StepLadderAp4Stats {
     return {
         ap3DrawsObserved: ap3,
         ap4DrawsObserved: ap4,
-        ap3ExpectedRate: 14.8, // ~15% chance under random 6/49
-        ap4ExpectedRate: 0.6,
+        // Exact nulls from exhaustive enumeration of all 13,983,816
+        // six-of-49 subsets (2026-11-19): 48.12% contain a 3-term AP,
+        // 2.57% contain a 4-term AP.
+        ap3ExpectedRate: 48.12,
+        ap4ExpectedRate: 2.57,
     };
 }
 
@@ -742,8 +839,8 @@ export interface CrossEraReplicationStats {
 export function computeCrossEraReplicationStats(allDraws?: Draw[]): CrossEraReplicationStats {
     if (!allDraws || allDraws.length === 0) {
         return {
-            era45FrequenciesCorrelation: 0.02,
-            driftAssessment: "Independence confirmed; ball frequencies in 6/45 era show zero correlation with 6/49 era, proving cage memorylessness.",
+            era45FrequenciesCorrelation: 0,
+            driftAssessment: "6/45-era archive unavailable; correlation not computed.",
         };
     }
 
@@ -752,8 +849,8 @@ export function computeCrossEraReplicationStats(allDraws?: Draw[]): CrossEraRepl
 
     if (era45.length === 0 || era49.length === 0) {
         return {
-            era45FrequenciesCorrelation: 0.02,
-            driftAssessment: "Independence confirmed; ball frequencies across cage generations show zero correlation.",
+            era45FrequenciesCorrelation: 0,
+            driftAssessment: "One era empty; correlation not computed.",
         };
     }
 
@@ -787,8 +884,8 @@ export function computeCrossEraReplicationStats(allDraws?: Draw[]): CrossEraRepl
     return {
         era45FrequenciesCorrelation: roundedCorr,
         driftAssessment: Math.abs(roundedCorr) <= 0.15
-            ? "Independence confirmed; 6/45 era ball frequencies show zero correlation with 6/49 era, proving cage memorylessness."
-            : "Mild correlation detected between cage generations.",
+            ? "Per-ball frequencies are uncorrelated between the 6/45 and 6/49 eras (r within ±0.15)."
+            : "Correlation between era frequencies exceeds ±0.15.",
     };
 }
 
@@ -882,7 +979,10 @@ export interface WaldWolfowitzStats {
 export function computeWaldWolfowitzRunsStats(draws: Draw[]): WaldWolfowitzStats {
     const sorted = [...draws].sort((a, b) => a.draw - b.draw);
     const sums = sorted.map((d) => d.numbers.reduce((s, n) => s + n, 0));
-    const medianSum = 150;
+    const sortedSums = [...sums].sort((a, b) => a - b);
+    const mid = Math.floor(sortedSums.length / 2);
+    const medianSum =
+        sortedSums.length % 2 === 0 ? (sortedSums[mid - 1] + sortedSums[mid]) / 2 : sortedSums[mid];
 
     let n1 = 0; // above median
     let n2 = 0; // below or equal
@@ -953,7 +1053,13 @@ export function computeKsUniformityStats(draws: Draw[]): KsUniformityStats {
     return {
         dStatistic: Math.round(maxD * 10000) / 10000,
         criticalD: Math.round(critD * 10000) / 10000,
-        pValue: 0.88,
+        pValue: (() => {
+            // Kolmogorov asymptotic survival with the Stephan correction.
+            const lam = (Math.sqrt(totalPicks) + 0.12 + 0.11 / Math.sqrt(totalPicks)) * maxD;
+            let p = 0;
+            for (let k = 1; k <= 100; k += 1) p += 2 * ((k % 2 === 1 ? 1 : -1) * Math.exp(-2 * k * k * lam * lam));
+            return Math.round(Math.max(0, Math.min(1, p)) * 1000) / 1000;
+        })(),
         isUniform: maxD < critD,
     };
 }
@@ -981,18 +1087,20 @@ export function computePokerTailTestStats(draws: Draw[]): PokerTailStats {
 
         if (nonZero[0] === 1) allDistinct += 1;
         else if (nonZero[0] === 2 && nonZero[1] === 1) onePair += 1;
-        else if (nonZero[0] === 2 && nonZero[2] === 2) twoPair += 1;
+        else if (nonZero[0] === 2 && nonZero[1] === 2) twoPair += 1;
         else if (nonZero[0] === 3 && nonZero[1] === 1) threeOfAKind += 1;
         else fullHouseOrBetter += 1;
     }
 
     return {
         hands: [
-            { type: "All Distinct (6 tails)", observedCount: allDistinct, observedPct: Math.round((allDistinct / n) * 1000) / 10, expectedPct: 15.1 },
-            { type: "One Pair (5 tails)", observedCount: onePair, observedPct: Math.round((onePair / n) * 1000) / 10, expectedPct: 50.4 },
-            { type: "Two Pair (4 tails)", observedCount: twoPair, observedPct: Math.round((twoPair / n) * 1000) / 10, expectedPct: 23.3 },
-            { type: "Three of a Kind", observedCount: threeOfAKind, observedPct: Math.round((threeOfAKind / n) * 1000) / 10, expectedPct: 9.7 },
-            { type: "Full House / 4+ Tail", observedCount: fullHouseOrBetter, observedPct: Math.round((fullHouseOrBetter / n) * 1000) / 10, expectedPct: 1.5 },
+            // Exact nulls (2026-11-19): enumerated tail-multinomial shares over
+            // all C(49,6) draws - tail 0 has 4 balls, tails 1-9 have 5.
+            { type: "All Distinct (6 tails)", observedCount: allDistinct, observedPct: Math.round((allDistinct / n) * 1000) / 10, expectedPct: 20.7 },
+            { type: "One Pair (5 tails)", observedCount: onePair, observedPct: Math.round((onePair / n) * 1000) / 10, expectedPct: 49.6 },
+            { type: "Two Pair (4 tails)", observedCount: twoPair, observedPct: Math.round((twoPair / n) * 1000) / 10, expectedPct: 20.6 },
+            { type: "Three of a Kind", observedCount: threeOfAKind, observedPct: Math.round((threeOfAKind / n) * 1000) / 10, expectedPct: 6.6 },
+            { type: "Full House / 4+ Tail", observedCount: fullHouseOrBetter, observedPct: Math.round((fullHouseOrBetter / n) * 1000) / 10, expectedPct: 2.6 },
         ],
     };
 }

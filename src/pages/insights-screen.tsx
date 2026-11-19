@@ -414,7 +414,7 @@ const SECTIONS: { id: string; label: string; panels: IndexPanel[] }[] = [
         id: "systems-ev",
         label: "Forensics & randomness",
         panels: [
-            { id: "panel-quad-collisions", label: "1,892-Draw quad collisions" },
+            { id: "panel-quad-collisions", label: "Quad collision search" },
             { id: "panel-cross-era-audit", label: "6/45 vs 6/49 cross-audit" },
             { id: "panel-gap-extremes", label: "Min & max gap extremes" },
             { id: "panel-line-sd-skew", label: "Line SD & skewness" },
@@ -1656,7 +1656,7 @@ export const InsightsScreen = () => {
                                 stats={[
                                     { label: "Max z-score", value: `+${pairCorr.maxZ.toFixed(2)}σ`, hint: "strongest affinity" },
                                     { label: "Min z-score", value: `${pairCorr.minZ.toFixed(2)}σ`, hint: "strongest repulsion" },
-                                    { label: "Mean |z|", value: `${pairCorr.meanAbsZ.toFixed(2)}σ`, hint: "overall deviation" },
+                                    { label: "Top affinity pair", value: `${pairCorr.topPositive[0]?.a}–${pairCorr.topPositive[0]?.b}`, hint: "most-drawn pair" },
                                 ]}
                             >
                                 {(() => {
@@ -1806,7 +1806,7 @@ export const InsightsScreen = () => {
                                 number={pNum("panel-mirrors")}
                                 section="Correlations"
                                 title="Mirror twins (50−n) & Bolak-Balik"
-                                caption="Symmetric pairs (n + m = 50) and Indonesian Togel digit swaps (cermin) vs chance."
+                                caption="Symmetric pairs (n + m = 50) and Indonesian Togel digit swaps (cermin), against the exact combinatorial expectation."
                                 id="panel-mirrors"
                                 family="Folk & Culture"
                                 className="lg:col-span-6"
@@ -2228,7 +2228,7 @@ export const InsightsScreen = () => {
                                     return (
                                         <PanelVerdict
                                             tone={tone}
-                                            label={tone === "watch" ? `Avoid sums outside 115–185 (now ${analysis.sum.mean.toFixed(1)})` : "No edge — any shape is as good"}
+                                            label={tone === "watch" ? `Modal sum ${analysis.sum.mode} — most draws land in 115–185` : "No edge — any shape is as good"}
                                             {...(tone === "watch" ? { avoid: "sum-outside-115-185" } : {})}
                                             detail={`mean ${analysis.sum.mean.toFixed(1)} vs band 115–185`}
                                             metric={`mean:${analysis.sum.mean.toFixed(1)}|band:115-185`}
@@ -2402,9 +2402,8 @@ export const InsightsScreen = () => {
                                 family="Structure"
                                 className="lg:col-span-6"
                                 stats={[
-                                    { label: "Mean gap", value: deltas.observedAverage.toFixed(2), hint: "observed" },
-                                    { label: "Expected", value: deltas.expectedAverage.toFixed(2) },
-                                    { label: "Most common", value: deltas.rows.reduce((best, row) => (row.count > best.count ? row : best), deltas.rows[0])?.gap ?? "—", hint: "gap size" },
+                                    { label: "Most common gap", value: deltas.rows.reduce((best, row) => (row.count > best.count ? row : best), deltas.rows[0])?.gap ?? "—", hint: "modal, gap size" },
+                                    { label: "Most common run", value: `${deltas.rows.reduce((best, row) => (row.count > best.count ? row : best), deltas.rows[0])?.count ?? 0}×`, hint: "how often it led" },
                                 ]}
                             >
                                 {(() => {
@@ -2433,9 +2432,9 @@ export const InsightsScreen = () => {
                                 family="Structure"
                                 className="lg:col-span-6"
                                 stats={[
-                                    { label: "Lowest median", value: positions[0]?.observedMedian.toFixed(0) ?? "—", hint: "position 1" },
-                                    { label: "Highest median", value: positions[5]?.observedMedian.toFixed(0) ?? "—", hint: "position 6" },
-                                    { label: "Expected mid", value: positions[2]?.expectedMedian ?? "—", hint: "position 3" },
+                                    { label: "Modal low band", value: `${positions[0]?.observedLow ?? "–"}–${positions[0]?.observedHigh ?? "–"}`, hint: "position 1, middle 90%" },
+                                    { label: "Modal high band", value: `${positions[5]?.observedLow ?? "–"}–${positions[5]?.observedHigh ?? "–"}`, hint: "position 6, middle 90%" },
+                                    { label: "Expected low / high", value: `${positions[0]?.expectedMedian ?? "–"} / ${positions[5]?.expectedMedian ?? "–"}`, hint: "fair-cage medians" },
                                 ]}
                             >
                                 {(() => {
@@ -2469,7 +2468,7 @@ export const InsightsScreen = () => {
                                     return (
                                         <PanelVerdict
                                             tone={tone}
-                                            label={tone === "watch" ? `Avoid spans outside 33–43 (now ${spans.observedMean.toFixed(1)})` : "No edge — any shape is as good"}
+                                            label={tone === "watch" ? "Modal span is 43; spans 33–43 cover the usual range" : "No edge — any shape is as good"}
                                             {...(tone === "watch" ? { avoid: "span-outside-33-43" } : {})}
                                             detail={`top span ${spans.mostCommonSpan}`}
                                             metric={`mean:${spans.observedMean.toFixed(1)}|band:33-43`}
@@ -2513,7 +2512,7 @@ export const InsightsScreen = () => {
                                             tone={tone}
                                             label={tone === "watch" ? `Avoid AC values outside 6–9 (now ${acValues.observedMean.toFixed(2)})` : "No edge — any shape is as good"}
                                             {...(tone === "watch" ? { avoid: "ac-outside-6-9" } : {})}
-                                            detail={`mean AC ${acValues.observedMean.toFixed(2)}`}
+                                            detail={`modal AC ${acValues.mostCommonAc} (${acValues.mostCommonAcCount}×)`}
                                             metric={`mean:${acValues.observedMean.toFixed(2)}|band:6-9`}
                                         />
                                     );
@@ -4511,8 +4510,8 @@ export const InsightsScreen = () => {
                         <InsightPanel
                                 number={pNum("panel-quad-collisions")}
                             section="Forensics"
-                            title="1,892-Draw archive quadruple collision search"
-                            caption="Scans all 1,892 draws since 2008 for 4-ball, 5-ball, and 6-ball identical line repetitions."
+                            title={`Archive quadruple collision search — ${formatNumber(quadCollisions?.totalDrawsScanned ?? 0)} draws`}
+                            caption="Scans every archived 6/49-era draw for 4-ball, 5-ball, and 6-ball identical line repetitions."
                             id="panel-quad-collisions"
                             family="Controls"
                             className="lg:col-span-6"
@@ -4954,6 +4953,7 @@ export const InsightsScreen = () => {
                                             <th className={th}>Design</th>
                                             <th className={th}>Guarantee</th>
                                             <th className={thNum}>Wheeled Tickets</th>
+                                            <th className={thNum}>Bound</th>
                                             <th className={thNum}>Full System</th>
                                             <th className={thNum}>Efficiency</th>
                                         </tr>
@@ -4963,7 +4963,13 @@ export const InsightsScreen = () => {
                                             <tr key={idx}>
                                                 <td className={td}><span className="font-semibold text-primary">{w.designName}</span></td>
                                                 <td className={td}>{w.guarantee}</td>
-                                                <td className={tdNum}>{w.linesRequired}</td>
+                                                <td className={tdNum}>
+                                                    {w.linesRequired}
+                                                    {w.provenOptimal ? "" : <span className="text-ink-subtle"> best found</span>}
+                                                </td>
+                                                <td className={tdNum}>
+                                                    <span title="Counting lower bound — the optimum cannot be smaller">≥ {w.lowerBoundLines}</span>
+                                                </td>
                                                 <td className={tdNum}>{w.fullSystemLines}</td>
                                                 <td className={tdNum}><span className="text-gold font-semibold">{w.lineSavingsPct}% saved</span></td>
                                             </tr>

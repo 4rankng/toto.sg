@@ -583,7 +583,10 @@ export interface UpcomingCalendarAffinityStats {
 }
 
 export function computeUpcomingCalendarAffinityStats(draws: Draw[]): UpcomingCalendarAffinityStats {
-    const latest = draws[0]; // draws are typically newest-first or sorted
+    // The newest archived draw, whatever order the caller passed.
+    const latest = draws.length
+        ? draws.reduce((a, b) => (b.draw > a.draw ? b : a), draws[0])
+        : undefined;
     // Determine target next weekday: if latest is Mon, next is Thu; else Mon.
     let targetWeekday: "Mon" | "Thu" = "Mon";
     let targetMonthHalf: "1–15" | "16–31" = "1–15";
@@ -1430,7 +1433,12 @@ export interface GreedyCoverageStats {
 }
 
 export function computeGreedyMatchCoverageStats(draws: Draw[]): GreedyCoverageStats {
-    const trailing = draws.slice(0, 100);
+    // Train the greedy pick on the oldest 100 era draws, then report
+    // coverage on the NEWEST 100 (held out) — the displayed numbers are
+    // out-of-sample by construction.
+    const asc = [...draws].sort((a, b) => a.draw - b.draw);
+    const train = asc.slice(0, 100);
+    const trailing = asc.slice(-100);
     const n = trailing.length;
 
     // Greedy selection of 8 balls to maximize 2+ matches
@@ -1445,7 +1453,7 @@ export function computeGreedyMatchCoverageStats(draws: Draw[]): GreedyCoverageSt
             if (selected.includes(candidate)) continue;
             const testSet = new Set([...selected, candidate]);
             let hits2 = 0;
-            for (const d of trailing) {
+            for (const d of train) {
                 const m = d.numbers.filter((x) => testSet.has(x)).length;
                 if (m >= 2) hits2 += 1;
             }
@@ -1502,7 +1510,10 @@ export interface CandidatePoolCaptureStats {
 }
 
 export function computeCandidatePoolCaptureCurve(draws: Draw[], candidateBalls: number[]): CandidatePoolCaptureStats {
-    const trailing = draws.slice(0, 100);
+    // Newest 100 era draws — the empirical capture is measured out-of-sample
+    // relative to any pool-selection logic upstream.
+    const asc = [...draws].sort((a, b) => a.draw - b.draw);
+    const trailing = asc.slice(-100);
     const n = trailing.length;
     const poolSizes = [8, 10, 12, 15, 18, 20];
     const rows: PoolCaptureRow[] = [];
@@ -1616,22 +1627,51 @@ export function computeSystemMatchMultipliers(): SystemMultiplierRow[] {
 export interface CoveringDesignRow {
     candidatePool: number;
     guarantee: string; // e.g. "3-if-3"
+    /** Optimum where proven; otherwise the best verified construction. */
     linesRequired: number;
+    /** Counting bound ceil(C(v,t)/C(6,t)) — the optimum cannot be smaller. */
+    lowerBoundLines: number;
+    /** Lines in the best construction actually found by search. */
+    achievedLines: number;
+    /** True when linesRequired is the exhaustively proven optimum. */
+    provenOptimal: boolean;
     fullSystemLines: number;
     lineSavingsPct: number;
     designName: string;
 }
 
+/**
+ * Covering-design sizes, honestly bounded (2026-11-19): exact minima are
+ * known only for the smallest wheels. Each row shows the counting lower
+ * bound ceil(C(v,t)/C(6,t)) and a construction actually found by verified
+ * search; the optimum lies between them. C(8,6,3)=4 is exhaustively proven.
+ */
 export function computeCoveringWheelGuarantees(): CoveringDesignRow[] {
+    const row = (v: number, t: number, found: number, proven?: number) => {
+        const lb = Math.ceil(binomial(v, t) / binomial(6, t));
+        const lines = proven ?? found;
+        const full = binomial(v, 6);
+        return {
+            candidatePool: v,
+            guarantee: `${t}-if-${t}`,
+            linesRequired: lines,
+            lowerBoundLines: lb,
+            achievedLines: found,
+            provenOptimal: proven !== undefined,
+            fullSystemLines: full,
+            lineSavingsPct: Math.round((1 - lines / full) * 1000) / 10,
+            designName: `C(${v}, 6, ${t})`,
+        };
+    };
     return [
-        { candidatePool: 8, guarantee: "3-if-3", linesRequired: 3, fullSystemLines: 28, lineSavingsPct: 89.3, designName: "C(8, 6, 3, 3)" },
-        { candidatePool: 8, guarantee: "4-if-4", linesRequired: 4, fullSystemLines: 28, lineSavingsPct: 85.7, designName: "C(8, 6, 4, 4)" },
-        { candidatePool: 9, guarantee: "3-if-3", linesRequired: 3, fullSystemLines: 84, lineSavingsPct: 96.4, designName: "C(9, 6, 3, 3)" },
-        { candidatePool: 10, guarantee: "3-if-3", linesRequired: 4, fullSystemLines: 210, lineSavingsPct: 98.1, designName: "C(10, 6, 3, 3)" },
-        { candidatePool: 10, guarantee: "4-if-4", linesRequired: 10, fullSystemLines: 210, lineSavingsPct: 95.2, designName: "C(10, 6, 4, 4)" },
-        { candidatePool: 12, guarantee: "3-if-3", linesRequired: 6, fullSystemLines: 924, lineSavingsPct: 99.4, designName: "C(12, 6, 3, 3)" },
-        { candidatePool: 12, guarantee: "4-if-4", linesRequired: 16, fullSystemLines: 924, lineSavingsPct: 98.3, designName: "C(12, 6, 4, 4)" },
-        { candidatePool: 14, guarantee: "3-if-3", linesRequired: 9, fullSystemLines: 3003, lineSavingsPct: 99.7, designName: "C(14, 6, 3, 3)" },
+        row(8, 3, 4, 4),   // exhaustive search: optimum 4
+        row(8, 4, 8),
+        row(9, 3, 9),
+        row(10, 3, 10),
+        row(10, 4, 23),
+        row(12, 3, 15),
+        row(12, 4, 53),
+        row(14, 3, 26),
     ];
 }
 
@@ -1671,7 +1711,7 @@ export function computeKeyBallMatchLift(): KeyBallLiftRow[] {
         {
             anchorsLocked: 0,
             chanceMatch2Plus: 15.1,
-            chanceMatch3Plus: 1.84,
+            chanceMatch3Plus: 1.86, // exact 1.864 — 260,624 / 13,983,816
             chanceMatch4Plus: 0.097,
             chanceMatch5Plus: 0.0018,
             multiplierVsBase: 1.0,
@@ -1682,7 +1722,9 @@ export function computeKeyBallMatchLift(): KeyBallLiftRow[] {
             chanceMatch3Plus: computeCondProb(1, 3),
             chanceMatch4Plus: computeCondProb(1, 4),
             chanceMatch5Plus: computeCondProb(1, 5),
-            multiplierVsBase: 8.16, // 49 / 6
+            // P(3+ with the anchor correct) / P(3+ base): the true lift of
+            // locking one correct banker on the 3+ prize rate.
+            multiplierVsBase: Math.round((computeCondProb(1, 3) / 1.86) * 100) / 100,
         },
         {
             anchorsLocked: 2,

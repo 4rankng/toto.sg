@@ -9,7 +9,58 @@ import type { Draw } from "@/lib/data";
 import { EXPECTED_CYCLE, PICKS, POOL } from "@/lib/insights-stats";
 import { pearsonCorrelation } from "@/lib/insights-correlations";
 
-const NULL_PROB = PICKS / POOL; // 6 / 49 ≈ 0.122449
+const NULL_PROB = PICKS / POOL; // 6 / 49
+
+/** Regularized upper incomplete gamma Q(a, x) via the series/CF split. */
+function gammaQ(a: number, x: number): number {
+    if (x <= 0) return 1;
+    if (x < a + 1) {
+        // lower series, then complement
+        let sum = 1 / a;
+        let term = sum;
+        for (let n = 1; n < 500; n += 1) {
+            term *= x / (a + n);
+            sum += term;
+            if (term < sum * 1e-14) break;
+        }
+        return 1 - sum * Math.exp(-x + a * Math.log(x) - lgamma(a));
+    }
+    // continued fraction for Q directly
+    const tiny = 1e-300;
+    let b = x + 1 - a;
+    let c = 1 / tiny;
+    let d = 1 / b;
+    let h = d;
+    for (let i = 1; i < 500; i += 1) {
+        const an = -i * (i - a);
+        b += 2;
+        d = an * d + b;
+        if (Math.abs(d) < tiny) d = tiny;
+        c = b + an / c;
+        if (Math.abs(c) < tiny) c = tiny;
+        d = 1 / d;
+        const del = d * c;
+        h *= del;
+        if (Math.abs(del - 1) < 1e-14) break;
+    }
+    return Math.exp(-x + a * Math.log(x) - lgamma(a)) * h;
+}
+
+function lgamma(x: number): number {
+    const c = [
+        76.18009172947146, -86.50532032941677, 24.01409824083091,
+        -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5,
+    ];
+    let y = x;
+    let tmp = x + 5.5;
+    tmp -= (x + 0.5) * Math.log(tmp);
+    let ser = 1.000000000190015;
+    for (let j = 0; j < 6; j += 1) {
+        y += 1;
+        ser += c[j] / y;
+    }
+    return -tmp + Math.log((2.5066282746310005 * ser) / x);
+}
 
 /* ------------------------------------------------------------------ *
  * Helper math utilities
@@ -808,11 +859,30 @@ export function computeKaplanMeierHazardStats(draws: Draw[]): KaplanMeierStats {
         atRisk -= hits;
     }
 
+    // Computed stats: the cliff is the largest single-step hazard drop;
+    // median survival is the first skip where survival crosses 0.5.
+    let cliffSkip = 0;
+    let cliffDrop = -Infinity;
+    for (let s = 1; s < hazardCurve.length; s += 1) {
+        const drop = hazardCurve[s - 1].hazardRate - hazardCurve[s].hazardRate;
+        if (drop > cliffDrop) {
+            cliffDrop = drop;
+            cliffSkip = s;
+        }
+    }
+    let medianSurvival = hazardCurve.length;
+    for (const p of hazardCurve) {
+        if (p.survivalRate <= 0.5) {
+            medianSurvival = p.skip;
+            break;
+        }
+    }
+
     return {
         hazardCurve,
         peakHazardSkip: peakSkip,
-        hazardCliffSkip: 22,
-        medianSurvivalDraws: 5, // Geometric median = -ln(2)/ln(43/49) ≈ 5.3
+        hazardCliffSkip: cliffSkip,
+        medianSurvivalDraws: medianSurvival,
     };
 }
 
@@ -867,11 +937,15 @@ export function computeCycleRatioStats(draws: Draw[]): CycleRatioStats {
     }
 
     const sortedByRatio = [...balls].sort((a, b) => b.ratio - a.ratio);
+    const ratios = balls.map((b) => b.ratio).sort((a, b) => a - b);
+    const mid = Math.floor(ratios.length / 2);
+    const medianRatio =
+        ratios.length % 2 === 0 ? (ratios[mid - 1] + ratios[mid]) / 2 : ratios[mid];
     return {
         balls,
         highestRatios: sortedByRatio.slice(0, 6),
         lowestRatios: sortedByRatio.slice(-6).reverse(),
-        medianRatio: 0.85,
+        medianRatio: Math.round(medianRatio * 100) / 100,
     };
 }
 
@@ -977,11 +1051,21 @@ export function computeMarkovTransitionStats(draws: Draw[]): MarkovTransitionSta
 
     transitions.sort((x, y) => y.lift - x.lift);
 
+    // Chi-square of the full 49x49 transition matrix against the
+    // independence expectation, with its p-value from the regularized
+    // upper incomplete gamma (df = 48*48).
+    let chi2 = 0;
+    for (const t of transitions) {
+        if (expectedPerPair > 0) chi2 += ((t.count - expectedPerPair) ** 2) / expectedPerPair;
+    }
+    const df = (POOL - 1) * (POOL - 1);
+    const chiSquareP = Math.round(gammaQ(df / 2, chi2 / 2) * 1000) / 1000;
+
     return {
         topTransitions: transitions.slice(0, 10),
         bottomTransitions: transitions.slice(-10).reverse(),
         matrixSample: transitions.slice(0, 50),
-        chiSquareP: 0.48, // typical null conformity
+        chiSquareP,
         allTransitions: transitions,
     };
 }
