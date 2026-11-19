@@ -23,6 +23,7 @@ import { SKIPGATE_FAMILY } from "./skipgate-rules.mjs";
 import { INSIGHT_FUSION_FAMILY } from "./insight-fusion-rules.mjs";
 import { CROSS_PANEL_FAMILY } from "./cross-panel-rules.mjs";
 import { FUSION_CONSENSUS_FAMILY } from "./insight-fusion-rules.mjs";
+import { STREAMPICK_FAMILY } from "./streampick-rules.mjs";
 
 /** Phase-1 families: every fold is graded as it is produced. */
 export const BASE_FAMILIES = [
@@ -39,7 +40,11 @@ export const BASE_FAMILIES = [
     SEQUENCE_DYNAMICS_FAMILY,
     SKIPGATE_FAMILY,
     INSIGHT_FUSION_FAMILY,
+    STREAMPICK_FAMILY,
 ];
 
 /** Phase-2 families: they read the base league's assembled fold votes. */
 export const PHASE2_FAMILIES = [CROSS_PANEL_FAMILY, META_VOTE_FAMILY, FUSION_CONSENSUS_FAMILY];
+
+/** Fixed-slot PCG64 stream champions (MEGA search exhibits). */
+export { STREAMPICK_FAMILY };

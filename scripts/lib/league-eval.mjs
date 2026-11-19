@@ -192,7 +192,12 @@ export function evaluateStrategy(
             group = cached.g;
         } else {
             const prior = era.slice(0, i);
-            pick = generateLine(spec.id, spec.rule, prior, draw, prepare ? prepare(prior, draw, prepareEnv) : undefined);
+            // Leak seal (2026-11-19): rules must never see the fold's own
+            // result. Only the draw number and date are visible to a rule —
+            // a doctored-cache incident showed the raw draw must not cross
+            // this boundary, even if no current rule reads it.
+            const visible = { draw: draw.draw, date: draw.date };
+            pick = generateLine(spec.id, spec.rule, prior, visible, prepare ? prepare(prior, visible, prepareEnv) : undefined);
             // Raw match count: every matched main number counts (chance 0.7347/draw).
             matched = draw.numbers.filter((n) => pick.includes(n)).length; // main numbers only
             group = scoreLine(pick, draw);

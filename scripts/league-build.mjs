@@ -281,7 +281,23 @@ const main = async () => {
     const keptIds = new Set(kept.map((row) => row.id));
 
     kept.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
-    kept.forEach((row, i) => {
+
+    // Owner rule (2026-11-13): retire rows whose last prize is older than
+    // 100 draws from the NEXT draw. The event ledger keeps their full
+    // history; only the league table is trimmed. The quickpick baseline
+    // is never retired — the below-chance cleanup needs it.
+    const STALE_LIMIT_DRAWS = 100;
+    const lastPrizeOf = (specId) => {
+        const evs = prizeEvents.get(specId);
+        return evs && evs.length ? evs[evs.length - 1].d : null;
+    };
+    const retiredStale = kept.filter(
+        (row) => row.id !== "quickpick" && lastPrizeOf(row.id) != null && nextDrawNo - lastPrizeOf(row.id) > STALE_LIMIT_DRAWS,
+    );
+    const retiredIds = new Set(retiredStale.map((row) => row.id));
+    const table = retiredIds.size ? kept.filter((row) => !retiredIds.has(row.id)) : kept;
+
+    table.forEach((row, i) => {
         row.rank = i + 1;
     });
 
@@ -294,7 +310,7 @@ const main = async () => {
     // 100, chance-grade rows sit near the low tens, zero-score rows floor
     // at 1, and the number stays comparable as the fold count grows.
     const ceiling = (foldEnd - foldStart) * 13;
-    for (const row of kept) row.score100 = Math.max(1, 1 + Math.round((99 * Math.log1p(row.score)) / Math.log1p(ceiling)));
+    for (const row of table) row.score100 = Math.max(1, 1 + Math.round((99 * Math.log1p(row.score)) / Math.log1p(ceiling)));
 
     const league = {
         meta: {
@@ -303,9 +319,9 @@ const main = async () => {
             folds: foldEnd - foldStart,
             chance: CHANCE,
             hot: { halfLifeDraws: HOT_HALF_LIFE, chanceHotScore },
-            families: [...new Set(kept.map((row) => row.family))].sort((a, b) => a.localeCompare(b)),
+            families: [...new Set(table.map((row) => row.family))].sort((a, b) => a.localeCompare(b)),
         },
-        strategies: kept,
+        strategies: table,
     };
     await writeFile(`${DATA_DIR}strategies.json`, JSON.stringify(league, 1), "utf8");
 
@@ -321,7 +337,7 @@ const main = async () => {
             nextDraw: nextDrawNo,
             folds: foldEnd - foldStart,
             directory: Object.fromEntries(
-                specs.map((spec) => [spec.id, { name: spec.name, family: spec.family, kept: keptIds.has(spec.id) }]),
+                specs.map((spec) => [spec.id, { name: spec.name, family: spec.family, kept: keptIds.has(spec.id) && !retiredIds.has(spec.id) }]),
             ),
         },
         strategies: Object.fromEntries(
@@ -332,7 +348,7 @@ const main = async () => {
 
     // The playbook pairs each cross-panel strategy's document evidence with
     // the live league row it produced.
-    const rowById = new Map(kept.map((row) => [row.id, row]));
+    const rowById = new Map(table.map((row) => [row.id, row]));
     const playbook = {
         meta: {
             generatedAt: league.meta.generatedAt,
