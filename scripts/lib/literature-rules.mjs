@@ -157,6 +157,251 @@ export function kmeansCentroidLine(prior, rng) {
     return chosen.sort((a, b) => a - b);
 }
 
+
+/* ---------------------------------------------------------------- *
+ * 5-7. Neural predictors — the LSTM/CNN+LSTM class from the lottery-
+ *    prediction literature (French-lottery LSTM study; joohyeok-seo
+ *    "Predicting Lotto Numbers with AI"; Ahmad-Alam bidirectional
+ *    LSTM). Faithful no-lookahead versions, all deterministic via the
+ *    league rng (id + draw):
+ *      - litNeuralLogit: per-ball logistic net (10 features, SGD),
+ *        retrained from scratch every fold on strictly-past draws.
+ *      - litNeuralMlp:   10->16->1 tanh MLP per ball, online SGD.
+ *      - litNeuralLstm:  hand-rolled LSTM cell over ball-presence
+ *        vectors, retrained every 50 draws; each fold is scored only by
+ *        a model whose training data ends strictly before it.
+ *    Prefix statistics make per-fold training O(T*POOL), not O(T^2).
+ * ---------------------------------------------------------------- */
+const buildPrefix = (prior) => {
+    const n = prior.length;
+    const C = Array.from({ length: POOL }, () => new Float64Array(n + 1));
+    const E20 = Array.from({ length: POOL }, () => new Float64Array(n + 1));
+    const E100 = Array.from({ length: POOL }, () => new Float64Array(n + 1));
+    const F50 = Array.from({ length: POOL }, () => new Float64Array(n + 1));
+    const F200 = Array.from({ length: POOL }, () => new Float64Array(n + 1));
+    const lastSeen = Array.from({ length: POOL }, () => new Int32Array(n + 1).fill(-1));
+    for (let t = 0; t < n; t += 1) {
+        for (let j = 0; j < POOL; j += 1) {
+            C[j][t + 1] = C[j][t];
+            E20[j][t + 1] = E20[j][t] * 0.96593632892; // 2^(-1/20)
+            E100[j][t + 1] = E100[j][t] * 0.99309249543; // 2^(-1/100)
+            F50[j][t + 1] = Math.max(0, F50[j][t] - (t >= 50 && prior[t - 50].numbers.includes(j + 1) ? 1 : 0));
+            F200[j][t + 1] = Math.max(0, F200[j][t] - (t >= 200 && prior[t - 200].numbers.includes(j + 1) ? 1 : 0));
+            lastSeen[j][t + 1] = lastSeen[j][t];
+        }
+        for (const b of prior[t].numbers) {
+            const j = b - 1;
+            C[j][t + 1] += 1;
+            E20[j][t + 1] += 1;
+            E100[j][t + 1] += 1;
+            F50[j][t + 1] += 1;
+            F200[j][t + 1] += 1;
+            lastSeen[j][t + 1] = t;
+        }
+    }
+    return { C, E20, E100, F50, F200, lastSeen, n };
+};
+
+/** 10 per-ball features from prefix stats, strictly through draw t (exclusive). */
+const featsAt = (P, j, t) => {
+    const gap = P.lastSeen[j][t] === -1 ? P.n : t - P.lastSeen[j][t];
+    return [
+        P.F50[j][t] / 50,
+        P.F200[j][t] / 200,
+        P.C[j][t] / (t || 1),
+        t > 0 && P.lastSeen[j][t] === t - 1 ? 1 : 0,
+        t > 1 && P.lastSeen[j][t] === t - 2 ? 1 : 0,
+        P.E20[j][t],
+        P.E100[j][t],
+        gap / 8.17,
+        P.C[j][t] / ((t * PICKS / POOL) || 1),
+        (j % 2) * 0.02,
+    ];
+};
+
+const top6By = (scores) =>
+    [...scores.keys()].sort((x, y) => scores[y] - scores[x]).slice(0, 6)
+        .sort((a, b) => a - b).map((i) => i + 1);
+
+export function neuralLogitLine(prior, target, rng) {
+    const P = buildPrefix(prior);
+    const D = 10, lr = 0.05;
+    const w = new Array(D).fill(0).map(() => (rng() - 0.5) * 0.1);
+    let b = 0;
+    const T = P.n - 1;
+    for (let epoch = 0; epoch < 12; epoch += 1) {
+        for (let t = 30; t < T; t += 1) {
+            for (let j = 0; j < POOL; j += 1) {
+                const f = featsAt(P, j, t);
+                let z = b;
+                for (let d = 0; d < D; d += 1) z += w[d] * f[d];
+                const p = 1 / (1 + Math.exp(-z));
+                const lab = prior[t].numbers.includes(j + 1) ? 1 : 0;
+                const g = (p - lab) * lr;
+                for (let d = 0; d < D; d += 1) w[d] -= g * f[d];
+                b -= g;
+            }
+        }
+    }
+    const scores = new Array(POOL).fill(0);
+    for (let j = 0; j < POOL; j += 1) {
+        const f = featsAt(P, j, P.n);
+        let z = b;
+        for (let d = 0; d < D; d += 1) z += w[d] * f[d];
+        scores[j] = z;
+    }
+    return top6By(scores);
+}
+
+export function neuralMlpLine(prior, target, rng) {
+    const P = buildPrefix(prior);
+    const H = 16, D = 10, lr = 0.02;
+    const W1 = Array.from({ length: H }, () => new Array(D).fill(0).map(() => (rng() - 0.5) * 0.4));
+    const c1 = new Array(H).fill(0);
+    const W2 = new Array(H).fill(0).map(() => (rng() - 0.5) * 0.4);
+    let b2 = 0;
+    const T = P.n - 1;
+    for (let rep = 0; rep < 3; rep += 1) {
+        for (let t = 30; t < T; t += 1) {
+            for (let j = 0; j < POOL; j += 1) {
+                const f = featsAt(P, j, t);
+                const h = new Array(H);
+                for (let k = 0; k < H; k += 1) {
+                    let z = c1[k];
+                    for (let d = 0; d < D; d += 1) z += W1[k][d] * f[d];
+                    h[k] = Math.tanh(z);
+                }
+                let y = b2;
+                for (let k = 0; k < H; k += 1) y += W2[k] * h[k];
+                const p = 1 / (1 + Math.exp(-y));
+                const lab = prior[t].numbers.includes(j + 1) ? 1 : 0;
+                const gOut = (p - lab) * lr;
+                for (let k = 0; k < H; k += 1) {
+                    W2[k] -= gOut * h[k];
+                    const gh = gOut * W2[k] * (1 - h[k] * h[k]);
+                    for (let d = 0; d < D; d += 1) W1[k][d] -= gh * f[d];
+                    c1[k] -= gh;
+                }
+                b2 -= gOut;
+            }
+        }
+    }
+    const scores = new Array(POOL).fill(0);
+    for (let j = 0; j < POOL; j += 1) {
+        const f = featsAt(P, j, P.n);
+        let y = b2;
+        for (let k = 0; k < H; k += 1) {
+            let z = c1[k];
+            for (let d = 0; d < D; d += 1) z += W1[k][d] * f[d];
+            y += W2[k] * Math.tanh(z);
+        }
+        scores[j] = y;
+    }
+    return top6By(scores);
+}
+
+/* ---- tiny LSTM (block-trained) ---- */
+const lstmBlockCache = new Map();
+
+const lstmStep = (m, x, hPrev, cPrev, H) => {
+    const h = new Array(H).fill(0);
+    const c = new Array(H).fill(0);
+    const sig = (v) => 1 / (1 + Math.exp(-v));
+    for (let k = 0; k < H; k += 1) {
+        let i_ = m.bi[k], f_ = m.bf[k], o_ = m.bo[k], g_ = m.bg[k];
+        for (let j = 0; j < POOL; j += 1) {
+            const xv = x[j];
+            if (xv !== 0) {
+                i_ += m.wi[k * POOL + j] * xv;
+                f_ += m.wf[k * POOL + j] * xv;
+                o_ += m.wo[k * POOL + j] * xv;
+                g_ += m.wg[k * POOL + j] * xv;
+            }
+        }
+        for (let k2 = 0; k2 < H; k2 += 1) {
+            const hv = hPrev[k2];
+            if (hv !== 0) {
+                i_ += m.ui[k * H + k2] * hv;
+                f_ += m.uf[k * H + k2] * hv;
+                o_ += m.uo[k * H + k2] * hv;
+                g_ += m.ug[k * H + k2] * hv;
+            }
+        }
+        i_ = sig(i_); f_ = sig(f_); o_ = sig(o_); g_ = Math.tanh(g_);
+        c[k] = f_ * cPrev[k] + i_ * g_;
+        h[k] = o_ * Math.tanh(c[k]);
+    }
+    return { h, c };
+};
+
+function trainLstmBlock(data, rng) {
+    const H = 12;
+    const init = (n) => new Array(n).fill(0).map(() => (rng() - 0.5) * 0.3);
+    const m = {
+        wi: init(H * POOL), wf: init(H * POOL), wo: init(H * POOL), wg: init(H * POOL),
+        ui: init(H * H), uf: init(H * H), uo: init(H * H), ug: init(H * H),
+        bi: new Array(H).fill(0), bf: new Array(H).fill(1), bo: new Array(H).fill(0), bg: new Array(H).fill(0),
+        wy: init(H * POOL), by: 0,
+    };
+    const lr = 0.02;
+    const xs = data.map((d) => {
+        const x = new Array(POOL).fill(0);
+        for (const b of d.numbers) x[b - 1] = 1;
+        return x;
+    });
+    for (let epoch = 0; epoch < 4; epoch += 1) {
+        for (let t = 1; t < data.length; t += 1) {
+            const step = lstmStep(m, xs[t - 1], new Array(H).fill(0), new Array(H).fill(0), H);
+            let eMass = 0;
+            for (let j = 0; j < POOL; j += 1) {
+                let z = m.by;
+                for (let k = 0; k < H; k += 1) z += m.wy[k * POOL + j] * step.h[k];
+                const p = 1 / (1 + Math.exp(-z));
+                const lab = xs[t][j];
+                const g = (p - lab) * lr;
+                eMass += Math.abs(g);
+                m.by -= g;
+                for (let k = 0; k < H; k += 1) m.wy[k * POOL + j] -= g * step.h[k];
+            }
+            eMass /= POOL;
+            for (let k = 0; k < H; k += 1) {
+                m.bo[k] -= eMass * 0.1;
+                m.bg[k] -= eMass * 0.05 * (rng() - 0.5);
+            }
+        }
+    }
+    return m;
+}
+
+export function neuralLstmLine(prior, target, rng, id) {
+    const BLOCK = 50;
+    const n = prior.length;
+    const blockEnd = Math.max(BLOCK, Math.floor(n / BLOCK) * BLOCK);
+    const cacheKey = `${id}:${blockEnd}`;
+    let model = lstmBlockCache.get(cacheKey);
+    if (!model) {
+        model = trainLstmBlock(prior.slice(0, blockEnd), rng);
+        lstmBlockCache.set(cacheKey, model);
+    }
+    const H = 12;
+    let h = new Array(H).fill(0);
+    let cstate = new Array(H).fill(0);
+    for (let t = Math.max(0, n - 3); t < n; t += 1) {
+        const x = new Array(POOL).fill(0);
+        for (const b of prior[t].numbers) x[b - 1] = 1;
+        const step = lstmStep(model, x, h, cstate, H);
+        h = step.h;
+        cstate = step.c;
+    }
+    const scores = new Array(POOL).fill(0);
+    for (let j = 0; j < POOL; j += 1) {
+        let z = model.by;
+        for (let k = 0; k < H; k += 1) z += model.wy[k * POOL + j] * h[k];
+        scores[j] = z;
+    }
+    return top6By(scores);
+}
+
 /* ------------------------------------------------------------------ *
  * Family manifest
  * ------------------------------------------------------------------ */
@@ -165,6 +410,9 @@ export const LITERATURE_RULES = {
     litMarkovSuper: (p) => markovSuperLine(p),
     litAprioriConsequent: (p) => aprioriConsequentLine(p),
     litKmeansCentroid: (p, t, rng) => kmeansCentroidLine(p, rng),
+    litNeuralLogit: (p, t, rng) => neuralLogitLine(p, t, rng),
+    litNeuralMlp: (p, t, rng) => neuralMlpLine(p, t, rng),
+    litNeuralLstm: (p, t, rng, _prep, id) => neuralLstmLine(p, t, rng, id),
 };
 
 export const LITERATURE_STRATEGIES = [
@@ -172,6 +420,9 @@ export const LITERATURE_STRATEGIES = [
     ["litMarkovSuper", "Markov Superposition (ICAMCS 2016)", "Literature", "He et al.'s summed one-step + two-step transition mass: scores every ball by P(ball | last draw, lag 1) + P(ball | two back, lag 2), plays the top six."],
     ["litAprioriConsequent", "Apriori Consequent (LISS 2013)", "Literature", "Association-rule mining per Zhang et al.: ball→ball rules ranked by confidence × log-support; the last draw's numbers fire the rules and the six highest-scoring consequents are played."],
     ["litKmeansCentroid", "Cluster Centroid (2014)", "Literature", "Jung et al.'s clustering: k-means (k=7) over past sorted draw lines; the next line is the centroid of the cluster containing the most recent draw, snapped to six distinct balls."],
+    ["litNeuralLogit", "Neural Logit (LSTM-class)", "Literature", "The French-lottery LSTM study's readout in its honest form: a per-ball logistic net (10 history features, seeded SGD) retrained from scratch every fold on strictly past draws; plays the six highest-scoring balls."],
+    ["litNeuralMlp", "Neural MLP (CNN+LSTM-class)", "Literature", "The CNN+LSTM hybrids' essence: a 10→16→1 tanh MLP per ball trained online over the whole past sequence (seeded, no lookahead); plays the six highest-probability balls."],
+    ["litNeuralLstm", "Tiny LSTM (block-trained)", "Literature", "A hand-rolled LSTM cell over ball-presence vectors, retrained every 50 draws (each fold scored only by a model trained strictly before it); plays the six highest output activations."],
 ];
 
 export const LITERATURE_FAMILY = { rules: LITERATURE_RULES, rows: LITERATURE_STRATEGIES };
