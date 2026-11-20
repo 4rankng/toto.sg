@@ -24,6 +24,7 @@ import { INSIGHT_FUSION_FAMILY } from "./insight-fusion-rules.mjs";
 import { CROSS_PANEL_FAMILY } from "./cross-panel-rules.mjs";
 import { FUSION_CONSENSUS_FAMILY } from "./insight-fusion-rules.mjs";
 import { STREAMPICK_FAMILY } from "./streampick-rules.mjs";
+import { LITERATURE_FAMILY } from "./literature-rules.mjs";
 
 /** Phase-1 families: every fold is graded as it is produced. */
 export const BASE_FAMILIES = [
@@ -41,6 +42,7 @@ export const BASE_FAMILIES = [
     SKIPGATE_FAMILY,
     INSIGHT_FUSION_FAMILY,
     STREAMPICK_FAMILY,
+    LITERATURE_FAMILY,
 ];
 
 /** Phase-2 families: they read the base league's assembled fold votes. */
