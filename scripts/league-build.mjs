@@ -282,11 +282,11 @@ const main = async () => {
 
     kept.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
 
-    // Owner rule (2026-11-13): retire rows whose last prize is older than
-    // 100 draws from the NEXT draw. The event ledger keeps their full
-    // history; only the league table is trimmed. The quickpick baseline
-    // is never retired — the below-chance cleanup needs it.
-    const STALE_LIMIT_DRAWS = 100;
+    // Owner rule (2026-11-13, tightened 2026-11-20): retire rows whose last
+    // prize is older than 50 draws from the NEXT draw. The event ledger keeps
+    // their full history; only the league table is trimmed. The quickpick
+    // baseline is never retired — the below-chance cleanup needs it.
+    const STALE_LIMIT_DRAWS = 50;
     const lastPrizeOf = (specId) => {
         const evs = prizeEvents.get(specId);
         return evs && evs.length ? evs[evs.length - 1].d : null;
