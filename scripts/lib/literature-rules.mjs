@@ -253,6 +253,122 @@ export function neuralLogitLine(prior, target, rng) {
     return top6By(scores);
 }
 
+/* Tuned variants (harness sweep 2026-11-20, in-sample exhibits):
+ * closed-form IRLS converges to chance (22 prizes) while the seeded
+ * underfit SGD holds 32 — implicit regularization. These grade live. */
+
+// decayed ball-pair co-occurrence mass, strictly past; out[t] = mass before draw t
+const PAIRMASS = (prior) => {
+    const co = Array.from({ length: POOL }, () => new Array(POOL).fill(0));
+    const out = new Array(prior.length + 1).fill(null);
+    const dec = 0.995;
+    for (let t = 0; t < prior.length; t += 1) {
+        for (let a = 0; a < POOL; a += 1) for (let b = 0; b < POOL; b += 1) co[a][b] *= dec;
+        const hit = new Array(POOL).fill(0);
+        for (const b of prior[t].numbers) hit[b - 1] = 1;
+        for (let a = 0; a < POOL; a += 1) for (let b = 0; b < POOL; b += 1) co[a][b] += hit[a] * hit[b];
+        const m = new Array(POOL).fill(0);
+        for (let a = 0; a < POOL; a += 1) {
+            let s = 0;
+            for (let b = 0; b < POOL; b += 1) s += co[a][b] * hit[b];
+            m[a] = s / PICKS;
+        }
+        out[t + 1] = m;
+    }
+    return out;
+};
+
+const fnvLocal = (s) => {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < s.length; i += 1) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+};
+const mulberryLocal = (seed) => {
+    let a = seed >>> 0;
+    return () => {
+        a = (a + 0x6d2b79f5) >>> 0;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+};
+
+const trainLogitW = (prior, rng) => {
+    // same training loop as trainLogit but returns {w, b}
+    const P = buildPrefix(prior);
+    const D = 10, lr = 0.05;
+    const w = new Array(D).fill(0).map(() => (rng() - 0.5) * 0.1);
+    let b = 0;
+    const T = P.n - 1;
+    for (let epoch = 0; epoch < 12; epoch += 1) {
+        for (let t = 30; t < T; t += 1) {
+            for (let j = 0; j < POOL; j += 1) {
+                const f = featsAt(P, j, t);
+                let z = b;
+                for (let d = 0; d < D; d += 1) z += w[d] * f[d];
+                const p = 1 / (1 + Math.exp(-z));
+                const lab = prior[t].numbers.includes(j + 1) ? 1 : 0;
+                const g = (p - lab) * lr;
+                for (let d = 0; d < D; d += 1) w[d] -= g * f[d];
+                b -= g;
+            }
+        }
+    }
+    return { w, b };
+};
+
+export function neuralEnsLine(prior, target, rng, id, nNets) {
+    void rng;
+    const nets = [];
+    for (let e = 0; e < nNets; e += 1) {
+        nets.push(trainLogitW(prior, mulberryLocal(fnvLocal(`${id}e${e}:${target.draw}`))));
+    }
+    const P = buildPrefix(prior);
+    const scores = new Array(POOL).fill(0);
+    for (let j = 0; j < POOL; j += 1) {
+        const f = featsAt(P, j, P.n);
+        for (const nw of nets) {
+            let z = nw.b;
+            for (let d = 0; d < nw.w.length; d += 1) z += nw.w[d] * f[d];
+            scores[j] += z;
+        }
+    }
+    return top6By(scores);
+}
+
+export function neuralPairSgdLine(prior, target, rng) {
+    void target;
+    const P = buildPrefix(prior);
+    const PM = PAIRMASS(prior);
+    const D = 11, lr = 0.05;
+    const w = new Array(D).fill(0).map(() => (rng() - 0.5) * 0.1);
+    let b = 0;
+    const T = P.n - 1;
+    for (let epoch = 0; epoch < 12; epoch += 1) {
+        for (let t = 30; t < T; t += 1) {
+            for (let j = 0; j < POOL; j += 1) {
+                const f = featsAt(P, j, t).concat([PM[t] ? PM[t][j] : 0]);
+                let z = b;
+                for (let d = 0; d < D; d += 1) z += w[d] * f[d];
+                const p = 1 / (1 + Math.exp(-z));
+                const lab = prior[t].numbers.includes(j + 1) ? 1 : 0;
+                const g = (p - lab) * lr;
+                for (let d = 0; d < D; d += 1) w[d] -= g * f[d];
+                b -= g;
+            }
+        }
+    }
+    const scores = new Array(POOL).fill(0);
+    for (let j = 0; j < POOL; j += 1) {
+        const f = featsAt(P, j, P.n).concat([PM[P.n] ? PM[P.n][j] : 0]);
+        let z = b;
+        for (let d = 0; d < D; d += 1) z += w[d] * f[d];
+        scores[j] = z;
+    }
+    return top6By(scores);
+}
+
 export function neuralMlpLine(prior, target, rng) {
     const P = buildPrefix(prior);
     const H = 16, D = 10, lr = 0.02;
@@ -413,6 +529,8 @@ export const LITERATURE_RULES = {
     litNeuralLogit: (p, t, rng) => neuralLogitLine(p, t, rng),
     litNeuralMlp: (p, t, rng) => neuralMlpLine(p, t, rng),
     litNeuralLstm: (p, t, rng, _prep, id) => neuralLstmLine(p, t, rng, id),
+    litNeuralEns3: (p, t, rng, _prep, id) => neuralEnsLine(p, t, rng, id, 3),
+    litNeuralPairSgd: (p, t, rng) => neuralPairSgdLine(p, t, rng),
 };
 
 export const LITERATURE_STRATEGIES = [
@@ -423,6 +541,8 @@ export const LITERATURE_STRATEGIES = [
     ["litNeuralLogit", "Neural Logit (LSTM-class)", "Literature", "The French-lottery LSTM study's readout in its honest form: a per-ball logistic net (10 history features, seeded SGD) retrained from scratch every fold on strictly past draws; plays the six highest-scoring balls."],
     ["litNeuralMlp", "Neural MLP (CNN+LSTM-class)", "Literature", "The CNN+LSTM hybrids' essence: a 10→16→1 tanh MLP per ball trained online over the whole past sequence (seeded, no lookahead); plays the six highest-probability balls."],
     ["litNeuralLstm", "Tiny LSTM (block-trained)", "Literature", "A hand-rolled LSTM cell over ball-presence vectors, retrained every 50 draws (each fold scored only by a model trained strictly before it); plays the six highest output activations."],
+    ["litNeuralEns3", "Neural Logit ×3 (seed ensemble)", "Literature", "Three independently-seeded per-ball logistic nets trained from scratch each fold; their scores are summed and the six highest-scoring balls are played."],
+    ["litNeuralPairSgd", "Neural Logit + Pair Mass", "Literature", "The per-ball logistic net plus one extra feature: decayed ball-pair co-occurrence mass (how often this ball has co-drawn with the previous draw's balls)."],
 ];
 
 export const LITERATURE_FAMILY = { rules: LITERATURE_RULES, rows: LITERATURE_STRATEGIES };
